@@ -456,7 +456,7 @@ diff -Nru eglibc-2.18/debian/rules eglibc-2.18/debian/rules
  include debian/rules.d/*.mk
  
 EOF
-	echo "patching eglibc to build without selinux in stage2"
+	echo "patching eglibc to build without selinux in stage2 #742640"
 	patch -p1 <<EOF
 diff -Nru eglibc-2.18/debian/sysdeps/linux.mk eglibc-2.18/debian/sysdeps/linux.mk
 --- eglibc-2.18/debian/sysdeps/linux.mk
