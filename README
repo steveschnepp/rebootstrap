@@ -1,0 +1,11 @@
+This project aims to do QA re-bootstraps of Debian architectures. It is
+considered experimental, so if it breaks, you keep the pieces. Never use
+something other than throw-away chroots. You have been warned.
+
+The bootstrap.sh script tries to re-bootstrap the given (host) architecture
+($1) from a build chroot with nothing but sid sources. No binaries from the
+host architecture are reused. It expects to be able to install packages and
+will leave the filesystem in a dirty state (creating symlinks without tracking
+them). It has only ever been tested with pbuilder:
+
+pbuilder --execute bootstrap.sh $host_arch
