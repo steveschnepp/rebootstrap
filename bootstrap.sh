@@ -515,7 +515,7 @@ else
 	patch_gcc
 	dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends
 	DEB_TARGET_ARCH=$HOST_ARCH DEB_CROSS_NO_BIARCH=yes DEB_STAGE=stage2 dpkg-buildpackage -d -T control
-	DEB_TARGET_ARCH=$HOST_ARCH DEB_CROSS_NO_BIARCH=yes DEB_STAGE=stage2 dpkg-buildpackage -d -b -uc -us
+	gcc_cv_libc_provides_ssp=yes DEB_TARGET_ARCH=$HOST_ARCH DEB_CROSS_NO_BIARCH=yes DEB_STAGE=stage2 dpkg-buildpackage -d -b -uc -us
 	cd ..
 	rm -vf *multilib*.deb
 	dpkg -i *.deb
