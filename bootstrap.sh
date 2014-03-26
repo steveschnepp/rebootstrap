@@ -258,7 +258,7 @@ if test -f "$PKG"; then
 	echo "skipping rebuild of linux-libc-dev"
 	dpkg -i "$PKG"
 else
-	apt-get install -y bc cpio debhelper kernel-wedge patchutils python quilt 
+	apt-get install -y bc cpio debhelper kernel-wedge patchutils python quilt python-six
 	cd /tmp/buildd
 	mkdir linux
 	cd linux
@@ -567,6 +567,7 @@ if test -d "$RESULT/eglibc2"; then
 	echo "skipping rebuild of eglibc stage2"
 	dpkg -i "$RESULT"/eglibc2/*.deb
 else
+	apt-get install -y gettext file quilt autoconf gawk debhelper rdfind symlinks libaudit-dev libcap-dev libselinux-dev binutils bison netbase
 	cd /tmp/buildd
 	mkdir eglibc2
 	cd eglibc2
