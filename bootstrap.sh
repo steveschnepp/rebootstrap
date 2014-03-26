@@ -582,3 +582,30 @@ else
 	cd ..
 	rm -Rf eglibc2
 fi
+
+if test -d "$RESULT/gcc3"; then
+	echo "skipping rebuild of gcc stage3"
+	dpkg -i "$RESULT"/gcc3/*.deb
+else
+	apt-get install -y debhelper gawk patchutils bison flex python realpath lsb-release quilt lib32gcc1 libx32gcc1 libc6-dbg libtool autoconf2.64 zlib1g-dev gperf texinfo locales sharutils procps libantlr-java libffi-dev fastjar libmagic-dev libecj-java zip libasound2-dev libxtst-dev libxt-dev libgtk2.0-dev libart-2.0-dev libcairo2-dev netbase libcloog-isl-dev libmpc-dev libmpfr-dev libgmp-dev dejagnu autogen chrpath binutils-multiarch
+	cd /tmp/buildd
+	mkdir gcc3
+	cd gcc3
+	apt-get source gcc-$GCC_VER
+	cd gcc-$GCC_VER-*
+	patch_gcc
+	dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends
+	DEB_TARGET_ARCH=$HOST_ARCH dpkg-buildpackage -d -T control
+	DEB_TARGET_ARCH=$HOST_ARCH dpkg-buildpackage -d -b -uc -us
+	cd ..
+	dpkg -i *.deb
+	compiler="`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE`-gcc-$GCC_VER"
+	if ! which "$compiler"; then echo "$compiler missing in stage3 gcc package"; exit 1; fi
+	if ! $compiler -x c -c /dev/null -o test.o; then echo "stage3 gcc fails to execute"; exit 1; fi
+	if ! test -f test.o; then echo "stage3 gcc fails to create binaries"; exit 1; fi
+	check_arch test.o "$HOST_ARCH"
+	test -d "$RESULT" && mkdir "$RESULT/gcc3"
+	test -d "$RESULT" && cp *.deb "$RESULT/gcc3"
+	cd ..
+	rm -Rf gcc3
+fi
