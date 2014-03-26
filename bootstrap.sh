@@ -475,6 +475,36 @@ diff -Nru eglibc-2.18/debian/sysdeps/linux.mk eglibc-2.18/debian/sysdeps/linux.m
  
  ifndef LINUX_SOURCE
 EOF
+	echo "patching eglibc to not depend on libgcc in stage2"
+	patch -p1 <<EOF
+diff -Nru eglibc-2.18/debian/control.in/libc eglibc-2.18/debian/control.in/libc
+--- eglibc-2.18/debian/control.in/libc
++++ eglibc-2.18/debian/control.in/libc
+@@ -3,7 +3,7 @@
+ Section: libs
+ Priority: required
+ Multi-Arch: same
+-Depends: \${shlibs:Depends}, libgcc1 [!hppa !m68k], libgcc2 [m68k], libgcc4 [hppa]
++Depends: @nobootstrap@, libgcc1 [!hppa !m68k], @nobootstrap@ libgcc2 [m68k], @nobootstrap@ libgcc4 [hppa], \${shlibs:Depends}
+ Recommends: libc6-i686 [i386], libc0.1-i686 [kfreebsd-i386], libc0.3-i686 [hurd-i386] 
+ Suggests: glibc-doc, debconf | debconf-2.0, locales [!hurd-i386]
+ Provides: \${locale-compat:Depends}, libc6-sparcv9b [sparc sparc64]
+diff -Nru eglibc-2.18/debian/rules.d/control.mk eglibc-2.18/debian/rules.d/control.mk
+--- eglibc-2.18/debian/rules.d/control.mk
++++ eglibc-2.18/debian/rules.d/control.mk
+@@ -45,7 +45,11 @@
+ ifeq (\$(DEB_BUILD_PROFILE),bootstrap)
+ 	sed -e 's%@libc@%\$(libc)%g;s%@nobootstrap@.*,%%g' < \$@T > debian/control
+ else
++ifneq (\$(filter stage2,\$(DEB_BUILD_PROFILES)),)
++	sed -e 's%@libc@%\$(libc)%g;s%@nobootstrap@.*,%%g' < \$@T > debian/control
++else
+ 	sed -e 's%@libc@%\$(libc)%g;s%@nobootstrap@%%g' < \$@T > debian/control
++endif
+ endif
+ 	rm \$@T
+ 	touch \$@
+EOF
 }
 PKG=`echo $RESULT/libc*-dev_*.deb`
 if test -f "$PKG"; then
