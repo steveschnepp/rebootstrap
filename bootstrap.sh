@@ -275,47 +275,6 @@ fi
 
 # gcc
 patch_gcc() {
-	if test "$GCC_VER" = "4.8" -a "$HOST_ARCH" = "x32"; then
-		echo "patching gcc-4.8 for x32: chooses wrong target architecture #742539"
-		patch -p1 <<EOF
-diff -u gcc-4.8-4.8.2/debian/rules2 gcc-4.8-4.8.2/debian/rules2
---- gcc-4.8-4.8.2/debian/rules2
-+++ gcc-4.8-4.8.2/debian/rules2
-@@ -505,11 +505,14 @@
- ifeq (\$(DEB_TARGET_ARCH),amd64)
-   CONFARGS += --with-abi=m64
- endif
-+ifeq (\$(DEB_TARGET_ARCH),x32)
-+  CONFARGS += --with-abi=mx32
-+endif
- ifeq (\$(multilib),yes)
-   ifneq (,\$(filter \$(DEB_TARGET_ARCH), amd64 i386))
-     CONFARGS += --with-multilib-list=m32,m64\$(if \$(filter yes,\$(biarchx32)),\$(COMMA)mx32)
-   else ifeq (\$(DEB_TARGET_ARCH),x32)
--    CONFARGS += --with-abi=mx32 --with-multilib-list=mx32,m64,m32
-+    CONFARGS += --with-multilib-list=mx32,m64,m32
-   endif
- endif
-  
-EOF
-	fi
-	if test "$GCC_VER" = "4.8" -a "$HOST_ARCH" = "x32"; then
-		echo "patching gcc-4.8 for x32: failure to disable multilib #742358"
-		patch -p1 <<EOF
-diff -u gcc-4.8-4.8.2/debian/rules2 gcc-4.8-4.8.2/debian/rules2
---- gcc-4.8-4.8.2/debian/rules2
-+++ gcc-4.8-4.8.2/debian/rules2
-@@ -334,7 +334,7 @@
-     endif
- endif
- 
--ifneq (,\$(filter \$(DEB_TARGET_GNU_TYPE), x86_64-linux-gnu x86_64-kfreebsd-gnu s390x-linux-gnu))
-+ifneq (,\$(filter \$(DEB_TARGET_GNU_TYPE), x86_64-linux-gnu x86_64-linux-gnux32 x86_64-kfreebsd-gnu s390x-linux-gnu))
-     ifneq (\$(biarch32),yes)
-       CONFARGS += --disable-multilib
-     endif
-EOF
-	fi
 	if test "$GCC_VER" = "4.8"; then
 		echo "patching gcc-4.8: failure to include headers in stage1"
 		patch -p1 <<EOF
