@@ -230,6 +230,10 @@ check_arch() {
 	return 0
 }
 
+obtain_source_package() {
+	apt-get source "$1"
+}
+
 grep -q '^deb-src ' /etc/apt/sources.list || echo "deb-src $MIRROR sid main" >> /etc/apt/sources.list
 
 apt-get update
@@ -245,7 +249,7 @@ else
 	cd /tmp/buildd
 	mkdir binutils
 	cd binutils
-	apt-get source binutils
+	obtain_source_package binutils
 	cd binutils-*
 	TARGET=$HOST_ARCH dpkg-buildpackage -B -uc -us
 	cd ..
@@ -270,7 +274,7 @@ else
 	cd /tmp/buildd
 	mkdir linux
 	cd linux
-	apt-get source linux
+	obtain_source_package linux
 	cd linux-*
 	dpkg-checkbuilddeps -B -a$HOST_ARCH || : # tell unmet build depends
 	KBUILD_VERBOSE=1 make -f debian/rules.gen binary-libc-dev_$HOST_ARCH
@@ -313,7 +317,7 @@ else
 	cd /tmp/buildd
 	mkdir gcc1
 	cd gcc1
-	apt-get source gcc-$GCC_VER
+	obtain_source_package gcc-$GCC_VER
 	cd gcc-$GCC_VER-*
 	patch_gcc
 	dpkg-checkbuilddeps -B -a$HOST_ARCH || : # tell unmet build depends
@@ -483,7 +487,7 @@ else
 	cd /tmp/buildd
 	mkdir eglibc
 	cd eglibc
-	apt-get source eglibc
+	obtain_source_package eglibc
 	cd eglibc-*
 	patch_eglibc
 	dpkg-checkbuilddeps -B -a$HOST_ARCH || : # tell unmet build depends
@@ -507,7 +511,7 @@ else
 	cd /tmp/buildd
 	mkdir gcc2
 	cd gcc2
-	apt-get source gcc-$GCC_VER
+	obtain_source_package gcc-$GCC_VER
 	cd gcc-$GCC_VER-*
 	patch_gcc
 	dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends
@@ -538,7 +542,7 @@ else
 	cd /tmp/buildd
 	mkdir eglibc2
 	cd eglibc2
-	apt-get source eglibc
+	obtain_source_package eglibc
 	cd eglibc-*
 	patch_eglibc
 	dpkg-checkbuilddeps -B -a$HOST_ARCH || : # tell unmet build depends
@@ -559,7 +563,7 @@ else
 	cd /tmp/buildd
 	mkdir gcc3
 	cd gcc3
-	apt-get source gcc-$GCC_VER
+	obtain_source_package gcc-$GCC_VER
 	cd gcc-$GCC_VER-*
 	patch_gcc
 	dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends
