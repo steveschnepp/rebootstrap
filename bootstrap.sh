@@ -6,15 +6,20 @@ set -e
 export DEB_BUILD_OPTIONS="nocheck parallel=1"
 export DH_VERBOSE=1
 RESULT="/tmp/result"
-mkdir "$RESULT"
-HOST_ARCH=$1
+HOST_ARCH=undefined
 GCC_VER=4.8
 MIRROR="http://ftp.stw-bonn.de/debian"
 
-if ! dpkg-architecture -a$HOST_ARCH; then
+# evaluate command line parameters of the form KEY=VALUE
+for param in "$*"; do
+	eval $param
+done
+
+if test -z "$HOST_ARCH" || ! dpkg-architecture -a$HOST_ARCH; then
 	echo "architecture $HOST_ARCH unknown to dpkg"
 	exit 1
 fi
+mkdir -p "$RESULT"
 
 check_arch() {
 	local FILE_RES
