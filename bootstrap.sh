@@ -258,6 +258,7 @@ else
 	cd binutils-*
 	TARGET=$HOST_ARCH dpkg-buildpackage -B -uc -us
 	cd ..
+	ls -l
 	dpkg -i binutils-*.deb
 	assembler="`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE`-as"
 	if ! which "$assembler"; then echo "$assembler missing in binutils package"; exit 1; fi
@@ -285,6 +286,7 @@ else
 	dpkg-checkbuilddeps -B -a$HOST_ARCH || : # tell unmet build depends
 	KBUILD_VERBOSE=1 make -f debian/rules.gen binary-libc-dev_$HOST_ARCH
 	cd ..
+	ls -l
 	dpkg -i linux-libc-dev_*.deb
 	test -d "$RESULT" && cp -v linux-libc-dev_*.deb "$RESULT"
 	cd ..
@@ -348,6 +350,7 @@ else
 	DEB_TARGET_ARCH=$HOST_ARCH DEB_CROSS_NO_BIARCH=yes DEB_STAGE=stage1 dpkg-buildpackage -d -T control
 	DEB_TARGET_ARCH=$HOST_ARCH DEB_CROSS_NO_BIARCH=yes DEB_STAGE=stage1 dpkg-buildpackage -d -B -uc -us
 	cd ..
+	ls -l
 	apt-get remove -y gcc-multilib
 	rm -vf *multilib*.deb
 	dpkg -i cpp-$GCC_VER-*.deb gcc-$GCC_VER-*.deb
@@ -518,6 +521,7 @@ else
 	dpkg-checkbuilddeps -B -a$HOST_ARCH || : # tell unmet build depends
 	DEB_GCC_VERSION=-$GCC_VER DEB_BUILD_PROFILE=bootstrap dpkg-buildpackage -B -uc -us -a$HOST_ARCH -d
 	cd ..
+	ls -l
 	apt-get -y remove libc6-dev-i386
 	dpkg -i libc*-dev_*.deb
 	test -d "$RESULT" && cp -v libc*-dev_*.deb "$RESULT/"
@@ -544,6 +548,7 @@ else
 	DEB_TARGET_ARCH=$HOST_ARCH DEB_CROSS_NO_BIARCH=yes DEB_STAGE=stage2 dpkg-buildpackage -d -T control
 	gcc_cv_libc_provides_ssp=yes DEB_TARGET_ARCH=$HOST_ARCH DEB_CROSS_NO_BIARCH=yes DEB_STAGE=stage2 dpkg-buildpackage -d -b -uc -us
 	cd ..
+	ls -l
 	rm -vf *multilib*.deb
 	dpkg -i *.deb
 	compiler="`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE`-gcc-$GCC_VER"
@@ -575,6 +580,7 @@ else
 	dpkg-checkbuilddeps -B -a$HOST_ARCH || : # tell unmet build depends
 	DEB_GCC_VERSION=-$GCC_VER dpkg-buildpackage -B -uc -us -a$HOST_ARCH -d -Pstage2
 	cd ..
+	ls -l
 	dpkg -i libc*-dev_*.deb libc*[0-9]_*_*.deb
 	test -d "$RESULT" && mkdir "$RESULT/eglibc2"
 	test -d "$RESULT" && cp libc*-dev_*.deb libc*[0-9]_*_*.deb "$RESULT/eglibc2"
@@ -598,6 +604,7 @@ else
 	DEB_TARGET_ARCH=$HOST_ARCH dpkg-buildpackage -d -T control
 	DEB_TARGET_ARCH=$HOST_ARCH dpkg-buildpackage -d -b -uc -us
 	cd ..
+	ls -l
 	dpkg -i *.deb
 	compiler="`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE`-gcc-$GCC_VER"
 	if ! which "$compiler"; then echo "$compiler missing in stage3 gcc package"; exit 1; fi
