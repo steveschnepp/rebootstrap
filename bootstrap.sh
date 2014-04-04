@@ -321,8 +321,8 @@ diff -u gcc-4.8-4.8.2/debian/rules2 gcc-4.8-4.8.2/debian/rules2
      endif
  endif
  
--ifneq (,\$(filter \$(DEB_TARGET_GNU_TYPE), x86_64-linux-gnu x86_64-kfreebsd-gnu s390x-linux-gnu))
-+ifneq (,\$(filter \$(DEB_TARGET_GNU_TYPE), x86_64-linux-gnu x86_64-kfreebsd-gnu s390x-linux-gnu sparc64-linux-gnu))
+-ifneq (,\$(filter \$(DEB_TARGET_GNU_TYPE), x86_64-linux-gnu x86_64-linux-gnux32 x86_64-kfreebsd-gnu s390x-linux-gnu))
++ifneq (,\$(filter \$(DEB_TARGET_GNU_TYPE), x86_64-linux-gnu x86_64-linux-gnux32 x86_64-kfreebsd-gnu s390x-linux-gnu sparc64-linux-gnu))
      ifneq (\$(biarch32),yes)
        CONFARGS += --disable-multilib
      endif
