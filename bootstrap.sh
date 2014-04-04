@@ -268,6 +268,7 @@ else
 	cd ..
 	rm -Rf binutils
 fi
+echo "progress-mark:1:binutils cross complete"
 
 # linux
 PKG=`echo $RESULT/linux-libc-dev_*.deb`
@@ -289,6 +290,7 @@ else
 	cd ..
 	rm -Rf linux
 fi
+echo "progress-mark:2:linux-libc-dev complete"
 
 # gcc
 patch_gcc() {
@@ -359,6 +361,7 @@ else
 	cd ..
 	rm -Rf gcc1
 fi
+echo "progress-mark:3:gcc stage1 complete"
 
 # eglibc looks for linux headers in /usr/<triplet>/include/linux rather than /usr/include/linux
 mkdir -p /usr/`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE`/include
@@ -521,6 +524,7 @@ else
 	cd ..
 	rm -Rf eglibc
 fi
+echo "progress-mark:4:eglibc stage1 complete"
 # binutils looks for libc.so in /usr/<triplet>/lib rather than /usr/lib/<triplet>
 mkdir -p /usr/`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE`
 ln -s /usr/lib/`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE` /usr/`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE`/lib
@@ -552,6 +556,7 @@ else
 	cd ..
 	rm -Rf gcc2
 fi
+echo "progress-mark:5:gcc stage2 complete"
 # libselinux wants unversioned gcc
 ln -s `dpkg-architecture -a$HOST_ARCH -qDEB_HOST_MULTIARCH`-gcc-$GCC_VER /usr/bin/`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_MULTIARCH`-gcc
 ln -s `dpkg-architecture -a$HOST_ARCH -qDEB_HOST_MULTIARCH`-cpp-$GCC_VER /usr/bin/`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_MULTIARCH`-cpp
@@ -576,6 +581,7 @@ else
 	cd ..
 	rm -Rf eglibc2
 fi
+echo "progress-mark:6:eglibc stage2 complete"
 
 if test -d "$RESULT/gcc3"; then
 	echo "skipping rebuild of gcc stage3"
@@ -603,3 +609,4 @@ else
 	cd ..
 	rm -Rf gcc3
 fi
+echo "progress-mark:7:gcc stage3 complete"
