@@ -317,23 +317,6 @@ diff -u gcc-4.8-4.8.2/debian/rules.d/binary-gcc.mk gcc-4.8-4.8.2/debian/rules.d/
  	\$(PF)/share/man/man1/\$(cmd_prefix){gcc,gcov}\$(pkg_ver).1
 EOF
 	fi
-	if test "$GCC_VER" = "4.8" -a "$HOST_ARCH" = "sparc64"; then
-		echo "patching gcc-4.8 for sparc64: honor DEB_CROSS_NO_BIARCH #743342"
-		patch -p1 <<EOF
-diff -u gcc-4.8-4.8.2/debian/rules2 gcc-4.8-4.8.2/debian/rules2
---- gcc-4.8-4.8.2/debian/rules2
-+++ gcc-4.8-4.8.2/debian/rules2
-@@ -334,7 +334,7 @@
-     endif
- endif
- 
--ifneq (,\$(filter \$(DEB_TARGET_GNU_TYPE), x86_64-linux-gnu x86_64-linux-gnux32 x86_64-kfreebsd-gnu s390x-linux-gnu))
-+ifneq (,\$(filter \$(DEB_TARGET_GNU_TYPE), x86_64-linux-gnu x86_64-linux-gnux32 x86_64-kfreebsd-gnu s390x-linux-gnu sparc64-linux-gnu))
-     ifneq (\$(biarch32),yes)
-       CONFARGS += --disable-multilib
-     endif
-EOF
-	fi
 }
 
 if test -d "$RESULT/gcc1"; then
