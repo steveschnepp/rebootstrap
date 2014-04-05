@@ -505,7 +505,7 @@ diff -Nru eglibc-2.18/debian/rules.d/control.mk eglibc-2.18/debian/rules.d/contr
  	touch \$@
 EOF
 	if test "$HOST_ARCH" = "i386"; then
-		echo "patching eglibc to avoid installing xen stuff in stage1 that wasn't built"
+		echo "patching eglibc to avoid installing xen stuff in stage1 that wasn't built #743676"
 		patch -p1 <<EOF
 diff -Nru eglibc-2.18/debian/sysdeps/i386.mk eglibc-2.18/debian/sysdeps/i386.mk
 --- eglibc-2.18/debian/sysdeps/i386.mk
