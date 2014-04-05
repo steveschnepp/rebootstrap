@@ -12,6 +12,7 @@ MIRROR="http://ftp.stw-bonn.de/debian"
 
 # evaluate command line parameters of the form KEY=VALUE
 for param in "$*"; do
+	echo "bootstrap-configuration: $param"
 	eval $param
 done
 
