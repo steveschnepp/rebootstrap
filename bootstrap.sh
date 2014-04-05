@@ -367,9 +367,9 @@ fi
 echo "progress-mark:3:gcc stage1 complete"
 
 # eglibc looks for linux headers in /usr/<triplet>/include/linux rather than /usr/include/linux
-mkdir -p /usr/`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE`/include
-ln -s /usr/include/linux /usr/`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE`/include/linux
-ln -s /usr/include/asm-generic /usr/`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE`/include/asm-generic
+# later gcc looks for pthread.h and stuff in /usr/<triplet>/include rather than /usr/include
+mkdir -p /usr/`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE`
+ln -s ../include /usr/`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE`/include
 
 # eglibc
 patch_eglibc() {
