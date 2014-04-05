@@ -585,8 +585,8 @@ else
 fi
 echo "progress-mark:5:gcc stage2 complete"
 # libselinux wants unversioned gcc
-ln -s `dpkg-architecture -a$HOST_ARCH -qDEB_HOST_MULTIARCH`-gcc-$GCC_VER /usr/bin/`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_MULTIARCH`-gcc
-ln -s `dpkg-architecture -a$HOST_ARCH -qDEB_HOST_MULTIARCH`-cpp-$GCC_VER /usr/bin/`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_MULTIARCH`-cpp
+ln -s `dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE`-gcc-$GCC_VER /usr/bin/`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE`-gcc
+ln -s `dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE`-cpp-$GCC_VER /usr/bin/`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE`-cpp
 
 if test -d "$RESULT/eglibc2"; then
 	echo "skipping rebuild of eglibc stage2"
