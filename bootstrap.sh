@@ -272,6 +272,7 @@ fi
 echo "progress-mark:1:binutils cross complete"
 
 # linux
+if test "`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_ARCH_OS`" = "linux"; then
 PKG=`echo $RESULT/linux-libc-dev_*.deb`
 if test -f "$PKG"; then
 	echo "skipping rebuild of linux-libc-dev"
@@ -293,6 +294,7 @@ else
 	rm -Rf linux
 fi
 echo "progress-mark:2:linux-libc-dev complete"
+fi
 
 # gcc
 patch_gcc() {
