@@ -553,7 +553,7 @@ fi
 echo "progress-mark:4:eglibc stage1 complete"
 # binutils looks for libc.so in /usr/<triplet>/lib rather than /usr/lib/<triplet>
 mkdir -p /usr/`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE`
-ln -s /usr/lib/`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE` /usr/`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE`/lib
+ln -s /usr/lib/`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_MULTIARCH` /usr/`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE`/lib
 
 if test -d "$RESULT/gcc2"; then
 	echo "skipping rebuild of gcc stage2"
