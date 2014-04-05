@@ -506,6 +506,23 @@ diff -Nru eglibc-2.18/debian/rules.d/control.mk eglibc-2.18/debian/rules.d/contr
  	rm \$@T
  	touch \$@
 EOF
+	echo "patching eglibc to not build multilib in stage2"
+	patch -p1 <<EOF
+diff -Nru eglibc-2.18/debian/rules eglibc-2.18/debian/rules
+--- eglibc-2.18/debian/rules
++++ eglibc-2.18/debian/rules
+@@ -201,6 +201,10 @@
+ override DEB_ARCH_REGULAR_PACKAGES = \$(libc)-dev
+ endif
+ 
++ifneq (\$(filter stage2,\$(DEB_BUILD_PROFILES)),)
++override EGLIBC_PASSES = libc
++endif
++
+ # And now the rules...
+ include debian/rules.d/*.mk
+ 
+EOF
 	if test "$HOST_ARCH" = "i386"; then
 		echo "patching eglibc to avoid installing xen stuff in stage1 that wasn't built #743676"
 		patch -p1 <<EOF
