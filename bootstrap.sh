@@ -356,6 +356,7 @@ echo "progress-mark:3:gcc stage1 complete"
 # later gcc looks for pthread.h and stuff in /usr/<triplet>/include rather than /usr/include
 mkdir -p /usr/`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE`
 ln -s ../include /usr/`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE`/include
+ln -s ../include/`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_MULTIARCH` /usr/`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE`/sys-include
 
 # eglibc
 patch_eglibc() {
