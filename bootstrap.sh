@@ -300,6 +300,10 @@ fi
 
 # gcc
 patch_gcc() {
+	if test "$GCC_VER" = "4.8" -a "$HOST_ARCH" = "sparc64"; then
+		echo "fixing broken sparc64 patch #743342"
+		sed -i 's/sparc64-linux-gnuA/sparc64-linux-gnu/' debian/rules2
+	fi
 	if test "$GCC_VER" = "4.8"; then
 		echo "patching gcc-4.8: failure to include headers in stage1"
 		patch -p1 <<EOF
