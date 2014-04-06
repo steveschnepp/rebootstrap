@@ -491,7 +491,7 @@ diff -Nru eglibc-2.18/debian/rules.d/control.mk eglibc-2.18/debian/rules.d/contr
  	rm \$@T
  	touch \$@
 EOF
-	echo "patching eglibc to not build multilib in stage2"
+	echo "patching eglibc to not build multilib in the nobiarch profile"
 	patch -p1 <<EOF
 diff -Nru eglibc-2.18/debian/rules eglibc-2.18/debian/rules
 --- eglibc-2.18/debian/rules
@@ -500,7 +500,7 @@ diff -Nru eglibc-2.18/debian/rules eglibc-2.18/debian/rules
  override DEB_ARCH_REGULAR_PACKAGES = \$(libc)-dev
  endif
  
-+ifneq (\$(filter stage2,\$(DEB_BUILD_PROFILES)),)
++ifneq (\$(filter nobiarch,\$(DEB_BUILD_PROFILES)),)
 +override EGLIBC_PASSES = libc
 +endif
 +
@@ -604,7 +604,7 @@ else
 	cd eglibc-*
 	patch_eglibc
 	dpkg-checkbuilddeps -B -a$HOST_ARCH || : # tell unmet build depends
-	DEB_GCC_VERSION=-$GCC_VER dpkg-buildpackage -B -uc -us -a$HOST_ARCH -d -Pstage2
+	DEB_GCC_VERSION=-$GCC_VER dpkg-buildpackage -B -uc -us -a$HOST_ARCH -d -Pstage2,nobiarch
 	cd ..
 	ls -l
 	dpkg -i libc*-dev_*.deb libc*[0-9]_*_*.deb
