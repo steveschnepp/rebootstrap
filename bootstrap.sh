@@ -9,6 +9,7 @@ RESULT="/tmp/result"
 HOST_ARCH=undefined
 GCC_VER=4.8
 MIRROR="http://ftp.stw-bonn.de/debian"
+ENABLE_MULTILIB=no
 
 # evaluate command line parameters of the form KEY=VALUE
 for param in "$*"; do
@@ -333,8 +334,13 @@ else
 	cd gcc-$GCC_VER-*
 	patch_gcc
 	dpkg-checkbuilddeps -B -a$HOST_ARCH || : # tell unmet build depends
-	DEB_TARGET_ARCH=$HOST_ARCH DEB_CROSS_NO_BIARCH=yes DEB_STAGE=stage1 dpkg-buildpackage -d -T control
-	DEB_TARGET_ARCH=$HOST_ARCH DEB_CROSS_NO_BIARCH=yes DEB_STAGE=stage1 dpkg-buildpackage -d -B -uc -us
+	if test "$ENABLE_MULTILIB" = yes; then
+		DEB_TARGET_ARCH=$HOST_ARCH DEB_STAGE=stage1 dpkg-buildpackage -d -T control
+		DEB_TARGET_ARCH=$HOST_ARCH DEB_STAGE=stage1 dpkg-buildpackage -d -B -uc -us
+	else
+		DEB_TARGET_ARCH=$HOST_ARCH DEB_CROSS_NO_BIARCH=yes DEB_STAGE=stage1 dpkg-buildpackage -d -T control
+		DEB_TARGET_ARCH=$HOST_ARCH DEB_CROSS_NO_BIARCH=yes DEB_STAGE=stage1 dpkg-buildpackage -d -B -uc -us
+	fi
 	cd ..
 	ls -l
 	apt-get remove -y gcc-multilib
@@ -571,8 +577,13 @@ else
 	cd gcc-$GCC_VER-*
 	patch_gcc
 	dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends
-	DEB_TARGET_ARCH=$HOST_ARCH DEB_CROSS_NO_BIARCH=yes DEB_STAGE=stage2 dpkg-buildpackage -d -T control
-	gcc_cv_libc_provides_ssp=yes DEB_TARGET_ARCH=$HOST_ARCH DEB_CROSS_NO_BIARCH=yes DEB_STAGE=stage2 dpkg-buildpackage -d -b -uc -us
+	if test "$ENABLE_MULTILIB" = yes; then
+		DEB_TARGET_ARCH=$HOST_ARCH DEB_STAGE=stage2 dpkg-buildpackage -d -T control
+		gcc_cv_libc_provides_ssp=yes DEB_TARGET_ARCH=$HOST_ARCH DEB_STAGE=stage2 dpkg-buildpackage -d -b -uc -us
+	else
+		DEB_TARGET_ARCH=$HOST_ARCH DEB_CROSS_NO_BIARCH=yes DEB_STAGE=stage2 dpkg-buildpackage -d -T control
+		gcc_cv_libc_provides_ssp=yes DEB_TARGET_ARCH=$HOST_ARCH DEB_CROSS_NO_BIARCH=yes DEB_STAGE=stage2 dpkg-buildpackage -d -b -uc -us
+	fi
 	cd ..
 	ls -l
 	rm -vf *multilib*.deb
@@ -604,7 +615,11 @@ else
 	cd eglibc-*
 	patch_eglibc
 	dpkg-checkbuilddeps -B -a$HOST_ARCH || : # tell unmet build depends
-	DEB_GCC_VERSION=-$GCC_VER dpkg-buildpackage -B -uc -us -a$HOST_ARCH -d -Pstage2,nobiarch
+	if test "$ENABLE_MULTILIB" = yes; then
+		DEB_GCC_VERSION=-$GCC_VER dpkg-buildpackage -B -uc -us -a$HOST_ARCH -d -Pstage2
+	else
+		DEB_GCC_VERSION=-$GCC_VER dpkg-buildpackage -B -uc -us -a$HOST_ARCH -d -Pstage2,nobiarch
+	fi
 	cd ..
 	ls -l
 	dpkg -i libc*-dev_*.deb libc*[0-9]_*_*.deb
@@ -627,8 +642,13 @@ else
 	cd gcc-$GCC_VER-*
 	patch_gcc
 	dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends
-	DEB_TARGET_ARCH=$HOST_ARCH dpkg-buildpackage -d -T control
-	DEB_TARGET_ARCH=$HOST_ARCH dpkg-buildpackage -d -b -uc -us
+	if test "$ENABLE_MULTILIB" = yes; then
+		DEB_TARGET_ARCH=$HOST_ARCH dpkg-buildpackage -d -T control
+		DEB_TARGET_ARCH=$HOST_ARCH dpkg-buildpackage -d -b -uc -us
+	else
+		DEB_TARGET_ARCH=$HOST_ARCH DEB_CROSS_NO_BIARCH=yes dpkg-buildpackage -d -T control
+		DEB_TARGET_ARCH=$HOST_ARCH DEB_CROSS_NO_BIARCH=yes dpkg-buildpackage -d -b -uc -us
+	fi
 	cd ..
 	ls -l
 	dpkg -i *.deb
