@@ -7,7 +7,8 @@ export DEB_BUILD_OPTIONS="nocheck parallel=1"
 export DH_VERBOSE=1
 RESULT="/tmp/result"
 HOST_ARCH=undefined
-GCC_VER=4.8
+# select gcc version from gcc-defaults package unless set
+GCC_VER=
 MIRROR="http://ftp.stw-bonn.de/debian"
 ENABLE_MULTILIB=no
 
@@ -240,6 +241,10 @@ grep -q '^deb-src ' /etc/apt/sources.list || echo "deb-src $MIRROR sid main" >> 
 apt-get update
 apt-get -y install build-essential
 dpkg --add-architecture $HOST_ARCH
+
+if test -z "$GCC_VER"; then
+	GCC_VER=`apt-cache depends gcc | sed 's/^ *Depends: gcc-\([0-9.]*\)$/\1/;t;d'`
+fi
 
 if test -z "$HOST_ARCH" || ! dpkg-architecture -a$HOST_ARCH; then
 	echo "architecture $HOST_ARCH unknown to dpkg"
