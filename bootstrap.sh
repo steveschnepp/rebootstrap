@@ -245,6 +245,7 @@ if test -z "$HOST_ARCH" || ! dpkg-architecture -a$HOST_ARCH; then
 	echo "architecture $HOST_ARCH unknown to dpkg"
 	exit 1
 fi
+mkdir -p /tmp/buildd
 mkdir -p "$RESULT"
 
 # binutils
