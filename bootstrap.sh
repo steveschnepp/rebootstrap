@@ -17,12 +17,6 @@ for param in "$*"; do
 	eval $param
 done
 
-if test -z "$HOST_ARCH" || ! dpkg-architecture -a$HOST_ARCH; then
-	echo "architecture $HOST_ARCH unknown to dpkg"
-	exit 1
-fi
-mkdir -p "$RESULT"
-
 check_arch() {
 	local FILE_RES
 	FILE_RES=`file -b "$1"`
@@ -244,7 +238,14 @@ obtain_source_package() {
 grep -q '^deb-src ' /etc/apt/sources.list || echo "deb-src $MIRROR sid main" >> /etc/apt/sources.list
 
 apt-get update
+apt-get -y install build-essential
 dpkg --add-architecture $HOST_ARCH
+
+if test -z "$HOST_ARCH" || ! dpkg-architecture -a$HOST_ARCH; then
+	echo "architecture $HOST_ARCH unknown to dpkg"
+	exit 1
+fi
+mkdir -p "$RESULT"
 
 # binutils
 PKG=`echo $RESULT/binutils-*.deb`
