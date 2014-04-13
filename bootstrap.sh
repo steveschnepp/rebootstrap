@@ -668,6 +668,7 @@ else
 	fi
 	cd ..
 	ls -l
+	rm -fv gcc-*-plugin-*.deb gcj-*.deb gdc-*.deb *gfortran*.deb *objc*.deb *-dbg_*.deb
 	dpkg -i *.deb
 	compiler="`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE`-gcc-$GCC_VER"
 	if ! which "$compiler"; then echo "$compiler missing in stage3 gcc package"; exit 1; fi
