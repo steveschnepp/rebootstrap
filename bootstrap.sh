@@ -658,13 +658,13 @@ else
 	patch_gcc
 	dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends
 	if test "$ENABLE_MULTILIB" = yes; then
-		DEB_TARGET_ARCH=$HOST_ARCH dpkg-buildpackage -d -T control
+		with_deps_on_target_arch_pkgs=yes DEB_TARGET_ARCH=$HOST_ARCH dpkg-buildpackage -d -T control
 		dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends again after rewriting control
-		DEB_TARGET_ARCH=$HOST_ARCH dpkg-buildpackage -d -b -uc -us
+		with_deps_on_target_arch_pkgs=yes DEB_TARGET_ARCH=$HOST_ARCH dpkg-buildpackage -d -b -uc -us
 	else
-		DEB_TARGET_ARCH=$HOST_ARCH DEB_CROSS_NO_BIARCH=yes dpkg-buildpackage -d -T control
+		with_deps_on_target_arch_pkgs=yes DEB_TARGET_ARCH=$HOST_ARCH DEB_CROSS_NO_BIARCH=yes dpkg-buildpackage -d -T control
 		dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends again after rewriting control
-		DEB_TARGET_ARCH=$HOST_ARCH DEB_CROSS_NO_BIARCH=yes dpkg-buildpackage -d -b -uc -us
+		with_deps_on_target_arch_pkgs=yes DEB_TARGET_ARCH=$HOST_ARCH DEB_CROSS_NO_BIARCH=yes dpkg-buildpackage -d -b -uc -us
 	fi
 	cd ..
 	ls -l
