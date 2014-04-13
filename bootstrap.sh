@@ -406,6 +406,25 @@ diff -u gcc-4.8-4.8.2/debian/patches/gcc-linaro.diff gcc-4.8-4.8.2/debian/patche
  @@ -838,6 +838,14 @@
 EOF
 	fi
+	if test "$GCC_VER" = "4.8"; then
+		echo "fixing patch application for powerpc* #743718"
+		patch -p1 <<EOF
+diff -u gcc-4.8-4.8.2/debian/patches/powerpc_remove_many.diff gcc-4.8-4.8.2/debian/patches/powerpc_remove_many.diff
+--- gcc-4.8-4.8.2/debian/patches/powerpc_remove_many.diff
++++ gcc-4.8-4.8.2/debian/patches/powerpc_remove_many.diff
+@@ -20,9 +20,9 @@
+     handling -mcpu=xxx switches.  There is a parallel list in driver-rs6000.c to
+     provide the default assembler options if the user uses -mcpu=native, so if
+ @@ -170,7 +176,8 @@
+- %{mcpu=e500mc64: -me500mc64} \\
+  %{maltivec: -maltivec} \\
+  %{mvsx: -mvsx %{!maltivec: -maltivec} %{!mcpu*: %(asm_cpu_power7)}} \\
++ %{mpower8-vector|mcrypto|mdirect-move|mhtm: %{!mcpu*: %(asm_cpu_power8)}} \\
+ --many"
+ +" \\
+ +ASM_CPU_SPU_MANY_NOT_SPE
+EOF
+	fi
 }
 
 if test -d "$RESULT/gcc1"; then
