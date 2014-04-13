@@ -265,7 +265,7 @@ else
 	cd binutils
 	obtain_source_package binutils
 	cd binutils-*
-	TARGET=$HOST_ARCH dpkg-buildpackage -B -uc -us
+	WITH_SYSROOT=/ TARGET=$HOST_ARCH dpkg-buildpackage -B -uc -us
 	cd ..
 	ls -l
 	dpkg -i binutils-*.deb
