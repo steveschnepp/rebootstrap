@@ -425,6 +425,23 @@ diff -u gcc-4.8-4.8.2/debian/patches/powerpc_remove_many.diff gcc-4.8-4.8.2/debi
  +ASM_CPU_SPU_MANY_NOT_SPE
 EOF
 	fi
+	if test "$GCC_VER" = "4.8"; then
+		echo "build gcc-X.Y-base when with_deps_on_target_arch_pkgs"
+		patch -p1 <<EOF
+diff -u gcc-4.8-4.8.2/debian/rules.defs gcc-4.8-4.8.2/debian/rules.defs
+--- gcc-4.8-4.8.2/debian/rules.defs
++++ gcc-4.8-4.8.2/debian/rules.defs
+@@ -431,6 +431,8 @@
+   else
+     ifneq (\$(with_deps_on_target_arch_pkgs),yes)
+       with_gccxbase := yes
++    else
++      with_gccbase := yes
+     endif
+   endif
+ endif
+EOF
+	fi
 }
 
 if test -d "$RESULT/gcc1"; then
