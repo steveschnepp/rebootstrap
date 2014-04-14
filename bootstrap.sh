@@ -431,7 +431,7 @@ EOF
 diff -u gcc-4.8-4.8.2/debian/control.m4 gcc-4.8-4.8.2/debian/control.m4
 --- gcc-4.8-4.8.2/debian/control.m4
 +++ gcc-4.8-4.8.2/debian/control.m4
-@@ -125,7 +125,6 @@
+@@ -125,11 +125,10 @@
  define(\`SOFTBASEDEP', \`gnat\`'PV-base (>= \${gnat:SoftVersion})')
  ')
  
@@ -439,6 +439,11 @@ diff -u gcc-4.8-4.8.2/debian/control.m4 gcc-4.8-4.8.2/debian/control.m4
  ifenabled(\`gccbase',\`
  
  Package: gcc\`'PV-base
+-Architecture: any
++Architecture: ifdef(\`TARGET',\`CROSS_ARCH',\`any')
+ ifdef(\`MULTIARCH', \`Multi-Arch: same
+ ')\`'dnl
+ Section: libs
 @@ -146,8 +145,7 @@
   This version of GCC is not yet available for this architecture.
   Please use the compilers from the gcc-snapshot package for testing.
@@ -449,6 +454,21 @@ diff -u gcc-4.8-4.8.2/debian/control.m4 gcc-4.8-4.8.2/debian/control.m4
  
  ifenabled(\`gccxbase',\`
  dnl override default base package dependencies to cross version
+diff -u gcc-4.8-4.8.2/debian/rules.d/binary-base.mk gcc-4.8-4.8.2/debian/rules.d/binary-base.mk
+--- gcc-4.8-4.8.2/debian/rules.d/binary-base.mk
++++ gcc-4.8-4.8.2/debian/rules.d/binary-base.mk
+@@ -38,7 +38,11 @@
+ 	dh_installchangelogs -p\$(p_base)
+ 	dh_compress -p\$(p_base)
+ 	dh_fixperms -p\$(p_base)
++ifeq (\$(with_deps_on_target_arch_pkgs),yes)
++	\$(cross_gencontrol) dh_gencontrol -p\$(p_base) -- -v\$(DEB_VERSION) \$(common_substvars)
++else
+ 	dh_gencontrol -p\$(p_base) -- -v\$(DEB_VERSION) \$(common_substvars)
++endif
+ 	dh_installdeb -p\$(p_base)
+ 	dh_md5sums -p\$(p_base)
+ 	dh_builddeb -p\$(p_base)
 diff -u gcc-4.8-4.8.2/debian/rules.defs gcc-4.8-4.8.2/debian/rules.defs
 --- gcc-4.8-4.8.2/debian/rules.defs
 +++ gcc-4.8-4.8.2/debian/rules.defs
