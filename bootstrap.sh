@@ -428,10 +428,31 @@ EOF
 	if test "$GCC_VER" = "4.8"; then
 		echo "build gcc-X.Y-base when with_deps_on_target_arch_pkgs"
 		patch -p1 <<EOF
+diff -u gcc-4.8-4.8.2/debian/control.m4 gcc-4.8-4.8.2/debian/control.m4
+--- gcc-4.8-4.8.2/debian/control.m4
++++ gcc-4.8-4.8.2/debian/control.m4
+@@ -125,7 +125,6 @@
+ define(\`SOFTBASEDEP', \`gnat\`'PV-base (>= \${gnat:SoftVersion})')
+ ')
+ 
+-ifdef(\`TARGET', \`', \`
+ ifenabled(\`gccbase',\`
+ 
+ Package: gcc\`'PV-base
+@@ -146,8 +145,7 @@
+  This version of GCC is not yet available for this architecture.
+  Please use the compilers from the gcc-snapshot package for testing.
+ ')\`'dnl
+-')\`'dnl
+-')\`'dnl native
++')\`'dnl gccbase
+ 
+ ifenabled(\`gccxbase',\`
+ dnl override default base package dependencies to cross version
 diff -u gcc-4.8-4.8.2/debian/rules.defs gcc-4.8-4.8.2/debian/rules.defs
 --- gcc-4.8-4.8.2/debian/rules.defs
 +++ gcc-4.8-4.8.2/debian/rules.defs
-@@ -431,6 +431,8 @@
+@@ -427,6 +427,8 @@
    else
      ifneq (\$(with_deps_on_target_arch_pkgs),yes)
        with_gccxbase := yes
