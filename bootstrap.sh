@@ -253,6 +253,12 @@ fi
 mkdir -p /tmp/buildd
 mkdir -p "$RESULT"
 
+# choosing libatomic1 arbitrarily here, cause it never bumped soname
+BUILD_GCC_MULTIARCH_VER=`apt-cache show --no-all-versions libatomic1 | sed 's/^Source: gcc-\([0-9.]*\)$/\1/;t;d'`
+if test "$GCC_VER" != "$BUILD_GCC_MULTIARCH_VER"; then
+	echo "fatal error: host gcc version ($GCC_VER) and build gcc version ($BUILD_GCC_MULTIARCH_VER) mismatch. implement rebuilding of build gcc or results will be uninstallable due to multiarch"
+fi
+
 # binutils
 PKG=`echo $RESULT/binutils-*.deb`
 if test -f "$PKG"; then
