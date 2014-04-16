@@ -524,6 +524,1148 @@ diff -u gcc-4.9-4.9-20140411/debian/patches/cross-ma-install-location.diff gcc-4
  @@ -109,15 +109,8 @@
 EOF
 	fi
+	if test "$GCC_VER" = "4.8"; then
+		echo "patching gcc to support multiarch crossbuilds"
+		patch -p1 <<EOF
+diff -u gcc-4.8-4.8.2/debian/control.m4 gcc-4.8-4.8.2/debian/control.m4
+--- gcc-4.8-4.8.2/debian/control.m4
++++ gcc-4.8-4.8.2/debian/control.m4
+@@ -21,6 +21,7 @@
+ define(\`depifenabled', \`ifelse(index(enabled_languages, \`\$1'), -1, \`', \`\$2')')
+ define(\`ifenabled', \`ifelse(index(enabled_languages, \`\$1'), -1, \`dnl', \`\$2')')
+ 
++ifdef(\`TARGET',\`ifdef(\`CROSS_ARCH',\`',\`undefine(\`MULTIARCH')')')
+ define(\`CROSS_ARCH', ifdef(\`CROSS_ARCH', CROSS_ARCH, \`all'))
+ define(\`libdep', \`lib\$2\$1\`'LS\`'AQ (ifelse(\`\$3',\`',\`>=',\`\$3') ifelse(\`\$4',\`',\`\${gcc:Version}',\`\$4'))')
+ define(\`libdevdep', \`lib\$2\$1\`'LS\`'AQ (ifelse(\`\$3',\`',\`=',\`\$3') ifelse(\`\$4',\`',\`\${gcc:Version}',\`\$4'))')
+@@ -224,11 +225,11 @@
+ Section: ifdef(\`TARGET',\`devel',\`libs')
+ Priority: ifdef(\`TARGET',\`extra',required)
+ Depends: BASEDEP, \${shlibs:Depends}, \${misc:Depends}
+-ifdef(\`TARGET',\`Provides: libgcc1-TARGET-dcv1',
++ifdef(\`TARGET',\`Provides: libgcc1-TARGET-dcv1',\`Provides: libgcc1-armel [armel], libgcc1-armhf [armhf]')
+ ifdef(\`MULTIARCH', \`Multi-Arch: same
+ Pre-Depends: multiarch-support
+ Breaks: \${multiarch:breaks}
+-')\`Provides: libgcc1-armel [armel], libgcc1-armhf [armhf]')
++')\`'dnl
+ BUILT_USING\`'dnl
+ Description: GCC support library\`'ifdef(\`TARGET)',\` (TARGET)', \`')
+  Shared version of the support library, a library of internal subroutines
+@@ -245,11 +246,10 @@
+ Section: debug
+ Priority: extra
+ Depends: BASEDEP, libdep(gcc1,,=,\${gcc:EpochVersion}), \${misc:Depends}
+-ifdef(\`TARGET',\`',\`dnl
++ifdef(\`TARGET',\`',\`Provides: libgcc1-dbg-armel [armel], libgcc1-dbg-armhf [armhf]
++')\`'dnl
+ ifdef(\`MULTIARCH',\`Multi-Arch: same
+-')dnl
+-Provides: libgcc1-dbg-armel [armel], libgcc1-dbg-armhf [armhf]
+-')dnl
++')\`'dnl
+ BUILT_USING\`'dnl
+ Description: GCC support library (debug symbols)\`'ifdef(\`TARGET)',\` (TARGET)', \`')
+  Debug symbols for the GCC support library.
+@@ -265,10 +265,11 @@
+ Priority: ifdef(\`TARGET',\`extra',required)
+ Depends: BASEDEP, \${shlibs:Depends}, \${misc:Depends}
+ ifdef(\`TARGET',\`Provides: libgcc2-TARGET-dcv1
+-',ifdef(\`MULTIARCH', \`Multi-Arch: same
++')\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
+ Pre-Depends: multiarch-support
+ Breaks: \${multiarch:breaks}
+-'))\`'dnl
++')\`'dnl
+ BUILT_USING\`'dnl
+ Description: GCC support library\`'ifdef(\`TARGET)',\` (TARGET)', \`')
+  Shared version of the support library, a library of internal subroutines
+@@ -285,8 +286,8 @@
+ Section: debug
+ Priority: extra
+ Depends: BASEDEP, libdep(gcc2,,=,\${gcc:Version}), \${misc:Depends}
+-ifdef(\`TARGET',\`',ifdef(\`MULTIARCH', \`Multi-Arch: same
+-'))\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
++')\`'dnl
+ BUILT_USING\`'dnl
+ Description: GCC support library (debug symbols)\`'ifdef(\`TARGET)',\` (TARGET)', \`')
+  Debug symbols for the GCC support library.
+@@ -304,8 +305,8 @@
+ Priority: optional
+ Recommends: \${dep:libcdev}
+ Depends: BASEDEP, \${dep:libgcc}, \${dep:libssp}, \${dep:libgomp}, \${dep:libitm}, \${dep:libatomic}, \${dep:libbtrace}, \${dep:libasan}, \${dep:libtsan}, \${dep:libqmath}, \${dep:libunwinddev}, \${shlibs:Depends}, \${misc:Depends}
+-ifdef(\`TARGET',\`',ifdef(\`MULTIARCH', \`Multi-Arch: same
+-'))\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
++')\`'dnl
+ BUILT_USING\`'dnl
+ Description: GCC support library (development files)
+  This package contains the headers and static library files necessary for
+@@ -315,10 +316,10 @@
+ ifenabled(\`lib4gcc',\`
+ Package: libgcc4\`'LS
+ Architecture: ifdef(\`TARGET',\`CROSS_ARCH',\`hppa')
+-ifdef(\`TARGET',\`',ifdef(\`MULTIARCH', \`Multi-Arch: same
++ifdef(\`MULTIARCH', \`Multi-Arch: same
+ Pre-Depends: multiarch-support
+ Breaks: \${multiarch:breaks}
+-'))\`'dnl
++')\`'dnl
+ Section: ifdef(\`TARGET',\`devel',\`libs')
+ Priority: ifdef(\`TARGET',\`extra',required)
+ Depends: ifdef(\`STANDALONEJAVA',\`gcj\`'PV-base (>= \${gcj:Version})',\`BASEDEP'), \${shlibs:Depends}, \${misc:Depends}
+@@ -335,8 +336,8 @@
+ 
+ Package: libgcc4-dbg\`'LS
+ Architecture: ifdef(\`TARGET',\`CROSS_ARCH',\`hppa')
+-ifdef(\`TARGET',\`',ifdef(\`MULTIARCH', \`Multi-Arch: same
+-'))\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
++')\`'dnl
+ Section: debug
+ Priority: extra
+ Depends: BASEDEP, libdep(gcc4,,=,\${gcc:Version}), \${misc:Depends}
+@@ -931,10 +932,12 @@
+ Package: libgomp\`'GOMP_SO\`'LS
+ Section: ifdef(\`TARGET',\`devel',\`libs')
+ Architecture: ifdef(\`TARGET',\`CROSS_ARCH',\`any')
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
++ifdef(\`TARGET',\`',\`Provides: libgomp'GOMP_SO\`-armel [armel], libgomp'GOMP_SO\`-armhf [armhf]
++')\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
+ Pre-Depends: multiarch-support
+ Breaks: \${multiarch:breaks}
+-')\`Provides: libgomp'GOMP_SO\`-armel [armel], libgomp'GOMP_SO\`-armhf [armhf]')
++')\`'dnl
+ Priority: ifdef(\`TARGET',\`extra',\`PRI(optional)')
+ Depends: BASEDEP, \${shlibs:Depends}, \${misc:Depends}
+ BUILT_USING\`'dnl
+@@ -947,8 +950,10 @@
+ Section: debug
+ Priority: extra
+ Depends: BASEDEP, libdep(gomp\`'GOMP_SO,,=), \${misc:Depends}
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
+-')\`Provides: libgomp'GOMP_SO\`-dbg-armel [armel], libgomp'GOMP_SO\`-dbg-armhf [armhf]')
++ifdef(\`TARGET',\`',\`Provides: libgomp'GOMP_SO\`-dbg-armel [armel], libgomp'GOMP_SO\`-dbg-armhf [armhf]
++')\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
++')\`'dnl
+ BUILT_USING\`'dnl
+ Description: GCC OpenMP (GOMP) support library (debug symbols)
+  GOMP is an implementation of OpenMP for the C, C++, and Fortran compilers
+@@ -1101,9 +1106,11 @@
+ Package: libitm\`'ITM_SO\`'LS
+ Section: ifdef(\`TARGET',\`devel',\`libs')
+ Architecture: ifdef(\`TARGET',\`CROSS_ARCH',\`any')
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
++ifdef(\`TARGET',\`',\`Provides: libitm'ITM_SO\`-armel [armel], libitm'ITM_SO\`-armhf [armhf]
++')\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
+ Pre-Depends: multiarch-support
+-')\`Provides: libitm'ITM_SO\`-armel [armel], libitm'ITM_SO\`-armhf [armhf]')
++')\`'dnl
+ Priority: ifdef(\`TARGET',\`extra',\`PRI(optional)')
+ Depends: BASEDEP, \${shlibs:Depends}, \${misc:Depends}
+ BUILT_USING\`'dnl
+@@ -1117,8 +1124,10 @@
+ Section: debug
+ Priority: extra
+ Depends: BASEDEP, libdep(itm\`'ITM_SO,,=), \${misc:Depends}
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
+-')\`Provides: libitm'ITM_SO\`-dbg-armel [armel], libitm'ITM_SO\`-dbg-armhf [armhf]')
++ifdef(\`TARGET',\`',\`Provides: libitm'ITM_SO\`-dbg-armel [armel], libitm'ITM_SO\`-dbg-armhf [armhf]
++')\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
++')\`'dnl
+ BUILT_USING\`'dnl
+ Description: GNU Transactional Memory Library (debug symbols)
+  GNU Transactional Memory Library (libitm) provides transaction support for
+@@ -1287,9 +1296,11 @@
+ Package: libatomic\`'ATOMIC_SO\`'LS
+ Section: ifdef(\`TARGET',\`devel',\`libs')
+ Architecture: ifdef(\`TARGET',\`CROSS_ARCH',\`any')
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
++ifdef(\`TARGET',\`',\`Provides: libatomic'ATOMIC_SO\`-armel [armel], libatomic'ATOMIC_SO\`-armhf [armhf]
++')\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
+ Pre-Depends: multiarch-support
+-')\`Provides: libatomic'ATOMIC_SO\`-armel [armel], libatomic'ATOMIC_SO\`-armhf [armhf]')
++')\`'dnl
+ Priority: ifdef(\`TARGET',\`extra',\`PRI(optional)')
+ Depends: BASEDEP, \${shlibs:Depends}, \${misc:Depends}
+ BUILT_USING\`'dnl
+@@ -1302,8 +1313,10 @@
+ Section: debug
+ Priority: extra
+ Depends: BASEDEP, libdep(atomic\`'ATOMIC_SO,,=), \${misc:Depends}
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
+-')\`Provides: libatomic'ATOMIC_SO\`-dbg-armel [armel], libatomic'ATOMIC_SO\`-dbg-armhf [armhf]')
++ifdef(\`TARGET',\`',\`Provides: libatomic'ATOMIC_SO\`-dbg-armel [armel], libatomic'ATOMIC_SO\`-dbg-armhf [armhf]
++')\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
++')\`'dnl
+ BUILT_USING\`'dnl
+ Description: support library providing __atomic built-in functions (debug symbols)
+  library providing __atomic built-in functions. When an atomic call cannot
+@@ -1458,9 +1471,11 @@
+ Package: libasan\`'ASAN_SO\`'LS
+ Section: ifdef(\`TARGET',\`devel',\`libs')
+ Architecture: ifdef(\`TARGET',\`CROSS_ARCH',\`any')
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
++ifdef(\`TARGET',\`',\`Provides: libasan'ASAN_SO\`-armel [armel], libasan'ASAN_SO\`-armhf [armhf]
++')\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
+ Pre-Depends: multiarch-support
+-')\`Provides: libasan'ASAN_SO\`-armel [armel], libasan'ASAN_SO\`-armhf [armhf]')
++')\`'dnl
+ Priority: ifdef(\`TARGET',\`extra',\`PRI(optional)')
+ Depends: BASEDEP, \${shlibs:Depends}, \${misc:Depends}
+ BUILT_USING\`'dnl
+@@ -1473,8 +1488,10 @@
+ Section: debug
+ Priority: extra
+ Depends: BASEDEP, libdep(asan\`'ASAN_SO,,=), \${misc:Depends}
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
+-')\`Provides: libasan'ASAN_SO\`-dbg-armel [armel], libasan'ASAN_SO\`-dbg-armhf [armhf]')
++ifdef(\`TARGET',\`',\`Provides: libasan'ASAN_SO\`-dbg-armel [armel], libasan'ASAN_SO\`-dbg-armhf [armhf]
++')\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
++')\`'dnl
+ BUILT_USING\`'dnl
+ Description: AddressSanitizer -- a fast memory error detector (debug symbols)
+  AddressSanitizer (ASan) is a fast memory error detector.  It finds
+@@ -1629,9 +1646,11 @@
+ Package: libtsan\`'TSAN_SO\`'LS
+ Section: ifdef(\`TARGET',\`devel',\`libs')
+ Architecture: ifdef(\`TARGET',\`CROSS_ARCH',\`any')
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
++ifdef(\`TARGET',\`',\`Provides: libtsan'TSAN_SO\`-armel [armel], libtsan'TSAN_SO\`-armhf [armhf]
++')\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
+ Pre-Depends: multiarch-support
+-')\`Provides: libtsan'TSAN_SO\`-armel [armel], libtsan'TSAN_SO\`-armhf [armhf]')
++')\`'dnl
+ Priority: ifdef(\`TARGET',\`extra',\`PRI(optional)')
+ Depends: BASEDEP, \${shlibs:Depends}, \${misc:Depends}
+ BUILT_USING\`'dnl
+@@ -1644,8 +1663,10 @@
+ Section: debug
+ Priority: extra
+ Depends: BASEDEP, libdep(tsan\`'TSAN_SO,,=), \${misc:Depends}
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
+-')\`Provides: libtsan'TSAN_SO\`-dbg-armel [armel], libtsan'TSAN_SO\`-dbg-armhf [armhf]')
++ifdef(\`TARGET',\`',\`Provides: libtsan'TSAN_SO\`-dbg-armel [armel], libtsan'TSAN_SO\`-dbg-armhf [armhf]
++')\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
++')\`'dnl
+ BUILT_USING\`'dnl
+ Description: ThreadSanitizer -- a Valgrind-based detector of data races (debug symbols)
+  ThreadSanitizer (Tsan) is a data race detector for C/C++ programs. 
+@@ -1804,9 +1825,11 @@
+ Package: libbacktrace\`'BTRACE_SO\`'LS
+ Section: ifdef(\`TARGET',\`devel',\`libs')
+ Architecture: ifdef(\`TARGET',\`CROSS_ARCH',\`any')
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
++ifdef(\`TARGET',\`',\`Provides: libbacktrace'BTRACE_SO\`-armel [armel], libbacktrace'BTRACE_SO\`-armhf [armhf]
++')\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
+ Pre-Depends: multiarch-support
+-')\`Provides: libbacktrace'BTRACE_SO\`-armel [armel], libbacktrace'BTRACE_SO\`-armhf [armhf]')
++')\`'dnl
+ Priority: ifdef(\`TARGET',\`extra',\`PRI(optional)')
+ Depends: BASEDEP, \${shlibs:Depends}, \${misc:Depends}
+ BUILT_USING\`'dnl
+@@ -1819,8 +1842,10 @@
+ Section: debug
+ Priority: extra
+ Depends: BASEDEP, libdep(backtrace\`'BTRACE_SO,,=), \${misc:Depends}
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
+-')\`Provides: libbacktrace'BTRACE_SO\`-dbg-armel [armel], libbacktrace'BTRACE_SO\`-dbg-armhf [armhf]')
++ifdef(\`TARGET',\`',\`Provides: libbacktrace'BTRACE_SO\`-dbg-armel [armel], libbacktrace'BTRACE_SO\`-dbg-armhf [armhf]
++')\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
++')\`'dnl
+ BUILT_USING\`'dnl
+ Description: stack backtrace library (debug symbols)
+  libbacktrace uses the GCC unwind interface to collect a stack trace,
+@@ -1976,9 +2001,9 @@
+ Package: libquadmath\`'QMATH_SO\`'LS
+ Section: ifdef(\`TARGET',\`devel',\`libs')
+ Architecture: ifdef(\`TARGET',\`CROSS_ARCH',\`any')
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
++ifdef(\`MULTIARCH', \`Multi-Arch: same
+ Pre-Depends: multiarch-support
+-'))\`'dnl
++')\`'dnl
+ Priority: ifdef(\`TARGET',\`extra',\`PRI(optional)')
+ Depends: BASEDEP, \${shlibs:Depends}, \${misc:Depends}
+ BUILT_USING\`'dnl
+@@ -1992,8 +2017,8 @@
+ Section: debug
+ Priority: extra
+ Depends: BASEDEP, libdep(quadmath\`'QMATH_SO,,=), \${misc:Depends}
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
+-'))\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
++')\`'dnl
+ BUILT_USING\`'dnl
+ Description: GCC Quad-Precision Math Library (debug symbols)
+  A library, which provides quad-precision mathematical functions on targets
+@@ -2199,8 +2224,8 @@
+ Section: libdevel
+ Priority: optional
+ Depends: BASEDEP, libdevdep(gcc\`'PV-dev,), libdep(objc\`'OBJC_SO,), \${shlibs:Depends}, \${misc:Depends}
+-ifdef(\`TARGET',\`',ifdef(\`MULTIARCH', \`Multi-Arch: same
+-'))\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
++')\`'dnl
+ BUILT_USING\`'dnl
+ Description: Runtime library for GNU Objective-C applications (development files)
+  This package contains the headers and static library files needed to build
+@@ -2277,10 +2302,12 @@
+ Package: libobjc\`'OBJC_SO\`'LS
+ Section: ifdef(\`TARGET',\`devel',\`libs')
+ Architecture: ifdef(\`TARGET',\`CROSS_ARCH',\`any')
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
++ifdef(\`TARGET',\`',\`Provides: libobjc'OBJC_SO\`-armel [armel], libobjc'OBJC_SO\`-armhf [armhf]
++')\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
+ Pre-Depends: multiarch-support
+ ifelse(OBJC_SO,\`2',\`Breaks: \${multiarch:breaks}
+-',\`')')\`Provides: libobjc'OBJC_SO\`-armel [armel], libobjc'OBJC_SO\`-armhf [armhf]')
++',\`')')\`'dnl
+ Priority: ifdef(\`TARGET',\`extra',\`PRI(optional)')
+ Depends: BASEDEP, \${shlibs:Depends}, \${misc:Depends}
+ BUILT_USING\`'dnl
+@@ -2290,8 +2317,10 @@
+ Package: libobjc\`'OBJC_SO-dbg\`'LS
+ Section: debug
+ Architecture: ifdef(\`TARGET',\`CROSS_ARCH',\`any')
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
+-')\`Provides: libobjc'OBJC_SO\`-dbg-armel [armel], libobjc'OBJC_SO\`-dbg-armhf [armhf]')
++ifdef(\`TARGET',\`',\`Provides: libobjc'OBJC_SO\`-dbg-armel [armel], libobjc'OBJC_SO\`-dbg-armhf [armhf]
++')\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
++')\`'dnl
+ Priority: extra
+ Depends: BASEDEP, libdep(objc\`'OBJC_SO,,=), libdbgdep(gcc\`'GCC_SO-dbg,,>=,\${libgcc:Version}), \${misc:Depends}
+ BUILT_USING\`'dnl
+@@ -2483,8 +2512,8 @@
+ Section: ifdef(\`TARGET',\`devel',\`libdevel')
+ Priority: optional
+ Depends: BASEDEP, libdevdep(gcc\`'PV-dev\`',), libdep(gfortran\`'FORTRAN_SO,), \${shlibs:Depends}, \${misc:Depends}
+-ifdef(\`TARGET',\`',ifdef(\`MULTIARCH', \`Multi-Arch: same
+-'))\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
++')\`'dnl
+ BUILT_USING\`'dnl
+ Description: Runtime library for GNU Fortran applications (development files)
+  This package contains the headers and static library files needed to build
+@@ -2561,10 +2590,12 @@
+ Package: libgfortran\`'FORTRAN_SO\`'LS
+ Section: ifdef(\`TARGET',\`devel',\`libs')
+ Architecture: ifdef(\`TARGET',\`CROSS_ARCH',\`any')
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
++ifdef(\`TARGET',\`',\`Provides: libgfortran'FORTRAN_SO\`-armel [armel], libgfortran'FORTRAN_SO\`-armhf [armhf]
++')\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
+ Pre-Depends: multiarch-support
+ Breaks: \${multiarch:breaks}
+-')\`Provides: libgfortran'FORTRAN_SO\`-armel [armel], libgfortran'FORTRAN_SO\`-armhf [armhf]')
++')\`'dnl
+ Priority: ifdef(\`TARGET',\`extra',PRI(optional))
+ Depends: BASEDEP, \${shlibs:Depends}, \${misc:Depends}
+ BUILT_USING\`'dnl
+@@ -2575,8 +2606,10 @@
+ Package: libgfortran\`'FORTRAN_SO-dbg\`'LS
+ Section: debug
+ Architecture: ifdef(\`TARGET',\`CROSS_ARCH',\`any')
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
+-')\`Provides: libgfortran'FORTRAN_SO\`-dbg-armel [armel], libgfortran'FORTRAN_SO\`-dbg-armhf [armhf]')
++ifdef(\`TARGET',\`',\`Provides: libgfortran'FORTRAN_SO\`-dbg-armel [armel], libgfortran'FORTRAN_SO\`-dbg-armhf [armhf]
++')\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
++')\`'dnl
+ Priority: extra
+ Depends: BASEDEP, libdep(gfortran\`'FORTRAN_SO,,=), libdbgdep(gcc\`'GCC_SO-dbg,,>=,\${libgcc:Version}), \${misc:Depends}
+ BUILT_USING\`'dnl
+@@ -2787,9 +2820,11 @@
+ Package: libgo\`'GO_SO\`'LS
+ Section: ifdef(\`TARGET',\`devel',\`libs')
+ Architecture: ifdef(\`TARGET',\`CROSS_ARCH',\`any')
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
++ifdef(\`TARGET',\`',\`Provides: libgo'GO_SO\`-armel [armel], libgo'GO_SO\`-armhf [armhf]
++')\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
+ Pre-Depends: multiarch-support
+-')\`Provides: libgo'GO_SO\`-armel [armel], libgo'GO_SO\`-armhf [armhf]')
++')\`'dnl
+ Priority: ifdef(\`TARGET',\`extra',PRI(optional))
+ Depends: BASEDEP, \${shlibs:Depends}, \${misc:Depends}
+ Replaces: libgo3\`'LS
+@@ -2801,8 +2836,10 @@
+ Package: libgo\`'GO_SO-dbg\`'LS
+ Section: debug
+ Architecture: ifdef(\`TARGET',\`CROSS_ARCH',\`any')
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
+-')\`Provides: libgo'GO_SO\`-dbg-armel [armel], libgo'GO_SO\`-dbg-armhf [armhf]')
++ifdef(\`TARGET',\`',\`Provides: libgo'GO_SO\`-dbg-armel [armel], libgo'GO_SO\`-dbg-armhf [armhf]
++')\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
++')\`'dnl
+ Priority: extra
+ Depends: BASEDEP, libdep(go\`'GO_SO,,=), \${misc:Depends}
+ BUILT_USING\`'dnl
+@@ -3152,11 +3189,11 @@
+ Section: ifdef(\`TARGET',\`devel',\`libs')
+ Priority: ifdef(\`TARGET',\`extra',PRI(important))
+ Depends: BASEDEP, \${dep:libc}, \${shlibs:Depends}, \${misc:Depends}
+-ifdef(\`TARGET',\`Provides: libstdc++CXX_SO-TARGET-dcv1',
++ifdef(\`TARGET',\`Provides: libstdc++CXX_SO-TARGET-dcv1',\`Provides: libstdc++'CXX_SO\`-armel [armel], libstdc++'CXX_SO\`-armhf [armhf]')
+ ifdef(\`MULTIARCH', \`Multi-Arch: same
+ Pre-Depends: multiarch-support
+ Breaks: \${multiarch:breaks}
+-')\`Provides: libstdc++'CXX_SO\`-armel [armel], libstdc++'CXX_SO\`-armhf [armhf]')
++')\`'dnl
+ Conflicts: scim (<< 1.4.2-1)
+ BUILT_USING\`'dnl
+ Description: GNU Standard C++ Library v3\`'ifdef(\`TARGET)',\` (TARGET)', \`')
+@@ -3328,8 +3365,8 @@
+ ifenabled(\`c++dev',\`
+ Package: libstdc++\`'PV-dev\`'LS
+ Architecture: ifdef(\`TARGET',\`CROSS_ARCH',\`any')
+-ifdef(\`TARGET',\`',ifdef(\`MULTIARCH', \`Multi-Arch: same
+-'))\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
++')\`'dnl
+ Section: ifdef(\`TARGET',\`devel',\`libdevel')
+ Priority: ifdef(\`TARGET',\`extra',PRI(optional))
+ Depends: BASEDEP, libdevdep(gcc\`'PV-dev,,=), libdep(stdc++CXX_SO,,>=), \${dep:libcdev}, \${misc:Depends}
+@@ -3354,8 +3391,8 @@
+ 
+ Package: libstdc++\`'PV-pic\`'LS
+ Architecture: ifdef(\`TARGET',\`CROSS_ARCH',\`any')
+-ifdef(\`TARGET',\`',ifdef(\`MULTIARCH', \`Multi-Arch: same
+-'))\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
++')\`'dnl
+ Section: ifdef(\`TARGET',\`devel',\`libdevel')
+ Priority: extra
+ Depends: BASEDEP, libdep(stdc++CXX_SO,), libdevdep(stdc++\`'PV-dev,), \${misc:Depends}
+@@ -3378,10 +3415,9 @@
+ Section: debug
+ Priority: extra
+ Depends: BASEDEP, libdep(stdc++CXX_SO,), libdbgdep(gcc\`'GCC_SO-dbg,,>=,\${libgcc:Version}), \${shlibs:Depends}, \${misc:Depends}
+-ifdef(\`TARGET',\`Provides: libstdc++CXX_SO-dbg-TARGET-dcv1',\`dnl
+-ifdef(\`MULTIARCH', \`Multi-Arch: same',\`dnl')
+-Provides: libstdc++'CXX_SO\`'PV\`-dbg-armel [armel], libstdc++'CXX_SO\`'PV\`-dbg-armhf [armhf]dnl
+-')
++ifdef(\`TARGET',\`Provides: libstdc++CXX_SO-dbg-TARGET-dcv1',\`Provides: libstdc++'CXX_SO\`'PV\`-dbg-armel [armel], libstdc++'CXX_SO\`'PV\`-dbg-armhf [armhf]')
++ifdef(\`MULTIARCH', \`Multi-Arch: same
++')\`'dnl
+ Recommends: libdevdep(stdc++\`'PV-dev,)
+ Conflicts: libstdc++5-dbg\`'LS, libstdc++5-3.3-dbg\`'LS, libstdc++6-dbg\`'LS, libstdc++6-4.0-dbg\`'LS, libstdc++6-4.1-dbg\`'LS, libstdc++6-4.2-dbg\`'LS, libstdc++6-4.3-dbg\`'LS, libstdc++6-4.4-dbg\`'LS, libstdc++6-4.5-dbg\`'LS, libstdc++6-4.6-dbg\`'LS, libstdc++6-4.7-dbg\`'LS
+ BUILT_USING\`'dnl
+@@ -3678,9 +3714,9 @@
+ Package: libgnat\`'-GNAT_V\`'LS
+ Section: ifdef(\`TARGET',\`devel',\`libs')
+ Architecture: ifdef(\`TARGET',\`CROSS_ARCH',\`any')
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
++ifdef(\`MULTIARCH', \`Multi-Arch: same
+ Pre-Depends: multiarch-support
+-'))\`'dnl
++')\`'dnl
+ Priority: PRI(optional)
+ Depends: BASEDEP, \${shlibs:Depends}, \${misc:Depends}
+ BUILT_USING\`'dnl
+@@ -3696,9 +3732,9 @@
+ Package: libgnat\`'-GNAT_V-dbg\`'LS
+ Section: debug
+ Architecture: ifdef(\`TARGET',\`CROSS_ARCH',\`any')
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
++ifdef(\`MULTIARCH', \`Multi-Arch: same
+ Pre-Depends: multiarch-support
+-'))\`'dnl
++')\`'dnl
+ Priority: extra
+ Depends: BASEDEP, libgnat\`'-GNAT_V\`'LS (= \${gnat:Version}), \${misc:Depends}
+ BUILT_USING\`'dnl
+@@ -3731,9 +3767,9 @@
+ 
+ Package: libgnatvsn\`'GNAT_V\`'LS
+ Architecture: ifdef(\`TARGET',\`CROSS_ARCH',\`any')
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
++ifdef(\`MULTIARCH', \`Multi-Arch: same
+ Pre-Depends: multiarch-support
+-'))\`'dnl
++')\`'dnl
+ Priority: PRI(optional)
+ Section: ifdef(\`TARGET',\`devel',\`libs')
+ Depends: BASEDEP, libgnat\`'-GNAT_V\`'LS (= \${gnat:Version}), \${misc:Depends}
+@@ -3750,9 +3786,9 @@
+ 
+ Package: libgnatvsn\`'GNAT_V-dbg\`'LS
+ Architecture: ifdef(\`TARGET',\`CROSS_ARCH',\`any')
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
++ifdef(\`MULTIARCH', \`Multi-Arch: same
+ Pre-Depends: multiarch-support
+-'))\`'dnl
++')\`'dnl
+ Priority: extra
+ Section: debug
+ Depends: BASEDEP, libgnatvsn\`'GNAT_V\`'LS (= \${gnat:Version}), \${misc:Depends}
+@@ -3792,9 +3828,9 @@
+ 
+ Package: libgnatprj\`'GNAT_V\`'LS
+ Architecture: ifdef(\`TARGET',\`CROSS_ARCH',\`any')
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
++ifdef(\`MULTIARCH', \`Multi-Arch: same
+ Pre-Depends: multiarch-support
+-'))\`'dnl
++')\`'dnl
+ Priority: PRI(optional)
+ Section: ifdef(\`TARGET',\`devel',\`libs')
+ Depends: BASEDEP, libgnat\`'-GNAT_V\`'LS (= \${gnat:Version}), libgnatvsn\`'GNAT_V\`'LS (= \${gnat:Version}), \${misc:Depends}
+@@ -3814,9 +3850,9 @@
+ 
+ Package: libgnatprj\`'GNAT_V-dbg\`'LS
+ Architecture: ifdef(\`TARGET',\`CROSS_ARCH',\`any')
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
++ifdef(\`MULTIARCH', \`Multi-Arch: same
+ Pre-Depends: multiarch-support
+-'))\`'dnl
++')\`'dnl
+ Priority: extra
+ Section: debug
+ Depends: BASEDEP, libgnatprj\`'GNAT_V\`'LS (= \${gnat:Version}), \${misc:Depends}
+EOF
+	fi
+	if test "$GCC_VER" = "4.9"; then
+		echo "patching gcc 4.9 to support multiarch crossbuilds"
+		patch -p1 <<EOF
+diff -u gcc-4.9-4.9-20140411/debian/control.m4 gcc-4.9-4.9-20140411/debian/control.m4
+--- gcc-4.9-4.9-20140411/debian/control.m4
++++ gcc-4.9-4.9-20140411/debian/control.m4
+@@ -21,6 +21,7 @@
+ define(\`depifenabled', \`ifelse(index(enabled_languages, \`\$1'), -1, \`', \`\$2')')
+ define(\`ifenabled', \`ifelse(index(enabled_languages, \`\$1'), -1, \`dnl', \`\$2')')
+ 
++ifdef(\`TARGET',\`ifdef(\`CROSS_ARCH',\`',\`undefine(\`MULTIARCH')')')
+ define(\`CROSS_ARCH', ifdef(\`CROSS_ARCH', CROSS_ARCH, \`all'))
+ define(\`libdep', \`lib\$2\$1\`'LS\`'AQ (ifelse(\`\$3',\`',\`>=',\`\$3') ifelse(\`\$4',\`',\`\${gcc:Version}',\`\$4'))')
+ define(\`libdevdep', \`lib\$2\$1\`'LS\`'AQ (ifelse(\`\$3',\`',\`=',\`\$3') ifelse(\`\$4',\`',\`\${gcc:Version}',\`\$4'))')
+@@ -224,11 +225,11 @@
+ Section: ifdef(\`TARGET',\`devel',\`libs')
+ Priority: ifdef(\`TARGET',\`extra',required)
+ Depends: BASEDEP, \${shlibs:Depends}, \${misc:Depends}
+-ifdef(\`TARGET',\`Provides: libgcc1-TARGET-dcv1',
++Provides: ifdef(\`TARGET',\`libgcc1-TARGET-dcv1',\`libgcc1-armel [armel], libgcc1-armhf [armhf]')
+ ifdef(\`MULTIARCH', \`Multi-Arch: same
+ Pre-Depends: multiarch-support
+ Breaks: \${multiarch:breaks}
+-')\`Provides: libgcc1-armel [armel], libgcc1-armhf [armhf]')
++')\`'dnl
+ BUILT_USING\`'dnl
+ Description: GCC support library\`'ifdef(\`TARGET)',\` (TARGET)', \`')
+  Shared version of the support library, a library of internal subroutines
+@@ -245,10 +246,9 @@
+ Section: debug
+ Priority: extra
+ Depends: BASEDEP, libdep(gcc1,,=,\${gcc:EpochVersion}), \${misc:Depends}
+-ifdef(\`TARGET',\`',\`dnl
+-ifdef(\`MULTIARCH',\`Multi-Arch: same
++ifdef(\`TARGET',\`',\`Provides: libgcc1-dbg-armel [armel], libgcc1-dbg-armhf [armhf]
+ ')dnl
+-Provides: libgcc1-dbg-armel [armel], libgcc1-dbg-armhf [armhf]
++ifdef(\`MULTIARCH',\`Multi-Arch: same
+ ')dnl
+ BUILT_USING\`'dnl
+ Description: GCC support library (debug symbols)\`'ifdef(\`TARGET)',\` (TARGET)', \`')
+@@ -265,10 +265,11 @@
+ Priority: ifdef(\`TARGET',\`extra',required)
+ Depends: BASEDEP, \${shlibs:Depends}, \${misc:Depends}
+ ifdef(\`TARGET',\`Provides: libgcc2-TARGET-dcv1
+-',ifdef(\`MULTIARCH', \`Multi-Arch: same
++')\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
+ Pre-Depends: multiarch-support
+ Breaks: \${multiarch:breaks}
+-'))\`'dnl
++')\`'dnl
+ BUILT_USING\`'dnl
+ Description: GCC support library\`'ifdef(\`TARGET)',\` (TARGET)', \`')
+  Shared version of the support library, a library of internal subroutines
+@@ -285,8 +286,8 @@
+ Section: debug
+ Priority: extra
+ Depends: BASEDEP, libdep(gcc2,,=,\${gcc:Version}), \${misc:Depends}
+-ifdef(\`TARGET',\`',ifdef(\`MULTIARCH', \`Multi-Arch: same
+-'))\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
++')\`'dnl
+ BUILT_USING\`'dnl
+ Description: GCC support library (debug symbols)\`'ifdef(\`TARGET)',\` (TARGET)', \`')
+  Debug symbols for the GCC support library.
+@@ -307,8 +308,8 @@
+  \${dep:libatomic}, \${dep:libbtrace}, \${dep:libasan}, \${dep:liblsan},
+  \${dep:libtsan}, \${dep:libubsan}, \${dep:libcilkrts}, \${dep:libvtv},
+  \${dep:libqmath}, \${dep:libunwinddev}, \${shlibs:Depends}, \${misc:Depends}
+-ifdef(\`TARGET',\`',ifdef(\`MULTIARCH', \`Multi-Arch: same
+-'))\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
++')\`'dnl
+ Replaces: gccgo-4.9 (<< \${gcc:Version})
+ BUILT_USING\`'dnl
+ Description: GCC support library (development files)
+@@ -319,10 +320,10 @@
+ ifenabled(\`lib4gcc',\`
+ Package: libgcc4\`'LS
+ Architecture: ifdef(\`TARGET',\`CROSS_ARCH',\`hppa')
+-ifdef(\`TARGET',\`',ifdef(\`MULTIARCH', \`Multi-Arch: same
++ifdef(\`MULTIARCH', \`Multi-Arch: same
+ Pre-Depends: multiarch-support
+ Breaks: \${multiarch:breaks}
+-'))\`'dnl
++')\`'dnl
+ Section: ifdef(\`TARGET',\`devel',\`libs')
+ Priority: ifdef(\`TARGET',\`extra',required)
+ Depends: ifdef(\`STANDALONEJAVA',\`gcj\`'PV-base (>= \${gcj:Version})',\`BASEDEP'), \${shlibs:Depends}, \${misc:Depends}
+@@ -339,8 +340,8 @@
+ 
+ Package: libgcc4-dbg\`'LS
+ Architecture: ifdef(\`TARGET',\`CROSS_ARCH',\`hppa')
+-ifdef(\`TARGET',\`',ifdef(\`MULTIARCH', \`Multi-Arch: same
+-'))\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
++')\`'dnl
+ Section: debug
+ Priority: extra
+ Depends: BASEDEP, libdep(gcc4,,=,\${gcc:Version}), \${misc:Depends}
+@@ -978,10 +979,12 @@
+ Package: libgomp\`'GOMP_SO\`'LS
+ Section: ifdef(\`TARGET',\`devel',\`libs')
+ Architecture: ifdef(\`TARGET',\`CROSS_ARCH',\`any')
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
++ifdef(\`TARGET',\`',\`Provides: libgomp'GOMP_SO\`-armel [armel], libgomp'GOMP_SO\`-armhf [armhf]
++')\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
+ Pre-Depends: multiarch-support
+ Breaks: \${multiarch:breaks}
+-')\`Provides: libgomp'GOMP_SO\`-armel [armel], libgomp'GOMP_SO\`-armhf [armhf]')
++')\`'dnl
+ Priority: ifdef(\`TARGET',\`extra',\`PRI(optional)')
+ Depends: BASEDEP, \${shlibs:Depends}, \${misc:Depends}
+ BUILT_USING\`'dnl
+@@ -994,8 +997,10 @@
+ Section: debug
+ Priority: extra
+ Depends: BASEDEP, libdep(gomp\`'GOMP_SO,,=), \${misc:Depends}
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
+-')\`Provides: libgomp'GOMP_SO\`-dbg-armel [armel], libgomp'GOMP_SO\`-dbg-armhf [armhf]')
++ifdef(\`TARGET',\`',\`Provides: libgomp'GOMP_SO\`-dbg-armel [armel], libgomp'GOMP_SO\`-dbg-armhf [armhf]
++')\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
++')\`'dnl
+ BUILT_USING\`'dnl
+ Description: GCC OpenMP (GOMP) support library (debug symbols)
+  GOMP is an implementation of OpenMP for the C, C++, and Fortran compilers
+@@ -1148,9 +1153,11 @@
+ Package: libitm\`'ITM_SO\`'LS
+ Section: ifdef(\`TARGET',\`devel',\`libs')
+ Architecture: ifdef(\`TARGET',\`CROSS_ARCH',\`any')
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
++ifdef(\`TARGET',\`',\`Provides: libitm'ITM_SO\`-armel [armel], libitm'ITM_SO\`-armhf [armhf]
++')\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
+ Pre-Depends: multiarch-support
+-')\`Provides: libitm'ITM_SO\`-armel [armel], libitm'ITM_SO\`-armhf [armhf]')
++')\`'dnl
+ Priority: ifdef(\`TARGET',\`extra',\`PRI(optional)')
+ Depends: BASEDEP, \${shlibs:Depends}, \${misc:Depends}
+ BUILT_USING\`'dnl
+@@ -1164,8 +1171,10 @@
+ Section: debug
+ Priority: extra
+ Depends: BASEDEP, libdep(itm\`'ITM_SO,,=), \${misc:Depends}
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
+-')\`Provides: libitm'ITM_SO\`-dbg-armel [armel], libitm'ITM_SO\`-dbg-armhf [armhf]')
++ifdef(\`TARGET',\`',\`Provides: libitm'ITM_SO\`-dbg-armel [armel], libitm'ITM_SO\`-dbg-armhf [armhf]
++')\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
++')\`'dnl
+ BUILT_USING\`'dnl
+ Description: GNU Transactional Memory Library (debug symbols)
+  GNU Transactional Memory Library (libitm) provides transaction support for
+@@ -1334,9 +1343,11 @@
+ Package: libatomic\`'ATOMIC_SO\`'LS
+ Section: ifdef(\`TARGET',\`devel',\`libs')
+ Architecture: ifdef(\`TARGET',\`CROSS_ARCH',\`any')
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
++ifdef(\`TARGET',\`',\`Provides: libatomic'ATOMIC_SO\`-armel [armel], libatomic'ATOMIC_SO\`-armhf [armhf]
++')\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
+ Pre-Depends: multiarch-support
+-')\`Provides: libatomic'ATOMIC_SO\`-armel [armel], libatomic'ATOMIC_SO\`-armhf [armhf]')
++')\`'dnl
+ Priority: ifdef(\`TARGET',\`extra',\`PRI(optional)')
+ Depends: BASEDEP, \${shlibs:Depends}, \${misc:Depends}
+ BUILT_USING\`'dnl
+@@ -1349,8 +1360,10 @@
+ Section: debug
+ Priority: extra
+ Depends: BASEDEP, libdep(atomic\`'ATOMIC_SO,,=), \${misc:Depends}
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
+-')\`Provides: libatomic'ATOMIC_SO\`-dbg-armel [armel], libatomic'ATOMIC_SO\`-dbg-armhf [armhf]')
++ifdef(\`TARGET',\`',\`Provides: libatomic'ATOMIC_SO\`-dbg-armel [armel], libatomic'ATOMIC_SO\`-dbg-armhf [armhf]
++')\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
++')\`'dnl
+ BUILT_USING\`'dnl
+ Description: support library providing __atomic built-in functions (debug symbols)
+  library providing __atomic built-in functions. When an atomic call cannot
+@@ -1505,9 +1518,11 @@
+ Package: libasan\`'ASAN_SO\`'LS
+ Section: ifdef(\`TARGET',\`devel',\`libs')
+ Architecture: ifdef(\`TARGET',\`CROSS_ARCH',\`any')
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
++ifdef(\`TARGET',\`',\`Provides: libasan'ASAN_SO\`-armel [armel], libasan'ASAN_SO\`-armhf [armhf]
++')\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
+ Pre-Depends: multiarch-support
+-')\`Provides: libasan'ASAN_SO\`-armel [armel], libasan'ASAN_SO\`-armhf [armhf]')
++')\`'dnl
+ Priority: ifdef(\`TARGET',\`extra',\`PRI(optional)')
+ Depends: BASEDEP, \${shlibs:Depends}, \${misc:Depends}
+ BUILT_USING\`'dnl
+@@ -1520,8 +1535,10 @@
+ Section: debug
+ Priority: extra
+ Depends: BASEDEP, libdep(asan\`'ASAN_SO,,=), \${misc:Depends}
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
+-')\`Provides: libasan'ASAN_SO\`-dbg-armel [armel], libasan'ASAN_SO\`-dbg-armhf [armhf]')
++ifdef(\`TARGET',\`',\`Provides: libasan'ASAN_SO\`-dbg-armel [armel], libasan'ASAN_SO\`-dbg-armhf [armhf]
++')\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
++')\`'dnl
+ BUILT_USING\`'dnl
+ Description: AddressSanitizer -- a fast memory error detector (debug symbols)
+  AddressSanitizer (ASan) is a fast memory error detector.  It finds
+@@ -1676,9 +1693,11 @@
+ Package: liblsan\`'LSAN_SO\`'LS
+ Section: ifdef(\`TARGET',\`devel',\`libs')
+ Architecture: ifdef(\`TARGET',\`CROSS_ARCH',\`any')
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
++ifdef(\`TARGET',\`',\`Provides: liblsan'LSAN_SO\`-armel [armel], liblsan'LSAN_SO\`-armhf [armhf]
++')\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
+ Pre-Depends: multiarch-support
+-')\`Provides: liblsan'LSAN_SO\`-armel [armel], liblsan'LSAN_SO\`-armhf [armhf]')
++')\`'dnl
+ Priority: ifdef(\`TARGET',\`extra',\`PRI(optional)')
+ Depends: BASEDEP, \${shlibs:Depends}, \${misc:Depends}
+ BUILT_USING\`'dnl
+@@ -1691,8 +1710,10 @@
+ Section: debug
+ Priority: extra
+ Depends: BASEDEP, libdep(lsan\`'LSAN_SO,,=), \${misc:Depends}
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
+-')\`Provides: liblsan'LSAN_SO\`-dbg-armel [armel], liblsan'LSAN_SO\`-dbg-armhf [armhf]')
++ifdef(\`TARGET',\`',\`Provides: liblsan'LSAN_SO\`-dbg-armel [armel], liblsan'LSAN_SO\`-dbg-armhf [armhf]
++')\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
++')\`'dnl
+ BUILT_USING\`'dnl
+ Description: LeakSanitizer -- a memory leak detector (debug symbols)
+  LeakSanitizer (Lsan) is a memory leak detector which is integrated
+@@ -1853,9 +1874,11 @@
+ Package: libtsan\`'TSAN_SO\`'LS
+ Section: ifdef(\`TARGET',\`devel',\`libs')
+ Architecture: ifdef(\`TARGET',\`CROSS_ARCH',\`any')
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
++ifdef(\`TARGET',\`',\`Provides: libtsan'TSAN_SO\`-armel [armel], libtsan'TSAN_SO\`-armhf [armhf]
++')\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
+ Pre-Depends: multiarch-support
+-')\`Provides: libtsan'TSAN_SO\`-armel [armel], libtsan'TSAN_SO\`-armhf [armhf]')
++')\`'dnl
+ Priority: ifdef(\`TARGET',\`extra',\`PRI(optional)')
+ Depends: BASEDEP, \${shlibs:Depends}, \${misc:Depends}
+ BUILT_USING\`'dnl
+@@ -1868,8 +1891,10 @@
+ Section: debug
+ Priority: extra
+ Depends: BASEDEP, libdep(tsan\`'TSAN_SO,,=), \${misc:Depends}
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
+-')\`Provides: libtsan'TSAN_SO\`-dbg-armel [armel], libtsan'TSAN_SO\`-dbg-armhf [armhf]')
++ifdef(\`TARGET',\`',\`Provides: libtsan'TSAN_SO\`-dbg-armel [armel], libtsan'TSAN_SO\`-dbg-armhf [armhf]
++')\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
++')\`'dnl
+ BUILT_USING\`'dnl
+ Description: ThreadSanitizer -- a Valgrind-based detector of data races (debug symbols)
+  ThreadSanitizer (Tsan) is a data race detector for C/C++ programs. 
+@@ -2028,9 +2053,11 @@
+ Package: libubsan\`'UBSAN_SO\`'LS
+ Section: ifdef(\`TARGET',\`devel',\`libs')
+ Architecture: ifdef(\`TARGET',\`CROSS_ARCH',\`any')
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
++ifdef(\`TARGET',\`',\`Provides: libubsan'UBSAN_SO\`-armel [armel], libubsan'UBSAN_SO\`-armhf [armhf]
++')\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
+ Pre-Depends: multiarch-support
+-')\`Provides: libubsan'UBSAN_SO\`-armel [armel], libubsan'UBSAN_SO\`-armhf [armhf]')
++')\`'dnl
+ Priority: ifdef(\`TARGET',\`extra',\`PRI(optional)')
+ Depends: BASEDEP, \${shlibs:Depends}, \${misc:Depends}
+ BUILT_USING\`'dnl
+@@ -2044,8 +2071,10 @@
+ Section: debug
+ Priority: extra
+ Depends: BASEDEP, libdep(ubsan\`'UBSAN_SO,,=), \${misc:Depends}
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
+-')\`Provides: libubsan'UBSAN_SO\`-dbg-armel [armel], libubsan'UBSAN_SO\`-dbg-armhf [armhf]')
++ifdef(\`TARGET',\`',\`Provides: libubsan'UBSAN_SO\`-dbg-armel [armel], libubsan'UBSAN_SO\`-dbg-armhf [armhf]
++')\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
++')\`'dnl
+ BUILT_USING\`'dnl
+ Description: UBSan -- undefined behaviour sanitizer (debug symbols)
+  UndefinedBehaviorSanitizer can be enabled via -fsanitize=undefined.
+@@ -2220,9 +2249,11 @@
+ Package: libvtv\`'VTV_SO\`'LS
+ Section: ifdef(\`TARGET',\`devel',\`libs')
+ Architecture: ifdef(\`TARGET',\`CROSS_ARCH',\`any')
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
++ifdef(\`TARGET',\`',\`Provides: libvtv'VTV_SO\`-armel [armel], libvtv'VTV_SO\`-armhf [armhf]
++')\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
+ Pre-Depends: multiarch-support
+-')\`Provides: libvtv'VTV_SO\`-armel [armel], libvtv'VTV_SO\`-armhf [armhf]')
++')\`'dnl
+ Priority: ifdef(\`TARGET',\`extra',\`PRI(optional)')
+ Depends: BASEDEP, \${shlibs:Depends}, \${misc:Depends}
+ BUILT_USING\`'dnl
+@@ -2237,8 +2268,10 @@
+ Section: debug
+ Priority: extra
+ Depends: BASEDEP, libdep(vtv\`'VTV_SO,,=), \${misc:Depends}
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
+-')\`Provides: libvtv'VTV_SO\`-dbg-armel [armel], libvtv'VTV_SO\`-dbg-armhf [armhf]')
++ifdef(\`TARGET',\`',\`Provides: libvtv'VTV_SO\`-dbg-armel [armel], libvtv'VTV_SO\`-dbg-armhf [armhf]
++')\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
++')\`'dnl
+ BUILT_USING\`'dnl
+ Description: GNU vtable verification library (debug symbols)
+  Vtable verification is a new security hardening feature for GCC that
+@@ -2427,9 +2460,11 @@
+ Package: libcilkrts\`'CILKRTS_SO\`'LS
+ Section: ifdef(\`TARGET',\`devel',\`libs')
+ Architecture: ifdef(\`TARGET',\`CROSS_ARCH',\`any')
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
++ifdef(\`TARGET',\`',\`Provides: libcilkrts'CILKRTS_SO\`-armel [armel], libcilkrts'CILKRTS_SO\`-armhf [armhf]
++')\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
+ Pre-Depends: multiarch-support
+-')\`Provides: libcilkrts'CILKRTS_SO\`-armel [armel], libcilkrts'CILKRTS_SO\`-armhf [armhf]')
++')\`'dnl
+ Priority: ifdef(\`TARGET',\`extra',\`PRI(optional)')
+ Depends: BASEDEP, \${shlibs:Depends}, \${misc:Depends}
+ BUILT_USING\`'dnl
+@@ -2442,8 +2477,10 @@
+ Section: debug
+ Priority: extra
+ Depends: BASEDEP, libdep(cilkrts\`'CILKRTS_SO,,=), \${misc:Depends}
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
+-')\`Provides: libcilkrts'CILKRTS_SO\`-dbg-armel [armel], libcilkrts'CILKRTS_SO\`-dbg-armhf [armhf]')
++ifdef(\`TARGET',\`',\`Provides: libcilkrts'CILKRTS_SO\`-dbg-armel [armel], libcilkrts'CILKRTS_SO\`-dbg-armhf [armhf]
++')\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
++')\`'dnl
+ BUILT_USING\`'dnl
+ Description: Intel Cilk Plus language extensions (debug symbols)
+  Intel Cilk Plus is an extension to the C and C++ languages to support
+@@ -2604,9 +2641,11 @@
+ Package: libbacktrace\`'BTRACE_SO\`'LS
+ Section: ifdef(\`TARGET',\`devel',\`libs')
+ Architecture: ifdef(\`TARGET',\`CROSS_ARCH',\`any')
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
++ifdef(\`TARGET',\`',\`Provides: libbacktrace'BTRACE_SO\`-armel [armel], libbacktrace'BTRACE_SO\`-armhf [armhf]
++')\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
+ Pre-Depends: multiarch-support
+-')\`Provides: libbacktrace'BTRACE_SO\`-armel [armel], libbacktrace'BTRACE_SO\`-armhf [armhf]')
++')\`'dnl
+ Priority: ifdef(\`TARGET',\`extra',\`PRI(optional)')
+ Depends: BASEDEP, \${shlibs:Depends}, \${misc:Depends}
+ BUILT_USING\`'dnl
+@@ -2619,8 +2658,10 @@
+ Section: debug
+ Priority: extra
+ Depends: BASEDEP, libdep(backtrace\`'BTRACE_SO,,=), \${misc:Depends}
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
+-')\`Provides: libbacktrace'BTRACE_SO\`-dbg-armel [armel], libbacktrace'BTRACE_SO\`-dbg-armhf [armhf]')
++ifdef(\`TARGET',\`',\`Provides: libbacktrace'BTRACE_SO\`-dbg-armel [armel], libbacktrace'BTRACE_SO\`-dbg-armhf [armhf]
++')\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
++')\`'dnl
+ BUILT_USING\`'dnl
+ Description: stack backtrace library (debug symbols)
+  libbacktrace uses the GCC unwind interface to collect a stack trace,
+@@ -2776,9 +2817,9 @@
+ Package: libquadmath\`'QMATH_SO\`'LS
+ Section: ifdef(\`TARGET',\`devel',\`libs')
+ Architecture: ifdef(\`TARGET',\`CROSS_ARCH',\`any')
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
++ifdef(\`MULTIARCH', \`Multi-Arch: same
+ Pre-Depends: multiarch-support
+-'))\`'dnl
++')\`'dnl
+ Priority: ifdef(\`TARGET',\`extra',\`PRI(optional)')
+ Depends: BASEDEP, \${shlibs:Depends}, \${misc:Depends}
+ BUILT_USING\`'dnl
+@@ -2792,8 +2833,8 @@
+ Section: debug
+ Priority: extra
+ Depends: BASEDEP, libdep(quadmath\`'QMATH_SO,,=), \${misc:Depends}
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
+-'))\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
++')\`'dnl
+ BUILT_USING\`'dnl
+ Description: GCC Quad-Precision Math Library (debug symbols)
+  A library, which provides quad-precision mathematical functions on targets
+@@ -2999,8 +3040,8 @@
+ Section: libdevel
+ Priority: optional
+ Depends: BASEDEP, libdevdep(gcc\`'PV-dev,), libdep(objc\`'OBJC_SO,), \${shlibs:Depends}, \${misc:Depends}
+-ifdef(\`TARGET',\`',ifdef(\`MULTIARCH', \`Multi-Arch: same
+-'))\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
++')\`'dnl
+ BUILT_USING\`'dnl
+ Description: Runtime library for GNU Objective-C applications (development files)
+  This package contains the headers and static library files needed to build
+@@ -3077,10 +3118,12 @@
+ Package: libobjc\`'OBJC_SO\`'LS
+ Section: ifdef(\`TARGET',\`devel',\`libs')
+ Architecture: ifdef(\`TARGET',\`CROSS_ARCH',\`any')
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
++ifdef(\`TARGET',\`',\`Provides: libobjc'OBJC_SO\`-armel [armel], libobjc'OBJC_SO\`-armhf [armhf]
++')\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
+ Pre-Depends: multiarch-support
+ ifelse(OBJC_SO,\`2',\`Breaks: \${multiarch:breaks}
+-',\`')')\`Provides: libobjc'OBJC_SO\`-armel [armel], libobjc'OBJC_SO\`-armhf [armhf]')
++',\`')')\`'dnl
+ Priority: ifdef(\`TARGET',\`extra',\`PRI(optional)')
+ Depends: BASEDEP, \${shlibs:Depends}, \${misc:Depends}
+ BUILT_USING\`'dnl
+@@ -3090,8 +3133,10 @@
+ Package: libobjc\`'OBJC_SO-dbg\`'LS
+ Section: debug
+ Architecture: ifdef(\`TARGET',\`CROSS_ARCH',\`any')
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
+-')\`Provides: libobjc'OBJC_SO\`-dbg-armel [armel], libobjc'OBJC_SO\`-dbg-armhf [armhf]')
++ifdef(\`TARGET',\`',\`Provides: libobjc'OBJC_SO\`-dbg-armel [armel], libobjc'OBJC_SO\`-dbg-armhf [armhf]
++')\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
++')\`'dnl
+ Priority: extra
+ Depends: BASEDEP, libdep(objc\`'OBJC_SO,,=), libdbgdep(gcc\`'GCC_SO-dbg,,>=,\${libgcc:Version}), \${misc:Depends}
+ BUILT_USING\`'dnl
+@@ -3283,8 +3328,8 @@
+ Section: ifdef(\`TARGET',\`devel',\`libdevel')
+ Priority: optional
+ Depends: BASEDEP, libdevdep(gcc\`'PV-dev\`',), libdep(gfortran\`'FORTRAN_SO,), \${shlibs:Depends}, \${misc:Depends}
+-ifdef(\`TARGET',\`',ifdef(\`MULTIARCH', \`Multi-Arch: same
+-'))\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
++')\`'dnl
+ BUILT_USING\`'dnl
+ Description: Runtime library for GNU Fortran applications (development files)
+  This package contains the headers and static library files needed to build
+@@ -3361,10 +3406,12 @@
+ Package: libgfortran\`'FORTRAN_SO\`'LS
+ Section: ifdef(\`TARGET',\`devel',\`libs')
+ Architecture: ifdef(\`TARGET',\`CROSS_ARCH',\`any')
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
++ifdef(\`TARGET',\`',\`Provides: libgfortran'FORTRAN_SO\`-armel [armel], libgfortran'FORTRAN_SO\`-armhf [armhf]
++')\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
+ Pre-Depends: multiarch-support
+ Breaks: \${multiarch:breaks}
+-')\`Provides: libgfortran'FORTRAN_SO\`-armel [armel], libgfortran'FORTRAN_SO\`-armhf [armhf]')
++')\`'dnl
+ Priority: ifdef(\`TARGET',\`extra',PRI(optional))
+ Depends: BASEDEP, \${shlibs:Depends}, \${misc:Depends}
+ BUILT_USING\`'dnl
+@@ -3375,8 +3422,10 @@
+ Package: libgfortran\`'FORTRAN_SO-dbg\`'LS
+ Section: debug
+ Architecture: ifdef(\`TARGET',\`CROSS_ARCH',\`any')
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
+-')\`Provides: libgfortran'FORTRAN_SO\`-dbg-armel [armel], libgfortran'FORTRAN_SO\`-dbg-armhf [armhf]')
++ifdef(\`TARGET',\`',\`Provides: libgfortran'FORTRAN_SO\`-dbg-armel [armel], libgfortran'FORTRAN_SO\`-dbg-armhf [armhf]
++')\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
++')\`'dnl
+ Priority: extra
+ Depends: BASEDEP, libdep(gfortran\`'FORTRAN_SO,,=), libdbgdep(gcc\`'GCC_SO-dbg,,>=,\${libgcc:Version}), \${misc:Depends}
+ BUILT_USING\`'dnl
+@@ -3587,9 +3636,11 @@
+ Package: libgo\`'GO_SO\`'LS
+ Section: ifdef(\`TARGET',\`devel',\`libs')
+ Architecture: ifdef(\`TARGET',\`CROSS_ARCH',\`any')
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
++ifdef(\`TARGET',\`',\`Provides: libgo'GO_SO\`-armel [armel], libgo'GO_SO\`-armhf [armhf]
++')\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
+ Pre-Depends: multiarch-support
+-')\`Provides: libgo'GO_SO\`-armel [armel], libgo'GO_SO\`-armhf [armhf]')
++')\`'dnl
+ Priority: ifdef(\`TARGET',\`extra',PRI(optional))
+ Depends: BASEDEP, \${shlibs:Depends}, \${misc:Depends}
+ Replaces: libgo3\`'LS
+@@ -3601,8 +3652,10 @@
+ Package: libgo\`'GO_SO-dbg\`'LS
+ Section: debug
+ Architecture: ifdef(\`TARGET',\`CROSS_ARCH',\`any')
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
+-')\`Provides: libgo'GO_SO\`-dbg-armel [armel], libgo'GO_SO\`-dbg-armhf [armhf]')
++ifdef(\`TARGET',\`',\`Provides: libgo'GO_SO\`-dbg-armel [armel], libgo'GO_SO\`-dbg-armhf [armhf]
++')\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
++')\`'dnl
+ Priority: extra
+ Depends: BASEDEP, libdep(go\`'GO_SO,,=), \${misc:Depends}
+ BUILT_USING\`'dnl
+@@ -3946,11 +3999,11 @@
+ Section: ifdef(\`TARGET',\`devel',\`libs')
+ Priority: ifdef(\`TARGET',\`extra',PRI(important))
+ Depends: BASEDEP, \${dep:libc}, \${shlibs:Depends}, \${misc:Depends}
+-ifdef(\`TARGET',\`Provides: libstdc++CXX_SO-TARGET-dcv1',
++Provides: ifdef(\`TARGET',\`libstdc++CXX_SO-TARGET-dcv1',\`libstdc++'CXX_SO\`-armel [armel], libstdc++'CXX_SO\`-armhf [armhf]')
+ ifdef(\`MULTIARCH', \`Multi-Arch: same
+ Pre-Depends: multiarch-support
+ Breaks: \${multiarch:breaks}
+-')\`Provides: libstdc++'CXX_SO\`-armel [armel], libstdc++'CXX_SO\`-armhf [armhf]')
++')\`'dnl
+ Conflicts: scim (<< 1.4.2-1)
+ BUILT_USING\`'dnl
+ Description: GNU Standard C++ Library v3\`'ifdef(\`TARGET)',\` (TARGET)', \`')
+@@ -4122,8 +4175,8 @@
+ ifenabled(\`c++dev',\`
+ Package: libstdc++\`'PV-dev\`'LS
+ Architecture: ifdef(\`TARGET',\`CROSS_ARCH',\`any')
+-ifdef(\`TARGET',\`',ifdef(\`MULTIARCH', \`Multi-Arch: same
+-'))\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
++')\`'dnl
+ Section: ifdef(\`TARGET',\`devel',\`libdevel')
+ Priority: ifdef(\`TARGET',\`extra',PRI(optional))
+ Depends: BASEDEP, libdevdep(gcc\`'PV-dev,,=),
+@@ -4151,8 +4204,8 @@
+ 
+ Package: libstdc++\`'PV-pic\`'LS
+ Architecture: ifdef(\`TARGET',\`CROSS_ARCH',\`any')
+-ifdef(\`TARGET',\`',ifdef(\`MULTIARCH', \`Multi-Arch: same
+-'))\`'dnl
++ifdef(\`MULTIARCH', \`Multi-Arch: same
++')\`'dnl
+ Section: ifdef(\`TARGET',\`devel',\`libdevel')
+ Priority: extra
+ Depends: BASEDEP, libdep(stdc++CXX_SO,),
+@@ -4177,10 +4230,9 @@
+ Priority: extra
+ Depends: BASEDEP, libdep(stdc++CXX_SO,),
+  libdbgdep(gcc\`'GCC_SO-dbg,,>=,\${libgcc:Version}), \${shlibs:Depends}, \${misc:Depends}
+-ifdef(\`TARGET',\`Provides: libstdc++CXX_SO-dbg-TARGET-dcv1',\`dnl
+-ifdef(\`MULTIARCH', \`Multi-Arch: same',\`dnl')
+-Provides: libstdc++'CXX_SO\`'PV\`-dbg-armel [armel], libstdc++'CXX_SO\`'PV\`-dbg-armhf [armhf]dnl
+-')
++Provides: ifdef(\`TARGET',\`libstdc++CXX_SO-dbg-TARGET-dcv1',\`libstdc++'CXX_SO\`'PV\`-dbg-armel [armel], libstdc++'CXX_SO\`'PV\`-dbg-armhf [armhf]')
++ifdef(\`MULTIARCH', \`Multi-Arch: same
++')\`'dnl
+ Recommends: libdevdep(stdc++\`'PV-dev,)
+ Conflicts: libstdc++5-dbg\`'LS, libstdc++5-3.3-dbg\`'LS, libstdc++6-dbg\`'LS,
+  libstdc++6-4.0-dbg\`'LS, libstdc++6-4.1-dbg\`'LS, libstdc++6-4.2-dbg\`'LS,
+@@ -4511,9 +4563,9 @@
+ Package: libgnat\`'-GNAT_V\`'LS
+ Section: ifdef(\`TARGET',\`devel',\`libs')
+ Architecture: ifdef(\`TARGET',\`CROSS_ARCH',\`any')
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
++ifdef(\`MULTIARCH', \`Multi-Arch: same
+ Pre-Depends: multiarch-support
+-'))\`'dnl
++')\`'dnl
+ Priority: PRI(optional)
+ Depends: BASEDEP, \${shlibs:Depends}, \${misc:Depends}
+ BUILT_USING\`'dnl
+@@ -4529,9 +4581,9 @@
+ Package: libgnat\`'-GNAT_V-dbg\`'LS
+ Section: debug
+ Architecture: ifdef(\`TARGET',\`CROSS_ARCH',\`any')
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
++ifdef(\`MULTIARCH', \`Multi-Arch: same
+ Pre-Depends: multiarch-support
+-'))\`'dnl
++')\`'dnl
+ Priority: extra
+ Depends: BASEDEP, libgnat\`'-GNAT_V\`'LS (= \${gnat:Version}), \${misc:Depends}
+ BUILT_USING\`'dnl
+@@ -4564,9 +4616,9 @@
+ 
+ Package: libgnatvsn\`'GNAT_V\`'LS
+ Architecture: ifdef(\`TARGET',\`CROSS_ARCH',\`any')
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
++ifdef(\`MULTIARCH', \`Multi-Arch: same
+ Pre-Depends: multiarch-support
+-'))\`'dnl
++')\`'dnl
+ Priority: PRI(optional)
+ Section: ifdef(\`TARGET',\`devel',\`libs')
+ Depends: BASEDEP, libgnat\`'-GNAT_V\`'LS (= \${gnat:Version}), \${misc:Depends}
+@@ -4583,9 +4635,9 @@
+ 
+ Package: libgnatvsn\`'GNAT_V-dbg\`'LS
+ Architecture: ifdef(\`TARGET',\`CROSS_ARCH',\`any')
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
++ifdef(\`MULTIARCH', \`Multi-Arch: same
+ Pre-Depends: multiarch-support
+-'))\`'dnl
++')\`'dnl
+ Priority: extra
+ Section: debug
+ Depends: BASEDEP, libgnatvsn\`'GNAT_V\`'LS (= \${gnat:Version}), \${misc:Depends}
+@@ -4625,9 +4677,9 @@
+ 
+ Package: libgnatprj\`'GNAT_V\`'LS
+ Architecture: ifdef(\`TARGET',\`CROSS_ARCH',\`any')
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
++ifdef(\`MULTIARCH', \`Multi-Arch: same
+ Pre-Depends: multiarch-support
+-'))\`'dnl
++')\`'dnl
+ Priority: PRI(optional)
+ Section: ifdef(\`TARGET',\`devel',\`libs')
+ Depends: BASEDEP, libgnat\`'-GNAT_V\`'LS (= \${gnat:Version}), libgnatvsn\`'GNAT_V\`'LS (= \${gnat:Version}), \${misc:Depends}
+@@ -4647,9 +4699,9 @@
+ 
+ Package: libgnatprj\`'GNAT_V-dbg\`'LS
+ Architecture: ifdef(\`TARGET',\`CROSS_ARCH',\`any')
+-ifdef(\`TARGET',\`dnl',ifdef(\`MULTIARCH', \`Multi-Arch: same
++ifdef(\`MULTIARCH', \`Multi-Arch: same
+ Pre-Depends: multiarch-support
+-'))\`'dnl
++')\`'dnl
+ Priority: extra
+ Section: debug
+ Depends: BASEDEP, libgnatprj\`'GNAT_V\`'LS (= \${gnat:Version}), \${misc:Depends}
+EOF
+	fi
 }
 
 if test -d "$RESULT/gcc1"; then
