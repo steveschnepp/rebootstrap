@@ -525,7 +525,7 @@ diff -u gcc-4.9-4.9-20140411/debian/patches/cross-ma-install-location.diff gcc-4
 EOF
 	fi
 	if test "$GCC_VER" = "4.8"; then
-		echo "patching gcc to support multiarch crossbuilds"
+		echo "patching gcc to support multiarch crossbuilds #716795"
 		patch -p1 <<EOF
 diff -u gcc-4.8-4.8.2/debian/control.m4 gcc-4.8-4.8.2/debian/control.m4
 --- gcc-4.8-4.8.2/debian/control.m4
@@ -1043,7 +1043,7 @@ diff -u gcc-4.8-4.8.2/debian/control.m4 gcc-4.8-4.8.2/debian/control.m4
 EOF
 	fi
 	if test "$GCC_VER" = "4.9"; then
-		echo "patching gcc 4.9 to support multiarch crossbuilds"
+		echo "patching gcc 4.9 to support multiarch crossbuilds #716795"
 		patch -p1 <<EOF
 diff -u gcc-4.9-4.9-20140411/debian/control.m4 gcc-4.9-4.9-20140411/debian/control.m4
 --- gcc-4.9-4.9-20140411/debian/control.m4
