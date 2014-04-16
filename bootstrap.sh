@@ -431,7 +431,7 @@ diff -u gcc-4.8-4.8.2/debian/patches/powerpc_remove_many.diff gcc-4.8-4.8.2/debi
  +ASM_CPU_SPU_MANY_NOT_SPE
 EOF
 	fi
-	if test "$GCC_VER" = "4.8"; then
+	if test "$GCC_VER" = "4.8" -o "$GCC_VER" = "4.9"; then
 		echo "build gcc-X.Y-base when with_deps_on_target_arch_pkgs #744782"
 		patch -p1 <<EOF
 diff -u gcc-4.8-4.8.2/debian/control.m4 gcc-4.8-4.8.2/debian/control.m4
