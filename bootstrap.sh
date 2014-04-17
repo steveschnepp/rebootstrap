@@ -2020,3 +2020,22 @@ else
 	rm -Rf gcc3
 fi
 echo "progress-mark:7:gcc stage3 complete"
+
+if test -d "$RESULT/pcre3"; then
+	echo "skipping rebuild of pcre3"
+else
+	apt-get -y install debhelper dpkg-dev
+	cd /tmp/buildd
+	mkdir pcre3
+	cd pcre3
+	obtain_source_package pcre3
+	cd pcre3-*
+	dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends
+	dpkg-buildpackage -a$HOST_ARCH -B -d -uc -us
+	cd ..
+	ls -l
+	test -d "$RESULT" && mkdir "$RESULT/pcre3"
+	cd ..
+	rm -Rf pcre3
+fi
+echo "progress-mark:8:pcre3 cross build"
