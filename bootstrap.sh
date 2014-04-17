@@ -256,7 +256,30 @@ mkdir -p "$RESULT"
 # choosing libatomic1 arbitrarily here, cause it never bumped soname
 BUILD_GCC_MULTIARCH_VER=`apt-cache show --no-all-versions libatomic1 | sed 's/^Source: gcc-\([0-9.]*\)$/\1/;t;d'`
 if test "$GCC_VER" != "$BUILD_GCC_MULTIARCH_VER"; then
-	echo "fatal error: host gcc version ($GCC_VER) and build gcc version ($BUILD_GCC_MULTIARCH_VER) mismatch. implement rebuilding of build gcc or results will be uninstallable due to multiarch"
+	echo "host gcc version ($GCC_VER) and build gcc version ($BUILD_GCC_MULTIARCH_VER) mismatch. need different build gcc"
+if test -d "$RESULT/gcc0"; then
+	echo "skipping rebuild of build gcc"
+	dpkg -i $RESULT/gcc0/*.deb
+else
+	apt-get build-dep --arch-only -y gcc-$GCC_VER
+	cd /tmp/buildd
+	mkdir gcc0
+	cd gcc0
+	obtain_source_package gcc-$GCC_VER
+	cd gcc-*
+	DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=biarch,d,go,java,objc,obj-c++" dpkg-buildpackage -B -uc -us
+	cd ..
+	ls -l
+	rm -fv *-plugin-dev_*.deb *-dbg_*.deb
+	dpkg -i *.deb
+	test -d "$RESULT" && mkdir "$RESULT/gcc0"
+	test -d "$RESULT" && cp *.deb "$RESULT/gcc0"
+	cd ..
+	rm -Rf gcc0
+fi
+echo "progress-mark:0:build compiler complete"
+else
+echo "host gcc version and build gcc version match. good for multiarch"
 fi
 
 # binutils
