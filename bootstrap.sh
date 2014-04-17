@@ -1989,10 +1989,11 @@ else
 	obtain_source_package eglibc
 	cd eglibc-*
 	patch_eglibc
-	dpkg-checkbuilddeps -B -a$HOST_ARCH || : # tell unmet build depends
 	if test "$ENABLE_MULTILIB" = yes; then
+		dpkg-checkbuilddeps -B -a$HOST_ARCH -Pstage2 || : # tell unmet build depends
 		DEB_GCC_VERSION=-$GCC_VER dpkg-buildpackage -B -uc -us -a$HOST_ARCH -d -Pstage2
 	else
+		dpkg-checkbuilddeps -B -a$HOST_ARCH -Pstage2,nobiarch || : # tell unmet build depends
 		DEB_GCC_VERSION=-$GCC_VER dpkg-buildpackage -B -uc -us -a$HOST_ARCH -d -Pstage2,nobiarch
 	fi
 	cd ..
