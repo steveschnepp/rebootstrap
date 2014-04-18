@@ -1690,7 +1690,7 @@ diff -u gcc-4.9-4.9-20140411/debian/control.m4 gcc-4.9-4.9-20140411/debian/contr
 EOF
 	fi # vim syntax deconfusion: '
 	if test "$GCC_VER" = "4.8"; then
-		echo "patching gcc to honour DEB_CROSS_NO_BIARCH for hppa"
+		echo "patching gcc to honour DEB_CROSS_NO_BIARCH for hppa #745116"
 		patch -p1 <<EOF
 diff -u gcc-4.8-4.8.2/debian/rules.defs gcc-4.8-4.8.2/debian/rules.defs
 --- gcc-4.8-4.8.2/debian/rules.defs
