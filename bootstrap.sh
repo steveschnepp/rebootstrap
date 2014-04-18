@@ -2076,31 +2076,6 @@ else
 	cd pcre3
 	obtain_source_package pcre3
 	cd pcre3-*
-	echo "patching pcre to build without jit where not implemented #745114"
-	patch -p1 <<EOF
-diff -Nru pcre3-8.31/debian/rules pcre3-8.31/debian/rules
---- pcre3-8.31/debian/rules
-+++ pcre3-8.31/debian/rules
-@@ -27,6 +27,9 @@
- INSTALL_PROGRAM += -s
- endif
- 
-+ifeq (,\$(findstring \$(DEB_HOST_MULTIARCH),aarch64-linux-gnu m68k-linux-gnu))
-+CONFIGURE_ARGS += --enable-jit
-+endif
- 
- config.status: configure
- 	dh_testdir
-@@ -37,7 +40,7 @@
- 		--infodir=\$${prefix}/share/info \\
- 		--libdir=\$${prefix}/lib/\$(DEB_HOST_MULTIARCH) \\
- 		--enable-utf8 --enable-unicode-properties \\
--		--enable-jit
-+		\$(CONFIGURE_ARGS)
- 
- build: build-arch build-indep
- build-arch: build-stamp
-EOF
 	dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends
 	dpkg-buildpackage -a$HOST_ARCH -B -d -uc -us
 	cd ..
