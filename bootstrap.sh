@@ -2070,14 +2070,13 @@ echo "progress-mark:7:gcc stage3 complete"
 if test -d "$RESULT/pcre3"; then
 	echo "skipping rebuild of pcre3"
 else
-	apt-get -y install debhelper dpkg-dev
+	apt-get -y -a$HOST_ARCH --arch-only build-dep pcre3
 	cd /tmp/buildd
 	mkdir pcre3
 	cd pcre3
 	obtain_source_package pcre3
 	cd pcre3-*
-	dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends
-	dpkg-buildpackage -a$HOST_ARCH -B -d -uc -us
+	dpkg-buildpackage -a$HOST_ARCH -B -uc -us
 	cd ..
 	ls -l
 	test -d "$RESULT" && mkdir "$RESULT/pcre3"
