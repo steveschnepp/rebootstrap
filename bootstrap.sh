@@ -1688,6 +1688,27 @@ diff -u gcc-4.9-4.9-20140411/debian/control.m4 gcc-4.9-4.9-20140411/debian/contr
  Section: debug
  Depends: BASEDEP, libgnatprj\`'GNAT_V\`'LS (= \${gnat:Version}), \${misc:Depends}
 EOF
+	fi # vim syntax deconfusion: '
+	if test "$GCC_VER" = "4.8"; then
+		echo "patching gcc to honour DEB_CROSS_NO_BIARCH for hppa"
+		patch -p1 <<EOF
+diff -u gcc-4.8-4.8.2/debian/rules.defs gcc-4.8-4.8.2/debian/rules.defs
+--- gcc-4.8-4.8.2/debian/rules.defs
++++ gcc-4.8-4.8.2/debian/rules.defs
+@@ -1138,7 +1138,11 @@
+   # hppa64 build ----------------
+   hppa64_no_snap := no
+   ifeq (\$(DEB_TARGET_ARCH),hppa)
+-    with_hppa64 := yes
++    ifdef DEB_CROSS_NO_BIARCH
++      with_hppa64 := disabled by DEB_CROSS_NO_BIARCH
++    else
++      with_hppa64 := yes
++    endif
+   endif
+   ifeq (\$(hppa64_no_snap)-\$(trunk_build),yes-yes)
+     with_hppa64 := disabled for snapshot build
+EOF
 	fi
 }
 
@@ -1709,9 +1730,9 @@ else
 		dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends again after rewriting control
 		DEB_TARGET_ARCH=$HOST_ARCH DEB_STAGE=stage1 dpkg-buildpackage -d -B -uc -us
 	else
-		DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=hppa64" DEB_TARGET_ARCH=$HOST_ARCH DEB_CROSS_NO_BIARCH=yes DEB_STAGE=stage1 dpkg-buildpackage -d -T control
+		DEB_TARGET_ARCH=$HOST_ARCH DEB_CROSS_NO_BIARCH=yes DEB_STAGE=stage1 dpkg-buildpackage -d -T control
 		dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends again after rewriting control
-		DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=hppa64" DEB_TARGET_ARCH=$HOST_ARCH DEB_CROSS_NO_BIARCH=yes DEB_STAGE=stage1 dpkg-buildpackage -d -B -uc -us
+		DEB_TARGET_ARCH=$HOST_ARCH DEB_CROSS_NO_BIARCH=yes DEB_STAGE=stage1 dpkg-buildpackage -d -B -uc -us
 	fi
 	cd ..
 	ls -l
