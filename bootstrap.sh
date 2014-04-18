@@ -2084,3 +2084,22 @@ else
 	rm -Rf pcre3
 fi
 echo "progress-mark:8:pcre3 cross build"
+
+if test -d "$RESULT/attr"; then
+	echo "skipping rebuild of attr"
+else
+	apt-get -y install dpkg-dev debhelper autoconf automake gettext libtool
+	cd /tmp/buildd
+	mkdir attr
+	cd attr
+	obtain_source_package attr
+	cd attr-*
+	dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends
+	dpkg-buildpackage -a$HOST_ARCH -B -d -uc -us
+	cd ..
+	ls -l
+	test -d "$RESULT" && mkdir "$RESULT/attr"
+	cd ..
+	rm -Rf attr
+fi
+echo "progress-mark:9:attr cross build"
