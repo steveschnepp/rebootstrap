@@ -1911,6 +1911,282 @@ diff -Nru eglibc-2.18/debian/rules eglibc-2.18/debian/rules
  include debian/rules.d/*.mk
  
 EOF
+	echo "patching eglibc to not create multilib packages in nobiarch profile"
+	patch -p1 <<EOF
+diff -Nru eglibc-2.18/debian/rules eglibc-2.18/debian/rules
+--- eglibc-2.18/debian/rules
++++ eglibc-2.18/debian/rules
+@@ -173,6 +173,11 @@
+ -include debian/sysdeps/\$(DEB_HOST_ARCH_OS).mk
+ -include debian/sysdeps/\$(DEB_HOST_ARCH).mk
+ 
++# build multilib packages unless build is staged
++ifeq (\$(filter nobiarch,\$(DEB_BUILD_PROFILES)),)
++DEB_ARCH_REGULAR_PACKAGES += \$(DEB_ARCH_MULTILIB_PACKAGES)
++endif
++
+ # Don't run dh_strip on this package
+ NOSTRIP_\$(libc)-dbg = 1
+ 
+diff -Nru eglibc-2.18/debian/sysdeps/alpha.mk eglibc-2.18/debian/sysdeps/alpha.mk
+--- eglibc-2.18/debian/sysdeps/alpha.mk
++++ eglibc-2.18/debian/sysdeps/alpha.mk
+@@ -4,7 +4,7 @@
+ 
+ # build an ev67 optimized library
+ EGLIBC_PASSES += alphaev67
+-DEB_ARCH_REGULAR_PACKAGES += libc6.1-alphaev67
++DEB_ARCH_MULTILIB_PACKAGES += libc6.1-alphaev67
+ alphaev67_add-ons = ports nptl \$(add-ons)
+ alphaev67_configure_target = alphaev67-linux-gnu
+ alphaev67_extra_cflags = -mcpu=ev67 -mtune=ev67 -O2
+diff -Nru eglibc-2.18/debian/sysdeps/amd64.mk eglibc-2.18/debian/sysdeps/amd64.mk
+--- eglibc-2.18/debian/sysdeps/amd64.mk
++++ eglibc-2.18/debian/sysdeps/amd64.mk
+@@ -3,7 +3,7 @@
+ 
+ # build 32-bit (i386) alternative library
+ EGLIBC_PASSES += i386
+-DEB_ARCH_REGULAR_PACKAGES += libc6-i386 libc6-dev-i386
++DEB_ARCH_MULTILIB_PACKAGES += libc6-i386 libc6-dev-i386
+ libc6-i386_shlib_dep = libc6-i386 (>= \$(shlib_dep_ver))
+ i386_add-ons = nptl \$(add-ons)
+ i386_configure_target = i686-linux-gnu
+@@ -39,7 +39,7 @@
+ 
+ # build x32 ABI alternative library
+ EGLIBC_PASSES += x32
+-DEB_ARCH_REGULAR_PACKAGES += libc6-x32 libc6-dev-x32
++DEB_ARCH_MULTILIB_PACKAGES += libc6-x32 libc6-dev-x32
+ libc6-x32_shlib_dep = libc6-x32 (>= \$(shlib_dep_ver))
+ x32_add-ons = nptl \$(add-ons)
+ x32_configure_target = x86_64-linux-gnux32
+diff -Nru eglibc-2.18/debian/sysdeps/armel.mk eglibc-2.18/debian/sysdeps/armel.mk
+--- eglibc-2.18/debian/sysdeps/armel.mk
++++ eglibc-2.18/debian/sysdeps/armel.mk
+@@ -2,7 +2,7 @@
+ extra_config_options = --enable-multi-arch
+ 
+ #EGLIBC_PASSES += armhf
+-#DEB_ARCH_REGULAR_PACKAGES += libc6-armhf libc6-dev-armhf
++#DEB_ARCH_MULTILIB_PACKAGES += libc6-armhf libc6-dev-armhf
+ #armhf_add-ons = ports nptl \$(add-ons)
+ #armhf_configure_target = arm-linux-gnueabihf
+ #armhf_CC = \$(CC) -march=armv7-a -mfpu=vfpv3-d16 -mfloat-abi=hard
+diff -Nru eglibc-2.18/debian/sysdeps/armhf.mk eglibc-2.18/debian/sysdeps/armhf.mk
+--- eglibc-2.18/debian/sysdeps/armhf.mk
++++ eglibc-2.18/debian/sysdeps/armhf.mk
+@@ -13,7 +13,7 @@
+ endef
+ 
+ #EGLIBC_PASSES += armel
+-#DEB_ARCH_REGULAR_PACKAGES += libc6-armel libc6-dev-armel
++#DEB_ARCH_MULTILIB_PACKAGES += libc6-armel libc6-dev-armel
+ #armel_add-ons = ports nptl \$(add-ons)
+ #armel_configure_target = arm-linux-gnueabi
+ #armel_CC = \$(CC) -mfloat-abi=soft
+diff -Nru eglibc-2.18/debian/sysdeps/hurd-i386.mk eglibc-2.18/debian/sysdeps/hurd-i386.mk
+--- eglibc-2.18/debian/sysdeps/hurd-i386.mk
++++ eglibc-2.18/debian/sysdeps/hurd-i386.mk
+@@ -1,7 +1,7 @@
+ # We use -march=i686 and glibc's i686 routines use cmov, so require it.
+ # A Debian-local glibc patch adds cmov to the search path.
+ EGLIBC_PASSES += i686
+-DEB_ARCH_REGULAR_PACKAGES += libc0.3-i686
++DEB_ARCH_MULTILIB_PACKAGES += libc0.3-i686
+ i686_add-ons = \$(libc_add-ons)
+ i686_configure_target=i686-gnu
+ i686_extra_cflags = -march=i686 -mtune=generic
+diff -Nru eglibc-2.18/debian/sysdeps/i386.mk eglibc-2.18/debian/sysdeps/i386.mk
+--- eglibc-2.18/debian/sysdeps/i386.mk
++++ eglibc-2.18/debian/sysdeps/i386.mk
+@@ -4,7 +4,7 @@
+ # A Debian-local glibc patch adds cmov to the search path.
+ # The optimized libraries also use NPTL!
+ EGLIBC_PASSES += i686
+-DEB_ARCH_REGULAR_PACKAGES += libc6-i686
++DEB_ARCH_MULTILIB_PACKAGES += libc6-i686
+ i686_add-ons = nptl \$(add-ons)
+ i686_configure_target=i686-linux-gnu
+ i686_extra_cflags = -march=i686 -mtune=generic
+@@ -33,7 +33,7 @@
+ 
+ # build 64-bit (amd64) alternative library
+ EGLIBC_PASSES += amd64
+-DEB_ARCH_REGULAR_PACKAGES += libc6-amd64 libc6-dev-amd64
++DEB_ARCH_MULTILIB_PACKAGES += libc6-amd64 libc6-dev-amd64
+ libc6-amd64_shlib_dep = libc6-amd64 (>= \$(shlib_dep_ver))
+ amd64_add-ons = nptl \$(add-ons)
+ amd64_configure_target = x86_64-linux-gnu
+@@ -77,7 +77,7 @@
+ 
+ # build x32 ABI alternative library
+ EGLIBC_PASSES += x32
+-DEB_ARCH_REGULAR_PACKAGES += libc6-x32 libc6-dev-x32
++DEB_ARCH_MULTILIB_PACKAGES += libc6-x32 libc6-dev-x32
+ libc6-x32_shlib_dep = libc6-x32 (>= \$(shlib_dep_ver))
+ x32_add-ons = nptl \$(add-ons)
+ x32_configure_target = x86_64-linux-gnux32
+diff -Nru eglibc-2.18/debian/sysdeps/kfreebsd-amd64.mk eglibc-2.18/debian/sysdeps/kfreebsd-amd64.mk
+--- eglibc-2.18/debian/sysdeps/kfreebsd-amd64.mk
++++ eglibc-2.18/debian/sysdeps/kfreebsd-amd64.mk
+@@ -3,7 +3,7 @@
+ 
+ # build 32-bit (i386) alternative library
+ EGLIBC_PASSES += i386
+-DEB_ARCH_REGULAR_PACKAGES += libc0.1-i386 libc0.1-dev-i386
++DEB_ARCH_MULTILIB_PACKAGES += libc0.1-i386 libc0.1-dev-i386
+ libc0.1-i386_shlib_dep = libc0.1-i386 (>= \$(shlib_dep_ver))
+ 
+ i386_configure_target = i686-kfreebsd-gnu
+diff -Nru eglibc-2.18/debian/sysdeps/kfreebsd-i386.mk eglibc-2.18/debian/sysdeps/kfreebsd-i386.mk
+--- eglibc-2.18/debian/sysdeps/kfreebsd-i386.mk
++++ eglibc-2.18/debian/sysdeps/kfreebsd-i386.mk
+@@ -3,7 +3,7 @@
+ 
+ # Build a 32-bit optimized library
+ EGLIBC_PASSES += i686
+-DEB_ARCH_REGULAR_PACKAGES += libc0.1-i686
++DEB_ARCH_MULTILIB_PACKAGES += libc0.1-i686
+ 
+ # We use -march=i686 and glibc's i686 routines use cmov, so require it.
+ # A Debian-local glibc patch adds cmov to the search path.
+diff -Nru eglibc-2.18/debian/sysdeps/mips.mk eglibc-2.18/debian/sysdeps/mips.mk
+--- eglibc-2.18/debian/sysdeps/mips.mk
++++ eglibc-2.18/debian/sysdeps/mips.mk
+@@ -3,7 +3,7 @@
+ 
+ # build 32-bit (n32) alternative library
+ EGLIBC_PASSES += mipsn32
+-DEB_ARCH_REGULAR_PACKAGES += libc6-mipsn32 libc6-dev-mipsn32
++DEB_ARCH_MULTILIB_PACKAGES += libc6-mipsn32 libc6-dev-mipsn32
+ mipsn32_add-ons = ports nptl \$(add-ons)
+ mipsn32_configure_target = mips32-linux-gnu
+ mipsn32_extra_cflags = -mno-plt
+@@ -17,7 +17,7 @@
+ 
+ # build 64-bit alternative library
+ EGLIBC_PASSES += mips64
+-DEB_ARCH_REGULAR_PACKAGES += libc6-mips64 libc6-dev-mips64
++DEB_ARCH_MULTILIB_PACKAGES += libc6-mips64 libc6-dev-mips64
+ mips64_add-ons = ports nptl \$(add-ons)
+ mips64_configure_target = mips64-linux-gnu
+ mips64_extra_cflags = -mno-plt
+diff -Nru eglibc-2.18/debian/sysdeps/mipsel.mk eglibc-2.18/debian/sysdeps/mipsel.mk
+--- eglibc-2.18/debian/sysdeps/mipsel.mk
++++ eglibc-2.18/debian/sysdeps/mipsel.mk
+@@ -3,7 +3,7 @@
+ 
+ # build 32-bit (n32) alternative library
+ EGLIBC_PASSES += mipsn32
+-DEB_ARCH_REGULAR_PACKAGES += libc6-mipsn32 libc6-dev-mipsn32
++DEB_ARCH_MULTILIB_PACKAGES += libc6-mipsn32 libc6-dev-mipsn32
+ mipsn32_add-ons = ports nptl \$(add-ons)
+ mipsn32_configure_target = mips32el-linux-gnu
+ mipsn32_extra_cflags = -mno-plt
+@@ -17,7 +17,7 @@
+ 
+ # build 64-bit alternative library
+ EGLIBC_PASSES += mips64
+-DEB_ARCH_REGULAR_PACKAGES += libc6-mips64 libc6-dev-mips64
++DEB_ARCH_MULTILIB_PACKAGES += libc6-mips64 libc6-dev-mips64
+ mips64_add-ons = ports nptl \$(add-ons)
+ mips64_configure_target = mips64el-linux-gnu
+ mips64_extra_cflags = -mno-plt
+@@ -57,7 +57,7 @@
+ 
+ # build a loongson-2f optimized library
+ EGLIBC_PASSES += loongson2f
+-DEB_ARCH_REGULAR_PACKAGES += libc6-loongson2f
++DEB_ARCH_MULTILIB_PACKAGES += libc6-loongson2f
+ loongson2f_add-ons = ports nptl \$(add-ons)
+ loongson2f_configure_target = mips32el-linux-gnu
+ loongson2f_CC = \$(CC) -mabi=32
+diff -Nru eglibc-2.18/debian/sysdeps/powerpc.mk eglibc-2.18/debian/sysdeps/powerpc.mk
+--- eglibc-2.18/debian/sysdeps/powerpc.mk
++++ eglibc-2.18/debian/sysdeps/powerpc.mk
+@@ -2,7 +2,7 @@
+ 
+ # build 64-bit (ppc64) alternative library
+ EGLIBC_PASSES += ppc64
+-DEB_ARCH_REGULAR_PACKAGES += libc6-ppc64 libc6-dev-ppc64
++DEB_ARCH_MULTILIB_PACKAGES += libc6-ppc64 libc6-dev-ppc64
+ ppc64_add-ons = nptl \$(add-ons)
+ ppc64_configure_target = powerpc64-linux-gnu
+ ppc64_CC = \$(CC) -m64
+diff -Nru eglibc-2.18/debian/sysdeps/ppc64.mk eglibc-2.18/debian/sysdeps/ppc64.mk
+--- eglibc-2.18/debian/sysdeps/ppc64.mk
++++ eglibc-2.18/debian/sysdeps/ppc64.mk
+@@ -3,7 +3,7 @@
+ 
+ # build 32-bit (powerpc) alternative library
+ EGLIBC_PASSES += powerpc
+-DEB_ARCH_REGULAR_PACKAGES += libc6-powerpc libc6-dev-powerpc
++DEB_ARCH_MULTILIB_PACKAGES += libc6-powerpc libc6-dev-powerpc
+ libc6-powerpc_shlib_dep = libc6-powerpc (>= \$(shlib_dep_ver))
+ powerpc_add-ons = nptl \$(add-ons)
+ powerpc_configure_target = powerpc-linux-gnu
+diff -Nru eglibc-2.18/debian/sysdeps/s390x.mk eglibc-2.18/debian/sysdeps/s390x.mk
+--- eglibc-2.18/debian/sysdeps/s390x.mk
++++ eglibc-2.18/debian/sysdeps/s390x.mk
+@@ -3,7 +3,7 @@
+ 
+ # build 32-bit (s390) alternative library
+ EGLIBC_PASSES += s390
+-DEB_ARCH_REGULAR_PACKAGES += libc6-s390 libc6-dev-s390
++DEB_ARCH_MULTILIB_PACKAGES += libc6-s390 libc6-dev-s390
+ s390_add-ons = nptl \$(add-ons)
+ s390_configure_target = s390-linux-gnu
+ s390_CC = \$(CC) -m31
+diff -Nru eglibc-2.18/debian/sysdeps/sparc.mk eglibc-2.18/debian/sysdeps/sparc.mk
+--- eglibc-2.18/debian/sysdeps/sparc.mk
++++ eglibc-2.18/debian/sysdeps/sparc.mk
+@@ -1,8 +1,8 @@
+ extra_config_options = --enable-multi-arch
+ 
+ # build 64-bit (sparc64) alternative library
+ EGLIBC_PASSES += sparc64
+-DEB_ARCH_REGULAR_PACKAGES += libc6-sparc64 libc6-dev-sparc64
++DEB_ARCH_MULTILIB_PACKAGES += libc6-sparc64 libc6-dev-sparc64
+ sparc64_add-ons = nptl \$(add-ons)
+ sparc64_configure_target=sparc64-linux-gnu
+ sparc64_CC = \$(CC) -m64
+diff -Nru eglibc-2.18/debian/sysdeps/sparc64.mk eglibc-2.18/debian/sysdeps/sparc64.mk
+--- eglibc-2.18/debian/sysdeps/sparc64.mk
++++ eglibc-2.18/debian/sysdeps/sparc64.mk
+@@ -4,7 +4,7 @@
+ 
+ # build 32-bit (sparc) alternative library
+ EGLIBC_PASSES += sparc
+-DEB_ARCH_REGULAR_PACKAGES += libc6-sparc libc6-dev-sparc
++DEB_ARCH_MULTILIB_PACKAGES += libc6-sparc libc6-dev-sparc
+ sparc_add-ons = nptl \$(add-ons)
+ sparc_configure_target=sparc-linux-gnu
+ sparc_CC = \$(CC) -m32
+diff -Nru eglibc-2.18/debian/sysdeps/x32.mk eglibc-2.18/debian/sysdeps/x32.mk
+--- eglibc-2.18/debian/sysdeps/x32.mk
++++ eglibc-2.18/debian/sysdeps/x32.mk
+@@ -1,9 +1,9 @@
+ libc_rtlddir = /libx32
+ extra_config_options = --enable-multi-arch
+ 
+ # build 64-bit (amd64) alternative library
+ EGLIBC_PASSES += amd64
+-DEB_ARCH_REGULAR_PACKAGES += libc6-amd64 libc6-dev-amd64
++DEB_ARCH_MULTILIB_PACKAGES += libc6-amd64 libc6-dev-amd64
+ libc6-amd64_shlib_dep = libc6-amd64 (>= \$(shlib_dep_ver))
+ amd64_add-ons = nptl \$(add-ons)
+ amd64_configure_target = x86_64-linux-gnu
+@@ -34,7 +35,7 @@
+ 
+ # build 32-bit (i386) alternative library
+ EGLIBC_PASSES += i386
+-DEB_ARCH_REGULAR_PACKAGES += libc6-i386 libc6-dev-i386
++DEB_ARCH_MULTILIB_PACKAGES += libc6-i386 libc6-dev-i386
+ libc6-i386_shlib_dep = libc6-i386 (>= \$(shlib_dep_ver))
+ i386_add-ons = nptl \$(add-ons)
+ i386_configure_target = i686-linux-gnu
+EOF
 	if test "$HOST_ARCH" = "i386"; then
 		echo "patching eglibc to avoid installing xen stuff in stage1 that wasn't built #743676"
 		patch -p1 <<EOF
