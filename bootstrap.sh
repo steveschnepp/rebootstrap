@@ -2395,3 +2395,23 @@ else
 	rm -Rf attr
 fi
 echo "progress-mark:9:attr cross build"
+
+if test -d "$RESULT/acl"; then
+	echo "skipping rebuild of acl"
+else
+	apt-get -y install dpkg-dev debhelper autotools-dev autoconf automake gettext libtool
+	cd /tmp/buildd
+	mkdir acl
+	cd acl
+	obtain_source_package acl
+	cd acl-*
+	dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends
+	dpkg-buildpackage -a$HOST_ARCH -B -d -uc -us
+	cd ..
+	ls -l
+	test -d "$RESULT" && mkdir "$RESULT/acl"
+	test -d "$RESULT" && cp *.deb "$RESULT/acl/"
+	cd ..
+	rm -Rf acl
+fi
+echo "progress-mark:10:acl cross build"
