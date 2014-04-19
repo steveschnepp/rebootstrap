@@ -2356,6 +2356,21 @@ else
 	cd pcre3
 	obtain_source_package pcre3
 	cd pcre3-*
+	echo "patching pcre3 to use host cc for jit detection #745222"
+	patch -p1 <<EOF
+diff -Nru pcre3-8.31/debian/rules pcre3-8.31/debian/rules
+--- pcre3-8.31/debian/rules
++++ pcre3-8.31/debian/rules
+@@ -28,7 +28,7 @@
+ endif
+ 
+ jit-test: debian/jit-test.c
+-	\$(CC) $< -o \$@
++	\$(DEB_HOST_GNU_TYPE)-gcc $< -o \$@
+ 
+ config.status: configure jit-test
+ 	dh_testdir
+EOF
 	dpkg-buildpackage -a$HOST_ARCH -B -uc -us
 	cd ..
 	ls -l
