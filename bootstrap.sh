@@ -1899,23 +1899,6 @@ EOF
 diff -Nru eglibc-2.18/debian/rules eglibc-2.18/debian/rules
 --- eglibc-2.18/debian/rules
 +++ eglibc-2.18/debian/rules
-@@ -201,6 +201,10 @@
- override DEB_ARCH_REGULAR_PACKAGES = \$(libc)-dev
- endif
- 
-+ifneq (\$(filter nobiarch,\$(DEB_BUILD_PROFILES)),)
-+override EGLIBC_PASSES = libc
-+endif
-+
- # And now the rules...
- include debian/rules.d/*.mk
- 
-EOF
-	echo "patching eglibc to not create multilib packages in nobiarch profile"
-	patch -p1 <<EOF
-diff -Nru eglibc-2.18/debian/rules eglibc-2.18/debian/rules
---- eglibc-2.18/debian/rules
-+++ eglibc-2.18/debian/rules
 @@ -173,6 +173,11 @@
  -include debian/sysdeps/\$(DEB_HOST_ARCH_OS).mk
  -include debian/sysdeps/\$(DEB_HOST_ARCH).mk
@@ -1927,6 +1910,17 @@ diff -Nru eglibc-2.18/debian/rules eglibc-2.18/debian/rules
 +
  # Don't run dh_strip on this package
  NOSTRIP_\$(libc)-dbg = 1
+ 
+@@ -201,6 +206,10 @@
+ override DEB_ARCH_REGULAR_PACKAGES = \$(libc)-dev
+ endif
+ 
++ifneq (\$(filter nobiarch,\$(DEB_BUILD_PROFILES)),)
++override EGLIBC_PASSES = libc
++endif
++
+ # And now the rules...
+ include debian/rules.d/*.mk
  
 diff -Nru eglibc-2.18/debian/sysdeps/alpha.mk eglibc-2.18/debian/sysdeps/alpha.mk
 --- eglibc-2.18/debian/sysdeps/alpha.mk
