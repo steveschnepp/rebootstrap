@@ -2376,6 +2376,7 @@ echo "progress-mark:8:pcre3 cross build"
 
 if test -d "$RESULT/attr"; then
 	echo "skipping rebuild of attr"
+	dpkg -i "$RESULT/attr/"libattr*.deb
 else
 	apt-get -y install dpkg-dev debhelper autoconf automake gettext libtool
 	cd /tmp/buildd
@@ -2387,7 +2388,9 @@ else
 	dpkg-buildpackage -a$HOST_ARCH -B -d -uc -us
 	cd ..
 	ls -l
+	dpkg -i libattr*.deb
 	test -d "$RESULT" && mkdir "$RESULT/attr"
+	test -d "$RESULT" && cp *.deb "$RESULT/attr/"
 	cd ..
 	rm -Rf attr
 fi
