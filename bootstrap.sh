@@ -2484,3 +2484,23 @@ else
 	rm -Rf zlib
 fi
 echo "progress-mark:11:zlib cross build"
+
+if test -d "$RESULT/hostname"; then
+	echo "skipping rebuild of hostname"
+else
+	apt-get -y install debhelper
+	cd /tmp/buildd
+	mkdir hostname
+	cd hostname
+	obtain_source_package hostname
+	cd hostname-*
+	dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends
+	dpkg-buildpackage -a$HOST_ARCH -B -d -uc -us
+	cd ..
+	ls -l
+	test -d "$RESULT" && mkdir "$RESULT/hostname"
+	test -d "$RESULT" && cp *.deb "$RESULT/hostname/"
+	cd ..
+	rm -Rf hostname
+fi
+echo "progress-mark:12:hostname cross build"
