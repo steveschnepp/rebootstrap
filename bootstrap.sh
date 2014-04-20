@@ -2468,14 +2468,13 @@ echo "progress-mark:10:acl cross build"
 if test -d "$RESULT/zlib"; then
 	echo "skipping rebuild of zlib"
 else
-	apt-get -y install debhelper
+	apt-get -y -a$HOST_ARCH --arch-only build-dep zlib
 	cd /tmp/buildd
 	mkdir zlib
 	cd zlib
 	obtain_source_package zlib
 	cd zlib-*
-	dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends
-	dpkg-buildpackage -a$HOST_ARCH -B -d -uc -us
+	dpkg-buildpackage -a$HOST_ARCH -B -uc -us
 	cd ..
 	ls -l
 	test -d "$RESULT" && mkdir "$RESULT/zlib"
@@ -2488,14 +2487,13 @@ echo "progress-mark:11:zlib cross build"
 if test -d "$RESULT/hostname"; then
 	echo "skipping rebuild of hostname"
 else
-	apt-get -y install debhelper
+	apt-get -y -a$HOST_ARCH --arch-only build-dep hostname
 	cd /tmp/buildd
 	mkdir hostname
 	cd hostname
 	obtain_source_package hostname
 	cd hostname-*
-	dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends
-	dpkg-buildpackage -a$HOST_ARCH -B -d -uc -us
+	dpkg-buildpackage -a$HOST_ARCH -B -uc -us
 	cd ..
 	ls -l
 	test -d "$RESULT" && mkdir "$RESULT/hostname"
@@ -2508,14 +2506,13 @@ echo "progress-mark:12:hostname cross build"
 if test -d "$RESULT/libsepol"; then
 	echo "skipping rebuild of libsepol"
 else
-	apt-get -y install debhelper dpkg-dev file
+	apt-get -y -a$HOST_ARCH --arch-only build-dep libsepol
 	cd /tmp/buildd
 	mkdir libsepol
 	cd libsepol
 	obtain_source_package libsepol
 	cd libsepol-*
-	dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends
-	dpkg-buildpackage -a$HOST_ARCH -B -d -uc -us
+	dpkg-buildpackage -a$HOST_ARCH -B -uc -us
 	cd ..
 	ls -l
 	test -d "$RESULT" && mkdir "$RESULT/libsepol"
