@@ -2464,3 +2464,23 @@ else
 	rm -Rf acl
 fi
 echo "progress-mark:10:acl cross build"
+
+if test -d "$RESULT/zlib"; then
+	echo "skipping rebuild of zlib"
+else
+	apt-get -y install debhelper
+	cd /tmp/buildd
+	mkdir zlib
+	cd zlib
+	obtain_source_package zlib
+	cd zlib-*
+	dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends
+	dpkg-buildpackage -a$HOST_ARCH -B -d -uc -us
+	cd ..
+	ls -l
+	test -d "$RESULT" && mkdir "$RESULT/zlib"
+	test -d "$RESULT" && cp *.deb "$RESULT/zlib/"
+	cd ..
+	rm -Rf zlib
+fi
+echo "progress-mark:11:zlib cross build"
