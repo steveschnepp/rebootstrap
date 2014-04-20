@@ -2521,3 +2521,24 @@ else
 	rm -Rf libsepol
 fi
 echo "progress-mark:13:libsepol cross build"
+
+if test -d "$RESULT/gmp"; then
+	echo "skipping rebuild of gmp"
+	dpkg -i "$RESULT/gmp/"libgmp*.deb
+else
+	apt-get -y -a$HOST_ARCH --arch-only build-dep gmp
+	cd /tmp/buildd
+	mkdir gmp
+	cd gmp
+	obtain_source_package gmp
+	cd gmp-*
+	dpkg-buildpackage -a$HOST_ARCH -B -uc -us
+	cd ..
+	ls -l
+	dpkg -i libgmp*.deb
+	test -d "$RESULT" && mkdir "$RESULT/gmp"
+	test -d "$RESULT" && cp *.deb "$RESULT/gmp/"
+	cd ..
+	rm -Rf gmp
+fi
+echo "progress-mark:14:gmp cross build"
