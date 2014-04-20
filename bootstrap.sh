@@ -2504,3 +2504,23 @@ else
 	rm -Rf hostname
 fi
 echo "progress-mark:12:hostname cross build"
+
+if test -d "$RESULT/libsepol"; then
+	echo "skipping rebuild of libsepol"
+else
+	apt-get -y install debhelper dpkg-dev file
+	cd /tmp/buildd
+	mkdir libsepol
+	cd libsepol
+	obtain_source_package libsepol
+	cd libsepol-*
+	dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends
+	dpkg-buildpackage -a$HOST_ARCH -B -d -uc -us
+	cd ..
+	ls -l
+	test -d "$RESULT" && mkdir "$RESULT/libsepol"
+	test -d "$RESULT" && cp *.deb "$RESULT/libsepol/"
+	cd ..
+	rm -Rf libsepol
+fi
+echo "progress-mark:13:libsepol cross build"
