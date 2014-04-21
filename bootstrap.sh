@@ -240,10 +240,6 @@ grep -q '^deb-src ' /etc/apt/sources.list || echo "deb-src $MIRROR sid main" >> 
 
 apt-get update
 apt-get -y install build-essential
-if test "$HOST_ARCH" = or1k; then
-	echo "patching dpkg's cputable for or1k to work around #736717"
-	echo "or1k or1k or1k 32 big" >> /usr/share/dpkg/cputable
-fi
 dpkg --add-architecture $HOST_ARCH
 
 if test -z "$GCC_VER"; then
