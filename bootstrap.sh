@@ -1943,7 +1943,7 @@ diff -Nru eglibc-2.18/debian/rules.d/control.mk eglibc-2.18/debian/rules.d/contr
  	rm \$@T
  	touch \$@
 EOF
-	echo "patching eglibc to not build multilib in the nobiarch profile"
+	echo "patching eglibc to not build multilib in the nobiarch profile #745380"
 	patch -p1 <<EOF
 diff -Nru eglibc-2.18/debian/rules eglibc-2.18/debian/rules
 --- eglibc-2.18/debian/rules
