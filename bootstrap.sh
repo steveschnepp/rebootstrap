@@ -2665,3 +2665,23 @@ else
 	rm -Rf gpm
 fi
 echo "progress-mark:16:gpm cross build"
+
+if test -d "$RESULT/ncurses"; then
+	echo "skipping rebuild of ncurses"
+else
+	apt-get -y install debhelper dpkg-dev pkg-config
+	cd /tmp/buildd
+	mkdir ncurses
+	cd ncurses
+	obtain_source_package ncurses
+	cd ncurses-*
+	dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends
+	dpkg-buildpackage -a$HOST_ARCH -B -d -uc -us
+	cd ..
+	ls -l
+	test -d "$RESULT" && mkdir "$RESULT/ncurses"
+	test -d "$RESULT" && cp *.deb "$RESULT/ncurses/"
+	cd ..
+	rm -Rf ncurses
+fi
+echo "progress-mark:17:ncurses cross build"
