@@ -2318,6 +2318,9 @@ ln -s `dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE`-gcc-$GCC_VER /usr/bin
 ln -s `dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE`-cpp-$GCC_VER /usr/bin/`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE`-cpp
 ln -s `dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE`-g++-$GCC_VER /usr/bin/`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE`-g++
 
+if test "$HOST_ARCH" = "sparc"; then
+	apt-get remove -y libc6-i386 # undeclared file conflict #745552
+fi
 if test -d "$RESULT/eglibc2"; then
 	echo "skipping rebuild of eglibc stage2"
 	dpkg -i "$RESULT"/eglibc2/*.deb
