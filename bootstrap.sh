@@ -2583,6 +2583,7 @@ else
 fi
 echo "progress-mark:12:hostname cross build"
 
+if test "`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_ARCH_OS`" = "linux"; then
 if test -d "$RESULT/libsepol"; then
 	echo "skipping rebuild of libsepol"
 else
@@ -2601,6 +2602,7 @@ else
 	rm -Rf libsepol
 fi
 echo "progress-mark:13:libsepol cross build"
+fi
 
 if test -d "$RESULT/gmp"; then
 	echo "skipping rebuild of gmp"
