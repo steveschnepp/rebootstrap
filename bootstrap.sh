@@ -2627,6 +2627,7 @@ echo "progress-mark:14:gmp cross build"
 
 if test -d "$RESULT/mpfr4"; then
 	echo "skipping rebuild of mpfr4"
+	dpkg -i "$RESULT/mpfr4/"*.deb
 else
 	apt-get -y -a$HOST_ARCH --arch-only build-dep mpfr4
 	cd /tmp/buildd
@@ -2637,6 +2638,7 @@ else
 	dpkg-buildpackage -a$HOST_ARCH -B -uc -us
 	cd ..
 	ls -l
+	dpkg -i *.deb
 	test -d "$RESULT" && mkdir "$RESULT/mpfr4"
 	test -d "$RESULT" && cp *.deb "$RESULT/mpfr4/"
 	cd ..
