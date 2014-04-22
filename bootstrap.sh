@@ -2641,3 +2641,25 @@ else
 	rm -Rf mpfr4
 fi
 echo "progress-mark:15:mpfr4 cross build"
+
+if test -d "$RESULT/gpm"; then
+	echo "skipping rebuild of gpm"
+	dpkg -i "$RESULT/gpm/"libgpm*.deb
+else
+	apt-get -y install autoconf autotools-dev quilt debhelper mawk bison texlive-base texinfo texi2html
+	cd /tmp/buildd
+	mkdir gpm
+	cd gpm
+	obtain_source_package gpm
+	cd gpm-*
+	dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends
+	dpkg-buildpackage -a$HOST_ARCH -B -d -uc -us
+	cd ..
+	ls -l
+	dpkg -i libgpm*.deb
+	test -d "$RESULT" && mkdir "$RESULT/gpm"
+	test -d "$RESULT" && cp *.deb "$RESULT/gpm/"
+	cd ..
+	rm -Rf gpm
+fi
+echo "progress-mark:16:gpm cross build"
