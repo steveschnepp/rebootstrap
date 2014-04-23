@@ -2649,6 +2649,27 @@ else
 fi
 echo "progress-mark:15:mpfr4 cross build"
 
+if test -d "$RESULT/mpclib3"; then
+	echo "skipping rebuild of mpclib3"
+	dpkg -i "$RESULT/mpclib3/"*.deb
+else
+	apt-get -y -a$HOST_ARCH --arch-only build-dep mpclib3
+	cd /tmp/buildd
+	mkdir mpclib3
+	cd mpclib3
+	obtain_source_package mpclib3
+	cd mpclib3-*
+	dpkg-buildpackage -a$HOST_ARCH -B -uc -us
+	cd ..
+	ls -l
+	dpkg -i *.deb
+	test -d "$RESULT" && mkdir "$RESULT/mpclib3"
+	test -d "$RESULT" && cp *.deb "$RESULT/mpclib3/"
+	cd ..
+	rm -Rf mpclib3
+fi
+echo "progress-mark:16:mpclib3 cross build"
+
 if test -d "$RESULT/gpm"; then
 	echo "skipping rebuild of gpm"
 	dpkg -i "$RESULT/gpm/"libgpm*.deb
@@ -2669,7 +2690,7 @@ else
 	cd ..
 	rm -Rf gpm
 fi
-echo "progress-mark:16:gpm cross build"
+echo "progress-mark:17:gpm cross build"
 
 if test -d "$RESULT/ncurses"; then
 	echo "skipping rebuild of ncurses"
@@ -2689,4 +2710,4 @@ else
 	cd ..
 	rm -Rf ncurses
 fi
-echo "progress-mark:17:ncurses cross build"
+echo "progress-mark:18:ncurses cross build"
