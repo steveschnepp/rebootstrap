@@ -414,55 +414,6 @@ diff -u gcc-4.8-4.8.2/debian/rules.defs gcc-4.8-4.8.2/debian/rules.defs
 EOF
 	fi
 	if test "$GCC_VER" = "4.9"; then
-		echo "patching gcc to cover libvtv and libcilkrts in cross-ma-install-location.diff"
-		patch -p1 <<EOF
-diff -u gcc-4.9-4.9-20140411/debian/patches/cross-ma-install-location.diff gcc-4.9-4.9-20140411/debian/patches/cross-ma-install-location.diff
---- gcc-4.9-4.9-20140411/debian/patches/cross-ma-install-location.diff
-+++ gcc-4.9-4.9-20140411/debian/patches/cross-ma-install-location.diff
-@@ -346,0 +347,40 @@
-+--- a/src/libvtv/configure.ac
-++++ b/src/libvtv/configure.ac
-+@@ -72,15 +72,8 @@
-+     toolexeclibdir='\$(toolexecdir)/\$(gcc_version)\$(MULTISUBDIR)'
-+     ;;
-+   no)
-+-    if test -n "\$with_cross_host" &&
-+-       test x"\$with_cross_host" != x"no"; then
-+-      # Install a library built with a cross compiler in tooldir, not libdir.
-+-      toolexecdir='\$(exec_prefix)/\$(target_alias)'
-+-      toolexeclibdir='\$(toolexecdir)/lib'
-+-    else
-+-      toolexecdir='\$(libdir)/gcc-lib/\$(target_alias)'
-+-      toolexeclibdir='\$(libdir)'
-+-    fi
-++    toolexecdir='\$(libdir)/gcc-lib/\$(target_alias)'
-++    toolexeclibdir='\$(libdir)'
-+     multi_os_directory=\`\$CC -print-multi-os-directory\`
-+     case \$multi_os_directory in
-+       .) ;; # Avoid trailing /.
-+--- a/src/libcilkrts/configure.ac
-++++ b/src/libcilkrts/configure.ac
-+@@ -103,15 +103,8 @@
-+     toolexeclibdir='\$(toolexecdir)/\$(gcc_version)\$(MULTISUBDIR)'
-+     ;;
-+   no)
-+-    if test -n "\$with_cross_host" &&
-+-       test x"\$with_cross_host" != x"no"; then
-+-      # Install a library built with a cross compiler in tooldir, not libdir.
-+-      toolexecdir='\$(exec_prefix)/\$(target_alias)'
-+-      toolexeclibdir='\$(toolexecdir)/lib'
-+-    else
-+-      toolexecdir='\$(libdir)/gcc-lib/\$(target_alias)'
-+-      toolexeclibdir='\$(libdir)'
-+-    fi
-++    toolexecdir='\$(libdir)/gcc-lib/\$(target_alias)'
-++    toolexeclibdir='\$(libdir)'
-+     multi_os_directory=\`\$CC -print-multi-os-directory\`
-+     case \$multi_os_directory in
-+       .) ;; # Avoid trailing /.
-EOF
-	fi
-	if test "$GCC_VER" = "4.9"; then
 		echo "patching gcc to apply cross-ma-install-location.diff again #744265"
 		patch -p1 <<EOF
 diff -u gcc-4.9-4.9-20140411/debian/patches/cross-ma-install-location.diff gcc-4.9-4.9-20140411/debian/patches/cross-ma-install-location.diff
