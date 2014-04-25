@@ -2501,6 +2501,48 @@ else
 fi
 echo "progress-mark:16:mpclib3 cross build"
 
+if test -d "$RESULT/isl"; then
+	echo "skipping rebuild of isl"
+	dpkg -i "$RESULT/isl/"libisl-dev_*.deb "$RESULT/isl/"libisl1*.deb
+else
+	apt-get -y install debhelper dh-autoreconf automake1.11
+	cd /tmp/buildd
+	mkdir isl
+	cd isl
+	obtain_source_package isl
+	cd isl-*
+	dpkg-buildpackage -a$HOST_ARCH -B -uc -us
+	cd ..
+	ls -l
+	dpkg -i libisl-dev_*.deb libisl1*.deb
+	test -d "$RESULT" && mkdir "$RESULT/isl"
+	test -d "$RESULT" && cp *.deb "$RESULT/isl/"
+	cd ..
+	rm -Rf isl
+fi
+echo "progress-mark:17:isl cross build"
+
+if test -d "$RESULT/cloog"; then
+	echo "skipping rebuild of cloog"
+	dpkg -i "$RESULT/cloog/"lib*.deb
+else
+	apt-get -y install debhelper autotools-dev texinfo help2man
+	cd /tmp/buildd
+	mkdir cloog
+	cd cloog
+	obtain_source_package cloog
+	cd cloog-*
+	dpkg-buildpackage -a$HOST_ARCH -B -uc -us
+	cd ..
+	ls -l
+	dpkg -i lib*.deb
+	test -d "$RESULT" && mkdir "$RESULT/cloog"
+	test -d "$RESULT" && cp *.deb "$RESULT/cloog/"
+	cd ..
+	rm -Rf cloog
+fi
+echo "progress-mark:18:cloog cross build"
+
 if test -d "$RESULT/gpm"; then
 	echo "skipping rebuild of gpm"
 	dpkg -i "$RESULT/gpm/"libgpm*.deb
@@ -2521,7 +2563,7 @@ else
 	cd ..
 	rm -Rf gpm
 fi
-echo "progress-mark:17:gpm cross build"
+echo "progress-mark:19:gpm cross build"
 
 if test -d "$RESULT/ncurses"; then
 	echo "skipping rebuild of ncurses"
@@ -2541,4 +2583,4 @@ else
 	cd ..
 	rm -Rf ncurses
 fi
-echo "progress-mark:18:ncurses cross build"
+echo "progress-mark:20:ncurses cross build"
