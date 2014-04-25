@@ -2199,6 +2199,9 @@ else
 	if ! $compiler -x c -c /dev/null -o test.o; then echo "stage3 gcc fails to execute"; exit 1; fi
 	if ! test -f test.o; then echo "stage3 gcc fails to create binaries"; exit 1; fi
 	check_arch test.o "$HOST_ARCH"
+	touch /usr/include/`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_MULTIARCH`/include_path_test_header.h
+	preproc="`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE`-cpp-$GCC_VER"
+	if ! echo '#include "include_path_test_header.h"' | $preproc -E -; then echo "stage3 gcc fails to search /usr/include/<triplet>"; exit 1; fi
 	test -d "$RESULT" && mkdir "$RESULT/gcc3"
 	test -d "$RESULT" && cp *.deb "$RESULT/gcc3"
 	cd ..
