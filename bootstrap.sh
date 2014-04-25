@@ -253,88 +253,7 @@ fi
 mkdir -p /tmp/buildd
 mkdir -p "$RESULT"
 
-# choosing libatomic1 arbitrarily here, cause it never bumped soname
-BUILD_GCC_MULTIARCH_VER=`apt-cache show --no-all-versions libatomic1 | sed 's/^Source: gcc-\([0-9.]*\)$/\1/;t;d'`
-if test "$GCC_VER" != "$BUILD_GCC_MULTIARCH_VER"; then
-	echo "host gcc version ($GCC_VER) and build gcc version ($BUILD_GCC_MULTIARCH_VER) mismatch. need different build gcc"
-if test -d "$RESULT/gcc0"; then
-	echo "skipping rebuild of build gcc"
-	dpkg -i $RESULT/gcc0/*.deb
-else
-	apt-get build-dep --arch-only -y gcc-$GCC_VER
-	cd /tmp/buildd
-	mkdir gcc0
-	cd gcc0
-	obtain_source_package gcc-$GCC_VER
-	cd gcc-*
-	DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=biarch,d,go,java,objc,obj-c++" dpkg-buildpackage -B -uc -us
-	cd ..
-	ls -l
-	rm -fv *-plugin-dev_*.deb *-dbg_*.deb
-	dpkg -i *.deb
-	test -d "$RESULT" && mkdir "$RESULT/gcc0"
-	test -d "$RESULT" && cp *.deb "$RESULT/gcc0"
-	cd ..
-	rm -Rf gcc0
-fi
-echo "progress-mark:0:build compiler complete"
-else
-echo "host gcc version and build gcc version match. good for multiarch"
-fi
-
-# binutils
-PKG=`echo $RESULT/binutils-*.deb`
-if test -f "$PKG"; then
-	echo "skipping rebuild of binutils-target"
-	dpkg -i "$PKG"
-else
-	apt-get install -y autoconf bison flex gettext texinfo dejagnu quilt python3 file lsb-release zlib1g-dev
-	cd /tmp/buildd
-	mkdir binutils
-	cd binutils
-	obtain_source_package binutils
-	cd binutils-*
-	WITH_SYSROOT=/ TARGET=$HOST_ARCH dpkg-buildpackage -B -uc -us
-	cd ..
-	ls -l
-	dpkg -i binutils-*.deb
-	assembler="`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE`-as"
-	if ! which "$assembler"; then echo "$assembler missing in binutils package"; exit 1; fi
-	if ! $assembler -o test.o /dev/null; then echo "binutils fail to execute"; exit 1; fi
-	if ! test -f test.o; then echo "binutils fail to create object"; exit 1; fi
-	check_arch test.o "$HOST_ARCH"
-	test -d "$RESULT" && cp -v binutils-*.deb "$RESULT"
-	cd ..
-	rm -Rf binutils
-fi
-echo "progress-mark:1:binutils cross complete"
-
-# linux
-if test "`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_ARCH_OS`" = "linux"; then
-PKG=`echo $RESULT/linux-libc-dev_*.deb`
-if test -f "$PKG"; then
-	echo "skipping rebuild of linux-libc-dev"
-	dpkg -i "$PKG"
-else
-	apt-get install -y bc cpio debhelper kernel-wedge patchutils python quilt python-six
-	cd /tmp/buildd
-	mkdir linux
-	cd linux
-	obtain_source_package linux
-	cd linux-*
-	dpkg-checkbuilddeps -B -a$HOST_ARCH || : # tell unmet build depends
-	KBUILD_VERBOSE=1 make -f debian/rules.gen binary-libc-dev_$HOST_ARCH
-	cd ..
-	ls -l
-	dpkg -i linux-libc-dev_*.deb
-	test -d "$RESULT" && cp -v linux-libc-dev_*.deb "$RESULT"
-	cd ..
-	rm -Rf linux
-fi
-echo "progress-mark:2:linux-libc-dev complete"
-fi
-
-# gcc
+# gcc0
 patch_gcc() {
 	if test "$GCC_VER" = "4.8"; then
 		echo "patching gcc-4.8: failure to include headers in stage1"
@@ -1577,7 +1496,88 @@ diff -u gcc-4.8-4.8.2/debian/rules.defs gcc-4.8-4.8.2/debian/rules.defs
 EOF
 	fi
 }
+# choosing libatomic1 arbitrarily here, cause it never bumped soname
+BUILD_GCC_MULTIARCH_VER=`apt-cache show --no-all-versions libatomic1 | sed 's/^Source: gcc-\([0-9.]*\)$/\1/;t;d'`
+if test "$GCC_VER" != "$BUILD_GCC_MULTIARCH_VER"; then
+	echo "host gcc version ($GCC_VER) and build gcc version ($BUILD_GCC_MULTIARCH_VER) mismatch. need different build gcc"
+if test -d "$RESULT/gcc0"; then
+	echo "skipping rebuild of build gcc"
+	dpkg -i $RESULT/gcc0/*.deb
+else
+	apt-get build-dep --arch-only -y gcc-$GCC_VER
+	cd /tmp/buildd
+	mkdir gcc0
+	cd gcc0
+	obtain_source_package gcc-$GCC_VER
+	cd gcc-*
+	DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=biarch,d,go,java,objc,obj-c++" dpkg-buildpackage -B -uc -us
+	cd ..
+	ls -l
+	rm -fv *-plugin-dev_*.deb *-dbg_*.deb
+	dpkg -i *.deb
+	test -d "$RESULT" && mkdir "$RESULT/gcc0"
+	test -d "$RESULT" && cp *.deb "$RESULT/gcc0"
+	cd ..
+	rm -Rf gcc0
+fi
+echo "progress-mark:0:build compiler complete"
+else
+echo "host gcc version and build gcc version match. good for multiarch"
+fi
 
+# binutils
+PKG=`echo $RESULT/binutils-*.deb`
+if test -f "$PKG"; then
+	echo "skipping rebuild of binutils-target"
+	dpkg -i "$PKG"
+else
+	apt-get install -y autoconf bison flex gettext texinfo dejagnu quilt python3 file lsb-release zlib1g-dev
+	cd /tmp/buildd
+	mkdir binutils
+	cd binutils
+	obtain_source_package binutils
+	cd binutils-*
+	WITH_SYSROOT=/ TARGET=$HOST_ARCH dpkg-buildpackage -B -uc -us
+	cd ..
+	ls -l
+	dpkg -i binutils-*.deb
+	assembler="`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE`-as"
+	if ! which "$assembler"; then echo "$assembler missing in binutils package"; exit 1; fi
+	if ! $assembler -o test.o /dev/null; then echo "binutils fail to execute"; exit 1; fi
+	if ! test -f test.o; then echo "binutils fail to create object"; exit 1; fi
+	check_arch test.o "$HOST_ARCH"
+	test -d "$RESULT" && cp -v binutils-*.deb "$RESULT"
+	cd ..
+	rm -Rf binutils
+fi
+echo "progress-mark:1:binutils cross complete"
+
+# linux
+if test "`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_ARCH_OS`" = "linux"; then
+PKG=`echo $RESULT/linux-libc-dev_*.deb`
+if test -f "$PKG"; then
+	echo "skipping rebuild of linux-libc-dev"
+	dpkg -i "$PKG"
+else
+	apt-get install -y bc cpio debhelper kernel-wedge patchutils python quilt python-six
+	cd /tmp/buildd
+	mkdir linux
+	cd linux
+	obtain_source_package linux
+	cd linux-*
+	dpkg-checkbuilddeps -B -a$HOST_ARCH || : # tell unmet build depends
+	KBUILD_VERBOSE=1 make -f debian/rules.gen binary-libc-dev_$HOST_ARCH
+	cd ..
+	ls -l
+	dpkg -i linux-libc-dev_*.deb
+	test -d "$RESULT" && cp -v linux-libc-dev_*.deb "$RESULT"
+	cd ..
+	rm -Rf linux
+fi
+echo "progress-mark:2:linux-libc-dev complete"
+fi
+
+# gcc
 if test -d "$RESULT/gcc1"; then
 	echo "skipping rebuild of gcc stage1"
 	apt-get remove -y gcc-multilib
