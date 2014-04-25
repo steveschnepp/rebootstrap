@@ -2295,6 +2295,7 @@ echo "progress-mark:10:acl cross build"
 
 if test -d "$RESULT/zlib"; then
 	echo "skipping rebuild of zlib"
+	dpkg -i "$RESULT/zlib/"zlib1g_*.deb "$RESULT/zlib/"zlib1g-dev_*.deb
 else
 	apt-get -y install debhelper binutils dpkg-dev
 	cd /tmp/buildd
@@ -2389,6 +2390,7 @@ EOF
 	fi
 	cd ..
 	ls -l
+	dpkg -i zlib1g_*.deb zlib1g-dev_*.deb
 	test -d "$RESULT" && mkdir "$RESULT/zlib"
 	test -d "$RESULT" && cp *.deb "$RESULT/zlib/"
 	cd ..
