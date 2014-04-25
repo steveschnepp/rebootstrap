@@ -1495,6 +1495,26 @@ diff -u gcc-4.8-4.8.2/debian/rules.defs gcc-4.8-4.8.2/debian/rules.defs
      with_hppa64 := disabled for snapshot build
 EOF
 	fi
+	if test "$GCC_VER" = "4.8"; then
+		echo "patching gcc-4.8 to build common libraries. not a bug"
+		patch -p1 <<EOF
+diff -u gcc-4.8-4.8.2/debian/rules.defs gcc-4.8-4.8.2/debian/rules.defs
+--- gcc-4.8-4.8.2/debian/rules.defs
++++ gcc-4.8-4.8.2/debian/rules.defs
+@@ -343,11 +343,6 @@
+ # XXX: should with_common_libs be "yes" only if this is the default compiler
+ # version on the targeted arch?
+ 
+-ifeq (,\$(filter \$(distrelease),lenny etch squeeze wheezy dapper hardy jaunty karmic lucid maverick oneiric precise quantal raring saucy trusty))
+-  with_common_pkgs :=
+-  with_common_libs :=
+-endif
+-
+ # is this a multiarch-enabled build?
+ ifeq (,\$(filter \$(distrelease),lenny etch squeeze dapper hardy jaunty karmic lucid maverick))
+   with_multiarch_lib := yes
+EOF
+	fi
 }
 # choosing libatomic1 arbitrarily here, cause it never bumped soname
 BUILD_GCC_MULTIARCH_VER=`apt-cache show --no-all-versions libatomic1 | sed 's/^Source: gcc-\([0-9.]*\)$/\1/;t;d'`
@@ -1505,11 +1525,15 @@ if test -d "$RESULT/gcc0"; then
 	dpkg -i $RESULT/gcc0/*.deb
 else
 	apt-get build-dep --arch-only -y gcc-$GCC_VER
+	# dependencies for common libs no longer declared
+	apt-get install -y doxygen graphviz ghostscript texlive-latex-base xsltproc docbook-xsl-ns
 	cd /tmp/buildd
 	mkdir gcc0
 	cd gcc0
 	obtain_source_package gcc-$GCC_VER
 	cd gcc-*
+	patch_gcc
+	DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=biarch,d,go,java,objc,obj-c++" dpkg-buildpackage -T control -uc -us
 	DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=biarch,d,go,java,objc,obj-c++" dpkg-buildpackage -B -uc -us
 	cd ..
 	ls -l
