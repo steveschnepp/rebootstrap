@@ -126,7 +126,7 @@ check_arch() {
 				return 1
 			fi
 		;;
-		*", Motorola 68020, version "*)
+		*", Motorola 68020, version "*|*", Motorola m68k, 68020, version "*)
 			if test m68k != `dpkg-architecture -a$2 -qDEB_HOST_ARCH_CPU`; then
 				echo "cpu mismatch"
 				echo "expected $2"
@@ -199,7 +199,7 @@ check_arch() {
 				return 1
 			fi
 		;;
-		*", SPARC, version "*)
+		*", SPARC version "*|*", SPARC, version "*)
 			if test sparc != `dpkg-architecture -a$2 -qDEB_HOST_ARCH_CPU`; then
 				echo "cpu mismatch"
 				echo "expected $2"
