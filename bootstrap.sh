@@ -2566,6 +2566,110 @@ else
 fi
 echo "progress-mark:19:gpm cross build"
 
+patch_ncurses() {
+	echo "patching ncurses to support the nobiarch profile #737946"
+	patch -p1 <<EOF
+diff -Nru ncurses-5.9+20140118/debian/control ncurses-5.9+20140118/debian/control
+--- ncurses-5.9+20140118/debian/control
++++ ncurses-5.9+20140118/debian/control
+@@ -5,7 +5,7 @@
+ Uploaders: Sven Joachim <svenjoac@gmx.de>
+ Build-Depends: debhelper (>= 8.1.3),
+                dpkg-dev (>= 1.15.7),
+-               g++-multilib [amd64 i386 powerpc ppc64 s390 sparc],
++               g++-multilib [amd64 i386 powerpc ppc64 s390 sparc] <!profile.nobiarch>,
+                libgpm-dev [linux-any],
+                pkg-config,
+ Standards-Version: 3.9.5
+@@ -158,6 +158,7 @@
+ Depends: lib64tinfo5 (= \${binary:Version}),
+          \${shlibs:Depends}, \${misc:Depends}
+ Replaces: amd64-libs (<= 1.2)
++Build-Profiles: !nobiarch
+ Description: shared libraries for terminal handling (64-bit)
+  The ncurses library routines are a terminal-independent method of
+  updating character screens with reasonable optimization.
+@@ -177,6 +178,7 @@
+          libncurses5-dev (= \${binary:Version}), lib64c-dev, \${misc:Depends}
+ Suggests: ncurses-doc
+ Replaces: amd64-libs-dev (<= 1.2), lib64tinfo5-dev
++Build-Profiles: !nobiarch
+ Description: developer's libraries for ncurses (64-bit)
+  The ncurses library routines are a terminal-independent method of
+  updating character screens with reasonable optimization.
+@@ -193,6 +195,7 @@
+ Depends: lib32tinfo5 (= \${binary:Version}),
+          \${shlibs:Depends}, \${misc:Depends}
+ Replaces: ia32-libs (<< 1.10)
++Build-Profiles: !nobiarch
+ Description: shared libraries for terminal handling (32-bit)
+  The ncurses library routines are a terminal-independent method of
+  updating character screens with reasonable optimization.
+@@ -211,6 +214,7 @@
+          lib32tinfo-dev (= \${binary:Version}),
+          libncurses5-dev (= \${binary:Version}), lib32c-dev, \${misc:Depends}
+ Suggests: ncurses-doc
++Build-Profiles: !nobiarch
+ Description: developer's libraries for ncurses (32-bit)
+  The ncurses library routines are a terminal-independent method of
+  updating character screens with reasonable optimization.
+@@ -226,6 +230,7 @@
+ Priority: optional
+ Depends: lib32tinfo5 (= \${binary:Version}),
+          \${shlibs:Depends}, \${misc:Depends}
++Build-Profiles: !nobiarch
+ Description: shared libraries for terminal handling (wide character support) (32-bit)
+  The ncurses library routines are a terminal-independent method of
+  updating character screens with reasonable optimization.
+@@ -244,6 +249,7 @@
+          lib32tinfo-dev (= \${binary:Version}),
+          libncursesw5-dev (= \${binary:Version}), lib32c-dev, \${misc:Depends}
+ Suggests: ncurses-doc
++Build-Profiles: !nobiarch
+ Description: developer's libraries for ncursesw (32-bit)
+  The ncurses library routines are a terminal-independent method of
+  updating character screens with reasonable optimization.
+@@ -261,6 +267,7 @@
+ Depends: \${shlibs:Depends}, \${misc:Depends}
+ Replaces: lib64ncurses5 (<< 5.9-3)
+ Breaks: lib64ncurses5 (<< 5.9-3)
++Build-Profiles: !nobiarch
+ Description: shared low-level terminfo library for terminal handling (64-bit)
+  The ncurses library routines are a terminal-independent method of
+  updating character screens with reasonable optimization.
+@@ -275,6 +282,7 @@
+ Depends: \${shlibs:Depends}, \${misc:Depends}
+ Replaces: lib32ncurses5 (<< 5.9-3)
+ Breaks: lib32ncurses5 (<< 5.9-3)
++Build-Profiles: !nobiarch
+ Description: shared low-level terminfo library for terminal handling (32-bit)
+  The ncurses library routines are a terminal-independent method of
+  updating character screens with reasonable optimization.
+@@ -291,6 +299,7 @@
+          lib32c-dev, \${misc:Depends}
+ Replaces: lib32ncurses5-dev (<< 5.9-3), lib32tinfo5-dev
+ Breaks: lib32ncurses5-dev (<< 5.9-3)
++Build-Profiles: !nobiarch
+ Description: developer's library for the low-level terminfo library (32-bit)
+  The ncurses library routines are a terminal-independent method of
+  updating character screens with reasonable optimization.
+diff -Nru ncurses-5.9+20140118/debian/rules ncurses-5.9+20140118/debian/rules
+--- ncurses-5.9+20140118/debian/rules
++++ ncurses-5.9+20140118/debian/rules
+@@ -97,6 +97,11 @@
+ usr_lib32 = /usr/lib32
+ endif
+ 
++ifneq (,\$(filter nobiarch,\$(DEB_BUILD_PROFILES)))
++override build_32=
++override build_64=
++endif
++
+ ifneq (\$(findstring linux,\$(DEB_HOST_GNU_SYSTEM)),)
+ with_gpm = --with-gpm
+ endif
+EOF
+}
 if test -d "$RESULT/ncurses"; then
 	echo "skipping rebuild of ncurses"
 else
@@ -2575,8 +2679,14 @@ else
 	cd ncurses
 	obtain_source_package ncurses
 	cd ncurses-*
-	dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends
-	dpkg-buildpackage -a$HOST_ARCH -B -d -uc -us
+	patch_ncurses
+	if test "$ENABLE_MULTILIB" = yes; then
+		dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends
+		dpkg-buildpackage -a$HOST_ARCH -B -d -uc -us
+	else
+		dpkg-checkbuilddeps -a$HOST_ARCH -Pnobiarch || : # tell unmet build depends
+		dpkg-buildpackage -a$HOST_ARCH -B -d -uc -us -Pnobiarch
+	fi
 	cd ..
 	ls -l
 	test -d "$RESULT" && mkdir "$RESULT/ncurses"
