@@ -2213,7 +2213,7 @@ else
 	fi
 	cd ..
 	ls -l
-	rm -fv gcc-*-plugin-*.deb gcj-*.deb gdc-*.deb *gfortran*.deb *objc*.deb *-dbg_*.deb
+	rm -fv gcc-*-plugin-*.deb gcj-*.deb gdc-*.deb *objc*.deb *-dbg_*.deb
 	dpkg -i *.deb
 	apt-get check || :
 	apt-get --no-download update || : # work around #745036
