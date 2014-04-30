@@ -1578,6 +1578,33 @@ fi
 echo "progress-mark:1:binutils cross complete"
 
 # linux
+patch_linux() {
+	if test "$HOST_ARCH" = or1k; then
+		echo "patching linux for or1k #746309"
+		patch -p1 <<EOF
+diff -Nuar linux-3.13.7.orig/debian/config/defines linux-3.13.7/debian/config/defines
+--- linux-3.13.7.orig/debian/config/defines
++++ linux-3.13.7/debian/config/defines
+@@ -19,6 +19,7 @@
+  m68k
+  mips
+  mipsel
++ or1k
+  powerpc
+  powerpcspe
+  ppc64
+diff -Nuar linux-3.13.7.orig/debian/config/or1k/defines linux-3.13.7/debian/config/or1k/defines
+--- linux-3.13.7.orig/debian/config/or1k/defines
++++ linux-3.13.7/debian/config/or1k/defines
+@@ -0,0 +1,4 @@
++[base]
++kernel-arch: openrisc
++featuresets:
++# empty; we don't have initramfs working yet
+EOF
+		./debian/rules debian/rules.gen || : # intentionally exits 1 to avoid being called automatically. we are doing it wrong
+	fi
+}
 if test "`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_ARCH_OS`" = "linux"; then
 PKG=`echo $RESULT/linux-libc-dev_*.deb`
 if test -f "$PKG"; then
@@ -1590,6 +1617,7 @@ else
 	cd linux
 	obtain_source_package linux
 	cd linux-*
+	patch_linux
 	dpkg-checkbuilddeps -B -a$HOST_ARCH || : # tell unmet build depends
 	KBUILD_VERBOSE=1 make -f debian/rules.gen binary-libc-dev_$HOST_ARCH
 	cd ..
