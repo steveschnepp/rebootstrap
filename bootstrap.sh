@@ -2735,3 +2735,23 @@ else
 	rm -Rf ncurses
 fi
 echo "progress-mark:20:ncurses cross build"
+
+if test -d "$RESULT/readline6"; then
+	echo "skipping rebuild of readline6"
+else
+	apt-get -y install debhelper mawk texinfo autotools-dev
+	cd /tmp/buildd
+	mkdir readline6
+	cd readline6
+	obtain_source_package readline6
+	cd readline6-*
+	dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends
+	dpkg-buildpackage -a$HOST_ARCH -B -d -uc -us
+	cd ..
+	ls -l
+	test -d "$RESULT" && mkdir "$RESULT/readline6"
+	test -d "$RESULT" && cp *.deb "$RESULT/readline6/"
+	cd ..
+	rm -Rf readline6
+fi
+echo "progress-mark:21:readline6 cross build"
