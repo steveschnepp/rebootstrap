@@ -2755,3 +2755,23 @@ else
 	rm -Rf readline6
 fi
 echo "progress-mark:21:readline6 cross build"
+
+if test -d "$RESULT/bzip2"; then
+	echo "skipping rebuild of bzip2"
+else
+	apt-get -y install texinfo dpkg-dev
+	cd /tmp/buildd
+	mkdir bzip2
+	cd bzip2
+	obtain_source_package bzip2
+	cd bzip2-*
+	dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends
+	dpkg-buildpackage -a$HOST_ARCH -B -d -uc -us
+	cd ..
+	ls -l
+	test -d "$RESULT" && mkdir "$RESULT/bzip2"
+	test -d "$RESULT" && cp *.deb "$RESULT/bzip2/"
+	cd ..
+	rm -Rf bzip2
+fi
+echo "progress-mark:22:bzip2 cross build"
