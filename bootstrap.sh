@@ -230,6 +230,7 @@ check_arch() {
 				echo "got $FILE_RES"
 				return 1
 			fi
+		;;
 		*)
 			echo "unknown ELF cpu"
 			echo "got $FILE_RES"
