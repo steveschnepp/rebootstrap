@@ -223,6 +223,13 @@ check_arch() {
 				return 1
 			fi
 		;;
+		*", Renesas SH, version "*)
+			if test sh4 != `dpkg-architecture -a$2 -qDEB_HOST_ARCH_CPU`; then
+				echo "cpu mismatch"
+				echo "expected $2"
+				echo "got $FILE_RES"
+				return 1
+			fi
 		*)
 			echo "unknown ELF cpu"
 			echo "got $FILE_RES"
