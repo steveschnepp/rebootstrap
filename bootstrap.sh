@@ -2707,6 +2707,8 @@ EOF
 }
 if test -d "$RESULT/ncurses"; then
 	echo "skipping rebuild of ncurses"
+	dpkg -i "$RESULT/ncurses/"libtinfo5_*.deb "$RESULT/ncurses/"libtinfo-dev_*.deb
+	dpkg -i "$RESULT/ncurses/"libncurses5_*.deb "$RESULT/ncurses/"libncurses5-dev_*.deb
 else
 	apt-get -y install debhelper dpkg-dev pkg-config
 	cd /tmp/buildd
@@ -2724,6 +2726,9 @@ else
 	fi
 	cd ..
 	ls -l
+	# install in two calls to account for Pre-Depends
+	dpkg -i libtinfo5_*.deb libtinfo-dev_*.deb
+	dpkg -i libncurses5_*.deb libncurses5-dev_*.deb
 	test -d "$RESULT" && mkdir "$RESULT/ncurses"
 	test -d "$RESULT" && cp *.deb "$RESULT/ncurses/"
 	cd ..
