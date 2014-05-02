@@ -2126,6 +2126,28 @@ diff -Nru eglibc-2.18/debian/sysdeps/i386.mk eglibc-2.18/debian/sysdeps/i386.mk
  
 EOF
 	fi
+	if test "$HOST_ARCH" = "i386"; then
+		echo "patching eglibc to avoid installing xen stuff in stage2 that wasn't built"
+		patch -p1 <<EOF
+diff -Nru eglibc-2.18/debian/sysdeps/i386.mk eglibc-2.18/debian/sysdeps/i386.mk
+--- eglibc-2.18/debian/sysdeps/i386.mk
++++ eglibc-2.18/debian/sysdeps/i386.mk
+@@ -52,11 +52,13 @@
+ endef
+ 
+ ifneq (\$(DEB_BUILD_PROFILE),bootstrap)
++ifeq (\$(filter stage2,\$(DEB_BUILD_PROFILES)),)
+ define libc6-dev_extra_pkg_install
+ mkdir -p debian/libc6-dev/\$(libdir)/xen
+ cp -af debian/tmp-xen/\$(libdir)/*.a \\
+ 	debian/libc6-dev/\$(libdir)/xen
+ endef
++endif
+ endif
+ 
+ define libc6-dev-amd64_extra_pkg_install
+EOF
+	fi
 }
 PKG=`echo $RESULT/libc*-dev_*.deb`
 if test -f "$PKG"; then
