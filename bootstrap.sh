@@ -1644,7 +1644,7 @@ if test -d "$RESULT/gcc1"; then
 	apt-get remove -y gcc-multilib
 	dpkg -i $RESULT/gcc1/*.deb
 else
-	apt-get install -y debhelper gawk patchutils bison flex python realpath lsb-release quilt g++-multilib libc6-dev-i386 lib32gcc1 libc6-dev-x32 libx32gcc1 libc6-dbg libtool autoconf2.64 zlib1g-dev gperf texinfo locales sharutils procps libantlr-java libffi-dev fastjar libmagic-dev libecj-java zip libasound2-dev libxtst-dev libxt-dev libgtk2.0-dev libart-2.0-dev libcairo2-dev netbase libcloog-isl-dev libmpc-dev libmpfr-dev libgmp-dev dejagnu autogen chrpath binutils-multiarch
+	apt-get install -y debhelper gawk patchutils bison flex python realpath lsb-release quilt libc6-dbg libtool autoconf2.64 zlib1g-dev gperf texinfo locales sharutils procps libantlr-java libffi-dev fastjar libmagic-dev libecj-java zip libasound2-dev libxtst-dev libxt-dev libgtk2.0-dev libart-2.0-dev libcairo2-dev netbase libcloog-isl-dev libmpc-dev libmpfr-dev libgmp-dev dejagnu autogen chrpath binutils-multiarch
 	cd /tmp/buildd
 	mkdir gcc1
 	cd gcc1
@@ -2159,7 +2159,7 @@ if test -d "$RESULT/gcc2"; then
 	echo "skipping rebuild of gcc stage2"
 	dpkg -i "$RESULT"/gcc2/*.deb
 else
-	apt-get install -y debhelper gawk patchutils bison flex python realpath lsb-release quilt lib32gcc1 libx32gcc1 libc6-dbg libtool autoconf2.64 zlib1g-dev gperf texinfo locales sharutils procps libantlr-java libffi-dev fastjar libmagic-dev libecj-java zip libasound2-dev libxtst-dev libxt-dev libgtk2.0-dev libart-2.0-dev libcairo2-dev netbase libcloog-isl-dev libmpc-dev libmpfr-dev libgmp-dev dejagnu autogen chrpath binutils-multiarch
+	apt-get install -y debhelper gawk patchutils bison flex python realpath lsb-release quilt libc6-dbg libtool autoconf2.64 zlib1g-dev gperf texinfo locales sharutils procps libantlr-java libffi-dev fastjar libmagic-dev libecj-java zip libasound2-dev libxtst-dev libxt-dev libgtk2.0-dev libart-2.0-dev libcairo2-dev netbase libcloog-isl-dev libmpc-dev libmpfr-dev libgmp-dev dejagnu autogen chrpath binutils-multiarch
 	cd /tmp/buildd
 	mkdir gcc2
 	cd gcc2
