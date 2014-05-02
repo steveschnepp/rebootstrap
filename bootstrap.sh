@@ -2797,3 +2797,23 @@ else
 	rm -Rf bzip2
 fi
 echo "progress-mark:22:bzip2 cross build"
+
+if test -d "$RESULT/xz-utils"; then
+	echo "skipping rebuild of xz-utils"
+else
+	apt-get -y install debhelper perl dpkg-dev autoconf automake libtool gettext autopoint
+	cd /tmp/buildd
+	mkdir xz-utils
+	cd xz-utils
+	obtain_source_package xz-utils
+	cd xz-utils-*
+	dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends
+	dpkg-buildpackage -a$HOST_ARCH -B -d -uc -us
+	cd ..
+	ls -l
+	test -d "$RESULT" && mkdir "$RESULT/xz-utils"
+	test -d "$RESULT" && cp *.deb "$RESULT/xz-utils/"
+	cd ..
+	rm -Rf xz-utils
+fi
+echo "progress-mark:23:xz-utils cross build"
