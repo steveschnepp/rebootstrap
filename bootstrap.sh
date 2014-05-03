@@ -2309,6 +2309,7 @@ else
 fi
 echo "progress-mark:8:pcre3 cross build"
 
+apt-get -y remove libc6-i386 # breaks cross builds
 if test -d "$RESULT/attr"; then
 	echo "skipping rebuild of attr"
 	dpkg -i "$RESULT/attr/"libattr*.deb
