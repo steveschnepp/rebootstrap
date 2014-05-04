@@ -264,25 +264,6 @@ mkdir -p "$RESULT"
 
 # gcc0
 patch_gcc() {
-	if test "$GCC_VER" = "4.8"; then
-		echo "patching gcc-4.8: failure to include headers in stage1"
-		patch -p1 <<EOF
-diff -u gcc-4.8-4.8.2/debian/rules.d/binary-gcc.mk gcc-4.8-4.8.2/debian/rules.d/binary-gcc.mk
---- gcc-4.8-4.8.2/debian/rules.d/binary-gcc.mk
-+++ gcc-4.8-4.8.2/debian/rules.d/binary-gcc.mk
-@@ -36,6 +36,10 @@
- 	\$(shell test -e \$(d)/\$(gcc_lib_dir)/SYSCALLS.c.X \\
- 		&& echo \$(gcc_lib_dir)/SYSCALLS.c.X)
- 
-+ifeq (\$(DEB_STAGE),stage1)
-+    files_gcc += \$(gcc_lib_dir)/include \$(gcc_lib_dir)/include-fixed
-+endif
-+
- ifneq (\$(GFDL_INVARIANT_FREE),yes)
-     files_gcc += \\
- 	\$(PF)/share/man/man1/\$(cmd_prefix){gcc,gcov}\$(pkg_ver).1
-EOF
-	fi
 	if test "$GCC_VER" = "4.8" -o "$GCC_VER" = "4.9"; then
 		echo "build gcc-X.Y-base when with_deps_on_target_arch_pkgs #744782"
 		patch -p1 <<EOF
