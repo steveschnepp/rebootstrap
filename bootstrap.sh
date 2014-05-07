@@ -1667,6 +1667,8 @@ ln -s ../include/`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_MULTIARCH` /usr/`dpk
 
 # eglibc
 patch_eglibc() {
+	echo "fixing glibc make ftbfs #747013"
+	sed -i 's/\(3\.\[89\]\*\))/\1 | 4.*)/' configure
 	echo "patching eglibc to avoid dependency on libc6 from libc6-dev in stage1"
 	patch -p1 <<EOF
 diff -Nru eglibc-2.18/debian/control.in/libc eglibc-2.18/debian/control.in/libc
