@@ -244,12 +244,14 @@ obtain_source_package() {
 	apt-get source "$1"
 }
 
+for f in /etc/apt/sources.list /etc/apt/sources.list.d/*.list; do
+	test -f "$f" && sed -i "s/^deb /deb [ arch-=$HOST_ARCH ] /" $f
+done
 grep -q '^deb-src ' /etc/apt/sources.list || echo "deb-src $MIRROR sid main" >> /etc/apt/sources.list
 
+dpkg --add-architecture $HOST_ARCH
 apt-get update
 apt-get -y install build-essential
-dpkg --add-architecture $HOST_ARCH
-apt-get --no-download update || : # work around #745036
 
 if test -z "$GCC_VER"; then
 	GCC_VER=`apt-cache depends gcc | sed 's/^ *Depends: gcc-\([0-9.]*\)$/\1/;t;d'`
