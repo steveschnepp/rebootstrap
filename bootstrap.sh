@@ -251,7 +251,7 @@ grep -q '^deb-src ' /etc/apt/sources.list || echo "deb-src $MIRROR sid main" >> 
 
 dpkg --add-architecture $HOST_ARCH
 apt-get update
-apt-get -y install build-essential
+apt-get -y --no-install-recommends install build-essential
 
 if test -z "$GCC_VER"; then
 	GCC_VER=`apt-cache depends gcc | sed 's/^ *Depends: gcc-\([0-9.]*\)$/\1/;t;d'`
@@ -1518,7 +1518,7 @@ if test -d "$RESULT/gcc0"; then
 else
 	apt-get build-dep --arch-only -y gcc-$GCC_VER
 	# dependencies for common libs no longer declared
-	apt-get install -y doxygen graphviz ghostscript texlive-latex-base xsltproc docbook-xsl-ns
+	apt-get -y --no-install-recommends install doxygen graphviz ghostscript texlive-latex-base xsltproc docbook-xsl-ns
 	cd /tmp/buildd
 	mkdir gcc0
 	cd gcc0
@@ -1547,7 +1547,7 @@ if test -f "$PKG"; then
 	echo "skipping rebuild of binutils-target"
 	dpkg -i "$PKG"
 else
-	apt-get install -y autoconf bison flex gettext texinfo dejagnu quilt python3 file lsb-release zlib1g-dev
+	apt-get -y --no-install-recommends install autoconf bison flex gettext texinfo dejagnu quilt python3 file lsb-release zlib1g-dev
 	cd /tmp/buildd
 	mkdir binutils
 	cd binutils
@@ -1629,7 +1629,7 @@ if test -f "$PKG"; then
 	echo "skipping rebuild of linux-libc-dev"
 	dpkg -i "$PKG"
 else
-	apt-get install -y bc cpio debhelper kernel-wedge patchutils python quilt python-six
+	apt-get -y --no-install-recommends install bc cpio debhelper kernel-wedge patchutils python quilt python-six
 	cd /tmp/buildd
 	mkdir linux
 	cd linux
@@ -1654,7 +1654,7 @@ if test -d "$RESULT/gcc1"; then
 	apt-get remove -y gcc-multilib
 	dpkg -i $RESULT/gcc1/*.deb
 else
-	apt-get install -y debhelper gawk patchutils bison flex python realpath lsb-release quilt libc6-dbg libtool autoconf2.64 zlib1g-dev gperf texinfo locales sharutils procps libantlr-java libffi-dev fastjar libmagic-dev libecj-java zip libasound2-dev libxtst-dev libxt-dev libgtk2.0-dev libart-2.0-dev libcairo2-dev netbase libcloog-isl-dev libmpc-dev libmpfr-dev libgmp-dev dejagnu autogen chrpath binutils-multiarch
+	apt-get -y --no-install-recommends install debhelper gawk patchutils bison flex python realpath lsb-release quilt libc6-dbg libtool autoconf2.64 zlib1g-dev gperf texinfo locales sharutils procps libantlr-java libffi-dev fastjar libmagic-dev libecj-java zip libasound2-dev libxtst-dev libxt-dev libgtk2.0-dev libart-2.0-dev libcairo2-dev netbase libcloog-isl-dev libmpc-dev libmpfr-dev libgmp-dev dejagnu autogen chrpath binutils-multiarch
 	cd /tmp/buildd
 	mkdir gcc1
 	cd gcc1
@@ -2167,7 +2167,7 @@ if test -f "$PKG"; then
 	apt-get -y remove libc6-dev-i386
 	dpkg -i "$PKG"
 else
-	apt-get install -y gettext file quilt autoconf gawk debhelper rdfind symlinks libaudit-dev libcap-dev libselinux-dev binutils bison netbase
+	apt-get -y --no-install-recommends install gettext file quilt autoconf gawk debhelper rdfind symlinks libaudit-dev libcap-dev libselinux-dev binutils bison netbase
 	cd /tmp/buildd
 	mkdir eglibc
 	cd eglibc
@@ -2193,7 +2193,7 @@ if test -d "$RESULT/gcc2"; then
 	echo "skipping rebuild of gcc stage2"
 	dpkg -i "$RESULT"/gcc2/*.deb
 else
-	apt-get install -y debhelper gawk patchutils bison flex python realpath lsb-release quilt libc6-dbg libtool autoconf2.64 zlib1g-dev gperf texinfo locales sharutils procps libantlr-java libffi-dev fastjar libmagic-dev libecj-java zip libasound2-dev libxtst-dev libxt-dev libgtk2.0-dev libart-2.0-dev libcairo2-dev netbase libcloog-isl-dev libmpc-dev libmpfr-dev libgmp-dev dejagnu autogen chrpath binutils-multiarch
+	apt-get -y --no-install-recommends install debhelper gawk patchutils bison flex python realpath lsb-release quilt libc6-dbg libtool autoconf2.64 zlib1g-dev gperf texinfo locales sharutils procps libantlr-java libffi-dev fastjar libmagic-dev libecj-java zip libasound2-dev libxtst-dev libxt-dev libgtk2.0-dev libart-2.0-dev libcairo2-dev netbase libcloog-isl-dev libmpc-dev libmpfr-dev libgmp-dev dejagnu autogen chrpath binutils-multiarch
 	cd /tmp/buildd
 	mkdir gcc2
 	cd gcc2
@@ -2238,7 +2238,7 @@ if test -d "$RESULT/eglibc2"; then
 	echo "skipping rebuild of eglibc stage2"
 	dpkg -i "$RESULT"/eglibc2/*.deb
 else
-	apt-get install -y gettext file quilt autoconf gawk debhelper rdfind symlinks libaudit-dev libcap-dev libselinux-dev binutils bison netbase
+	apt-get -y --no-install-recommends install gettext file quilt autoconf gawk debhelper rdfind symlinks libaudit-dev libcap-dev libselinux-dev binutils bison netbase
 	cd /tmp/buildd
 	mkdir eglibc2
 	cd eglibc2
@@ -2266,7 +2266,7 @@ if test -d "$RESULT/gcc3"; then
 	echo "skipping rebuild of gcc stage3"
 	dpkg -i "$RESULT"/gcc3/*.deb
 else
-	apt-get install -y debhelper gawk patchutils bison flex python realpath lsb-release quilt libc6-dbg libtool autoconf2.64 zlib1g-dev gperf texinfo locales sharutils procps libantlr-java libffi-dev fastjar libmagic-dev libecj-java zip libasound2-dev libxtst-dev libxt-dev libgtk2.0-dev libart-2.0-dev libcairo2-dev netbase libcloog-isl-dev libmpc-dev libmpfr-dev libgmp-dev dejagnu autogen chrpath binutils-multiarch
+	apt-get -y --no-install-recommends install debhelper gawk patchutils bison flex python realpath lsb-release quilt libc6-dbg libtool autoconf2.64 zlib1g-dev gperf texinfo locales sharutils procps libantlr-java libffi-dev fastjar libmagic-dev libecj-java zip libasound2-dev libxtst-dev libxt-dev libgtk2.0-dev libart-2.0-dev libcairo2-dev netbase libcloog-isl-dev libmpc-dev libmpfr-dev libgmp-dev dejagnu autogen chrpath binutils-multiarch
 	cd /tmp/buildd
 	mkdir gcc3
 	cd gcc3
@@ -2326,7 +2326,7 @@ if test -d "$RESULT/attr"; then
 	echo "skipping rebuild of attr"
 	dpkg -i "$RESULT/attr/"libattr*.deb
 else
-	apt-get -y install dpkg-dev debhelper autoconf automake gettext libtool
+	apt-get -y --no-install-recommends install dpkg-dev debhelper autoconf automake gettext libtool
 	cd /tmp/buildd
 	mkdir attr
 	cd attr
@@ -2347,7 +2347,7 @@ echo "progress-mark:9:attr cross build"
 if test -d "$RESULT/acl"; then
 	echo "skipping rebuild of acl"
 else
-	apt-get -y install dpkg-dev debhelper autotools-dev autoconf automake gettext libtool
+	apt-get -y --no-install-recommends install dpkg-dev debhelper autotools-dev autoconf automake gettext libtool
 	cd /tmp/buildd
 	mkdir acl
 	cd acl
@@ -2368,7 +2368,7 @@ if test -d "$RESULT/zlib"; then
 	echo "skipping rebuild of zlib"
 	dpkg -i "$RESULT/zlib/"zlib1g_*.deb "$RESULT/zlib/"zlib1g-dev_*.deb
 else
-	apt-get -y install debhelper binutils dpkg-dev
+	apt-get -y --no-install-recommends install debhelper binutils dpkg-dev
 	cd /tmp/buildd
 	mkdir zlib
 	cd zlib
@@ -2576,7 +2576,7 @@ if test -d "$RESULT/isl"; then
 	echo "skipping rebuild of isl"
 	dpkg -i "$RESULT/isl/"libisl-dev_*.deb "$RESULT/isl/"libisl1*.deb
 else
-	apt-get -y install debhelper dh-autoreconf automake1.11
+	apt-get -y --no-install-recommends install debhelper dh-autoreconf automake1.11
 	cd /tmp/buildd
 	mkdir isl
 	cd isl
@@ -2597,7 +2597,7 @@ if test -d "$RESULT/cloog"; then
 	echo "skipping rebuild of cloog"
 	dpkg -i "$RESULT/cloog/"lib*.deb
 else
-	apt-get -y install debhelper autotools-dev texinfo help2man
+	apt-get -y --no-install-recommends install debhelper autotools-dev texinfo help2man
 	cd /tmp/buildd
 	mkdir cloog
 	cd cloog
@@ -2618,7 +2618,7 @@ if test -d "$RESULT/gpm"; then
 	echo "skipping rebuild of gpm"
 	dpkg -i "$RESULT/gpm/"libgpm*.deb
 else
-	apt-get -y install autoconf autotools-dev quilt debhelper mawk bison texlive-base texinfo texi2html
+	apt-get -y --no-install-recommends install autoconf autotools-dev quilt debhelper mawk bison texlive-base texinfo texi2html
 	cd /tmp/buildd
 	mkdir gpm
 	cd gpm
@@ -2745,7 +2745,7 @@ if test -d "$RESULT/ncurses"; then
 	dpkg -i "$RESULT/ncurses/"libtinfo5_*.deb "$RESULT/ncurses/"libtinfo-dev_*.deb
 	dpkg -i "$RESULT/ncurses/"libncurses5_*.deb "$RESULT/ncurses/"libncurses5-dev_*.deb
 else
-	apt-get -y install debhelper dpkg-dev pkg-config
+	apt-get -y --no-install-recommends install debhelper dpkg-dev pkg-config
 	cd /tmp/buildd
 	mkdir ncurses
 	cd ncurses
@@ -2774,7 +2774,7 @@ echo "progress-mark:20:ncurses cross build"
 if test -d "$RESULT/readline6"; then
 	echo "skipping rebuild of readline6"
 else
-	apt-get -y install debhelper mawk texinfo autotools-dev
+	apt-get -y --no-install-recommends install debhelper mawk texinfo autotools-dev
 	cd /tmp/buildd
 	mkdir readline6
 	cd readline6
@@ -2794,7 +2794,7 @@ echo "progress-mark:21:readline6 cross build"
 if test -d "$RESULT/bzip2"; then
 	echo "skipping rebuild of bzip2"
 else
-	apt-get -y install texinfo dpkg-dev
+	apt-get -y --no-install-recommends install texinfo dpkg-dev
 	cd /tmp/buildd
 	mkdir bzip2
 	cd bzip2
@@ -2814,7 +2814,7 @@ echo "progress-mark:22:bzip2 cross build"
 if test -d "$RESULT/xz-utils"; then
 	echo "skipping rebuild of xz-utils"
 else
-	apt-get -y install debhelper perl dpkg-dev autoconf automake libtool gettext autopoint
+	apt-get -y --no-install-recommends install debhelper perl dpkg-dev autoconf automake libtool gettext autopoint
 	cd /tmp/buildd
 	mkdir xz-utils
 	cd xz-utils
