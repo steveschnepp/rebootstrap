@@ -11,6 +11,7 @@ HOST_ARCH=undefined
 GCC_VER=
 MIRROR="http://ftp.stw-bonn.de/debian"
 ENABLE_MULTILIB=no
+REPODIR=/tmp/repo
 
 # evaluate command line parameters of the form KEY=VALUE
 for param in "$*"; do
@@ -251,7 +252,8 @@ grep -q '^deb-src ' /etc/apt/sources.list || echo "deb-src $MIRROR sid main" >> 
 
 dpkg --add-architecture $HOST_ARCH
 apt-get update
-apt-get -y --no-install-recommends install build-essential
+apt-get -y --no-install-recommends install pinentry-curses # avoid installing pinentry-gtk (via reprepro)
+apt-get -y --no-install-recommends install build-essential reprepro
 
 if test -z "$GCC_VER"; then
 	GCC_VER=`apt-cache depends gcc | sed 's/^ *Depends: gcc-\([0-9.]*\)$/\1/;t;d'`
@@ -263,6 +265,68 @@ if test -z "$HOST_ARCH" || ! dpkg-architecture -a$HOST_ARCH; then
 fi
 mkdir -p /tmp/buildd
 mkdir -p "$RESULT"
+
+mkdir -p "$REPODIR/conf"
+mkdir "$REPODIR/archive"
+cat > "$REPODIR/conf/distributions" <<EOF
+Codename: rebootstrap
+Label: rebootstrap
+Architectures: `dpkg --print-architecture` $HOST_ARCH
+Components: main
+UDebComponents: main
+Description: cross toolchain and build results for $HOST_ARCH
+EOF
+cat > "$REPODIR/conf/options" <<EOF
+verbose
+ignore wrongdistribution
+EOF
+export REPREPRO_BASE_DIR="$REPODIR"
+
+pickup_packages() {
+	local sources
+	local source
+	local f
+	local i
+	# collect source package names referenced
+	for f in "$*"; do
+		if test "${f%.deb}" != "$f"; then
+			source=`dpkg-deb -f "$f" Source`
+			test -z "$source" && source=${f%%_*}
+		elif test "${f%.changes}" != "$f"; then
+			source=${f%%_*}
+		else
+			echo "cannot pick up package $f"
+			exit 1
+		fi
+		sources="$sources $source"
+	done
+	sources=`echo "$sources" | tr ' ' '\n' | sort -u`
+	# archive old contents and remove them from the repository
+	for source in $sources; do
+		i=1
+		while test -e "$REPODIR/archive/${source}_$i"; do
+			i=`expr $i + 1`
+		done
+		i="$REPODIR/archive/${source}_$i"
+		mkdir "$i"
+		for f in `reprepro --list-format '${Filename}\n'  listfilter rebootstrap "Source (= $source)"`; do
+			cp -v "$REPODIR/$f" "$i"
+		done
+		find "$i" -type d -empty -delete
+		reprepro removesrc rebootstrap "$source"
+	done
+	# add new contents
+	for f in "$*"; do
+		if test "${f%.deb}" != "$f"; then
+			reprepro includedeb rebootstrap "$f"
+		elif test "${f%.changes}" != "$f"; then
+			reprepro include rebootstrap "$f"
+		else
+			echo "cannot pick up package $f"
+			exit 1
+		fi
+	done
+}
 
 # gcc0
 patch_gcc() {
@@ -1529,6 +1593,7 @@ else
 	DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=biarch,d,go,java,objc,obj-c++" dpkg-buildpackage -B -uc -us
 	cd ..
 	ls -l
+	pickup_packages *.changes
 	rm -fv *-plugin-dev_*.deb *-dbg_*.deb
 	dpkg -i *.deb
 	test -d "$RESULT" && mkdir "$RESULT/gcc0"
@@ -1556,6 +1621,7 @@ else
 	WITH_SYSROOT=/ TARGET=$HOST_ARCH dpkg-buildpackage -B -uc -us
 	cd ..
 	ls -l
+	pickup_packages *.changes
 	dpkg -i binutils-*.deb
 	assembler="`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE`-as"
 	if ! which "$assembler"; then echo "$assembler missing in binutils package"; exit 1; fi
@@ -1640,6 +1706,7 @@ else
 	KBUILD_VERBOSE=1 make -f debian/rules.gen binary-libc-dev_$HOST_ARCH
 	cd ..
 	ls -l
+	pickup_packages *.deb
 	dpkg -i linux-libc-dev_*.deb
 	test -d "$RESULT" && cp -v linux-libc-dev_*.deb "$RESULT"
 	cd ..
@@ -1673,6 +1740,7 @@ else
 	fi
 	cd ..
 	ls -l
+	pickup_packages *.changes
 	apt-get remove -y gcc-multilib
 	rm -vf *multilib*.deb
 	dpkg -i cpp-$GCC_VER-*.deb gcc-$GCC_VER-*.deb
@@ -2178,6 +2246,7 @@ else
 	DEB_GCC_VERSION=-$GCC_VER DEB_BUILD_PROFILE=bootstrap dpkg-buildpackage -B -uc -us -a$HOST_ARCH -d
 	cd ..
 	ls -l
+	pickup_packages *.changes
 	apt-get -y remove libc6-dev-i386
 	dpkg -i libc*-dev_*.deb
 	test -d "$RESULT" && cp -v libc*-dev_*.deb "$RESULT/"
@@ -2212,6 +2281,7 @@ else
 	fi
 	cd ..
 	ls -l
+	pickup_packages *.changes
 	rm -vf *multilib*.deb
 	dpkg -i *.deb
 	compiler="`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE`-gcc-$GCC_VER"
@@ -2254,6 +2324,7 @@ else
 	fi
 	cd ..
 	ls -l
+	pickup_packages *.changes
 	dpkg -i libc*-dev_*.deb libc*[0-9]_*_*.deb
 	test -d "$RESULT" && mkdir "$RESULT/eglibc2"
 	test -d "$RESULT" && cp libc*-dev_*.deb libc*[0-9]_*_*.deb "$RESULT/eglibc2"
@@ -2285,6 +2356,7 @@ else
 	fi
 	cd ..
 	ls -l
+	pickup_packages *.changes
 	rm -fv gcc-*-plugin-*.deb gcj-*.deb gdc-*.deb *objc*.deb *-dbg_*.deb
 	dpkg -i *.deb
 	apt-get check # test for #745036
@@ -2315,6 +2387,7 @@ else
 	dpkg-buildpackage -a$HOST_ARCH -B -uc -us
 	cd ..
 	ls -l
+	pickup_packages *.changes
 	test -d "$RESULT" && mkdir "$RESULT/pcre3"
 	cd ..
 	rm -Rf pcre3
@@ -2336,6 +2409,7 @@ else
 	dpkg-buildpackage -a$HOST_ARCH -B -d -uc -us
 	cd ..
 	ls -l
+	pickup_packages *.changes
 	dpkg -i libattr*.deb
 	test -d "$RESULT" && mkdir "$RESULT/attr"
 	test -d "$RESULT" && cp *.deb "$RESULT/attr/"
@@ -2357,6 +2431,7 @@ else
 	dpkg-buildpackage -a$HOST_ARCH -B -d -uc -us
 	cd ..
 	ls -l
+	pickup_packages *.changes
 	test -d "$RESULT" && mkdir "$RESULT/acl"
 	test -d "$RESULT" && cp *.deb "$RESULT/acl/"
 	cd ..
@@ -2461,6 +2536,7 @@ EOF
 	fi
 	cd ..
 	ls -l
+	pickup_packages *.changes
 	dpkg -i zlib1g_*.deb zlib1g-dev_*.deb
 	test -d "$RESULT" && mkdir "$RESULT/zlib"
 	test -d "$RESULT" && cp *.deb "$RESULT/zlib/"
@@ -2481,6 +2557,7 @@ else
 	dpkg-buildpackage -a$HOST_ARCH -B -uc -us
 	cd ..
 	ls -l
+	pickup_packages *.changes
 	test -d "$RESULT" && mkdir "$RESULT/hostname"
 	test -d "$RESULT" && cp *.deb "$RESULT/hostname/"
 	cd ..
@@ -2501,6 +2578,7 @@ else
 	dpkg-buildpackage -a$HOST_ARCH -B -uc -us
 	cd ..
 	ls -l
+	pickup_packages *.changes
 	test -d "$RESULT" && mkdir "$RESULT/libsepol"
 	test -d "$RESULT" && cp *.deb "$RESULT/libsepol/"
 	cd ..
@@ -2522,6 +2600,7 @@ else
 	dpkg-buildpackage -a$HOST_ARCH -B -uc -us
 	cd ..
 	ls -l
+	pickup_packages *.changes
 	dpkg -i libgmp*.deb
 	test -d "$RESULT" && mkdir "$RESULT/gmp"
 	test -d "$RESULT" && cp *.deb "$RESULT/gmp/"
@@ -2543,6 +2622,7 @@ else
 	dpkg-buildpackage -a$HOST_ARCH -B -uc -us
 	cd ..
 	ls -l
+	pickup_packages *.changes
 	dpkg -i *.deb
 	test -d "$RESULT" && mkdir "$RESULT/mpfr4"
 	test -d "$RESULT" && cp *.deb "$RESULT/mpfr4/"
@@ -2564,6 +2644,7 @@ else
 	dpkg-buildpackage -a$HOST_ARCH -B -uc -us
 	cd ..
 	ls -l
+	pickup_packages *.changes
 	dpkg -i *.deb
 	test -d "$RESULT" && mkdir "$RESULT/mpclib3"
 	test -d "$RESULT" && cp *.deb "$RESULT/mpclib3/"
@@ -2585,6 +2666,7 @@ else
 	dpkg-buildpackage -a$HOST_ARCH -B -uc -us
 	cd ..
 	ls -l
+	pickup_packages *.changes
 	dpkg -i libisl-dev_*.deb libisl1*.deb
 	test -d "$RESULT" && mkdir "$RESULT/isl"
 	test -d "$RESULT" && cp *.deb "$RESULT/isl/"
@@ -2606,6 +2688,7 @@ else
 	dpkg-buildpackage -a$HOST_ARCH -B -uc -us
 	cd ..
 	ls -l
+	pickup_packages *.changes
 	dpkg -i lib*.deb
 	test -d "$RESULT" && mkdir "$RESULT/cloog"
 	test -d "$RESULT" && cp *.deb "$RESULT/cloog/"
@@ -2628,6 +2711,7 @@ else
 	dpkg-buildpackage -a$HOST_ARCH -B -d -uc -us
 	cd ..
 	ls -l
+	pickup_packages *.changes
 	dpkg -i libgpm*.deb
 	test -d "$RESULT" && mkdir "$RESULT/gpm"
 	test -d "$RESULT" && cp *.deb "$RESULT/gpm/"
@@ -2761,6 +2845,7 @@ else
 	fi
 	cd ..
 	ls -l
+	pickup_packages *.changes
 	# install in two calls to account for Pre-Depends
 	dpkg -i libtinfo5_*.deb libtinfo-dev_*.deb
 	dpkg -i libncurses5_*.deb libncurses5-dev_*.deb
@@ -2784,6 +2869,7 @@ else
 	dpkg-buildpackage -a$HOST_ARCH -B -d -uc -us
 	cd ..
 	ls -l
+	pickup_packages *.changes
 	test -d "$RESULT" && mkdir "$RESULT/readline6"
 	test -d "$RESULT" && cp *.deb "$RESULT/readline6/"
 	cd ..
@@ -2804,6 +2890,7 @@ else
 	dpkg-buildpackage -a$HOST_ARCH -B -d -uc -us
 	cd ..
 	ls -l
+	pickup_packages *.changes
 	test -d "$RESULT" && mkdir "$RESULT/bzip2"
 	test -d "$RESULT" && cp *.deb "$RESULT/bzip2/"
 	cd ..
@@ -2824,6 +2911,7 @@ else
 	dpkg-buildpackage -a$HOST_ARCH -B -d -uc -us
 	cd ..
 	ls -l
+	pickup_packages *.changes
 	test -d "$RESULT" && mkdir "$RESULT/xz-utils"
 	test -d "$RESULT" && cp *.deb "$RESULT/xz-utils/"
 	cd ..
