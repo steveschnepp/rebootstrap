@@ -2856,6 +2856,90 @@ else
 fi
 echo "progress-mark:20:ncurses cross build"
 
+patch_readline6() {
+	echo "patching readline6 to support nobiarch profile #737955"
+	patch -p1 <<EOF
+diff -Nru readline6-6.3/debian/changelog readline6-6.3/debian/changelog
+--- readline6-6.3/debian/changelog
++++ readline6-6.3/debian/changelog
+@@ -1,3 +1,10 @@
++readline6 (6.3-6.1) UNRELEASED; urgency=low
++
++  * Non-maintainer upload.
++  * Support nobiarch build profile. (Closes: #737955)
++
++ -- Helmut Grohne <helmut@dedup1.subdivi.de>  Sun, 04 May 2014 14:47:47 +0200
++
+ readline6 (6.3-6) unstable; urgency=medium
+ 
+   * Really apply the patch to fix the display issue when a multiline
+diff -Nru readline6-6.3/debian/control readline6-6.3/debian/control
+--- readline6-6.3/debian/control
++++ readline6-6.3/debian/control
+@@ -4,11 +4,11 @@
+ Maintainer: Matthias Klose <doko@debian.org>
+ Standards-Version: 3.9.5
+ Build-Depends: debhelper (>= 8.1.3),
+-  libtinfo-dev, lib32tinfo-dev [amd64 ppc64],
++  libtinfo-dev, lib32tinfo-dev [amd64 ppc64] <!profile.nobiarch>,
+   libncursesw5-dev (>= 5.6),
+-  lib32ncursesw5-dev [amd64 ppc64], lib64ncurses5-dev [i386 powerpc sparc s390],
++  lib32ncursesw5-dev [amd64 ppc64] <!profile.nobiarch>, lib64ncurses5-dev [i386 powerpc sparc s390] <!profile.nobiarch>,
+   mawk | awk, texinfo, autotools-dev,
+-  gcc-multilib [amd64 i386 kfreebsd-amd64 powerpc ppc64 s390 sparc]
++  gcc-multilib [amd64 i386 kfreebsd-amd64 powerpc ppc64 s390 sparc] <!profile.nobiarch>
+ 
+ Package: libreadline6
+ Architecture: any
+@@ -30,6 +30,7 @@
+ Depends: readline-common, \${shlibs:Depends}, \${misc:Depends}
+ Section: libs
+ Priority: optional
++Build-Profiles: !nobiarch
+ Description: GNU readline and history libraries, run-time libraries (64-bit)
+  The GNU readline library aids in the consistency of user interface
+  across discrete programs that need to provide a command line
+@@ -96,6 +97,7 @@
+ Conflicts: lib64readline-dev, lib64readline-gplv2-dev
+ Section: libdevel
+ Priority: optional
++Build-Profiles: !nobiarch
+ Description: GNU readline and history libraries, development files (64-bit)
+  The GNU readline library aids in the consistency of user interface
+  across discrete programs that need to provide a command line
+@@ -139,6 +141,7 @@
+ Depends: readline-common, \${shlibs:Depends}, \${misc:Depends}
+ Section: libs
+ Priority: optional
++Build-Profiles: !nobiarch
+ Description: GNU readline and history libraries, run-time libraries (32-bit)
+  The GNU readline library aids in the consistency of user interface
+  across discrete programs that need to provide a command line
+@@ -154,6 +157,7 @@
+ Conflicts: lib32readline-dev, lib32readline-gplv2-dev
+ Section: libdevel
+ Priority: optional
++Build-Profiles: !nobiarch
+ Description: GNU readline and history libraries, development files (32-bit)
+  The GNU readline library aids in the consistency of user interface
+  across discrete programs that need to provide a command line
+diff -Nru readline6-6.3/debian/rules readline6-6.3/debian/rules
+--- readline6-6.3/debian/rules	2014-03-19 17:05:34.000000000 +0100
++++ readline6-6.3/debian/rules	2014-05-04 14:46:45.000000000 +0200
+@@ -57,6 +57,11 @@
+   endif
+ endif
+ 
++ifneq (\$(filter nobiarch,\$(DEB_BUILD_PROFILES)),)
++build32 =
++build64 =
++endif
++
+ CFLAGS := \$(shell dpkg-buildflags --get CFLAGS)
+ CPPFLAGS := \$(shell dpkg-buildflags --get CPPFLAGS)
+ LDFLAGS := \$(shell dpkg-buildflags --get LDFLAGS)
+EOF
+}
 if test -d "$RESULT/readline6"; then
 	echo "skipping rebuild of readline6"
 else
@@ -2865,8 +2949,14 @@ else
 	cd readline6
 	obtain_source_package readline6
 	cd readline6-*
-	dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends
-	dpkg-buildpackage -a$HOST_ARCH -B -d -uc -us
+	patch_readline6
+	if test "$ENABLE_MULTILIB" = yes; then
+		dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends
+		dpkg-buildpackage -a$HOST_ARCH -B -d -uc -us
+	else
+		dpkg-checkbuilddeps -a$HOST_ARCH -Pnobiarch || : # tell unmet build depends
+		dpkg-buildpackage -a$HOST_ARCH -B -d -uc -us -Pnobiarch
+	fi
 	cd ..
 	ls -l
 	pickup_packages *.changes
