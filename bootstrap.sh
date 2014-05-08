@@ -1661,14 +1661,14 @@ else
 	obtain_source_package gcc-$GCC_VER
 	cd gcc-$GCC_VER-*
 	patch_gcc
-	dpkg-checkbuilddeps -B -a$HOST_ARCH || : # tell unmet build depends
+	dpkg-checkbuilddeps -B || : # tell unmet build depends
 	if test "$ENABLE_MULTILIB" = yes; then
 		DEB_TARGET_ARCH=$HOST_ARCH DEB_STAGE=stage1 dpkg-buildpackage -d -T control
-		dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends again after rewriting control
+		dpkg-checkbuilddeps -B || : # tell unmet build depends again after rewriting control
 		DEB_TARGET_ARCH=$HOST_ARCH DEB_STAGE=stage1 dpkg-buildpackage -d -B -uc -us
 	else
 		DEB_TARGET_ARCH=$HOST_ARCH DEB_CROSS_NO_BIARCH=yes DEB_STAGE=stage1 dpkg-buildpackage -d -T control
-		dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends again after rewriting control
+		dpkg-checkbuilddeps -B || : # tell unmet build depends again after rewriting control
 		DEB_TARGET_ARCH=$HOST_ARCH DEB_CROSS_NO_BIARCH=yes DEB_STAGE=stage1 dpkg-buildpackage -d -B -uc -us
 	fi
 	cd ..
