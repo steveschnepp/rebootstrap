@@ -281,6 +281,9 @@ verbose
 ignore wrongdistribution
 EOF
 export REPREPRO_BASE_DIR="$REPODIR"
+reprepro export
+echo "deb [ arch=`dpkg --print-architecture`,$HOST_ARCH trusted=yes ] file://$REPODIR rebootstrap main" >/etc/apt/sources.list.d/rebootstrap.list
+apt-get update
 
 pickup_packages() {
 	local sources
@@ -326,6 +329,7 @@ pickup_packages() {
 			exit 1
 		fi
 	done
+	apt-get update
 }
 
 # gcc0
@@ -2399,7 +2403,6 @@ echo "progress-mark:8:pcre3 cross build"
 apt-get -y remove libc6-i386 # breaks cross builds
 if test -d "$RESULT/attr"; then
 	echo "skipping rebuild of attr"
-	dpkg -i "$RESULT/attr/"libattr*.deb
 else
 	apt-get -y --no-install-recommends install dpkg-dev debhelper autoconf automake gettext libtool
 	cd /tmp/buildd
@@ -2412,7 +2415,6 @@ else
 	cd ..
 	ls -l
 	pickup_packages *.changes
-	dpkg -i libattr*.deb
 	test -d "$RESULT" && mkdir "$RESULT/attr"
 	test -d "$RESULT" && cp *.deb "$RESULT/attr/"
 	cd ..
@@ -2423,7 +2425,7 @@ echo "progress-mark:9:attr cross build"
 if test -d "$RESULT/acl"; then
 	echo "skipping rebuild of acl"
 else
-	apt-get -y --no-install-recommends install dpkg-dev debhelper autotools-dev autoconf automake gettext libtool
+	apt-get -y --no-install-recommends install dpkg-dev debhelper autotools-dev autoconf automake gettext libtool libattr1-dev:$HOST_ARCH
 	cd /tmp/buildd
 	mkdir acl
 	cd acl
@@ -2443,7 +2445,6 @@ echo "progress-mark:10:acl cross build"
 
 if test -d "$RESULT/zlib"; then
 	echo "skipping rebuild of zlib"
-	dpkg -i "$RESULT/zlib/"zlib1g_*.deb "$RESULT/zlib/"zlib1g-dev_*.deb
 else
 	apt-get -y --no-install-recommends install debhelper binutils dpkg-dev
 	cd /tmp/buildd
@@ -2539,7 +2540,6 @@ EOF
 	cd ..
 	ls -l
 	pickup_packages *.changes
-	dpkg -i zlib1g_*.deb zlib1g-dev_*.deb
 	test -d "$RESULT" && mkdir "$RESULT/zlib"
 	test -d "$RESULT" && cp *.deb "$RESULT/zlib/"
 	cd ..
@@ -2591,7 +2591,6 @@ fi
 
 if test -d "$RESULT/gmp"; then
 	echo "skipping rebuild of gmp"
-	dpkg -i "$RESULT/gmp/"libgmp*.deb
 else
 	apt-get -y -a$HOST_ARCH --arch-only build-dep gmp
 	cd /tmp/buildd
@@ -2603,7 +2602,6 @@ else
 	cd ..
 	ls -l
 	pickup_packages *.changes
-	dpkg -i libgmp*.deb
 	test -d "$RESULT" && mkdir "$RESULT/gmp"
 	test -d "$RESULT" && cp *.deb "$RESULT/gmp/"
 	cd ..
@@ -2613,7 +2611,6 @@ echo "progress-mark:14:gmp cross build"
 
 if test -d "$RESULT/mpfr4"; then
 	echo "skipping rebuild of mpfr4"
-	dpkg -i "$RESULT/mpfr4/"*.deb
 else
 	apt-get -y -a$HOST_ARCH --arch-only build-dep mpfr4
 	cd /tmp/buildd
@@ -2625,7 +2622,6 @@ else
 	cd ..
 	ls -l
 	pickup_packages *.changes
-	dpkg -i *.deb
 	test -d "$RESULT" && mkdir "$RESULT/mpfr4"
 	test -d "$RESULT" && cp *.deb "$RESULT/mpfr4/"
 	cd ..
@@ -2635,7 +2631,6 @@ echo "progress-mark:15:mpfr4 cross build"
 
 if test -d "$RESULT/mpclib3"; then
 	echo "skipping rebuild of mpclib3"
-	dpkg -i "$RESULT/mpclib3/"*.deb
 else
 	apt-get -y -a$HOST_ARCH --arch-only build-dep mpclib3
 	cd /tmp/buildd
@@ -2647,7 +2642,6 @@ else
 	cd ..
 	ls -l
 	pickup_packages *.changes
-	dpkg -i *.deb
 	test -d "$RESULT" && mkdir "$RESULT/mpclib3"
 	test -d "$RESULT" && cp *.deb "$RESULT/mpclib3/"
 	cd ..
@@ -2657,9 +2651,8 @@ echo "progress-mark:16:mpclib3 cross build"
 
 if test -d "$RESULT/isl"; then
 	echo "skipping rebuild of isl"
-	dpkg -i "$RESULT/isl/"libisl-dev_*.deb "$RESULT/isl/"libisl1*.deb
 else
-	apt-get -y --no-install-recommends install debhelper dh-autoreconf automake1.11
+	apt-get -y --no-install-recommends install debhelper dh-autoreconf automake1.11 libgmp-dev:$HOST_ARCH
 	cd /tmp/buildd
 	mkdir isl
 	cd isl
@@ -2669,7 +2662,6 @@ else
 	cd ..
 	ls -l
 	pickup_packages *.changes
-	dpkg -i libisl-dev_*.deb libisl1*.deb
 	test -d "$RESULT" && mkdir "$RESULT/isl"
 	test -d "$RESULT" && cp *.deb "$RESULT/isl/"
 	cd ..
@@ -2679,9 +2671,8 @@ echo "progress-mark:17:isl cross build"
 
 if test -d "$RESULT/cloog"; then
 	echo "skipping rebuild of cloog"
-	dpkg -i "$RESULT/cloog/"lib*.deb
 else
-	apt-get -y --no-install-recommends install debhelper autotools-dev texinfo help2man
+	apt-get -y --no-install-recommends install debhelper autotools-dev libisl-dev:$HOST_ARCH libgmp-dev:$HOST_ARCH texinfo help2man
 	cd /tmp/buildd
 	mkdir cloog
 	cd cloog
@@ -2691,7 +2682,6 @@ else
 	cd ..
 	ls -l
 	pickup_packages *.changes
-	dpkg -i lib*.deb
 	test -d "$RESULT" && mkdir "$RESULT/cloog"
 	test -d "$RESULT" && cp *.deb "$RESULT/cloog/"
 	cd ..
@@ -2701,7 +2691,6 @@ echo "progress-mark:18:cloog cross build"
 
 if test -d "$RESULT/gpm"; then
 	echo "skipping rebuild of gpm"
-	dpkg -i "$RESULT/gpm/"libgpm*.deb
 else
 	apt-get -y --no-install-recommends install autoconf autotools-dev quilt debhelper mawk bison texlive-base texinfo texi2html
 	cd /tmp/buildd
@@ -2714,7 +2703,6 @@ else
 	cd ..
 	ls -l
 	pickup_packages *.changes
-	dpkg -i libgpm*.deb
 	test -d "$RESULT" && mkdir "$RESULT/gpm"
 	test -d "$RESULT" && cp *.deb "$RESULT/gpm/"
 	cd ..
@@ -2828,10 +2816,8 @@ EOF
 }
 if test -d "$RESULT/ncurses"; then
 	echo "skipping rebuild of ncurses"
-	dpkg -i "$RESULT/ncurses/"libtinfo5_*.deb "$RESULT/ncurses/"libtinfo-dev_*.deb
-	dpkg -i "$RESULT/ncurses/"libncurses5_*.deb "$RESULT/ncurses/"libncurses5-dev_*.deb
 else
-	apt-get -y --no-install-recommends install debhelper dpkg-dev pkg-config
+	apt-get -y --no-install-recommends install debhelper dpkg-dev libgpm-dev:$HOST_ARCH pkg-config
 	cd /tmp/buildd
 	mkdir ncurses
 	cd ncurses
@@ -2849,8 +2835,6 @@ else
 	ls -l
 	pickup_packages *.changes
 	# install in two calls to account for Pre-Depends
-	dpkg -i libtinfo5_*.deb libtinfo-dev_*.deb
-	dpkg -i libncurses5_*.deb libncurses5-dev_*.deb
 	test -d "$RESULT" && mkdir "$RESULT/ncurses"
 	test -d "$RESULT" && cp *.deb "$RESULT/ncurses/"
 	cd ..
@@ -2945,7 +2929,7 @@ EOF
 if test -d "$RESULT/readline6"; then
 	echo "skipping rebuild of readline6"
 else
-	apt-get -y --no-install-recommends install debhelper mawk texinfo autotools-dev
+	apt-get -y --no-install-recommends install debhelper libtinfo-dev:$HOST_ARCH libncurses5-dev:$HOST_ARCH mawk texinfo autotools-dev
 	cd /tmp/buildd
 	mkdir readline6
 	cd readline6
