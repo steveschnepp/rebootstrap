@@ -1639,60 +1639,6 @@ fi
 echo "progress-mark:1:binutils cross complete"
 
 # linux
-patch_linux() {
-	if test "$HOST_ARCH" = or1k; then
-		echo "patching linux for or1k #746309"
-		patch -p1 <<EOF
-diff -Nuar linux-3.13.7.orig/debian/config/defines linux-3.13.7/debian/config/defines
---- linux-3.13.7.orig/debian/config/defines
-+++ linux-3.13.7/debian/config/defines
-@@ -19,6 +19,7 @@
-  m68k
-  mips
-  mipsel
-+ or1k
-  powerpc
-  powerpcspe
-  ppc64
-diff -Nuar linux-3.13.7.orig/debian/config/or1k/defines linux-3.13.7/debian/config/or1k/defines
---- linux-3.13.7.orig/debian/config/or1k/defines
-+++ linux-3.13.7/debian/config/or1k/defines
-@@ -0,0 +1,4 @@
-+[base]
-+kernel-arch: openrisc
-+featuresets:
-+# empty; we don't have initramfs working yet
-EOF
-		./debian/rules debian/rules.gen || : # intentionally exits 1 to avoid being called automatically. we are doing it wrong
-	fi
-	if test "$HOST_ARCH" = ppc64el; then
-		echo "patching linux for ppc64el #747367"
-		patch -p1 <<EOF
-Index: linux-3.14.2/debian/config/defines
-===================================================================
---- linux-3.14.2.orig/debian/config/defines	2014-04-28 11:46:12.000000000 -0300
-+++ linux-3.14.2/debian/config/defines	2014-05-07 18:58:17.000000000 -0300
-@@ -17,6 +17,7 @@
-  powerpc
-  powerpcspe
-  ppc64
-+ ppc64el
-  s390
-  s390x
-  sh4
-Index: linux-3.14.2/debian/config/ppc64el/defines
-===================================================================
---- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ linux-3.14.2/debian/config/ppc64el/defines	2014-05-07 19:01:44.000000000 -0300
-@@ -0,0 +1,4 @@
-+[base]
-+kernel-arch: powerpc
-+featuresets:
-+# empty
-EOF
-		./debian/rules debian/rules.gen || : # intentionally exits 1 to avoid being called automatically. we are doing it wrong
-	fi
-}
 if test "`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_ARCH_OS`" = "linux"; then
 PKG=`echo $RESULT/linux-libc-dev_*.deb`
 if test -f "$PKG"; then
@@ -1705,7 +1651,6 @@ else
 	cd linux
 	obtain_source_package linux
 	cd linux-*
-	patch_linux
 	dpkg-checkbuilddeps -B -a$HOST_ARCH || : # tell unmet build depends
 	KBUILD_VERBOSE=1 make -f debian/rules.gen binary-libc-dev_$HOST_ARCH
 	cd ..
