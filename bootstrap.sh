@@ -334,7 +334,7 @@ pickup_packages() {
 
 # gcc0
 patch_gcc() {
-	if test "$GCC_VER" = "4.8" -o "$GCC_VER" = "4.9"; then
+	if test "$GCC_VER" = "4.8"; then
 		echo "build gcc-X.Y-base when with_deps_on_target_arch_pkgs #744782"
 		patch -p1 <<EOF
 diff -u gcc-4.8-4.8.2/debian/control.m4 gcc-4.8-4.8.2/debian/control.m4
