@@ -267,6 +267,8 @@ fi
 mkdir -p /tmp/buildd
 mkdir -p "$RESULT"
 
+HOST_ARCH_SUFFIX="-`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE | tr _ -`"
+
 mkdir -p "$REPODIR/conf"
 mkdir "$REPODIR/archive"
 cat > "$REPODIR/conf/distributions" <<EOF
@@ -415,7 +417,6 @@ fi
 PKG=`echo $RESULT/binutils-*.deb`
 if test -f "$PKG"; then
 	echo "skipping rebuild of binutils-target"
-	dpkg -i "$PKG"
 else
 	$APT_GET install autoconf bison flex gettext texinfo dejagnu quilt python3 file lsb-release zlib1g-dev
 	cd /tmp/buildd
@@ -427,7 +428,7 @@ else
 	cd ..
 	ls -l
 	pickup_packages *.changes
-	dpkg -i binutils-*.deb
+	$APT_GET install binutils$HOST_ARCH_SUFFIX
 	assembler="`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE`-as"
 	if ! which "$assembler"; then echo "$assembler missing in binutils package"; exit 1; fi
 	if ! $assembler -o test.o /dev/null; then echo "binutils fail to execute"; exit 1; fi
@@ -471,7 +472,7 @@ if test -d "$RESULT/gcc1"; then
 	$APT_GET remove gcc-multilib
 	dpkg -i $RESULT/gcc1/*.deb
 else
-	$APT_GET install debhelper gawk patchutils bison flex python realpath lsb-release quilt libc6-dbg libtool autoconf2.64 zlib1g-dev gperf texinfo locales sharutils procps libantlr-java libffi-dev fastjar libmagic-dev libecj-java zip libasound2-dev libxtst-dev libxt-dev libgtk2.0-dev libart-2.0-dev libcairo2-dev netbase libcloog-isl-dev libmpc-dev libmpfr-dev libgmp-dev dejagnu autogen chrpath binutils-multiarch
+	$APT_GET install debhelper gawk patchutils bison flex python realpath lsb-release quilt libc6-dbg libtool autoconf2.64 zlib1g-dev gperf texinfo locales sharutils procps libantlr-java libffi-dev fastjar libmagic-dev libecj-java zip libasound2-dev libxtst-dev libxt-dev libgtk2.0-dev libart-2.0-dev libcairo2-dev netbase libcloog-isl-dev libmpc-dev libmpfr-dev libgmp-dev dejagnu autogen chrpath binutils-multiarch binutils$HOST_ARCH_SUFFIX
 	cd /tmp/buildd
 	mkdir gcc1
 	cd gcc1
@@ -1042,7 +1043,7 @@ if test -d "$RESULT/gcc2"; then
 	echo "skipping rebuild of gcc stage2"
 	dpkg -i "$RESULT"/gcc2/*.deb
 else
-	$APT_GET install debhelper gawk patchutils bison flex python realpath lsb-release quilt libc6-dbg libtool autoconf2.64 zlib1g-dev gperf texinfo locales sharutils procps libantlr-java libffi-dev fastjar libmagic-dev libecj-java zip libasound2-dev libxtst-dev libxt-dev libgtk2.0-dev libart-2.0-dev libcairo2-dev netbase libcloog-isl-dev libmpc-dev libmpfr-dev libgmp-dev dejagnu autogen chrpath binutils-multiarch
+	$APT_GET install debhelper gawk patchutils bison flex python realpath lsb-release quilt libc6-dbg libtool autoconf2.64 zlib1g-dev gperf texinfo locales sharutils procps libantlr-java libffi-dev fastjar libmagic-dev libecj-java zip libasound2-dev libxtst-dev libxt-dev libgtk2.0-dev libart-2.0-dev libcairo2-dev netbase libcloog-isl-dev libmpc-dev libmpfr-dev libgmp-dev dejagnu autogen chrpath binutils-multiarch binutils$HOST_ARCH_SUFFIX
 	cd /tmp/buildd
 	mkdir gcc2
 	cd gcc2
@@ -1117,7 +1118,7 @@ if test -d "$RESULT/gcc3"; then
 	echo "skipping rebuild of gcc stage3"
 	dpkg -i "$RESULT"/gcc3/*.deb
 else
-	$APT_GET install debhelper gawk patchutils bison flex python realpath lsb-release quilt libc6-dbg libtool autoconf2.64 zlib1g-dev gperf texinfo locales sharutils procps libantlr-java libffi-dev fastjar libmagic-dev libecj-java zip libasound2-dev libxtst-dev libxt-dev libgtk2.0-dev libart-2.0-dev libcairo2-dev netbase libcloog-isl-dev libmpc-dev libmpfr-dev libgmp-dev dejagnu autogen chrpath binutils-multiarch
+	$APT_GET install debhelper gawk patchutils bison flex python realpath lsb-release quilt libc6-dbg libtool autoconf2.64 zlib1g-dev gperf texinfo locales sharutils procps libantlr-java libffi-dev fastjar libmagic-dev libecj-java zip libasound2-dev libxtst-dev libxt-dev libgtk2.0-dev libart-2.0-dev libcairo2-dev netbase libcloog-isl-dev libmpc-dev libmpfr-dev libgmp-dev dejagnu autogen chrpath binutils-multiarch binutils$HOST_ARCH_SUFFIX
 	cd /tmp/buildd
 	mkdir gcc3
 	cd gcc3
