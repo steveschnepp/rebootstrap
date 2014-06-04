@@ -445,7 +445,6 @@ if test "`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_ARCH_OS`" = "linux"; then
 PKG=`echo $RESULT/linux-libc-dev_*.deb`
 if test -f "$PKG"; then
 	echo "skipping rebuild of linux-libc-dev"
-	dpkg -i "$PKG"
 else
 	$APT_GET install bc cpio debhelper kernel-wedge patchutils python quilt python-six
 	cd /tmp/buildd
@@ -458,7 +457,6 @@ else
 	cd ..
 	ls -l
 	pickup_packages *.deb
-	dpkg -i linux-libc-dev_*.deb
 	test -d "$RESULT" && cp -v linux-libc-dev_*.deb "$RESULT"
 	cd ..
 	rm -Rf linux
@@ -472,7 +470,7 @@ if test -d "$RESULT/gcc1"; then
 	$APT_GET remove gcc-multilib
 	dpkg -i $RESULT/gcc1/*.deb
 else
-	$APT_GET install debhelper gawk patchutils bison flex python realpath lsb-release quilt libc6-dbg libtool autoconf2.64 zlib1g-dev gperf texinfo locales sharutils procps libantlr-java libffi-dev fastjar libmagic-dev libecj-java zip libasound2-dev libxtst-dev libxt-dev libgtk2.0-dev libart-2.0-dev libcairo2-dev netbase libcloog-isl-dev libmpc-dev libmpfr-dev libgmp-dev dejagnu autogen chrpath binutils-multiarch binutils$HOST_ARCH_SUFFIX
+	$APT_GET install debhelper gawk patchutils bison flex python realpath lsb-release quilt libc6-dbg libtool autoconf2.64 zlib1g-dev gperf texinfo locales sharutils procps libantlr-java libffi-dev fastjar libmagic-dev libecj-java zip libasound2-dev libxtst-dev libxt-dev libgtk2.0-dev libart-2.0-dev libcairo2-dev netbase libcloog-isl-dev libmpc-dev libmpfr-dev libgmp-dev dejagnu autogen chrpath binutils-multiarch binutils$HOST_ARCH_SUFFIX linux-libc-dev:$HOST_ARCH
 	cd /tmp/buildd
 	mkdir gcc1
 	cd gcc1
@@ -1016,7 +1014,7 @@ if test -f "$PKG"; then
 	$APT_GET remove libc6-dev-i386
 	dpkg -i "$PKG"
 else
-	$APT_GET install gettext file quilt autoconf gawk debhelper rdfind symlinks libaudit-dev libcap-dev libselinux-dev binutils bison netbase
+	$APT_GET install gettext file quilt autoconf gawk debhelper rdfind symlinks libaudit-dev libcap-dev libselinux-dev binutils bison netbase linux-libc-dev:$HOST_ARCH
 	cd /tmp/buildd
 	mkdir eglibc
 	cd eglibc
@@ -1089,7 +1087,7 @@ if test -d "$RESULT/eglibc2"; then
 	echo "skipping rebuild of eglibc stage2"
 	dpkg -i "$RESULT"/eglibc2/*.deb
 else
-	$APT_GET install gettext file quilt autoconf gawk debhelper rdfind symlinks libaudit-dev libcap-dev libselinux-dev binutils bison netbase
+	$APT_GET install gettext file quilt autoconf gawk debhelper rdfind symlinks libaudit-dev libcap-dev libselinux-dev binutils bison netbase linux-libc-dev:$HOST_ARCH
 	cd /tmp/buildd
 	mkdir eglibc2
 	cd eglibc2
