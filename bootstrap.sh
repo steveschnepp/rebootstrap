@@ -599,7 +599,9 @@ diff -Nru eglibc-2.18/debian/rules eglibc-2.18/debian/rules
  
 EOF
 	echo "patching eglibc to build without selinux in stage2 #742640"
-	patch -p1 <<EOF
+	case `dpkg-parsechangelog --show-field Version` in
+		2.18-*)
+			patch -p1 <<EOF
 diff -Nru eglibc-2.18/debian/sysdeps/linux.mk eglibc-2.18/debian/sysdeps/linux.mk
 --- eglibc-2.18/debian/sysdeps/linux.mk
 +++ eglibc-2.18/debian/sysdeps/linux.mk
@@ -617,6 +619,32 @@ diff -Nru eglibc-2.18/debian/sysdeps/linux.mk eglibc-2.18/debian/sysdeps/linux.m
  
  ifndef LINUX_SOURCE
 EOF
+		;;
+		2.19-*)
+			patch -p1 <<EOF
+diff -Nru eglibc-2.19/debian/sysdeps/linux.mk eglibc-2.19/debian/sysdeps/linux.mk
+--- eglibc-2.19/debian/sysdeps/linux.mk
++++ eglibc-2.19/debian/sysdeps/linux.mk
+@@ -12,7 +12,11 @@
+ ifeq (\$(DEB_BUILD_PROFILE),bootstrap)
+   libc_extra_config_options = \$(extra_config_options)
+ else
+-  libc_extra_config_options = --with-selinux --enable-systemtap \$(extra_config_options)
++  ifneq (\$(filter stage2,\$(DEB_BUILD_PROFILES)),)
++    libc_extra_config_options = \$(extra_config_options)
++  else 
++    libc_extra_config_options = --with-selinux --enable-systemtap \$(extra_config_options)
++  endif
+ endif
+ 
+ ifndef LINUX_SOURCE
+EOF
+		;;
+		*)
+			echo "unknown glibc version"
+			exit 1
+		;;
+	esac
 	echo "patching eglibc to not depend on libgcc in stage2"
 	patch -p1 <<EOF
 diff -Nru eglibc-2.18/debian/control.in/libc eglibc-2.18/debian/control.in/libc
