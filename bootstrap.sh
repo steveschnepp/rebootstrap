@@ -1607,7 +1607,6 @@ else
 	cd ..
 	ls -l
 	pickup_packages *.changes
-	# install in two calls to account for Pre-Depends
 	test -d "$RESULT" && mkdir "$RESULT/ncurses"
 	test -d "$RESULT" && cp *.deb "$RESULT/ncurses/"
 	cd ..
