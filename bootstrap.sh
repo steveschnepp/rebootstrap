@@ -1860,7 +1860,7 @@ else
 	cd libonig
 	obtain_source_package libonig
 	cd libonig-*
-	dpkg-buildpackage -a$HOST_ARCH -B -d -uc -us
+	dpkg-buildpackage -a$HOST_ARCH -B -uc -us
 	cd ..
 	ls -l
 	pickup_packages *.changes
