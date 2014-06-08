@@ -1850,3 +1850,23 @@ else
 	rm -Rf xz-utils
 fi
 echo "progress-mark:23:xz-utils cross build"
+
+if test -d "$RESULT/libonig"; then
+	echo "skipping rebuild of libonig"
+else
+	$APT_GET build-dep -a$HOST_ARCH --arch-only libonig
+	cd /tmp/buildd
+	mkdir libonig
+	cd libonig
+	obtain_source_package libonig
+	cd libonig-*
+	dpkg-buildpackage -a$HOST_ARCH -B -d -uc -us
+	cd ..
+	ls -l
+	pickup_packages *.changes
+	test -d "$RESULT" && mkdir "$RESULT/libonig"
+	test -d "$RESULT" && cp *.deb "$RESULT/libonig/"
+	cd ..
+	rm -Rf libonig
+fi
+echo "progress-mark:24:libonig cross build"
