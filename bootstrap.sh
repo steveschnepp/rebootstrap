@@ -378,6 +378,33 @@ diff -u gcc-4.8-4.8.2/debian/rules.defs gcc-4.8-4.8.2/debian/rules.defs
    with_multiarch_lib := yes
 EOF
 	fi
+	if test "$GCC_VER" = "4.9"; then
+		echo "patching gcc-4.9 for powerpcspe #751001"
+		patch -p1 <<EOF
+diff -u gcc-4.9-4.9.0/debian/patches/powerpc_remove_many.diff gcc-4.9-4.9.0/debian/patches/powerpc_remove_many.diff
+--- gcc-4.9-4.9.0/debian/patches/powerpc_remove_many.diff
++++ gcc-4.9-4.9.0/debian/patches/powerpc_remove_many.diff
+@@ -23,6 +23,7 @@
+  %{mcpu=e500mc64: -me500mc64} \\
+  %{maltivec: -maltivec} \\
+  %{mvsx: -mvsx %{!maltivec: -maltivec} %{!mcpu*: %(asm_cpu_power7)}} \\
++ %{mpower8-vector|mcrypto|mdirect-move|mhtm: %{!mcpu*: %(asm_cpu_power8)}} \\
+ --many"
+ +" \\
+ +ASM_CPU_SPU_MANY_NOT_SPE
+diff -u gcc-4.9-4.9.0/debian/rules.patch gcc-4.9-4.9.0/debian/rules.patch
+--- gcc-4.9-4.9.0/debian/rules.patch
++++ gcc-4.9-4.9.0/debian/rules.patch
+@@ -203,7 +203,6 @@
+ ifeq (\$(DEB_TARGET_ARCH),powerpcspe)
+   debian_patches += powerpc_remove_many
+   debian_patches += powerpc_nofprs
+-  debian_patches += gcc-powerpcspe-ldbl-fix
+ endif
+ 
+ #debian_patches += link-libs
+EOF
+	fi
 }
 # choosing libatomic1 arbitrarily here, cause it never bumped soname
 BUILD_GCC_MULTIARCH_VER=`apt-cache show --no-all-versions libatomic1 | sed 's/^Source: gcc-\([0-9.]*\)$/\1/;t;d'`
