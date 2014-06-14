@@ -13,6 +13,7 @@ MIRROR="http://ftp.stw-bonn.de/debian"
 ENABLE_MULTILIB=no
 REPODIR=/tmp/repo
 APT_GET="apt-get --no-install-recommends -y"
+DEFAULT_PROFILES=cross
 
 # evaluate command line parameters of the form KEY=VALUE
 for param in "$*"; do
@@ -335,8 +336,65 @@ pickup_packages() {
 	apt-get update
 }
 
+cross_build_setup() {
+	local pkg mangledpkg subdir
+	pkg="$1"
+	subdir="$2"
+	if test -z "$subdir"; then
+		subdir="$pkg"
+	fi
+	mangledpkg=`echo "$pkg" | tr -- -. __` # - invalid in function names
+	cd /tmp/buildd
+	mkdir "$subdir"
+	cd "$subdir"
+	obtain_source_package "$pkg"
+	cd "${pkg}-"*
+	if type "patch_$mangledpkg" >/dev/null; then
+		"patch_$mangledpkg"
+	fi
+}
+
+cross_build() {
+	local pkg profiles mangledpkg
+	pkg="$1"
+	profiles="$DEFAULT_PROFILES $2"
+	mangledpkg=`echo "$pkg" | tr -- -. __` # - invalid in function names
+	if test "$ENABLE_MULTILIB" = "no"; then
+		profiles="$profiles nobiarch"
+	fi
+	profiles=`echo "$profiles" | sed 's/ /,/g;s/,,*/,/g;s/^,//;s/,$//'`
+	if test -d "$RESULT/$pkg"; then
+		echo "skipping rebuild of $pkg with profiles $profiles"
+	else
+		echo "building $pkg with profiles $profiles"
+		if type "builddep_$mangledpkg" >/dev/null; then
+			echo "installing Build-Depends for $pkg using custom function"
+			"builddep_$mangledpkg" "$profiles"
+		else
+			echo "installing Build-Depends for $pkg using apt-get build-dep"
+			$APT_GET build-dep -a$HOST_ARCH --arch-only -P "$profiles" "$pkg"
+		fi
+		cross_build_setup "$pkg"
+		if type "builddep_$mangledpkg" >/dev/null; then
+			if dpkg-checkbuilddeps -a$HOST_ARCH -P "$profiles"; then
+				echo "rebootstrap-warning: Build-Depends for $pkg satisfied even though a custom builddep_  function is in use"
+			fi
+			dpkg-buildpackage -a$HOST_ARCH -B "-P$profiles" -d -uc -us
+		else
+			dpkg-buildpackage -a$HOST_ARCH -B "-P$profiles" -uc -us
+		fi
+		cd ..
+		ls -l
+		pickup_packages *.changes
+		test -d "$RESULT" && mkdir "$RESULT/$pkg"
+		test -d "$RESULT" && cp *.deb "$RESULT/$pkg/"
+		cd ..
+		rm -Rf "$pkg"
+	fi
+}
+
 # gcc0
-patch_gcc() {
+patch_gcc_4_9() {
 	if test "$GCC_VER" = "4.8"; then
 		echo "patching gcc to honour DEB_CROSS_NO_BIARCH for hppa #745116"
 		patch -p1 <<EOF
@@ -406,6 +464,9 @@ diff -u gcc-4.9-4.9.0/debian/rules.patch gcc-4.9-4.9.0/debian/rules.patch
 EOF
 	fi
 }
+patch_gcc_4_8() {
+	patch_gcc_4_9
+}
 # choosing libatomic1 arbitrarily here, cause it never bumped soname
 BUILD_GCC_MULTIARCH_VER=`apt-cache show --no-all-versions libatomic1 | sed 's/^Source: gcc-\([0-9.]*\)$/\1/;t;d'`
 if test "$GCC_VER" != "$BUILD_GCC_MULTIARCH_VER"; then
@@ -417,12 +478,7 @@ else
 	$APT_GET build-dep --arch-only gcc-$GCC_VER
 	# dependencies for common libs no longer declared
 	$APT_GET install doxygen graphviz ghostscript texlive-latex-base xsltproc docbook-xsl-ns
-	cd /tmp/buildd
-	mkdir gcc0
-	cd gcc0
-	obtain_source_package gcc-$GCC_VER
-	cd gcc-*
-	patch_gcc
+	cross_build_setup "gcc-$GCC_VER" gcc0
 	DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=biarch,d,go,java,objc,obj-c++" dpkg-buildpackage -T control -uc -us
 	DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=biarch,d,go,java,objc,obj-c++" dpkg-buildpackage -B -uc -us
 	cd ..
@@ -446,11 +502,7 @@ if test -f "$PKG"; then
 	echo "skipping rebuild of binutils-target"
 else
 	$APT_GET install autoconf bison flex gettext texinfo dejagnu quilt python3 file lsb-release zlib1g-dev
-	cd /tmp/buildd
-	mkdir binutils
-	cd binutils
-	obtain_source_package binutils
-	cd binutils-*
+	cross_build_setup binutils
 	WITH_SYSROOT=/ TARGET=$HOST_ARCH dpkg-buildpackage -B -uc -us
 	cd ..
 	ls -l
@@ -474,11 +526,7 @@ if test -f "$PKG"; then
 	echo "skipping rebuild of linux-libc-dev"
 else
 	$APT_GET install bc cpio debhelper kernel-wedge patchutils python quilt python-six
-	cd /tmp/buildd
-	mkdir linux
-	cd linux
-	obtain_source_package linux
-	cd linux-*
+	cross_build_setup linux
 	dpkg-checkbuilddeps -B -a$HOST_ARCH || : # tell unmet build depends
 	KBUILD_VERBOSE=1 make -f debian/rules.gen binary-libc-dev_$HOST_ARCH
 	cd ..
@@ -498,12 +546,7 @@ if test -d "$RESULT/gcc1"; then
 	dpkg -i $RESULT/gcc1/*.deb
 else
 	$APT_GET install debhelper gawk patchutils bison flex python realpath lsb-release quilt libc6-dbg libtool autoconf2.64 zlib1g-dev gperf texinfo locales sharutils procps libantlr-java libffi-dev fastjar libmagic-dev libecj-java zip libasound2-dev libxtst-dev libxt-dev libgtk2.0-dev libart-2.0-dev libcairo2-dev netbase libcloog-isl-dev libmpc-dev libmpfr-dev libgmp-dev dejagnu autogen chrpath binutils-multiarch binutils$HOST_ARCH_SUFFIX linux-libc-dev:$HOST_ARCH
-	cd /tmp/buildd
-	mkdir gcc1
-	cd gcc1
-	obtain_source_package gcc-$GCC_VER
-	cd gcc-$GCC_VER-*
-	patch_gcc
+	cross_build_setup "gcc-$GCC_VER" gcc1
 	dpkg-checkbuilddeps -B || : # tell unmet build depends
 	if test "$ENABLE_MULTILIB" = yes; then
 		DEB_TARGET_ARCH=$HOST_ARCH DEB_STAGE=stage1 dpkg-buildpackage -d -T control
@@ -1035,19 +1078,13 @@ diff -Nru eglibc-2.18/debian/sysdeps/i386.mk eglibc-2.18/debian/sysdeps/i386.mk
 EOF
 	fi
 }
-PKG=`echo $RESULT/libc*-dev_*.deb`
-if test -f "$PKG"; then
+if test -d "$RESULT/eglibc1"; then
 	echo "skipping rebuild of eglibc stage1"
 	$APT_GET remove libc6-dev-i386
-	dpkg -i "$PKG"
+	dpkg -i "$RESULT/eglibc1/"*.deb
 else
 	$APT_GET install gettext file quilt autoconf gawk debhelper rdfind symlinks libaudit-dev libcap-dev libselinux-dev binutils bison netbase linux-libc-dev:$HOST_ARCH
-	cd /tmp/buildd
-	mkdir eglibc
-	cd eglibc
-	obtain_source_package eglibc
-	cd eglibc-*
-	patch_eglibc
+	cross_build_setup eglibc eglibc1
 	dpkg-checkbuilddeps -B -a$HOST_ARCH || : # tell unmet build depends
 	DEB_GCC_VERSION=-$GCC_VER DEB_BUILD_PROFILE=bootstrap dpkg-buildpackage -B -uc -us -a$HOST_ARCH -d
 	cd ..
@@ -1055,7 +1092,8 @@ else
 	pickup_packages *.changes
 	$APT_GET remove libc6-dev-i386
 	dpkg -i libc*-dev_*.deb
-	test -d "$RESULT" && cp -v libc*-dev_*.deb "$RESULT/"
+	test -d "$RESULT" && mkdir "$RESULT/eglibc1"
+	test -d "$RESULT" && cp -v libc*-dev_*.deb "$RESULT/eglibc1"
 	cd ..
 	rm -Rf eglibc
 fi
@@ -1069,12 +1107,7 @@ if test -d "$RESULT/gcc2"; then
 	dpkg -i "$RESULT"/gcc2/*.deb
 else
 	$APT_GET install debhelper gawk patchutils bison flex python realpath lsb-release quilt libc6-dbg libtool autoconf2.64 zlib1g-dev gperf texinfo locales sharutils procps libantlr-java libffi-dev fastjar libmagic-dev libecj-java zip libasound2-dev libxtst-dev libxt-dev libgtk2.0-dev libart-2.0-dev libcairo2-dev netbase libcloog-isl-dev libmpc-dev libmpfr-dev libgmp-dev dejagnu autogen chrpath binutils-multiarch binutils$HOST_ARCH_SUFFIX
-	cd /tmp/buildd
-	mkdir gcc2
-	cd gcc2
-	obtain_source_package gcc-$GCC_VER
-	cd gcc-$GCC_VER-*
-	patch_gcc
+	cross_build_setup "gcc-$GCC_VER" gcc2
 	dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends
 	if test "$ENABLE_MULTILIB" = yes; then
 		DEB_TARGET_ARCH=$HOST_ARCH DEB_STAGE=stage2 dpkg-buildpackage -d -T control
@@ -1115,12 +1148,7 @@ if test -d "$RESULT/eglibc2"; then
 	dpkg -i "$RESULT"/eglibc2/*.deb
 else
 	$APT_GET install gettext file quilt autoconf gawk debhelper rdfind symlinks libaudit-dev libcap-dev libselinux-dev binutils bison netbase linux-libc-dev:$HOST_ARCH
-	cd /tmp/buildd
-	mkdir eglibc2
-	cd eglibc2
-	obtain_source_package eglibc
-	cd eglibc-*
-	patch_eglibc
+	cross_build_setup eglibc eglibc2
 	if test "$ENABLE_MULTILIB" = yes; then
 		dpkg-checkbuilddeps -B -a$HOST_ARCH -Pstage2 || : # tell unmet build depends
 		DEB_GCC_VERSION=-$GCC_VER dpkg-buildpackage -B -uc -us -a$HOST_ARCH -d -Pstage2
@@ -1144,12 +1172,7 @@ if test -d "$RESULT/gcc3"; then
 	dpkg -i "$RESULT"/gcc3/*.deb
 else
 	$APT_GET install debhelper gawk patchutils bison flex python realpath lsb-release quilt libc6-dbg libtool autoconf2.64 zlib1g-dev gperf texinfo locales sharutils procps libantlr-java libffi-dev fastjar libmagic-dev libecj-java zip libasound2-dev libxtst-dev libxt-dev libgtk2.0-dev libart-2.0-dev libcairo2-dev netbase libcloog-isl-dev libmpc-dev libmpfr-dev libgmp-dev dejagnu autogen chrpath binutils-multiarch binutils$HOST_ARCH_SUFFIX
-	cd /tmp/buildd
-	mkdir gcc3
-	cd gcc3
-	obtain_source_package gcc-$GCC_VER
-	cd gcc-$GCC_VER-*
-	patch_gcc
+	cross_build_setup "gcc-$GCC_VER" gcc3
 	dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends
 	if test "$ENABLE_MULTILIB" = yes; then
 		DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=d,go,java,objc,obj-c++" with_deps_on_target_arch_pkgs=yes DEB_TARGET_ARCH=$HOST_ARCH dpkg-buildpackage -d -T control
@@ -1181,77 +1204,25 @@ else
 fi
 echo "progress-mark:7:gcc stage3 complete"
 
-if test -d "$RESULT/pcre3"; then
-	echo "skipping rebuild of pcre3"
-else
-	$APT_GET -a$HOST_ARCH --arch-only build-dep pcre3
-	cd /tmp/buildd
-	mkdir pcre3
-	cd pcre3
-	obtain_source_package pcre3
-	cd pcre3-*
-	dpkg-buildpackage -a$HOST_ARCH -B -uc -us
-	cd ..
-	ls -l
-	pickup_packages *.changes
-	test -d "$RESULT" && mkdir "$RESULT/pcre3"
-	cd ..
-	rm -Rf pcre3
-fi
+cross_build pcre3
 echo "progress-mark:8:pcre3 cross build"
 
 $APT_GET remove libc6-i386 # breaks cross builds
-if test -d "$RESULT/attr"; then
-	echo "skipping rebuild of attr"
-else
+builddep_attr() {
+	# libtool dependency unsatisfiable
 	$APT_GET install dpkg-dev debhelper autoconf automake gettext libtool
-	cd /tmp/buildd
-	mkdir attr
-	cd attr
-	obtain_source_package attr
-	cd attr-*
-	dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends
-	dpkg-buildpackage -a$HOST_ARCH -B -d -uc -us
-	cd ..
-	ls -l
-	pickup_packages *.changes
-	test -d "$RESULT" && mkdir "$RESULT/attr"
-	test -d "$RESULT" && cp *.deb "$RESULT/attr/"
-	cd ..
-	rm -Rf attr
-fi
+}
+cross_build attr
 echo "progress-mark:9:attr cross build"
 
-if test -d "$RESULT/acl"; then
-	echo "skipping rebuild of acl"
-else
+builddep_acl() {
+	# libtool dependency unsatisfiable
 	$APT_GET install dpkg-dev debhelper autotools-dev autoconf automake gettext libtool libattr1-dev:$HOST_ARCH
-	cd /tmp/buildd
-	mkdir acl
-	cd acl
-	obtain_source_package acl
-	cd acl-*
-	dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends
-	dpkg-buildpackage -a$HOST_ARCH -B -d -uc -us
-	cd ..
-	ls -l
-	pickup_packages *.changes
-	test -d "$RESULT" && mkdir "$RESULT/acl"
-	test -d "$RESULT" && cp *.deb "$RESULT/acl/"
-	cd ..
-	rm -Rf acl
-fi
+}
+cross_build acl
 echo "progress-mark:10:acl cross build"
 
-if test -d "$RESULT/zlib"; then
-	echo "skipping rebuild of zlib"
-else
-	$APT_GET install debhelper binutils dpkg-dev
-	cd /tmp/buildd
-	mkdir zlib
-	cd zlib
-	obtain_source_package zlib
-	cd zlib-*
+patch_zlib() {
 	echo "patching zlib to support nobiarch build profile #709623"
 	patch -p1 <<EOF
 diff -Nru zlib-1.2.8.dfsg/debian/control zlib-1.2.8.dfsg/debian/control
@@ -1330,184 +1301,42 @@ diff -Nru zlib-1.2.8.dfsg/debian/rules zlib-1.2.8.dfsg/debian/rules
  ifneq (,\$(findstring \$(DEB_HOST_ARCH), \$(UNALIGNED_ARCHS)))
  CFLAGS+=-DUNALIGNED_OK
 EOF
-	if test "$ENABLE_MULTILIB" = yes; then
-		dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends
-		dpkg-buildpackage -a$HOST_ARCH -B -d -uc -us
-	else
-		dpkg-checkbuilddeps -a$HOST_ARCH -Pnobiarch || : # tell unmet build depends
-		dpkg-buildpackage -a$HOST_ARCH -B -d -uc -us -Pnobiarch
-	fi
-	cd ..
-	ls -l
-	pickup_packages *.changes
-	test -d "$RESULT" && mkdir "$RESULT/zlib"
-	test -d "$RESULT" && cp *.deb "$RESULT/zlib/"
-	cd ..
-	rm -Rf zlib
-fi
+}
+builddep_zlib() {
+	# gcc-multilib dependency unsatisfiable
+	$APT_GET install debhelper binutils dpkg-dev
+}
+cross_build zlib
 echo "progress-mark:11:zlib cross build"
 
-if test -d "$RESULT/hostname"; then
-	echo "skipping rebuild of hostname"
-else
-	$APT_GET -a$HOST_ARCH --arch-only build-dep hostname
-	cd /tmp/buildd
-	mkdir hostname
-	cd hostname
-	obtain_source_package hostname
-	cd hostname-*
-	dpkg-buildpackage -a$HOST_ARCH -B -uc -us
-	cd ..
-	ls -l
-	pickup_packages *.changes
-	test -d "$RESULT" && mkdir "$RESULT/hostname"
-	test -d "$RESULT" && cp *.deb "$RESULT/hostname/"
-	cd ..
-	rm -Rf hostname
-fi
+cross_build hostname
 echo "progress-mark:12:hostname cross build"
 
 if test "`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_ARCH_OS`" = "linux"; then
-if test -d "$RESULT/libsepol"; then
-	echo "skipping rebuild of libsepol"
-else
-	$APT_GET -a$HOST_ARCH --arch-only build-dep libsepol
-	cd /tmp/buildd
-	mkdir libsepol
-	cd libsepol
-	obtain_source_package libsepol
-	cd libsepol-*
-	dpkg-buildpackage -a$HOST_ARCH -B -uc -us
-	cd ..
-	ls -l
-	pickup_packages *.changes
-	test -d "$RESULT" && mkdir "$RESULT/libsepol"
-	test -d "$RESULT" && cp *.deb "$RESULT/libsepol/"
-	cd ..
-	rm -Rf libsepol
-fi
-echo "progress-mark:13:libsepol cross build"
+	cross_build libsepol
+	echo "progress-mark:13:libsepol cross build"
 fi
 
-if test -d "$RESULT/gmp"; then
-	echo "skipping rebuild of gmp"
-else
-	$APT_GET -a$HOST_ARCH --arch-only build-dep gmp
-	cd /tmp/buildd
-	mkdir gmp
-	cd gmp
-	obtain_source_package gmp
-	cd gmp-*
-	dpkg-buildpackage -a$HOST_ARCH -B -uc -us
-	cd ..
-	ls -l
-	pickup_packages *.changes
-	test -d "$RESULT" && mkdir "$RESULT/gmp"
-	test -d "$RESULT" && cp *.deb "$RESULT/gmp/"
-	cd ..
-	rm -Rf gmp
-fi
+cross_build gmp
 echo "progress-mark:14:gmp cross build"
 
-if test -d "$RESULT/mpfr4"; then
-	echo "skipping rebuild of mpfr4"
-else
-	$APT_GET -a$HOST_ARCH --arch-only build-dep mpfr4
-	cd /tmp/buildd
-	mkdir mpfr4
-	cd mpfr4
-	obtain_source_package mpfr4
-	cd mpfr4-*
-	dpkg-buildpackage -a$HOST_ARCH -B -uc -us
-	cd ..
-	ls -l
-	pickup_packages *.changes
-	test -d "$RESULT" && mkdir "$RESULT/mpfr4"
-	test -d "$RESULT" && cp *.deb "$RESULT/mpfr4/"
-	cd ..
-	rm -Rf mpfr4
-fi
+cross_build mpfr4
 echo "progress-mark:15:mpfr4 cross build"
 
-if test -d "$RESULT/mpclib3"; then
-	echo "skipping rebuild of mpclib3"
-else
-	$APT_GET -a$HOST_ARCH --arch-only build-dep mpclib3
-	cd /tmp/buildd
-	mkdir mpclib3
-	cd mpclib3
-	obtain_source_package mpclib3
-	cd mpclib3-*
-	dpkg-buildpackage -a$HOST_ARCH -B -uc -us
-	cd ..
-	ls -l
-	pickup_packages *.changes
-	test -d "$RESULT" && mkdir "$RESULT/mpclib3"
-	test -d "$RESULT" && cp *.deb "$RESULT/mpclib3/"
-	cd ..
-	rm -Rf mpclib3
-fi
+cross_build mpclib3
 echo "progress-mark:16:mpclib3 cross build"
 
-if test -d "$RESULT/isl"; then
-	echo "skipping rebuild of isl"
-else
-	$APT_GET install debhelper dh-autoreconf automake1.11 libgmp-dev:$HOST_ARCH
-	cd /tmp/buildd
-	mkdir isl
-	cd isl
-	obtain_source_package isl
-	cd isl-*
-	dpkg-buildpackage -a$HOST_ARCH -B -uc -us
-	cd ..
-	ls -l
-	pickup_packages *.changes
-	test -d "$RESULT" && mkdir "$RESULT/isl"
-	test -d "$RESULT" && cp *.deb "$RESULT/isl/"
-	cd ..
-	rm -Rf isl
-fi
+cross_build isl
 echo "progress-mark:17:isl cross build"
 
-if test -d "$RESULT/cloog"; then
-	echo "skipping rebuild of cloog"
-else
-	$APT_GET install debhelper autotools-dev libisl-dev:$HOST_ARCH libgmp-dev:$HOST_ARCH texinfo help2man
-	cd /tmp/buildd
-	mkdir cloog
-	cd cloog
-	obtain_source_package cloog
-	cd cloog-*
-	dpkg-buildpackage -a$HOST_ARCH -B -uc -us
-	cd ..
-	ls -l
-	pickup_packages *.changes
-	test -d "$RESULT" && mkdir "$RESULT/cloog"
-	test -d "$RESULT" && cp *.deb "$RESULT/cloog/"
-	cd ..
-	rm -Rf cloog
-fi
+cross_build cloog
 echo "progress-mark:18:cloog cross build"
 
-if test -d "$RESULT/gpm"; then
-	echo "skipping rebuild of gpm"
-else
+builddep_gpm() {
+	# texlive-base dependency unsatisfiable
 	$APT_GET install autoconf autotools-dev quilt debhelper mawk bison texlive-base texinfo texi2html
-	cd /tmp/buildd
-	mkdir gpm
-	cd gpm
-	obtain_source_package gpm
-	cd gpm-*
-	dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends
-	dpkg-buildpackage -a$HOST_ARCH -B -d -uc -us
-	cd ..
-	ls -l
-	pickup_packages *.changes
-	test -d "$RESULT" && mkdir "$RESULT/gpm"
-	test -d "$RESULT" && cp *.deb "$RESULT/gpm/"
-	cd ..
-	rm -Rf gpm
-fi
+}
+cross_build gpm
 echo "progress-mark:19:gpm cross build"
 
 patch_ncurses() {
@@ -1614,31 +1443,11 @@ diff -Nru ncurses-5.9+20140118/debian/rules ncurses-5.9+20140118/debian/rules
  endif
 EOF
 }
-if test -d "$RESULT/ncurses"; then
-	echo "skipping rebuild of ncurses"
-else
+builddep_ncurses() {
+	# g++-multilib dependency unsatisfiable
 	$APT_GET install debhelper dpkg-dev libgpm-dev:$HOST_ARCH pkg-config
-	cd /tmp/buildd
-	mkdir ncurses
-	cd ncurses
-	obtain_source_package ncurses
-	cd ncurses-*
-	patch_ncurses
-	if test "$ENABLE_MULTILIB" = yes; then
-		dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends
-		dpkg-buildpackage -a$HOST_ARCH -B -d -uc -us
-	else
-		dpkg-checkbuilddeps -a$HOST_ARCH -Pnobiarch || : # tell unmet build depends
-		dpkg-buildpackage -a$HOST_ARCH -B -d -uc -us -Pnobiarch
-	fi
-	cd ..
-	ls -l
-	pickup_packages *.changes
-	test -d "$RESULT" && mkdir "$RESULT/ncurses"
-	test -d "$RESULT" && cp *.deb "$RESULT/ncurses/"
-	cd ..
-	rm -Rf ncurses
-fi
+}
+cross_build ncurses
 echo "progress-mark:20:ncurses cross build"
 
 patch_readline6() {
@@ -1725,31 +1534,11 @@ diff -Nru readline6-6.3/debian/rules readline6-6.3/debian/rules
  LDFLAGS := \$(shell dpkg-buildflags --get LDFLAGS)
 EOF
 }
-if test -d "$RESULT/readline6"; then
-	echo "skipping rebuild of readline6"
-else
+builddep_readline6() {
+	# gcc-multilib dependency unsatisfiable
 	$APT_GET install debhelper libtinfo-dev:$HOST_ARCH libncurses5-dev:$HOST_ARCH mawk texinfo autotools-dev
-	cd /tmp/buildd
-	mkdir readline6
-	cd readline6
-	obtain_source_package readline6
-	cd readline6-*
-	patch_readline6
-	if test "$ENABLE_MULTILIB" = yes; then
-		dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends
-		dpkg-buildpackage -a$HOST_ARCH -B -d -uc -us
-	else
-		dpkg-checkbuilddeps -a$HOST_ARCH -Pnobiarch || : # tell unmet build depends
-		dpkg-buildpackage -a$HOST_ARCH -B -d -uc -us -Pnobiarch
-	fi
-	cd ..
-	ls -l
-	pickup_packages *.changes
-	test -d "$RESULT" && mkdir "$RESULT/readline6"
-	test -d "$RESULT" && cp *.deb "$RESULT/readline6/"
-	cd ..
-	rm -Rf readline6
-fi
+}
+cross_build readline6
 echo "progress-mark:21:readline6 cross build"
 
 patch_bzip2() {
@@ -1830,70 +1619,19 @@ diff -Nru bzip2-1.0.6/debian/rules bzip2-1.0.6/debian/rules
  build: build-stamp \$(build32-stamp) \$(build64-stamp)
 EOF
 }
-if test -d "$RESULT/bzip2"; then
-	echo "skipping rebuild of bzip2"
-else
+builddep_bzip2() {
+	# gcc-multilib dependency unsatisfiable
 	$APT_GET install texinfo dpkg-dev
-	cd /tmp/buildd
-	mkdir bzip2
-	cd bzip2
-	obtain_source_package bzip2
-	cd bzip2-*
-	patch_bzip2
-	if test "$ENABLE_MULTILIB" = yes; then
-		dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends
-		dpkg-buildpackage -a$HOST_ARCH -B -d -uc -us
-	else
-		dpkg-checkbuilddeps -a$HOST_ARCH -Pnobiarch || : # tell unmet build depends
-		dpkg-buildpackage -a$HOST_ARCH -B -d -uc -us -Pnobiarch
-	fi
-	cd ..
-	ls -l
-	pickup_packages *.changes
-	test -d "$RESULT" && mkdir "$RESULT/bzip2"
-	test -d "$RESULT" && cp *.deb "$RESULT/bzip2/"
-	cd ..
-	rm -Rf bzip2
-fi
+}
+cross_build bzip2
 echo "progress-mark:22:bzip2 cross build"
 
-if test -d "$RESULT/xz-utils"; then
-	echo "skipping rebuild of xz-utils"
-else
+builddep_xz_utils() {
+	# autopoint dependency unsatisfiable
 	$APT_GET install debhelper perl dpkg-dev autoconf automake libtool gettext autopoint
-	cd /tmp/buildd
-	mkdir xz-utils
-	cd xz-utils
-	obtain_source_package xz-utils
-	cd xz-utils-*
-	dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends
-	dpkg-buildpackage -a$HOST_ARCH -B -d -uc -us
-	cd ..
-	ls -l
-	pickup_packages *.changes
-	test -d "$RESULT" && mkdir "$RESULT/xz-utils"
-	test -d "$RESULT" && cp *.deb "$RESULT/xz-utils/"
-	cd ..
-	rm -Rf xz-utils
-fi
+}
+cross_build xz-utils
 echo "progress-mark:23:xz-utils cross build"
 
-if test -d "$RESULT/libonig"; then
-	echo "skipping rebuild of libonig"
-else
-	$APT_GET build-dep -a$HOST_ARCH --arch-only libonig
-	cd /tmp/buildd
-	mkdir libonig
-	cd libonig
-	obtain_source_package libonig
-	cd libonig-*
-	dpkg-buildpackage -a$HOST_ARCH -B -uc -us
-	cd ..
-	ls -l
-	pickup_packages *.changes
-	test -d "$RESULT" && mkdir "$RESULT/libonig"
-	test -d "$RESULT" && cp *.deb "$RESULT/libonig/"
-	cd ..
-	rm -Rf libonig
-fi
+cross_build libonig
 echo "progress-mark:24:libonig cross build"
