@@ -268,6 +268,10 @@ fi
 mkdir -p /tmp/buildd
 mkdir -p "$RESULT"
 
+if test "$HOST_ARCH" = "i386" -a "$GCC_VER" != "4.8" ; then
+	echo "fixing dpkg's cputable for i386 #751363"
+	sed -i 's/i486/i586/' /usr/share/dpkg/cputable
+fi
 HOST_ARCH_SUFFIX="-`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE | tr _ -`"
 
 mkdir -p "$REPODIR/conf"
