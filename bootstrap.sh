@@ -1398,6 +1398,69 @@ echo "progress-mark:14:gmp cross build"
 cross_build mpfr4
 echo "progress-mark:15:mpfr4 cross build"
 
+patch_mpclib3() {
+	echo "patching mpclib3 to use dh-autoreconf"
+	patch -p1 <<EOF
+diff -u mpclib3-1.0.1/debian/rules mpclib3-1.0.1/debian/rules
+--- mpclib3-1.0.1/debian/rules
++++ mpclib3-1.0.1/debian/rules
+@@ -33,8 +33,9 @@
+ major=\`ls src/.libs/lib*.so.* | \\
+  awk '{if (match(\$\$0,/\.so\.[0-9]+\$\$/)) print substr(\$\$0,RSTART+4)}'\`
+ 
+-config.status: configure
++configure-stamp:
+ 	dh_testdir
++	dh_autoreconf
+ 	# Add here commands to configure the package.
+ ifneq "\$(wildcard /usr/share/misc/config.sub)" ""
+ 	cp -f /usr/share/misc/config.sub config.sub
+@@ -47,10 +48,11 @@
+ 		--mandir=\$${prefix}/share/man \\
+ 		--infodir=\$${prefix}/share/info \\
+ 		CFLAGS="\$(CFLAGS)" LDFLAGS="-Wl,-z,defs"
++	touch \$@
+ 
+ 
+ build: build-stamp
+-build-stamp:  config.status 
++build-stamp: configure-stamp
+ 	dh_testdir
+ 
+ 	# Add here commands to compile the package.
+@@ -64,12 +66,13 @@
+ clean: 
+ 	dh_testdir
+ 	dh_testroot
+-	rm -f build-stamp 
++	rm -f build-stamp configure-stamp
+ 
+ 	# Add here commands to clean up after the build process.
+ 	[ ! -f Makefile ] || \$(MAKE) distclean
+ 	rm -f config.sub config.guess
+ 
++	dh_autoreconf_clean
+ 	dh_clean 
+ 
+ install: build
+diff -u mpclib3-1.0.1/debian/control mpclib3-1.0.1/debian/control
+--- mpclib3-1.0.1/debian/control
++++ mpclib3-1.0.1/debian/control
+@@ -1,7 +1,7 @@
+ Source: mpclib3
+ Priority: extra
+ Maintainer: Laurent Fousse <lfousse@debian.org>
+-Build-Depends: debhelper (>= 7), autotools-dev, libmpfr-dev, libgmp-dev
++Build-Depends: debhelper (>= 7), autotools-dev, libmpfr-dev, libgmp-dev, dh-autoreconf
+ Standards-Version: 3.8.4
+ Section: libs
+ Homepage: http://www.multiprecision.org/mpc/
+EOF
+}
+builddep_mpclib3() {
+	# patch adds dh-autoreconf dependency
+	$APT_GET install debhelper autotools-dev libmpfr-dev:$HOST_ARCH libgmp-dev:$HOST_ARCH dh-autoreconf
+}
 cross_build mpclib3
 echo "progress-mark:16:mpclib3 cross build"
 
