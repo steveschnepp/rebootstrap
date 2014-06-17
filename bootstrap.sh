@@ -1753,3 +1753,6 @@ builddep_libpng() {
 }
 cross_build libpng
 echo "progress-mark:25:libpng cross build"
+
+cross_build slang2
+echo "progress-mark:26:slang2 cross build"
