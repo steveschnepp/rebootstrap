@@ -1689,3 +1689,21 @@ builddep_slang2() {
 }
 cross_build slang2
 echo "progress-mark:26:slang2 cross build"
+
+if test -d "$RESULT/libselinux1"; then
+	echo "skipping rebuild of libselinux stage1"
+else
+	# gem2deb dependency lacks profile annotation
+	$APT_GET install debhelper file libsepol1-dev:$HOST_ARCH libpcre3-dev:$HOST_ARCH pkg-config
+	cross_build_setup libselinux libselinux1
+	dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends
+	DEB_STAGE=stage1 dpkg-buildpackage -d -B -uc -us -a$HOST_ARCH
+	cd ..
+	ls -l
+	pickup_packages *.changes
+	test -d "$RESULT" && mkdir "$RESULT/libselinux1"
+	test -d "$RESULT" && cp *.deb "$RESULT/libselinux1"
+	cd ..
+	rm -Rf libselinux1
+fi
+echo "progress-mark:27:libselinux cross build"
