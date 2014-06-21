@@ -1683,5 +1683,9 @@ builddep_libpng() {
 cross_build libpng
 echo "progress-mark:25:libpng cross build"
 
+builddep_slang2() {
+	# unicode-data dependency unsatisfiable #752247
+	$APT_GET install debhelper autoconf autotools-dev unicode-data chrpath docbook-to-man dpkg-dev libncurses-dev:$HOST_ARCH libonig-dev:$HOST_ARCH libpcre3-dev:$HOST_ARCH libpng-dev:$HOST_ARCH zlib1g-dev:$HOST_ARCH
+}
 cross_build slang2
 echo "progress-mark:26:slang2 cross build"
