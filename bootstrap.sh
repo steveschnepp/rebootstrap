@@ -14,7 +14,7 @@ ENABLE_MULTILIB=no
 REPODIR=/tmp/repo
 APT_GET="apt-get --no-install-recommends -y"
 DEFAULT_PROFILES=cross
-LIBC_NAME=eglibc
+LIBC_NAME=glibc
 
 # evaluate command line parameters of the form KEY=VALUE
 for param in "$*"; do
