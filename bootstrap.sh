@@ -627,24 +627,6 @@ diff -Nru eglibc-2.18/debian/rules.d/debhelper.mk eglibc-2.18/debian/rules.d/deb
  \$(patsubst %,debhelper_%,\$(EGLIBC_PASSES)) :: debhelper_% : \$(stamp)debhelper_%
  \$(stamp)debhelper_%: \$(stamp)debhelper-common \$(stamp)install_%
 EOF
-	echo "patching eglibc to avoid multilib for bootstrap profile"
-	patch -p1 <<EOF
-diff -Nru eglibc-2.18/debian/rules eglibc-2.18/debian/rules
---- eglibc-2.18/debian/rules
-+++ eglibc-2.18/debian/rules
-@@ -196,6 +196,11 @@
-   endif
- endif
- 
-+ifeq (\$(DEB_BUILD_PROFILE),bootstrap)
-+override EGLIBC_PASSES = libc
-+override DEB_ARCH_REGULAR_PACKAGES = \$(libc)-dev
-+endif
-+
- # And now the rules...
- include debian/rules.d/*.mk
- 
-EOF
 	echo "patching eglibc to build without selinux in stage2 #742640"
 	case `dpkg-parsechangelog --show-field Version` in
 		2.18-*)
@@ -723,6 +705,68 @@ diff -Nru eglibc-2.18/debian/rules.d/control.mk eglibc-2.18/debian/rules.d/contr
  endif
  	rm \$@T
  	touch \$@
+EOF
+	if test "$HOST_ARCH" = "i386"; then
+		echo "patching eglibc to avoid installing xen stuff in stage1 that wasn't built #743676"
+		patch -p1 <<EOF
+diff -Nru eglibc-2.18/debian/sysdeps/i386.mk eglibc-2.18/debian/sysdeps/i386.mk
+--- eglibc-2.18/debian/sysdeps/i386.mk
++++ eglibc-2.18/debian/sysdeps/i386.mk
+@@ -51,11 +51,13 @@
+ 	debian/tmp-libc/usr/bin
+ endef
+ 
++ifneq (\$(DEB_BUILD_PROFILE),bootstrap)
+ define libc6-dev_extra_pkg_install
+ mkdir -p debian/libc6-dev/\$(libdir)/xen
+ cp -af debian/tmp-xen/\$(libdir)/*.a \\
+ 	debian/libc6-dev/\$(libdir)/xen
+ endef
++endif
+ 
+ define libc6-dev-amd64_extra_pkg_install
+ 
+EOF
+	fi
+	if test "$HOST_ARCH" = "i386"; then
+		echo "patching eglibc to avoid installing xen stuff in stage2 that wasn't built"
+		patch -p1 <<EOF
+diff -Nru eglibc-2.18/debian/sysdeps/i386.mk eglibc-2.18/debian/sysdeps/i386.mk
+--- eglibc-2.18/debian/sysdeps/i386.mk
++++ eglibc-2.18/debian/sysdeps/i386.mk
+@@ -52,11 +52,13 @@
+ endef
+ 
+ ifneq (\$(DEB_BUILD_PROFILE),bootstrap)
++ifeq (\$(filter stage2,\$(DEB_BUILD_PROFILES)),)
+ define libc6-dev_extra_pkg_install
+ mkdir -p debian/libc6-dev/\$(libdir)/xen
+ cp -af debian/tmp-xen/\$(libdir)/*.a \\
+ 	debian/libc6-dev/\$(libdir)/xen
+ endef
++endif
+ endif
+ 
+ define libc6-dev-amd64_extra_pkg_install
+EOF
+	fi
+	echo "patching eglibc to avoid multilib for bootstrap profile"
+	patch -p1 <<EOF
+diff -Nru eglibc-2.18/debian/rules eglibc-2.18/debian/rules
+--- eglibc-2.18/debian/rules
++++ eglibc-2.18/debian/rules
+@@ -196,6 +196,11 @@
+   endif
+ endif
+ 
++ifeq (\$(DEB_BUILD_PROFILE),bootstrap)
++override EGLIBC_PASSES = libc
++override DEB_ARCH_REGULAR_PACKAGES = \$(libc)-dev
++endif
++
+ # And now the rules...
+ include debian/rules.d/*.mk
+ 
 EOF
 	echo "patching eglibc to not build multilib in the nobiarch profile #745380"
 	patch -p1 <<EOF
@@ -1011,50 +1055,6 @@ diff -Nru eglibc-2.18/debian/sysdeps/x32.mk eglibc-2.18/debian/sysdeps/x32.mk
  i386_add-ons = nptl \$(add-ons)
  i386_configure_target = i686-linux-gnu
 EOF
-	if test "$HOST_ARCH" = "i386"; then
-		echo "patching eglibc to avoid installing xen stuff in stage1 that wasn't built #743676"
-		patch -p1 <<EOF
-diff -Nru eglibc-2.18/debian/sysdeps/i386.mk eglibc-2.18/debian/sysdeps/i386.mk
---- eglibc-2.18/debian/sysdeps/i386.mk
-+++ eglibc-2.18/debian/sysdeps/i386.mk
-@@ -51,11 +51,13 @@
- 	debian/tmp-libc/usr/bin
- endef
- 
-+ifneq (\$(DEB_BUILD_PROFILE),bootstrap)
- define libc6-dev_extra_pkg_install
- mkdir -p debian/libc6-dev/\$(libdir)/xen
- cp -af debian/tmp-xen/\$(libdir)/*.a \\
- 	debian/libc6-dev/\$(libdir)/xen
- endef
-+endif
- 
- define libc6-dev-amd64_extra_pkg_install
- 
-EOF
-	fi
-	if test "$HOST_ARCH" = "i386"; then
-		echo "patching eglibc to avoid installing xen stuff in stage2 that wasn't built"
-		patch -p1 <<EOF
-diff -Nru eglibc-2.18/debian/sysdeps/i386.mk eglibc-2.18/debian/sysdeps/i386.mk
---- eglibc-2.18/debian/sysdeps/i386.mk
-+++ eglibc-2.18/debian/sysdeps/i386.mk
-@@ -52,11 +52,13 @@
- endef
- 
- ifneq (\$(DEB_BUILD_PROFILE),bootstrap)
-+ifeq (\$(filter stage2,\$(DEB_BUILD_PROFILES)),)
- define libc6-dev_extra_pkg_install
- mkdir -p debian/libc6-dev/\$(libdir)/xen
- cp -af debian/tmp-xen/\$(libdir)/*.a \\
- 	debian/libc6-dev/\$(libdir)/xen
- endef
-+endif
- endif
- 
- define libc6-dev-amd64_extra_pkg_install
-EOF
-	fi
 }
 patch_eglibc() {
 	patch_libc_common
