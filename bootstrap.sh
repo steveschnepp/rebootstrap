@@ -14,6 +14,7 @@ ENABLE_MULTILIB=no
 REPODIR=/tmp/repo
 APT_GET="apt-get --no-install-recommends -y"
 DEFAULT_PROFILES=cross
+LIBC_NAME=eglibc
 
 # evaluate command line parameters of the form KEY=VALUE
 for param in "$*"; do
@@ -552,14 +553,14 @@ else
 fi
 echo "progress-mark:3:gcc stage1 complete"
 
-# eglibc looks for linux headers in /usr/<triplet>/include/linux rather than /usr/include/linux
+# $LIBC_NAME looks for linux headers in /usr/<triplet>/include/linux rather than /usr/include/linux
 # later gcc looks for pthread.h and stuff in /usr/<triplet>/include rather than /usr/include
 mkdir -p /usr/`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE`
 ln -s ../include /usr/`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE`/include
 ln -s ../include/`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_MULTIARCH` /usr/`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE`/sys-include
 
-# eglibc
-patch_eglibc() {
+# libc
+patch_libc_common() {
 	echo "fixing glibc make ftbfs #747013"
 	sed -i 's/\(3\.\[89\]\*\))/\1 | 4.*)/' configure
 	echo "patching eglibc to avoid dependency on libc6 from libc6-dev in stage1"
@@ -1055,13 +1056,19 @@ diff -Nru eglibc-2.18/debian/sysdeps/i386.mk eglibc-2.18/debian/sysdeps/i386.mk
 EOF
 	fi
 }
-if test -d "$RESULT/eglibc1"; then
-	echo "skipping rebuild of eglibc stage1"
+patch_eglibc() {
+	patch_libc_common
+}
+patch_glibc() {
+	patch_libc_common
+}
+if test -d "$RESULT/${LIBC_NAME}1"; then
+	echo "skipping rebuild of $LIBC_NAME stage1"
 	$APT_GET remove libc6-dev-i386
-	dpkg -i "$RESULT/eglibc1/"*.deb
+	dpkg -i "$RESULT/${LIBC_NAME}1/"*.deb
 else
 	$APT_GET install gettext file quilt autoconf gawk debhelper rdfind symlinks libaudit-dev libcap-dev libselinux-dev binutils bison netbase linux-libc-dev:$HOST_ARCH
-	cross_build_setup eglibc eglibc1
+	cross_build_setup "$LIBC_NAME" "${LIBC_NAME}1"
 	dpkg-checkbuilddeps -B -a$HOST_ARCH || : # tell unmet build depends
 	DEB_GCC_VERSION=-$GCC_VER DEB_BUILD_PROFILE=bootstrap dpkg-buildpackage -B -uc -us -a$HOST_ARCH -d
 	cd ..
@@ -1069,12 +1076,12 @@ else
 	pickup_packages *.changes
 	$APT_GET remove libc6-dev-i386
 	dpkg -i libc*-dev_*.deb
-	test -d "$RESULT" && mkdir "$RESULT/eglibc1"
-	test -d "$RESULT" && cp -v libc*-dev_*.deb "$RESULT/eglibc1"
+	test -d "$RESULT" && mkdir "$RESULT/${LIBC_NAME}1"
+	test -d "$RESULT" && cp -v libc*-dev_*.deb "$RESULT/${LIBC_NAME}1"
 	cd ..
-	rm -Rf eglibc
+	rm -Rf "${LIBC_NAME}1"
 fi
-echo "progress-mark:4:eglibc stage1 complete"
+echo "progress-mark:4:$LIBC_NAME stage1 complete"
 # binutils looks for libc.so in /usr/<triplet>/lib rather than /usr/lib/<triplet>
 mkdir -p /usr/`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE`
 ln -s /usr/lib/`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_MULTIARCH` /usr/`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE`/lib
@@ -1120,12 +1127,12 @@ ln -s `dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE`-gfortran-$GCC_VER /us
 if test "$HOST_ARCH" = "sparc"; then
 	$APT_GET remove libc6-i386 # undeclared file conflict #745552
 fi
-if test -d "$RESULT/eglibc2"; then
-	echo "skipping rebuild of eglibc stage2"
-	dpkg -i "$RESULT"/eglibc2/*.deb
+if test -d "$RESULT/${LIBC_NAME}2"; then
+	echo "skipping rebuild of $LIBC_NAME stage2"
+	dpkg -i "$RESULT/${LIBC_NAME}2/"*.deb
 else
 	$APT_GET install gettext file quilt autoconf gawk debhelper rdfind symlinks libaudit-dev libcap-dev libselinux-dev binutils bison netbase linux-libc-dev:$HOST_ARCH
-	cross_build_setup eglibc eglibc2
+	cross_build_setup "$LIBC_NAME" "${LIBC_NAME}2"
 	if test "$ENABLE_MULTILIB" = yes; then
 		dpkg-checkbuilddeps -B -a$HOST_ARCH -Pstage2 || : # tell unmet build depends
 		DEB_GCC_VERSION=-$GCC_VER dpkg-buildpackage -B -uc -us -a$HOST_ARCH -d -Pstage2
@@ -1137,12 +1144,12 @@ else
 	ls -l
 	pickup_packages *.changes
 	dpkg -i libc*-dev_*.deb libc*[0-9]_*_*.deb
-	test -d "$RESULT" && mkdir "$RESULT/eglibc2"
-	test -d "$RESULT" && cp libc*-dev_*.deb libc*[0-9]_*_*.deb "$RESULT/eglibc2"
+	test -d "$RESULT" && mkdir "$RESULT/${LIBC_NAME}2"
+	test -d "$RESULT" && cp libc*-dev_*.deb libc*[0-9]_*_*.deb "$RESULT/${LIBC_NAME}2"
 	cd ..
-	rm -Rf eglibc2
+	rm -Rf "${LIBC_NAME}2"
 fi
-echo "progress-mark:6:eglibc stage2 complete"
+echo "progress-mark:6:$LIBC_NAME stage2 complete"
 
 if test -d "$RESULT/gcc3"; then
 	echo "skipping rebuild of gcc stage3"
