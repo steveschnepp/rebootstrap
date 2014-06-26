@@ -2019,3 +2019,24 @@ else
 	rm -Rf libselinux1
 fi
 echo "progress-mark:27:libselinux cross build"
+
+builddep_util_linux() {
+	# po-debconf dependency unsatisfiable
+	$APT_GET install "libncurses5-dev:$HOST_ARCH" "libslang2-dev:$HOST_ARCH" gettext "zlib1g-dev:$HOST_ARCH" dpkg-dev "libselinux1-dev:$HOST_ARCH" debhelper lsb-release pkg-config po-debconf autoconf automake autopoint libtool
+}
+if test -d "$RESULT/util-linux"; then
+	echo "skipping rebuild of util-linux"
+else
+	builddep_util_linux
+	cross_build_setup util-linux
+	dpkg-checkbuilddeps "-a$HOST_ARCH" || : # tell unmet build depends
+	scanf_cv_type_modifier=ms dpkg-buildpackage "-a$HOST_ARCH" -B -d -uc -us
+	cd ..
+	ls -l
+	pickup_packages ./*.changes
+	test -d "$RESULT" && mkdir "$RESULT/util-linux"
+	test -d "$RESULT" && cp ./*.deb "$RESULT/util-linux/"
+	cd ..
+	rm -Rf util-linux
+fi
+echo "progress-mark:28:util-linux cross build"
