@@ -2043,3 +2043,6 @@ echo "progress-mark:28:util-linux cross build"
 
 cross_build base-files
 echo "progress-mark:29:base-files cross build"
+
+cross_build dash
+echo "progress-mark:30:dash cross build"
