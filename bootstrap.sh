@@ -498,7 +498,34 @@ fi
 echo "progress-mark:1:binutils cross complete"
 
 # linux
-if test "`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_ARCH_OS`" = "linux"; then
+patch_linux() {
+	if test "$HOST_ARCH" = arm; then
+		echo "patching linux for arm"
+		patch -p1 <<EOF
+diff -Nru linux-3.14.7/debian/config/arm/defines linux-3.14.7/debian/config/arm/defines
+--- linux-3.14.7/debian/config/arm/defines
++++ linux-3.14.7/debian/config/arm/defines
+@@ -0,0 +1,4 @@
++[base]
++kernel-arch: arm
++featuresets:
++# empty; just building headers yet
+diff -Nru linux-3.14.7/debian/config/defines linux-3.14.7/debian/config/defines
+--- linux-3.14.7/debian/config/defines
++++ linux-3.14.7/debian/config/defines
+@@ -23,6 +23,7 @@
+ arches:
+  alpha
+  amd64
++ arm
+  arm64
+  armel
+  armhf
+EOF
+		./debian/rules debian/rules.gen || : # intentionally exits 1 to avoid being called automatically. we are doing it wrong
+	fi
+}
+if test "`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS`" = "linux"; then
 PKG=`echo $RESULT/linux-libc-dev_*.deb`
 if test -f "$PKG"; then
 	echo "skipping rebuild of linux-libc-dev"
