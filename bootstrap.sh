@@ -1520,6 +1520,148 @@ else
 fi
 echo "progress-mark:7:gcc stage3 complete"
 
+patch_pcre3() {
+	echo "patching pcre3 to use dh-autoreconf #751390"
+	quilt pop -a
+	patch -p1 <<EOF
+--- a/debian/control
++++ b/debian/control
+@@ -3,7 +3,7 @@
+ Priority: optional
+ Maintainer:  Mark Baker <mark@mnb.org.uk>
+ Standards-Version: 3.9.3
+-Build-Depends: debhelper (>= 5.0.22), dpkg-dev (>= 1.16.0)
++Build-Depends: debhelper (>= 5.0.22), dpkg-dev (>= 1.16.0), dh-autoreconf
+ 
+ Package: libpcre3
+ Section: libs
+--- a/debian/patches/no_jit_ppc64el.patch
++++ b/debian/patches/no_jit_ppc64el.patch
+@@ -0,0 +1,18 @@
++Description: Disable JIT on ppc64el, needs explicit porting to ELFv2.
++Author: Adam Conrad <adconrad@ubuntu.com>
++
++--- pcre3-8.31.orig/sljit/sljitConfigInternal.h
+++++ pcre3-8.31/sljit/sljitConfigInternal.h
++@@ -94,7 +94,11 @@
++ #define SLJIT_CONFIG_ARM_V5 1
++ #endif
++ #elif defined(__ppc64__) || defined(__powerpc64__)
++-#define SLJIT_CONFIG_PPC_64 1
+++# if _CALL_ELF != 2
+++#  define SLJIT_CONFIG_PPC_64 1
+++# else
+++#  define SLJIT_CONFIG_UNSUPPORTED 1
+++# endif
++ #elif defined(__ppc__) || defined(__powerpc__)
++ #define SLJIT_CONFIG_PPC_32 1
++ #elif defined(__mips__)
+--- a/debian/patches/series
++++ b/debian/patches/series
+@@ -4,3 +4,4 @@
+ pcregrep.1-patch
+ soname.patch
+ bug1287
++no_jit_ppc64el.patch
+--- a/debian/patches/soname.patch
++++ b/debian/patches/soname.patch
+@@ -1,23 +1,20 @@
+ From: Mark Baker <mark@mnb.org.uk>
+ Description: Change soname to what debian use
+-Index: pcre3-8.31/configure
++
++Index: b/configure.ac
+ ===================================================================
+---- pcre3-8.31.orig/configure	2012-07-06 10:02:02.000000000 +0100
+-+++ pcre3-8.31/configure	2012-09-13 19:47:13.000000000 +0100
+-@@ -17190,13 +17190,13 @@
+- # (Note: The libpcre*_version bits are m4 variables, assigned above)
++--- a/configure.ac
+++++ b/configure.ac
++@@ -17,9 +17,9 @@
++ # 50 lines of this file. Please update that if the variables above are moved.
+  
+- EXTRA_LIBPCRE_LDFLAGS="\$EXTRA_LIBPCRE_LDFLAGS \\
+--                       \$NO_UNDEFINED -version-info 1:1:0"
+-+                       \$NO_UNDEFINED -version-info 16:1:13"
++ # Libtool shared library interface versions (current:revision:age)
++-m4_define(libpcre_version, [1:1:0])
++-m4_define(libpcre16_version, [0:1:0])
++-m4_define(libpcreposix_version, [0:1:0])
+++m4_define(libpcre_version, [16:1:13])
+++m4_define(libpcre16_version, [16:1:13])
+++m4_define(libpcreposix_version, [16:1:13])
++ m4_define(libpcrecpp_version, [0:0:0])
+  
+- EXTRA_LIBPCRE16_LDFLAGS="\$EXTRA_LIBPCRE16_LDFLAGS \\
+--                       \$NO_UNDEFINED -version-info 0:1:0"
+-+                       \$NO_UNDEFINED -version-info 16:1:13"
+- 
+- EXTRA_LIBPCREPOSIX_LDFLAGS="\$EXTRA_LIBPCREPOSIX_LDFLAGS \\
+--                            \$NO_UNDEFINED -version-info 0:1:0"
+-+                            \$NO_UNDEFINED -version-info 16:1:13"
+- 
+- EXTRA_LIBPCRECPP_LDFLAGS="\$EXTRA_LIBPCRECPP_LDFLAGS \\
+-                           \$NO_UNDEFINED -version-info 0:0:0 \\
++ AC_PREREQ(2.57)
+--- a/debian/rules
++++ b/debian/rules
+@@ -27,9 +27,10 @@
+ INSTALL_PROGRAM += -s
+ endif
+ 
+-config.status: configure
++configure-stamp:
+ 	dh_testdir
+ 	# Add here commands to configure the package.
++	dh_autoreconf
+ 	CC_FOR_BUILD=cc CFLAGS="\$(CFLAGS)" ./configure \\
+ 		--host=\$(DEB_HOST_GNU_TYPE) --build=\$(DEB_BUILD_GNU_TYPE) \\
+ 		--prefix=/usr --mandir=\\\$\${prefix}/share/man \\
+@@ -38,11 +39,12 @@
+ 		--enable-utf8 --enable-unicode-properties \\
+ 		--disable-silent-rules \\
+ 		\$(shell . debian/jit-test)
++	touch configure-stamp
+ 
+ build: build-arch build-indep
+ build-arch: build-stamp
+ build-indep: build-stamp
+-build-stamp:  config.status
++build-stamp:  configure-stamp
+ 	dh_testdir
+ 
+ 	# Add here commands to compile the package.
+@@ -53,10 +55,10 @@
+ 
+ 	touch build-stamp
+ 
+-clean: config.status
++clean:
+ 	dh_testdir
+ 	dh_testroot
+-	rm -f build-stamp
++	rm -f configure-stamp build-stamp
+ 	# Add here commands to clean up after the build process.
+ 	[ ! -f Makefile ] || \$(MAKE) distclean
+ ###	-test -r /usr/share/misc/config.sub && \\
+@@ -64,5 +66,6 @@
+ ###	-test -r /usr/share/misc/config.guess && \\
+ ###	  cp -f /usr/share/misc/config.guess config.guess
+ 	rm -f dftables testsavedregex
++	dh_autoreconf_clean
+ 	dh_clean
+ 
+ install: build
+EOF
+	quilt push -a
+}
+builddep_pcre3() {
+	# patch adds dh-autoreconf dependency
+	$APT_GET install debhelper dpkg-dev dh-autoreconf
+	# needed for patch_pcre3
+	$APT_GET install quilt
+}
 cross_build pcre3
 echo "progress-mark:8:pcre3 cross build"
 
