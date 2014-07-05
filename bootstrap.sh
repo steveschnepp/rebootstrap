@@ -2251,3 +2251,6 @@ echo "progress-mark:30:dash cross build"
 
 cross_build tar
 echo "progress-mark:31:tar cross build"
+
+cross_build sed
+echo "progress-mark:32:sed cross build"
