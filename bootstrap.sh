@@ -2215,3 +2215,6 @@ echo "progress-mark:29:base-files cross build"
 
 cross_build dash
 echo "progress-mark:30:dash cross build"
+
+cross_build tar
+echo "progress-mark:31:tar cross build"
