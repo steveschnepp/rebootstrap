@@ -532,6 +532,31 @@ diff -Nru linux-3.14.7/debian/config/defines linux-3.14.7/debian/config/defines
 EOF
 		./debian/rules debian/rules.gen || : # intentionally exits 1 to avoid being called automatically. we are doing it wrong
 	fi
+	if test "$HOST_ARCH" = mips64el; then
+		echo "patching linux for mips64el #749688"
+		patch -p1 <<EOF
+diff -Nru linux-3.14.7/debian/config/defines linux-3.14.7/debian/config/defines
+--- linux-3.14.7/debian/config/defines
++++ linux-3.14.7/debian/config/defines
+@@ -31,6 +31,7 @@
+  ia64
+  m68k
+  mips
++ mips64el
+  mipsel
+  or1k
+  powerpc
+diff -Nru linux-3.14.7/debian/config/mips64el/defines linux-3.14.7/debian/config/mips64el/defines
+--- linux-3.14.7/debian/config/mips64el/defines
++++ linux-3.14.7/debian/config/mips64el/defines
+@@ -0,0 +1,4 @@
++[base]
++kernel-arch: mips
++featuresets:
++# empty; just building headers yet
+EOF
+		./debian/rules debian/rules.gen || : # intentionally exits 1 to avoid being called automatically. we are doing it wrong
+	fi
 }
 if test "`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS`" = "linux"; then
 PKG=`echo $RESULT/linux-libc-dev_*.deb`
