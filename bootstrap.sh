@@ -739,28 +739,6 @@ diff -Nru eglibc-2.18/debian/rules.d/control.mk eglibc-2.18/debian/rules.d/contr
  	touch \$@
 EOF
 	if test "$HOST_ARCH" = "i386"; then
-		echo "patching eglibc to avoid installing xen stuff in stage1 that wasn't built #743676"
-		patch -p1 <<EOF
-diff -Nru eglibc-2.18/debian/sysdeps/i386.mk eglibc-2.18/debian/sysdeps/i386.mk
---- eglibc-2.18/debian/sysdeps/i386.mk
-+++ eglibc-2.18/debian/sysdeps/i386.mk
-@@ -51,11 +51,13 @@
- 	debian/tmp-libc/usr/bin
- endef
- 
-+ifneq (\$(DEB_BUILD_PROFILE),bootstrap)
- define libc6-dev_extra_pkg_install
- mkdir -p debian/libc6-dev/\$(libdir)/xen
- cp -af debian/tmp-xen/\$(libdir)/*.a \\
- 	debian/libc6-dev/\$(libdir)/xen
- endef
-+endif
- 
- define libc6-dev-amd64_extra_pkg_install
- 
-EOF
-	fi
-	if test "$HOST_ARCH" = "i386"; then
 		echo "patching eglibc to avoid installing xen stuff in stage2 that wasn't built"
 		patch -p1 <<EOF
 diff -Nru eglibc-2.18/debian/sysdeps/i386.mk eglibc-2.18/debian/sysdeps/i386.mk
