@@ -645,7 +645,7 @@ diff -Nru eglibc-2.18/debian/rules.d/control.mk eglibc-2.18/debian/rules.d/contr
  	cat debian/control.in/libnss-dns-udeb	>> \$@T
  	cat debian/control.in/libnss-files-udeb	>> \$@T
 -	sed -e 's%@libc@%\$(libc)%g' < \$@T > debian/control
-+ifeq (\$(DEB_BUILD_PROFILE),bootstrap)
++ifneq (\$(filter stage1,\$(DEB_BUILD_PROFILES)),)
 +	sed -e 's%@libc@%\$(libc)%g;s%@nobootstrap@[^,]*,%%g' < \$@T > debian/control
 +else
 +	sed -e 's%@libc@%\$(libc)%g;s%@nobootstrap@%%g' < \$@T > debian/control
@@ -724,7 +724,7 @@ diff -Nru eglibc-2.18/debian/rules.d/control.mk eglibc-2.18/debian/rules.d/contr
 --- eglibc-2.18/debian/rules.d/control.mk
 +++ eglibc-2.18/debian/rules.d/control.mk
 @@ -45,7 +45,11 @@
- ifeq (\$(DEB_BUILD_PROFILE),bootstrap)
+ ifneq (\$(filter stage1,\$(DEB_BUILD_PROFILES)),)
 -	sed -e 's%@libc@%\$(libc)%g;s%@nobootstrap@[^,]*,%%g' < \$@T > debian/control
 +	sed -e 's%@libc@%\$(libc)%g;s%@nobootstrap@[^,]*,%%g;s%@nostage2@%%g' < \$@T > debian/control
  else
@@ -747,7 +747,7 @@ diff -Nru eglibc-2.18/debian/sysdeps/i386.mk eglibc-2.18/debian/sysdeps/i386.mk
 @@ -52,11 +52,13 @@
  endef
  
- ifneq (\$(DEB_BUILD_PROFILE),bootstrap)
+ ifeq (\$(filter stage1,\$(DEB_BUILD_PROFILES)),)
 +ifeq (\$(filter stage2,\$(DEB_BUILD_PROFILES)),)
  define libc6-dev_extra_pkg_install
  mkdir -p debian/libc6-dev/\$(libdir)/xen
@@ -769,7 +769,7 @@ diff -Nru glibc-2.19/debian/rules glibc-2.19/debian/rules
    endif
  endif
  
-+ifeq (\$(DEB_BUILD_PROFILE),bootstrap)
++ifneq (\$(filter stage1,\$(DEB_BUILD_PROFILES)),)
 +override GLIBC_PASSES = libc
 +override DEB_ARCH_REGULAR_PACKAGES = \$(libc)-dev
 +endif
@@ -1074,7 +1074,7 @@ else
 	$APT_GET install gettext file quilt autoconf gawk debhelper rdfind symlinks libaudit-dev libcap-dev libselinux-dev binutils bison netbase linux-libc-dev:$HOST_ARCH
 	cross_build_setup "$LIBC_NAME" "${LIBC_NAME}1"
 	dpkg-checkbuilddeps -B -a$HOST_ARCH || : # tell unmet build depends
-	DEB_GCC_VERSION=-$GCC_VER DEB_BUILD_PROFILE=bootstrap dpkg-buildpackage -B -uc -us -a$HOST_ARCH -d
+	DEB_GCC_VERSION=-$GCC_VER dpkg-buildpackage -B -uc -us "-a$HOST_ARCH" -d -Pstage1
 	cd ..
 	ls -l
 	pickup_packages *.changes
