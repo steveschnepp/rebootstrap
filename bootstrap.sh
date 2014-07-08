@@ -676,13 +676,12 @@ diff -Nru eglibc-2.18/debian/rules.d/build.mk eglibc-2.18/debian/rules.d/build.m
 diff -Nru eglibc-2.18/debian/rules.d/debhelper.mk eglibc-2.18/debian/rules.d/debhelper.mk
 --- eglibc-2.18/debian/rules.d/debhelper.mk
 +++ eglibc-2.18/debian/rules.d/debhelper.mk
-@@ -208,7 +208,8 @@
+@@ -207,6 +207,7 @@
+ 	done
  
- 	egrep -v "LIBDIR.*.a " debian/\$(libc)-dev.install >debian/\$(libc)-dev.install-
- 	mv debian/\$(libc)-dev.install- debian/\$(libc)-dev.install
--	sed -e "s#LIBDIR#lib#g" -i debian/\$(libc)-dev.install
+-	sed -e "/LIBDIR.*.a /d" -e "s#LIBDIR#lib#g" -i debian/\$(libc)-dev.install
 +	libdir=\$(call xx,libdir) ; \\
-+	sed -e "s#LIBDIR#\$\$libdir#g" -i debian/\$(libc)-dev.install
++	sed -e "/LIBDIR.*.a /d" -e "s#LIBDIR#\$\$libdir#g" -i debian/\$(libc)-dev.install
  else
  \$(patsubst %,debhelper_%,\$(EGLIBC_PASSES)) :: debhelper_% : \$(stamp)debhelper_%
  \$(stamp)debhelper_%: \$(stamp)debhelper-common \$(stamp)install_%
