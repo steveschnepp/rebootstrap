@@ -1064,6 +1064,32 @@ diff -Nru glibc-2.19/debian/sysdeps/x32.mk glibc-2.19/debian/sysdeps/x32.mk
  i386_add-ons = nptl \$(add-ons)
  i386_configure_target = i686-linux-gnu
 EOF
+	echo "patching glibc to remove --dbg-package in stage1"
+	patch -p1 <<EOF
+diff -Nru glibc-2.19/debian/rules.d/debhelper.mk glibc-2.19/debian/rules.d/debhelper.mk
+--- glibc-2.19/debian/rules.d/debhelper.mk
++++ glibc-2.19/debian/rules.d/debhelper.mk
+@@ -8,6 +8,10 @@
+ non-debug-packages = \$(filter-out %-dbg,\$(DEB_ARCH_REGULAR_PACKAGES))
+ \$(patsubst %,\$(stamp)binaryinst_%,\$(debug-packages)):: \$(patsubst %,\$(stamp)binaryinst_%,\$(non-debug-packages))
+ 
++ifeq (\$(filter stage1,\$(DEB_BUILD_PROFILES)),)
++DH_STRIP_DEBUG_PACKAGE=--dbg-package=\$(libc)-dbg
++endif
++
+ \$(patsubst %,\$(stamp)binaryinst_%,\$(DEB_ARCH_REGULAR_PACKAGES) \$(DEB_INDEP_REGULAR_PACKAGES)):: \$(patsubst %,\$(stamp)install_%,\$(GLIBC_PASSES)) debhelper
+ 	@echo Running debhelper for \$(curpass)
+ 	dh_testroot
+@@ -49,7 +53,7 @@
+ 	# strip *.o files as dh_strip does not (yet?) do it.
+ 	if test "\$(NOSTRIP_\$(curpass))" != 1; then				\\
+ 	  if test "\$(NODEBUG_\$(curpass))" != 1; then				\\
+-	    dh_strip -p\$(curpass) -Xlibpthread --dbg-package=\$(libc)-dbg;	\\
++	    dh_strip -p\$(curpass) -Xlibpthread \$(DH_STRIP_DEBUG_PACKAGE);	\\
+ 	    (cd debian/\$(curpass);						\\
+ 	      find . -name libpthread-\*.so -exec objcopy			\\
+ 	        --only-keep-debug '{}' ../\$(libc)-dbg/usr/lib/debug/'{}'	\\
+EOF
 }
 if test -d "$RESULT/${LIBC_NAME}1"; then
 	echo "skipping rebuild of $LIBC_NAME stage1"
