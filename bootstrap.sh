@@ -1918,3 +1918,6 @@ echo "progress-mark:31:tar cross build"
 
 cross_build sed
 echo "progress-mark:32:sed cross build"
+
+cross_build gzip
+echo "progress-mark:33:gzip cross build"
