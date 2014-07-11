@@ -1858,3 +1858,6 @@ echo "progress-mark:32:sed cross build"
 
 cross_build gzip
 echo "progress-mark:33:gzip cross build"
+
+cross_build grep
+echo "progress-mark:34:grep cross build"
