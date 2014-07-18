@@ -1693,3 +1693,6 @@ echo "progress-mark:35:nettle cross build"
 
 cross_build db-defaults
 echo "progress-mark:36:db-defaults cross build"
+
+cross_build mawk
+echo "progress-mark:37:mawk cross build"
