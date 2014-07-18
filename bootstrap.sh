@@ -1687,3 +1687,6 @@ echo "progress-mark:33:gzip cross build"
 
 cross_build grep
 echo "progress-mark:34:grep cross build"
+
+cross_build nettle
+echo "progress-mark:35:nettle cross build"
