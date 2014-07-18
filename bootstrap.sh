@@ -1690,3 +1690,6 @@ echo "progress-mark:34:grep cross build"
 
 cross_build nettle
 echo "progress-mark:35:nettle cross build"
+
+cross_build db-defaults
+echo "progress-mark:36:db-defaults cross build"
