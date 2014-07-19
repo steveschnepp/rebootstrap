@@ -773,61 +773,322 @@ diff -Nru glibc-2.19/debian/rules glibc-2.19/debian/rules
 EOF
 	echo "patching glibc to not build multilib in the nobiarch profile #745380"
 	patch -p1 <<EOF
+diff -Nru glibc-2.19/debian/control.in/amd64 glibc-2.19/debian/control.in/amd64
+--- glibc-2.19/debian/control.in/amd64
++++ glibc-2.19/debian/control.in/amd64
+@@ -4,7 +4,7 @@
+ Priority: optional
+ Depends: libc6 (= \${binary:Version}), \${misc:Depends}
+ Conflicts: amd64-libs (<= 1.2)
+-Build-Profiles: !stage1
++Build-Profiles: !stage1 !nobiarch
+ Description: GNU C Library: 64bit Shared libraries for AMD64
+  This package includes shared versions of the standard C library and the
+  standard math library, as well as many others. This is the 64bit version
+@@ -19,6 +19,7 @@
+ Conflicts: libc6-dev (<< 2.13-14)
+ Replaces: amd64-libs-dev (<= 1.2), libc6-dev (<< 2.13-11)
+ Provides: lib64c-dev
++Build-Profiles: !nobiarch
+ Description: GNU C Library: 64bit Development Libraries for AMD64
+  Contains the symlinks and object files needed to compile and link programs
+  which use the standard C library. This is the 64bit version of the
+diff -Nru glibc-2.19/debian/control.in/armel glibc-2.19/debian/control.in/armel
+--- glibc-2.19/debian/control.in/armel
++++ glibc-2.19/debian/control.in/armel
+@@ -3,7 +3,7 @@
+ Section: libs
+ Priority: optional
+ Depends: libc6 (= \${binary:Version}), \${misc:Depends}
+-Build-Profiles: !stage1
++Build-Profiles: !stage1 !nobiarch
+ Description: GNU C Library: ARM softfp shared libraries for armhf
+  This package includes shared versions of the standard C
+  library and the standard math library, as well as many others.
+@@ -15,6 +15,7 @@
+ Priority: optional
+ Depends: libc6-armel (= \${binary:Version}), libc6-dev (= \${binary:Version}), \${misc:Depends}
+ Recommends: gcc-multilib
++Build-Profiles: !nobiarch
+ Description: GNU C Library: ARM softfp development libraries for armhf
+  Contains the symlinks and object files needed to compile and link programs
+  which use the standard C library. This is the ARM softfp version of the
+diff -Nru glibc-2.19/debian/control.in/armhf glibc-2.19/debian/control.in/armhf
+--- glibc-2.19/debian/control.in/armhf
++++ glibc-2.19/debian/control.in/armhf
+@@ -3,7 +3,7 @@
+ Section: libs
+ Priority: optional
+ Depends: libc6 (= \${binary:Version}), \${misc:Depends}
+-Build-Profiles: !stage1
++Build-Profiles: !stage1 !nobiarch
+ Description: GNU C Library: ARM hard float shared libraries for armel
+  This package includes shared versions of the standard C
+  library and the standard math library, as well as many others.
+@@ -15,6 +15,7 @@
+ Priority: optional
+ Depends: libc6-armhf (= \${binary:Version}), libc6-dev (= \${binary:Version}), \${misc:Depends}
+ Recommends: gcc-multilib
++Build-Profiles: !nobiarch
+ Description: GNU C Library: ARM hard float development libraries for armel
+  Contains the symlinks and object files needed to compile and link programs
+  which use the standard C library. This is the ARM hard float version of the
+diff -Nru glibc-2.19/debian/control.in/i386 glibc-2.19/debian/control.in/i386
+--- glibc-2.19/debian/control.in/i386
++++ glibc-2.19/debian/control.in/i386
+@@ -5,7 +5,7 @@
+ Depends: libc6 (= \${binary:Version}), \${misc:Depends}
+ Replaces: libc6-dev-i386
+ Breaks: fakeroot (<< 1.12.3), gnu-efi (<< 3.0e-3), fakechroot (<< 2.9-1.1), fglrx-glx-ia32 (<< 1:9-6-1), ia32-libs (<< 20090804), ia32-libs-gtk (<< 20090804), lib32asound2 (<< 1.0.20-3), lib32asound2-dev (<< 1.0.20-3), lib32bz2-1.0 (<< 1.0.5-3), lib32bz2-dev (<< 1.0.5-3), lib32ffi-dev (<< 3.0.9~rc9-1), lib32ffi5 (<< 3.0.9~rc9-1), lib32g2c0 (<< 1:3.4.6-10), lib32gcc1 (<< 1:4.4.0-7), lib32gfortran3 (<< 4.4.0-7), lib32gmp3 (<< 2:4.3.1+dfsg-3), lib32gmp3-dev (<< 2:4.3.1+dfsg-3), lib32gmpxx4 (<< 2:4.3.1+dfsg-3), lib32gomp1 (<< 4.4.0-7), lib32icu-dev (<< 4.0.1-3), lib32icu40 (<< 4.0.1-3), lib32mudflap0 (<< 4.4.0-7), lib32ncurses5 (<< 5.7+20090523-1), lib32ncurses5-dev (<< 5.7+20090530-1), lib32ncursesw5 (<< 5.7+20090530-1), lib32ncursesw5-dev (<< 5.7+20090530-1), lib32nss-mdns (<< 0.10-3.1), lib32objc2 (<< 4.4.0-7), lib32readline5 (<< 5.2-5), lib32readline5-dev (<< 5.2-5), lib32stdc++6 (<< 4.4.0-7), lib32stdc++6-4.4-dbg (<< 4.4.0-7), lib32z1 (<< 1:1.2.3.3.dfsg-14), lib32z1-dev (<< 1:1.2.3.3.dfsg-14), libc6-dev-i386 (<< 2.9-15), nvidia-glx-ia32 (<< 185.18.14-2), nvidia-libvdpau1-ia32 (<< 185.18.14-2)
+-Build-Profiles: !stage1
++Build-Profiles: !stage1 !nobiarch
+ Description: GNU C Library: 32-bit shared libraries for AMD64
+  This package includes shared versions of the standard C
+  library and the standard math library, as well as many others.
+@@ -20,6 +20,7 @@
+ Replaces: libc6-dev (<< 2.13-11)
+ Depends: libc6-i386 (= \${binary:Version}), libc6-dev (= \${binary:Version}), \${misc:Depends}
+ Recommends: gcc-multilib
++Build-Profiles: !nobiarch
+ Description: GNU C Library: 32-bit development libraries for AMD64
+  Contains the symlinks and object files needed to compile and link programs
+  which use the standard C library. This is the 32bit version of the
+diff -Nru glibc-2.19/debian/control.in/kfreebsd-i386 glibc-2.19/debian/control.in/kfreebsd-i386
+--- glibc-2.19/debian/control.in/kfreebsd-i386
++++ glibc-2.19/debian/control.in/kfreebsd-i386
+@@ -3,7 +3,7 @@
+ Section: libs
+ Priority: optional
+ Depends: libc0.1 (= \${binary:Version}), \${misc:Depends}
+-Build-Profiles: !stage1
++Build-Profiles: !stage1 !nobiarch
+ Description: GNU C Library: 32bit shared libraries for AMD64
+  This package includes shared versions of the standard C
+  library and the standard math library, as well as many others.
+@@ -18,6 +18,7 @@
+ Replaces: libc0.1-dev (<< 2.13-11)
+ Depends: libc0.1-i386 (= \${binary:Version}), libc0.1-dev (= \${binary:Version}), \${misc:Depends}
+ Recommends: gcc-multilib
++Build-Profiles: !nobiarch
+ Description: GNU C Library: 32bit development libraries for AMD64
+  Contains the symlinks and object files needed to compile and link programs
+  which use the standard C library. This is the 32bit version of the
+diff -Nru glibc-2.19/debian/control.in/mips32 glibc-2.19/debian/control.in/mips32
+--- glibc-2.19/debian/control.in/mips32
++++ glibc-2.19/debian/control.in/mips32
+@@ -3,7 +3,7 @@
+ Section: libs
+ Priority: optional
+ Depends: libc6 (= \${binary:Version}), \${misc:Depends}
+-Build-Profiles: !stage1
++Build-Profiles: !stage1 !nobiarch
+ Description: GNU C Library: o32 Shared libraries for MIPS
+  This package includes shared versions of the standard C library and the
+  standard math library, as well as many others. This is the o32 version
+@@ -21,6 +21,7 @@
+    libc6-dev-mips64 (= \${binary:Version}) [mipsn32 mipsn32el],
+    \${misc:Depends}
+ Recommends: gcc-multilib
++Build-Profiles: !nobiarch
+ Description: GNU C Library: o32 Development Libraries for MIPS
+  Contains the symlinks and object files needed to compile and link programs
+  which use the standard C library. This is the o32 version of the
+diff -Nru glibc-2.19/debian/control.in/mips64 glibc-2.19/debian/control.in/mips64
+--- glibc-2.19/debian/control.in/mips64
++++ glibc-2.19/debian/control.in/mips64
+@@ -3,7 +3,7 @@
+ Section: libs
+ Priority: optional
+ Depends: libc6 (= \${binary:Version}), \${misc:Depends}
+-Build-Profiles: !stage1
++Build-Profiles: !stage1 !nobiarch
+ Description: GNU C Library: 64bit Shared libraries for MIPS64
+  This package includes shared versions of the standard C library and the
+  standard math library, as well as many others. This is the 64bit version
+@@ -18,6 +18,7 @@
+ Replaces: libc6-dev (<< 2.13-11)
+ Depends: libc6-mips64 (= \${binary:Version}), libc6-dev (= \${binary:Version}), \${misc:Depends}
+ Recommends: gcc-multilib
++Build-Profiles: !nobiarch
+ Description: GNU C Library: 64bit Development Libraries for MIPS64
+  Contains the symlinks and object files needed to compile and link programs
+  which use the standard C library. This is the 64bit version of the
+diff -Nru glibc-2.19/debian/control.in/mipsn32 glibc-2.19/debian/control.in/mipsn32
+--- glibc-2.19/debian/control.in/mipsn32
++++ glibc-2.19/debian/control.in/mipsn32
+@@ -3,7 +3,7 @@
+ Section: libs
+ Priority: optional
+ Depends: libc6 (= \${binary:Version}), \${misc:Depends}
+-Build-Profiles: !stage1
++Build-Profiles: !stage1 !nobiarch
+ Description: GNU C Library: n32 Shared libraries for MIPS64
+  This package includes shared versions of the standard C library and the
+  standard math library, as well as many others. This is the n32 version
+@@ -18,6 +18,7 @@
+ Replaces: libc6-dev (<< 2.13-11)
+ Depends: libc6-mipsn32 (= \${binary:Version}), libc6-dev-mips64 (= \${binary:Version}) [mips mipsel], libc6-dev (= \${binary:Version}), \${misc:Depends}
+ Recommends: gcc-multilib
++Build-Profiles: !nobiarch
+ Description: GNU C Library: n32 Development Libraries for MIPS64
+  Contains the symlinks and object files needed to compile and link programs
+  which use the standard C library. This is the n32 version of the
+diff -Nru glibc-2.19/debian/control.in/powerpc glibc-2.19/debian/control.in/powerpc
+--- glibc-2.19/debian/control.in/powerpc
++++ glibc-2.19/debian/control.in/powerpc
+@@ -3,7 +3,7 @@
+ Section: libs
+ Priority: optional
+ Depends: libc6 (= \${binary:Version}), \${misc:Depends}
+-Build-Profiles: !stage1
++Build-Profiles: !stage1 !nobiarch
+ Description: GNU C Library: 32bit powerpc shared libraries for ppc64
+  This package includes shared versions of the standard C
+  library and the standard math library, as well as many others.
+@@ -18,6 +18,7 @@
+ Replaces: libc6-dev (<< 2.13-11)
+ Depends: libc6-powerpc (= \${binary:Version}), libc6-dev (= \${binary:Version}), \${misc:Depends}
+ Recommends: gcc-multilib
++Build-Profiles: !nobiarch
+ Description: GNU C Library: 32bit powerpc development libraries for ppc64
+  Contains the symlinks and object files needed to compile and link programs
+  which use the standard C library. This is the 32bit version of the
+diff -Nru glibc-2.19/debian/control.in/ppc64 glibc-2.19/debian/control.in/ppc64
+--- glibc-2.19/debian/control.in/ppc64
++++ glibc-2.19/debian/control.in/ppc64
+@@ -3,7 +3,7 @@
+ Section: libs
+ Priority: optional
+ Depends: libc6 (= \${binary:Version}), \${misc:Depends}
+-Build-Profiles: !stage1
++Build-Profiles: !stage1 !nobiarch
+ Description: GNU C Library: 64bit Shared libraries for PowerPC64
+  This package includes shared versions of the standard C library and the
+  standard math library, as well as many others. This is the 64bit version
+@@ -18,6 +18,7 @@
+ Replaces: libc6-dev (<< 2.13-11)
+ Depends: libc6-ppc64 (= \${binary:Version}), libc6-dev (= \${binary:Version}), \${misc:Depends}
+ Recommends: gcc-multilib
++Build-Profiles: !nobiarch
+ Description: GNU C Library: 64bit Development Libraries for PowerPC64
+  Contains the symlinks and object files needed to compile and link programs
+  which use the standard C library. This is the 64bit version of the
+diff -Nru glibc-2.19/debian/control.in/s390 glibc-2.19/debian/control.in/s390
+--- glibc-2.19/debian/control.in/s390
++++ glibc-2.19/debian/control.in/s390
+@@ -3,7 +3,7 @@
+ Section: libs
+ Priority: optional
+ Depends: libc6 (= \${binary:Version}), \${misc:Depends}
+-Build-Profiles: !stage1
++Build-Profiles: !stage1 !nobiarch
+ Description: GNU C Library: 32bit Shared libraries for IBM zSeries
+  This package includes shared versions of the standard C library and the
+  standard math library, as well as many others. This is the 32bit version
+@@ -18,6 +18,7 @@
+ Replaces: libc6-dev (<< 2.13-11)
+ Depends: libc6-s390 (= \${binary:Version}), libc6-dev (= \${binary:Version}), \${misc:Depends}
+ Recommends: gcc-multilib
++Build-Profiles: !nobiarch
+ Description: GNU C Library: 32bit Development Libraries for IBM zSeries
+  Contains the symlinks and object files needed to compile and link programs
+  which use the standard C library. This is the 32bit version of the
+diff -Nru glibc-2.19/debian/control.in/sparc glibc-2.19/debian/control.in/sparc
+--- glibc-2.19/debian/control.in/sparc
++++ glibc-2.19/debian/control.in/sparc
+@@ -3,7 +3,7 @@
+ Section: libs
+ Priority: optional
+ Depends: libc6 (= \${binary:Version}), \${misc:Depends}
+-Build-Profiles: !stage1
++Build-Profiles: !stage1 !nobiarch
+ Description: GNU C Library: 32bit Shared libraries for SPARC
+  This package includes shared versions of the standard C library and the
+  standard math library, as well as many others. This is the 32bit version
+@@ -18,6 +18,7 @@
+ Replaces: libc6-dev (<< 2.13-11)
+ Depends: libc6-sparc (= \${binary:Version}), libc6-dev (= \${binary:Version}), \${misc:Depends}
+ Recommends: gcc-multilib
++Build-Profiles: !nobiarch
+ Description: GNU C Library: 32bit Development Libraries for SPARC
+  Contains the symlinks and object files needed to compile and link programs
+  which use the standard C library. This is the 32bit version of the
+diff -Nru glibc-2.19/debian/control.in/sparc64 glibc-2.19/debian/control.in/sparc64
+--- glibc-2.19/debian/control.in/sparc64
++++ glibc-2.19/debian/control.in/sparc64
+@@ -3,7 +3,7 @@
+ Section: libs
+ Priority: optional
+ Depends: libc6 (= \${binary:Version}), \${misc:Depends}
+-Build-Profiles: !stage1
++Build-Profiles: !stage1 !nobiarch
+ Description: GNU C Library: 64bit Shared libraries for UltraSPARC
+  This package includes shared versions of the standard C library and the
+  standard math library, as well as many others. This is the 64bit version
+@@ -18,6 +18,7 @@
+ Replaces: libc6-dev (<< 2.13-11)
+ Depends: libc6-sparc64 (= \${binary:Version}), libc6-dev (= \${binary:Version}), \${misc:Depends}
+ Recommends: gcc-multilib
++Build-Profiles: !nobiarch
+ Description: GNU C Library: 64bit Development Libraries for UltraSPARC
+  Contains the symlinks and object files needed to compile and link programs
+  which use the standard C library. This is the 64bit version of the
+diff -Nru glibc-2.19/debian/control.in/x32 glibc-2.19/debian/control.in/x32
+--- glibc-2.19/debian/control.in/x32
++++ glibc-2.19/debian/control.in/x32
+@@ -3,7 +3,7 @@
+ Section: libs
+ Priority: optional
+ Depends: libc6 (= \${binary:Version}), \${misc:Depends}
+-Build-Profiles: !stage1
++Build-Profiles: !stage1 !nobiarch
+ Description: GNU C Library: X32 ABI Shared libraries for AMD64
+  This package includes shared versions of the standard C library and the
+  standard math library, as well as many others. This is the X32 ABI version
+@@ -14,6 +14,7 @@
+ Section: libdevel
+ Priority: optional
+ Depends: libc6-x32 (= \${binary:Version}), libc6-dev-i386 (= \${binary:Version}) [amd64], libc6-dev-amd64 (= \${binary:Version}) [i386], libc6-dev (= \${binary:Version}), \${misc:Depends}
++Build-Profiles: !nobiarch
+ Description: GNU C Library: X32 ABI Development Libraries for AMD64
+  Contains the symlinks and object files needed to compile and link programs
+  which use the standard C library. This is the X32 ABI version of the
 diff -Nru glibc-2.19/debian/rules glibc-2.19/debian/rules
 --- glibc-2.19/debian/rules
 +++ glibc-2.19/debian/rules
-@@ -173,6 +173,11 @@
+@@ -178,6 +178,11 @@
  -include debian/sysdeps/\$(DEB_HOST_ARCH_OS).mk
  -include debian/sysdeps/\$(DEB_HOST_ARCH).mk
  
-+# build multilib packages unless build is staged
 +ifeq (\$(filter nobiarch,\$(DEB_BUILD_PROFILES)),)
++GLIBC_PASSES += \$(GLIBC_MULTILIB_PASSES)
 +DEB_ARCH_REGULAR_PACKAGES += \$(DEB_ARCH_MULTILIB_PACKAGES)
 +endif
 +
  # Don't run dh_strip on this package
  NOSTRIP_\$(libc)-dbg = 1
  
-@@ -201,6 +206,10 @@
- override DEB_ARCH_REGULAR_PACKAGES = \$(libc)-dev
- endif
- 
-+ifneq (\$(filter nobiarch,\$(DEB_BUILD_PROFILES)),)
-+override GLIBC_PASSES = libc
-+endif
-+
- # And now the rules...
- include debian/rules.d/*.mk
- 
-diff -Nru glibc-2.19/debian/sysdeps/alpha.mk glibc-2.19/debian/sysdeps/alpha.mk
---- glibc-2.19/debian/sysdeps/alpha.mk
-+++ glibc-2.19/debian/sysdeps/alpha.mk
-@@ -4,7 +4,7 @@
- 
- # build an ev67 optimized library
- GLIBC_PASSES += alphaev67
--DEB_ARCH_REGULAR_PACKAGES += libc6.1-alphaev67
-+DEB_ARCH_MULTILIB_PACKAGES += libc6.1-alphaev67
- alphaev67_add-ons = ports nptl \$(add-ons)
- alphaev67_configure_target = alphaev67-linux-gnu
- alphaev67_extra_cflags = -mcpu=ev67 -mtune=ev67 -O2
 diff -Nru glibc-2.19/debian/sysdeps/amd64.mk glibc-2.19/debian/sysdeps/amd64.mk
 --- glibc-2.19/debian/sysdeps/amd64.mk
 +++ glibc-2.19/debian/sysdeps/amd64.mk
-@@ -3,7 +3,7 @@
+@@ -2,8 +2,8 @@
+ extra_config_options = --enable-multi-arch --enable-lock-elision
  
  # build 32-bit (i386) alternative library
- GLIBC_PASSES += i386
+-GLIBC_PASSES += i386
 -DEB_ARCH_REGULAR_PACKAGES += libc6-i386 libc6-dev-i386
++GLIBC_MULTILIB_PASSES += i386
 +DEB_ARCH_MULTILIB_PACKAGES += libc6-i386 libc6-dev-i386
  libc6-i386_shlib_dep = libc6-i386 (>= \$(shlib_dep_ver))
  i386_add-ons = nptl \$(add-ons)
  i386_configure_target = i686-linux-gnu
-@@ -39,7 +39,7 @@
+@@ -38,8 +38,8 @@
+ endef
  
  # build x32 ABI alternative library
- GLIBC_PASSES += x32
+-GLIBC_PASSES += x32
 -DEB_ARCH_REGULAR_PACKAGES += libc6-x32 libc6-dev-x32
++GLIBC_MULTILIB_PASSES += x32
 +DEB_ARCH_MULTILIB_PACKAGES += libc6-x32 libc6-dev-x32
  libc6-x32_shlib_dep = libc6-x32 (>= \$(shlib_dep_ver))
  x32_add-ons = nptl \$(add-ons)
@@ -835,11 +1096,13 @@ diff -Nru glibc-2.19/debian/sysdeps/amd64.mk glibc-2.19/debian/sysdeps/amd64.mk
 diff -Nru glibc-2.19/debian/sysdeps/armel.mk glibc-2.19/debian/sysdeps/armel.mk
 --- glibc-2.19/debian/sysdeps/armel.mk
 +++ glibc-2.19/debian/sysdeps/armel.mk
-@@ -2,7 +2,7 @@
+@@ -1,8 +1,8 @@
+ libc_add-ons = ports nptl \$(add-ons)
  extra_config_options = --enable-multi-arch
  
- #GLIBC_PASSES += armhf
+-#GLIBC_PASSES += armhf
 -#DEB_ARCH_REGULAR_PACKAGES += libc6-armhf libc6-dev-armhf
++#GLIBC_MULTILIB_PASSES += armhf
 +#DEB_ARCH_MULTILIB_PACKAGES += libc6-armhf libc6-dev-armhf
  #armhf_add-ons = ports nptl \$(add-ons)
  #armhf_configure_target = arm-linux-gnueabihf
@@ -847,53 +1110,38 @@ diff -Nru glibc-2.19/debian/sysdeps/armel.mk glibc-2.19/debian/sysdeps/armel.mk
 diff -Nru glibc-2.19/debian/sysdeps/armhf.mk glibc-2.19/debian/sysdeps/armhf.mk
 --- glibc-2.19/debian/sysdeps/armhf.mk
 +++ glibc-2.19/debian/sysdeps/armhf.mk
-@@ -13,7 +13,7 @@
+@@ -12,8 +12,8 @@
+ ln -sf /lib/ld-linux-armhf.so.3 debian/libc6-udeb/lib/arm-linux-gnueabihf/ld-linux.so.3
  endef
  
- #GLIBC_PASSES += armel
+-#GLIBC_PASSES += armel
 -#DEB_ARCH_REGULAR_PACKAGES += libc6-armel libc6-dev-armel
++#GLIBC_MULTILIB_PASSES += armel
 +#DEB_ARCH_MULTILIB_PACKAGES += libc6-armel libc6-dev-armel
  #armel_add-ons = ports nptl \$(add-ons)
  #armel_configure_target = arm-linux-gnueabi
  #armel_CC = \$(CC) -mfloat-abi=soft
-diff -Nru glibc-2.19/debian/sysdeps/hurd-i386.mk glibc-2.19/debian/sysdeps/hurd-i386.mk
---- glibc-2.19/debian/sysdeps/hurd-i386.mk
-+++ glibc-2.19/debian/sysdeps/hurd-i386.mk
-@@ -1,7 +1,7 @@
- # We use -march=i686 and glibc's i686 routines use cmov, so require it.
- # A Debian-local glibc patch adds cmov to the search path.
- GLIBC_PASSES += i686
--DEB_ARCH_REGULAR_PACKAGES += libc0.3-i686
-+DEB_ARCH_MULTILIB_PACKAGES += libc0.3-i686
- i686_add-ons = \$(libc_add-ons)
- i686_configure_target=i686-gnu
- i686_extra_cflags = -march=i686 -mtune=generic
 diff -Nru glibc-2.19/debian/sysdeps/i386.mk glibc-2.19/debian/sysdeps/i386.mk
 --- glibc-2.19/debian/sysdeps/i386.mk
 +++ glibc-2.19/debian/sysdeps/i386.mk
-@@ -4,7 +4,7 @@
- # A Debian-local glibc patch adds cmov to the search path.
- # The optimized libraries also use NPTL!
- GLIBC_PASSES += i686
--DEB_ARCH_REGULAR_PACKAGES += libc6-i686
-+DEB_ARCH_MULTILIB_PACKAGES += libc6-i686
- i686_add-ons = nptl \$(add-ons)
- i686_configure_target=i686-linux-gnu
- i686_extra_cflags = -march=i686 -mtune=generic
-@@ -33,7 +33,7 @@
+@@ -32,8 +32,8 @@
+ endef
  
  # build 64-bit (amd64) alternative library
- GLIBC_PASSES += amd64
+-GLIBC_PASSES += amd64
 -DEB_ARCH_REGULAR_PACKAGES += libc6-amd64 libc6-dev-amd64
++GLIBC_MULTILIB_PASSES += amd64
 +DEB_ARCH_MULTILIB_PACKAGES += libc6-amd64 libc6-dev-amd64
  libc6-amd64_shlib_dep = libc6-amd64 (>= \$(shlib_dep_ver))
  amd64_add-ons = nptl \$(add-ons)
  amd64_configure_target = x86_64-linux-gnu
-@@ -77,7 +77,7 @@
+@@ -78,8 +78,8 @@
+ endef
  
  # build x32 ABI alternative library
- GLIBC_PASSES += x32
+-GLIBC_PASSES += x32
 -DEB_ARCH_REGULAR_PACKAGES += libc6-x32 libc6-dev-x32
++GLIBC_MULTILIB_PASSES += x32
 +DEB_ARCH_MULTILIB_PACKAGES += libc6-x32 libc6-dev-x32
  libc6-x32_shlib_dep = libc6-x32 (>= \$(shlib_dep_ver))
  x32_add-ons = nptl \$(add-ons)
@@ -901,86 +1149,177 @@ diff -Nru glibc-2.19/debian/sysdeps/i386.mk glibc-2.19/debian/sysdeps/i386.mk
 diff -Nru glibc-2.19/debian/sysdeps/kfreebsd-amd64.mk glibc-2.19/debian/sysdeps/kfreebsd-amd64.mk
 --- glibc-2.19/debian/sysdeps/kfreebsd-amd64.mk
 +++ glibc-2.19/debian/sysdeps/kfreebsd-amd64.mk
-@@ -3,7 +3,7 @@
+@@ -2,8 +2,8 @@
+ extra_config_options = --disable-compatible-utmp --disable-multi-arch
  
  # build 32-bit (i386) alternative library
- GLIBC_PASSES += i386
+-GLIBC_PASSES += i386
 -DEB_ARCH_REGULAR_PACKAGES += libc0.1-i386 libc0.1-dev-i386
++GLIBC_MULTILIB_PASSES += i386
 +DEB_ARCH_MULTILIB_PACKAGES += libc0.1-i386 libc0.1-dev-i386
  libc0.1-i386_shlib_dep = libc0.1-i386 (>= \$(shlib_dep_ver))
  
  i386_configure_target = i686-kfreebsd-gnu
-diff -Nru glibc-2.19/debian/sysdeps/kfreebsd-i386.mk glibc-2.19/debian/sysdeps/kfreebsd-i386.mk
---- glibc-2.19/debian/sysdeps/kfreebsd-i386.mk
-+++ glibc-2.19/debian/sysdeps/kfreebsd-i386.mk
-@@ -3,7 +3,7 @@
- 
- # Build a 32-bit optimized library
- GLIBC_PASSES += i686
--DEB_ARCH_REGULAR_PACKAGES += libc0.1-i686
-+DEB_ARCH_MULTILIB_PACKAGES += libc0.1-i686
- 
- # We use -march=i686 and glibc's i686 routines use cmov, so require it.
- # A Debian-local glibc patch adds cmov to the search path.
 diff -Nru glibc-2.19/debian/sysdeps/mips.mk glibc-2.19/debian/sysdeps/mips.mk
 --- glibc-2.19/debian/sysdeps/mips.mk
 +++ glibc-2.19/debian/sysdeps/mips.mk
-@@ -3,7 +3,7 @@
+@@ -2,8 +2,8 @@
+ extra_cflags = -mno-plt
  
  # build 32-bit (n32) alternative library
- GLIBC_PASSES += mipsn32
+-GLIBC_PASSES += mipsn32
 -DEB_ARCH_REGULAR_PACKAGES += libc6-mipsn32 libc6-dev-mipsn32
++GLIBC_MULTILIB_PASSES += mipsn32
 +DEB_ARCH_MULTILIB_PACKAGES += libc6-mipsn32 libc6-dev-mipsn32
  mipsn32_add-ons = ports nptl \$(add-ons)
- mipsn32_configure_target = mips32-linux-gnu
+ mipsn32_configure_target = mips64-linux-gnuabin32
  mipsn32_extra_cflags = -mno-plt
-@@ -17,7 +17,7 @@
+@@ -16,8 +16,8 @@
+ mipsn32_extra_config_options := \$(extra_config_options) --disable-profile
  
  # build 64-bit alternative library
- GLIBC_PASSES += mips64
+-GLIBC_PASSES += mips64
 -DEB_ARCH_REGULAR_PACKAGES += libc6-mips64 libc6-dev-mips64
++GLIBC_MULTILIB_PASSES += mips64
 +DEB_ARCH_MULTILIB_PACKAGES += libc6-mips64 libc6-dev-mips64
  mips64_add-ons = ports nptl \$(add-ons)
- mips64_configure_target = mips64-linux-gnu
+ mips64_configure_target = mips64-linux-gnuabi64
  mips64_extra_cflags = -mno-plt
+diff -Nru glibc-2.19/debian/sysdeps/mips64.mk glibc-2.19/debian/sysdeps/mips64.mk
+--- glibc-2.19/debian/sysdeps/mips64.mk
++++ glibc-2.19/debian/sysdeps/mips64.mk
+@@ -3,8 +3,8 @@
+ extra_cflags = -mno-plt
+ 
+ # build 32-bit (n32) alternative library
+-GLIBC_PASSES += mipsn32
+-DEB_ARCH_REGULAR_PACKAGES += libc6-mipsn32 libc6-dev-mipsn32
++GLIBC_MULTILIB_PASSES += mipsn32
++DEB_ARCH_MULTILIB_PACKAGES += libc6-mipsn32 libc6-dev-mipsn32
+ mipsn32_add-ons = ports nptl \$(add-ons)
+ mipsn32_configure_target = mips64-linux-gnuabin32
+ mipsn32_extra_cflags = -mno-plt
+@@ -17,8 +17,8 @@
+ mipsn32_extra_config_options := \$(extra_config_options) --disable-profile
+ 
+ # build 32-bit (o32) alternative library
+-GLIBC_PASSES += mips32
+-DEB_ARCH_REGULAR_PACKAGES += libc6-mips32 libc6-dev-mips32
++GLIBC_MULTILIB_PASSES += mips32
++DEB_ARCH_MULTILIB_PACKAGES += libc6-mips32 libc6-dev-mips32
+ mips32_add-ons = ports nptl \$(add-ons)
+ mips32_configure_target = mips-linux-gnu
+ mips32_extra_cflags = -mno-plt
+diff -Nru glibc-2.19/debian/sysdeps/mips64el.mk glibc-2.19/debian/sysdeps/mips64el.mk
+--- glibc-2.19/debian/sysdeps/mips64el.mk
++++ glibc-2.19/debian/sysdeps/mips64el.mk
+@@ -3,8 +3,8 @@
+ extra_cflags = -mno-plt
+ 
+ # build 32-bit (n32) alternative library
+-GLIBC_PASSES += mipsn32
+-DEB_ARCH_REGULAR_PACKAGES += libc6-mipsn32 libc6-dev-mipsn32
++GLIBC_MULTILIB_PASSES += mipsn32
++DEB_ARCH_MULTILIB_PACKAGES += libc6-mipsn32 libc6-dev-mipsn32
+ mipsn32_add-ons = ports nptl \$(add-ons)
+ mipsn32_configure_target = mips64el-linux-gnuabin32
+ mipsn32_extra_cflags = -mno-plt
+@@ -17,8 +17,8 @@
+ mipsn32_extra_config_options := \$(extra_config_options) --disable-profile
+ 
+ # build 32-bit (o32) alternative library
+-GLIBC_PASSES += mips32
+-DEB_ARCH_REGULAR_PACKAGES += libc6-mips32 libc6-dev-mips32
++GLIBC_MULTILIB_PASSES += mips32
++DEB_ARCH_MULTILIB_PACKAGES += libc6-mips32 libc6-dev-mips32
+ mips32_add-ons = ports nptl \$(add-ons)
+ mips32_configure_target = mipsel-linux-gnu
+ mips32_extra_cflags = -mno-plt
 diff -Nru glibc-2.19/debian/sysdeps/mipsel.mk glibc-2.19/debian/sysdeps/mipsel.mk
 --- glibc-2.19/debian/sysdeps/mipsel.mk
 +++ glibc-2.19/debian/sysdeps/mipsel.mk
-@@ -3,7 +3,7 @@
+@@ -2,8 +2,8 @@
+ extra_cflags = -mno-plt
  
  # build 32-bit (n32) alternative library
- GLIBC_PASSES += mipsn32
+-GLIBC_PASSES += mipsn32
 -DEB_ARCH_REGULAR_PACKAGES += libc6-mipsn32 libc6-dev-mipsn32
++GLIBC_MULTILIB_PASSES += mipsn32
 +DEB_ARCH_MULTILIB_PACKAGES += libc6-mipsn32 libc6-dev-mipsn32
  mipsn32_add-ons = ports nptl \$(add-ons)
- mipsn32_configure_target = mips32el-linux-gnu
+ mipsn32_configure_target = mips64el-linux-gnuabin32
  mipsn32_extra_cflags = -mno-plt
-@@ -17,7 +17,7 @@
+@@ -16,8 +16,8 @@
+ mipsn32_extra_config_options := \$(extra_config_options) --disable-profile
  
  # build 64-bit alternative library
- GLIBC_PASSES += mips64
+-GLIBC_PASSES += mips64
 -DEB_ARCH_REGULAR_PACKAGES += libc6-mips64 libc6-dev-mips64
++GLIBC_MULTILIB_PASSES += mips64
 +DEB_ARCH_MULTILIB_PACKAGES += libc6-mips64 libc6-dev-mips64
  mips64_add-ons = ports nptl \$(add-ons)
- mips64_configure_target = mips64el-linux-gnu
+ mips64_configure_target = mips64el-linux-gnuabi64
  mips64_extra_cflags = -mno-plt
-@@ -57,7 +57,7 @@
+diff -Nru glibc-2.19/debian/sysdeps/mipsn32.mk glibc-2.19/debian/sysdeps/mipsn32.mk
+--- glibc-2.19/debian/sysdeps/mipsn32.mk
++++ glibc-2.19/debian/sysdeps/mipsn32.mk
+@@ -3,8 +3,8 @@
+ extra_cflags = -mno-plt
  
- # build a loongson-2f optimized library
- GLIBC_PASSES += loongson2f
--DEB_ARCH_REGULAR_PACKAGES += libc6-loongson2f
-+DEB_ARCH_MULTILIB_PACKAGES += libc6-loongson2f
- loongson2f_add-ons = ports nptl \$(add-ons)
- loongson2f_configure_target = mips32el-linux-gnu
- loongson2f_CC = \$(CC) -mabi=32
+ # build 64-bit alternative library
+-GLIBC_PASSES += mips64
+-DEB_ARCH_REGULAR_PACKAGES += libc6-mips64 libc6-dev-mips64
++GLIBC_MULTILIB_PASSES += mips64
++DEB_ARCH_MULTILIB_PACKAGES += libc6-mips64 libc6-dev-mips64
+ mips64_add-ons = ports nptl \$(add-ons)
+ mips64_configure_target = mips64-linux-gnuabi64
+ mips64_extra_cflags = -mno-plt
+@@ -17,8 +17,8 @@
+ mips64_extra_config_options := \$(extra_config_options) --disable-profile
+ 
+ # build 32-bit (o32) alternative library
+-GLIBC_PASSES += mips32
+-DEB_ARCH_REGULAR_PACKAGES += libc6-mips32 libc6-dev-mips32
++GLIBC_MULTILIB_PASSES += mips32
++DEB_ARCH_MULTILIB_PACKAGES += libc6-mips32 libc6-dev-mips32
+ mips32_add-ons = ports nptl \$(add-ons)
+ mips32_configure_target = mips-linux-gnu
+ mips32_extra_cflags = -mno-plt
+diff -Nru glibc-2.19/debian/sysdeps/mipsn32el.mk glibc-2.19/debian/sysdeps/mipsn32el.mk
+--- glibc-2.19/debian/sysdeps/mipsn32el.mk
++++ glibc-2.19/debian/sysdeps/mipsn32el.mk
+@@ -3,8 +3,8 @@
+ extra_cflags = -mno-plt
+ 
+ # build 64-bit alternative library
+-GLIBC_PASSES += mips64
+-DEB_ARCH_REGULAR_PACKAGES += libc6-mips64 libc6-dev-mips64
++GLIBC_MULTILIB_PASSES += mips64
++DEB_ARCH_MULTILIB_PACKAGES += libc6-mips64 libc6-dev-mips64
+ mips64_add-ons = ports nptl \$(add-ons)
+ mips64_configure_target = mips64el-linux-gnuabi64
+ mips64_extra_cflags = -mno-plt
+@@ -17,8 +17,8 @@
+ mips64_extra_config_options := \$(extra_config_options) --disable-profile
+ 
+ # build 32-bit (o32) alternative library
+-GLIBC_PASSES += mips32
+-DEB_ARCH_REGULAR_PACKAGES += libc6-mips32 libc6-dev-mips32
++GLIBC_MULTILIB_PASSES += mips32
++DEB_ARCH_MULTILIB_PACKAGES += libc6-mips32 libc6-dev-mips32
+ mips32_add-ons = ports nptl \$(add-ons)
+ mips32_configure_target = mipsel-linux-gnu
+ mips32_extra_cflags = -mno-plt
 diff -Nru glibc-2.19/debian/sysdeps/powerpc.mk glibc-2.19/debian/sysdeps/powerpc.mk
 --- glibc-2.19/debian/sysdeps/powerpc.mk
 +++ glibc-2.19/debian/sysdeps/powerpc.mk
-@@ -2,7 +2,7 @@
+@@ -1,8 +1,8 @@
+ extra_config_options = --enable-multi-arch
  
  # build 64-bit (ppc64) alternative library
- GLIBC_PASSES += ppc64
+-GLIBC_PASSES += ppc64
 -DEB_ARCH_REGULAR_PACKAGES += libc6-ppc64 libc6-dev-ppc64
++GLIBC_MULTILIB_PASSES += ppc64
 +DEB_ARCH_MULTILIB_PACKAGES += libc6-ppc64 libc6-dev-ppc64
  ppc64_add-ons = nptl \$(add-ons)
  ppc64_configure_target = powerpc64-linux-gnu
@@ -988,11 +1327,13 @@ diff -Nru glibc-2.19/debian/sysdeps/powerpc.mk glibc-2.19/debian/sysdeps/powerpc
 diff -Nru glibc-2.19/debian/sysdeps/ppc64.mk glibc-2.19/debian/sysdeps/ppc64.mk
 --- glibc-2.19/debian/sysdeps/ppc64.mk
 +++ glibc-2.19/debian/sysdeps/ppc64.mk
-@@ -3,7 +3,7 @@
+@@ -2,8 +2,8 @@
+ extra_config_options = --enable-multi-arch
  
  # build 32-bit (powerpc) alternative library
- GLIBC_PASSES += powerpc
+-GLIBC_PASSES += powerpc
 -DEB_ARCH_REGULAR_PACKAGES += libc6-powerpc libc6-dev-powerpc
++GLIBC_MULTILIB_PASSES += powerpc
 +DEB_ARCH_MULTILIB_PACKAGES += libc6-powerpc libc6-dev-powerpc
  libc6-powerpc_shlib_dep = libc6-powerpc (>= \$(shlib_dep_ver))
  powerpc_add-ons = nptl \$(add-ons)
@@ -1000,11 +1341,13 @@ diff -Nru glibc-2.19/debian/sysdeps/ppc64.mk glibc-2.19/debian/sysdeps/ppc64.mk
 diff -Nru glibc-2.19/debian/sysdeps/s390x.mk glibc-2.19/debian/sysdeps/s390x.mk
 --- glibc-2.19/debian/sysdeps/s390x.mk
 +++ glibc-2.19/debian/sysdeps/s390x.mk
-@@ -3,7 +3,7 @@
+@@ -2,8 +2,8 @@
+ extra_config_options = --enable-multi-arch
  
  # build 32-bit (s390) alternative library
- GLIBC_PASSES += s390
+-GLIBC_PASSES += s390
 -DEB_ARCH_REGULAR_PACKAGES += libc6-s390 libc6-dev-s390
++GLIBC_MULTILIB_PASSES += s390
 +DEB_ARCH_MULTILIB_PACKAGES += libc6-s390 libc6-dev-s390
  s390_add-ons = nptl \$(add-ons)
  s390_configure_target = s390-linux-gnu
@@ -1013,11 +1356,12 @@ diff -Nru glibc-2.19/debian/sysdeps/sparc.mk glibc-2.19/debian/sysdeps/sparc.mk
 --- glibc-2.19/debian/sysdeps/sparc.mk
 +++ glibc-2.19/debian/sysdeps/sparc.mk
 @@ -1,8 +1,8 @@
- extra_config_options = --enable-multi-arch
+ extra_config_options = --disable-multi-arch
  
  # build 64-bit (sparc64) alternative library
- GLIBC_PASSES += sparc64
+-GLIBC_PASSES += sparc64
 -DEB_ARCH_REGULAR_PACKAGES += libc6-sparc64 libc6-dev-sparc64
++GLIBC_MULTILIB_PASSES += sparc64
 +DEB_ARCH_MULTILIB_PACKAGES += libc6-sparc64 libc6-dev-sparc64
  sparc64_add-ons = nptl \$(add-ons)
  sparc64_configure_target=sparc64-linux-gnu
@@ -1025,11 +1369,13 @@ diff -Nru glibc-2.19/debian/sysdeps/sparc.mk glibc-2.19/debian/sysdeps/sparc.mk
 diff -Nru glibc-2.19/debian/sysdeps/sparc64.mk glibc-2.19/debian/sysdeps/sparc64.mk
 --- glibc-2.19/debian/sysdeps/sparc64.mk
 +++ glibc-2.19/debian/sysdeps/sparc64.mk
-@@ -4,7 +4,7 @@
+@@ -3,8 +3,8 @@
+ libc_extra_cflags = -mcpu=ultrasparc
  
  # build 32-bit (sparc) alternative library
- GLIBC_PASSES += sparc
+-GLIBC_PASSES += sparc
 -DEB_ARCH_REGULAR_PACKAGES += libc6-sparc libc6-dev-sparc
++GLIBC_MULTILIB_PASSES += sparc
 +DEB_ARCH_MULTILIB_PACKAGES += libc6-sparc libc6-dev-sparc
  sparc_add-ons = nptl \$(add-ons)
  sparc_configure_target=sparc-linux-gnu
@@ -1037,22 +1383,24 @@ diff -Nru glibc-2.19/debian/sysdeps/sparc64.mk glibc-2.19/debian/sysdeps/sparc64
 diff -Nru glibc-2.19/debian/sysdeps/x32.mk glibc-2.19/debian/sysdeps/x32.mk
 --- glibc-2.19/debian/sysdeps/x32.mk
 +++ glibc-2.19/debian/sysdeps/x32.mk
-@@ -1,9 +1,9 @@
- libc_rtlddir = /libx32
- extra_config_options = --enable-multi-arch
+@@ -2,8 +2,8 @@
+ extra_config_options = --enable-multi-arch --enable-lock-elision
  
  # build 64-bit (amd64) alternative library
- GLIBC_PASSES += amd64
+-GLIBC_PASSES += amd64
 -DEB_ARCH_REGULAR_PACKAGES += libc6-amd64 libc6-dev-amd64
++GLIBC_MULTILIB_PASSES += amd64
 +DEB_ARCH_MULTILIB_PACKAGES += libc6-amd64 libc6-dev-amd64
  libc6-amd64_shlib_dep = libc6-amd64 (>= \$(shlib_dep_ver))
  amd64_add-ons = nptl \$(add-ons)
  amd64_configure_target = x86_64-linux-gnu
-@@ -34,7 +35,7 @@
+@@ -33,8 +33,8 @@
+ endef
  
  # build 32-bit (i386) alternative library
- GLIBC_PASSES += i386
+-GLIBC_PASSES += i386
 -DEB_ARCH_REGULAR_PACKAGES += libc6-i386 libc6-dev-i386
++GLIBC_MULTILIB_PASSES += i386
 +DEB_ARCH_MULTILIB_PACKAGES += libc6-i386 libc6-dev-i386
  libc6-i386_shlib_dep = libc6-i386 (>= \$(shlib_dep_ver))
  i386_add-ons = nptl \$(add-ons)
