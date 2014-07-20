@@ -1767,7 +1767,7 @@ diff -Nru ncurses-5.9+20140118/debian/rules ncurses-5.9+20140118/debian/rules
 +override build_64=
 +endif
 +
- ifneq (\$(findstring linux,\$(DEB_HOST_GNU_SYSTEM)),)
+ ifeq (\$(DEB_HOST_ARCH_OS),linux)
  with_gpm = --with-gpm
  endif
 EOF
