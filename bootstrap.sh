@@ -2045,3 +2045,6 @@ echo "progress-mark:36:db-defaults cross build"
 
 cross_build mawk
 echo "progress-mark:37:mawk cross build"
+
+cross_build libatomic-ops
+echo "progress-mark:38:libatomic-ops cross build"
