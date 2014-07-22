@@ -2048,3 +2048,6 @@ echo "progress-mark:37:mawk cross build"
 
 cross_build libatomic-ops
 echo "progress-mark:38:libatomic-ops cross build"
+
+cross_build diffutils
+echo "progress-mark:39:diffutils cross build"
