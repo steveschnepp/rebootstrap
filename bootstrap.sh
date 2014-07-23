@@ -446,6 +446,49 @@ diff -u gcc-4.8-4.8.2/debian/rules.defs gcc-4.8-4.8.2/debian/rules.defs
    with_multiarch_lib := yes
 EOF
 }
+patch_gcc_4_9() {
+	echo "patching gcc to honour DEB_CROSS_NO_BIARCH for mips64el"
+	patch -p1 <<EOF
+--- a/debian/rules2
++++ b/debian/rules2
+@@ -607,6 +607,12 @@
+   endif
+ endif
+ 
++ifneq (,\$(findstring mips,\$(DEB_TARGET_GNU_TYPE)))
++  ifeq (,\$(filter yes,\$(biarch32) \$(biarchn32) \$(biarch64)))
++      CONFARGS += --disable-multilib
++  endif
++endif
++
+ ifneq (,\$(findstring s390-linux,\$(DEB_TARGET_GNU_TYPE)))
+   ifeq (\$(multilib),yes)
+     ifeq (\$(biarch64),yes)
+@@ -731,7 +737,7 @@
+ 				\$(shell cat build/runcheck\$(1).out), \\
+ 				\$(shell CC="\$(builddir)/gcc/xgcc -B\$(builddir)/gcc/ -static-libgcc \$(1)" bash debian/runcheck.sh)))
+ ifeq (\$(biarch32),yes)
+-  DEJAGNU_RUNS += \$(call abi_run_check,-m32)
++  DEJAGNU_RUNS += \$(call abi_run_check,\$(if \$(filter \$(DEB_TARGET_ARCH_CPU),mips64 mips64el mipsn32 mipsn32el),-mabi=32,-m32))
+ endif
+ ifeq (\$(biarch64),yes)
+   DEJAGNU_RUNS += \$(call abi_run_check,\$(if \$(filter \$(DEB_TARGET_ARCH_CPU),mips mipsel),-mabi=64,-m64))
+diff -u gcc-4.9-4.9.1/debian/rules.defs gcc-4.9-4.9.1/debian/rules.defs
+--- gcc-4.9-4.9.1/debian/rules.defs
++++ gcc-4.9-4.9.1/debian/rules.defs
+@@ -1787,8 +1787,8 @@
+ ifneq (,\$(filter \$(DEB_TARGET_ARCH), mips mipsel mips64 mips64el mipsn32 mipsn32el))
+   ifneq (\$(with_deps_on_target_arch_pkgs),yes)
+     define cross_mangle_control
+-	\$(if \$(findstring 64,\$(1)),sed -i -r '/^(Dep|Rec|Sug)/s/[a-z0-9-]+32[^\$(COMMA)]+(\$(COMMA) *|\$\$)//g;/^(Dep|Rec|Sug)/s/\$(p_lgcc)/\$(p_l64gcc)/;/^(Dep|Rec|Sug)/s/ *\$(COMMA) *\$\$//' debian/\$(1)/DEBIAN/control,@:)
+-	\$(if \$(findstring n32,\$(1)),sed -i -r '/^(Dep|Rec|Sug)/s/[a-z0-9-]+64[^\$(COMMA)]+(\$(COMMA) *|\$\$)//g;/^(Dep|Rec|Sug)/s/\$(p_lgcc)/\$(p_ln32gcc)/;/^(Dep|Rec|Sug)/s/ *\$(COMMA) *\$\$//' debian/\$(1)/DEBIAN/control,@:)
++	\$(if \$(findstring lib64,\$(1)),sed -i -r '/^(Dep|Rec|Sug)/s/[a-z0-9-]+32[^\$(COMMA)]+(\$(COMMA) *|\$\$)//g;/^(Dep|Rec|Sug)/s/\$(p_lgcc)/\$(p_l64gcc)/;/^(Dep|Rec|Sug)/s/ *\$(COMMA) *\$\$//' debian/\$(1)/DEBIAN/control,@:)
++	\$(if \$(findstring libn32,\$(1)),sed -i -r '/^(Dep|Rec|Sug)/s/[a-z0-9-]+64[^\$(COMMA)]+(\$(COMMA) *|\$\$)//g;/^(Dep|Rec|Sug)/s/\$(p_lgcc)/\$(p_ln32gcc)/;/^(Dep|Rec|Sug)/s/ *\$(COMMA) *\$\$//' debian/\$(1)/DEBIAN/control,@:)
+     endef
+   else
+     define cross_mangle_control
+EOF
+}
 # choosing libatomic1 arbitrarily here, cause it never bumped soname
 BUILD_GCC_MULTIARCH_VER=`apt-cache show --no-all-versions libatomic1 | sed 's/^Source: gcc-\([0-9.]*\)$/\1/;t;d'`
 if test "$GCC_VER" != "$BUILD_GCC_MULTIARCH_VER"; then
