@@ -2037,8 +2037,10 @@ echo "progress-mark:33:gzip cross build"
 cross_build grep
 echo "progress-mark:34:grep cross build"
 
+if test "$HOST_ARCH" = sparc64; then export lsh_cv_sys_ccpic=-fPIC; fi
 cross_build nettle
 echo "progress-mark:35:nettle cross build"
+unset lsh_cv_sys_ccpic
 
 cross_build db-defaults
 echo "progress-mark:36:db-defaults cross build"
