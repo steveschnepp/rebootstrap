@@ -407,10 +407,9 @@ cross_build() {
 }
 
 # gcc0
-patch_gcc_4_9() {
-	if test "$GCC_VER" = "4.8"; then
-		echo "patching gcc to honour DEB_CROSS_NO_BIARCH for hppa #745116"
-		patch -p1 <<EOF
+patch_gcc_4_8() {
+	echo "patching gcc to honour DEB_CROSS_NO_BIARCH for hppa #745116"
+	patch -p1 <<EOF
 diff -u gcc-4.8-4.8.2/debian/rules.defs gcc-4.8-4.8.2/debian/rules.defs
 --- gcc-4.8-4.8.2/debian/rules.defs
 +++ gcc-4.8-4.8.2/debian/rules.defs
@@ -428,10 +427,8 @@ diff -u gcc-4.8-4.8.2/debian/rules.defs gcc-4.8-4.8.2/debian/rules.defs
    ifeq (\$(hppa64_no_snap)-\$(trunk_build),yes-yes)
      with_hppa64 := disabled for snapshot build
 EOF
-	fi
-	if test "$GCC_VER" = "4.8"; then
-		echo "patching gcc-4.8 to build common libraries. not a bug"
-		patch -p1 <<EOF
+	echo "patching gcc-4.8 to build common libraries. not a bug"
+	patch -p1 <<EOF
 diff -u gcc-4.8-4.8.2/debian/rules.defs gcc-4.8-4.8.2/debian/rules.defs
 --- gcc-4.8-4.8.2/debian/rules.defs
 +++ gcc-4.8-4.8.2/debian/rules.defs
@@ -448,10 +445,6 @@ diff -u gcc-4.8-4.8.2/debian/rules.defs gcc-4.8-4.8.2/debian/rules.defs
  ifeq (,\$(filter \$(distrelease),lenny etch squeeze dapper hardy jaunty karmic lucid maverick))
    with_multiarch_lib := yes
 EOF
-	fi
-}
-patch_gcc_4_8() {
-	patch_gcc_4_9
 }
 # choosing libatomic1 arbitrarily here, cause it never bumped soname
 BUILD_GCC_MULTIARCH_VER=`apt-cache show --no-all-versions libatomic1 | sed 's/^Source: gcc-\([0-9.]*\)$/\1/;t;d'`
