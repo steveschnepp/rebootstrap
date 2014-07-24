@@ -2067,3 +2067,6 @@ echo "progress-mark:38:libatomic-ops cross build"
 
 cross_build diffutils
 echo "progress-mark:39:diffutils cross build"
+
+cross_build libgc
+echo "progress-mark:40:libgc cross build"
