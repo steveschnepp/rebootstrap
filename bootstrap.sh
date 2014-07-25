@@ -2070,3 +2070,10 @@ echo "progress-mark:39:diffutils cross build"
 
 cross_build libgc
 echo "progress-mark:40:libgc cross build"
+
+builddep_gdbm() {
+	# libtool dependency unsatisfiable #682045
+	$APT_GET install texinfo libtool automake autoconf autotools-dev dpkg-dev
+}
+cross_build gdbm
+echo "progress-mark:41:gdbm cross build"
