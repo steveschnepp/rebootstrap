@@ -1420,6 +1420,25 @@ diff -Nru glibc-2.19/debian/sysdeps/x32.mk glibc-2.19/debian/sysdeps/x32.mk
  i386_add-ons = nptl \$(add-ons)
  i386_configure_target = i686-linux-gnu
 EOF
+	if test "$HOST_ARCH" = ia64; then
+		echo "fixing patch application for ia64"
+		patch -p1 << 'EOF'
+diff -Nru glibc-2.19/debian/patches/ia64/local-rtld-compile-options.diff glibc-2.19/debian/patches/ia64/local-rtld-compile-options.diff
+--- glibc-2.19/debian/patches/ia64/local-rtld-compile-options.diff
++++ glibc-2.19/debian/patches/ia64/local-rtld-compile-options.diff
+@@ -6,8 +6,8 @@
+  		    -D'SLIBDIR="$(slibdir)"' -DIS_IN_ldconfig=1
+  CFLAGS-dl-cache.c = $(SYSCONF-FLAGS)
+  CFLAGS-cache.c = $(SYSCONF-FLAGS)
+--CFLAGS-rtld.c = $(SYSCONF-FLAGS)
+-+CFLAGS-rtld.c = $(SYSCONF-FLAGS) -O1 -fno-tree-copy-prop -fno-tree-dominator-opts -fno-tree-ccp
++-CFLAGS-rtld.c += $(SYSCONF-FLAGS)
+++CFLAGS-rtld.c += $(SYSCONF-FLAGS) -O1 -fno-tree-copy-prop -fno-tree-dominator-opts -fno-tree-ccp
+  
+  CPPFLAGS-.os += $(if $(filter $(@F),$(patsubst %,%.os,$(all-rtld-routines))),\
+  		     -DNOT_IN_libc=1 -DIS_IN_rtld=1 -DIN_LIB=rtld)
+EOF
+	fi
 }
 if test -d "$RESULT/${LIBC_NAME}1"; then
 	echo "skipping rebuild of $LIBC_NAME stage1"
