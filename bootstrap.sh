@@ -735,37 +735,33 @@ diff -Nru eglibc-2.19/debian/sysdeps/linux.mk eglibc-2.19/debian/sysdeps/linux.m
  else
    libc_extra_config_options = --with-selinux --enable-systemtap \$(extra_config_options)
 EOF
-	echo "patching eglibc to not depend on libgcc in stage2"
+	echo "patching eglibc to not depend on libgcc in stage2 #755580"
 	patch -p1 <<EOF
-diff -Nru eglibc-2.18/debian/control.in/libc eglibc-2.18/debian/control.in/libc
---- eglibc-2.18/debian/control.in/libc
-+++ eglibc-2.18/debian/control.in/libc
+diff -Nru glibc-2.19/debian/control.in/libc glibc-2.19/debian/control.in/libc
+--- glibc-2.19/debian/control.in/libc
++++ glibc-2.19/debian/control.in/libc
 @@ -3,7 +3,7 @@
  Section: libs
  Priority: required
  Multi-Arch: same
 -Depends: \${shlibs:Depends}, libgcc1 [!hppa !m68k], libgcc2 [m68k], libgcc4 [hppa]
-+Depends: @nostage2@ libgcc1 [!hppa !m68k], @nostage2@ libgcc2 [m68k], @nostage2@ libgcc4 [hppa], \${shlibs:Depends}
++Depends: \${shlibs:Depends}, \${libgcc:Depends}
  Recommends: libc6-i686 [i386], libc0.1-i686 [kfreebsd-i386], libc0.3-i686 [hurd-i386] 
  Suggests: glibc-doc, debconf | debconf-2.0, locales [!hurd-i386]
  Provides: \${locale-compat:Depends}, libc6-sparcv9b [sparc sparc64]
-diff -Nru eglibc-2.18/debian/rules.d/control.mk eglibc-2.18/debian/rules.d/control.mk
---- eglibc-2.18/debian/rules.d/control.mk
-+++ eglibc-2.18/debian/rules.d/control.mk
-@@ -45,7 +45,11 @@
- ifneq (\$(filter stage1,\$(DEB_BUILD_PROFILES)),)
--	sed -e 's%@libc@%\$(libc)%g;s%@nobootstrap@[^,]*,%%g' < \$@T > debian/control
-+	sed -e 's%@libc@%\$(libc)%g;s%@nobootstrap@[^,]*,%%g;s%@nostage2@%%g' < \$@T > debian/control
- else
--	sed -e 's%@libc@%\$(libc)%g;s%@nobootstrap@%%g' < \$@T > debian/control
-+ifneq (\$(filter stage2,\$(DEB_BUILD_PROFILES)),)
-+	sed -e 's%@libc@%\$(libc)%g;s%@nobootstrap@%%g;s%@nostage2@[^,]*,%%g' < \$@T > debian/control
-+else
-+	sed -e 's%@libc@%\$(libc)%g;s%@nobootstrap@%%g;s%@nostage2@%%g' < \$@T > debian/control
+diff -Nru glibc-2.19/debian/rules.d/debhelper.mk glibc-2.19/debian/rules.d/debhelper.mk
+--- glibc-2.19/debian/rules.d/debhelper.mk
++++ glibc-2.19/debian/rules.d/debhelper.mk
+@@ -180,6 +180,9 @@
+ 	# Generate common substvars files.
+ 	echo "locale:Depends=\$(shell perl debian/debver2localesdep.pl \$(LOCALES_DEP_VER))" > tmp.substvars
+ 	echo "locale-compat:Depends=\$(shell perl debian/debver2localesdep.pl \$(LOCALES_COMPAT_VER))" >> tmp.substvars
++ifeq (\$(filter stage2,\$(DEB_BUILD_PROFILES)),)
++	echo 'libgcc:Depends=libgcc1 [!hppa !m68k], libgcc2 [m68k], libgcc4 [hppa]' >> tmp.substvars
 +endif
- endif
- 	rm \$@T
- 	touch \$@
+ 
+ 	for pkg in \$(DEB_ARCH_REGULAR_PACKAGES) \$(DEB_INDEP_REGULAR_PACKAGES) \$(DEB_UDEB_PACKAGES); do \\
+ 	  cp tmp.substvars debian/\$\$pkg.substvars; \\
 EOF
 	echo "patching glibc to avoid multilib for bootstrap profile"
 	patch -p1 <<EOF
