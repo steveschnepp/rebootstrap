@@ -2092,3 +2092,24 @@ builddep_gdbm() {
 }
 cross_build gdbm
 echo "progress-mark:41:gdbm cross build"
+
+builddep_file() {
+	# python-all lacks build profile annotation
+	$APT_GET install debhelper dh-autoreconf "zlib1g-dev:$HOST_ARCH"
+}
+if test -d "$RESULT/file_1"; then
+	echo "skipping stage1 rebuild of file"
+else
+	builddep_file
+	cross_build_setup file file_1
+	dpkg-checkbuilddeps "-a$HOST_ARCH" || : # tell unmet build depends
+	dpkg-buildpackage "-a$HOST_ARCH" -B -d -uc -us -Pstage1
+	cd ..
+	ls -l
+	pickup_packages *.changes
+	test -d "$RESULT" && mkdir "$RESULT/file_1"
+	test -d "$RESULT" && cp ./*.deb "$RESULT/file_1/"
+	cd ..
+	rm -Rf file_1
+fi
+echo "progress-mark:42:file cross build"
