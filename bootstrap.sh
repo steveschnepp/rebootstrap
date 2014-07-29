@@ -763,18 +763,22 @@ diff -Nru glibc-2.19/debian/rules.d/debhelper.mk glibc-2.19/debian/rules.d/debhe
  	for pkg in \$(DEB_ARCH_REGULAR_PACKAGES) \$(DEB_INDEP_REGULAR_PACKAGES) \$(DEB_UDEB_PACKAGES); do \\
  	  cp tmp.substvars debian/\$\$pkg.substvars; \\
 EOF
-	echo "patching glibc to avoid multilib for bootstrap profile"
+	echo "patching glibc to select the correct packages in stage1"
 	patch -p1 <<EOF
 diff -Nru glibc-2.19/debian/rules glibc-2.19/debian/rules
 --- glibc-2.19/debian/rules
 +++ glibc-2.19/debian/rules
-@@ -196,6 +196,11 @@
+@@ -196,6 +196,15 @@
    endif
  endif
  
 +ifneq (\$(filter stage1,\$(DEB_BUILD_PROFILES)),)
++ifneq (\$(filter nobiarch,\$(DEB_BUILD_PROFILES)),)
 +override GLIBC_PASSES = libc
 +override DEB_ARCH_REGULAR_PACKAGES = \$(libc)-dev
++else
++override DEB_ARCH_REGULAR_PACKAGES := \$(foreach p,\$(DEB_ARCH_REGULAR_PACKAGES),\$(if \$(findstring -dev,\$(p)),\$(if \$(findstring -bin,\$(p)),,\$(p))))
++endif
 +endif
 +
  # And now the rules...
