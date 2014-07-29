@@ -1528,8 +1528,13 @@ if test -d "$RESULT/${LIBC_NAME}1"; then
 else
 	$APT_GET install gettext file quilt autoconf gawk debhelper rdfind symlinks libaudit-dev libcap-dev libselinux-dev binutils bison netbase linux-libc-dev:$HOST_ARCH
 	cross_build_setup "$LIBC_NAME" "${LIBC_NAME}1"
-	dpkg-checkbuilddeps -B -a$HOST_ARCH || : # tell unmet build depends
-	DEB_GCC_VERSION=-$GCC_VER dpkg-buildpackage -B -uc -us "-a$HOST_ARCH" -d -Pstage1
+	if test "$ENABLE_MULTILIB" = yes; then
+		dpkg-checkbuilddeps -B "-a$HOST_ARCH" -Pstage1 || : # tell unmet build depends
+		DEB_GCC_VERSION=-$GCC_VER dpkg-buildpackage -B -uc -us "-a$HOST_ARCH" -d -Pstage1
+	else
+		dpkg-checkbuilddeps -B "-a$HOST_ARCH" -Pstage1,nobiarch || : # tell unmet build depends
+		DEB_GCC_VERSION=-$GCC_VER dpkg-buildpackage -B -uc -us "-a$HOST_ARCH" -d -Pstage1,nobiarch
+	fi
 	cd ..
 	ls -l
 	pickup_packages *.changes
