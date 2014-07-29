@@ -1991,8 +1991,8 @@ cross_build readline6
 echo "progress-mark:21:readline6 cross build"
 
 builddep_bzip2() {
-	# gcc-multilib dependency unsatisfiable
-	$APT_GET install texinfo dpkg-dev
+	# unused gcc-multilib dependency unsatisfiable
+	$APT_GET install dpkg-dev debhelper dh-exec
 }
 cross_build bzip2
 echo "progress-mark:22:bzip2 cross build"
