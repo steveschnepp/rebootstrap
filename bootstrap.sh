@@ -1490,6 +1490,28 @@ diff -Nru glibc-2.19/debian/patches/ia64/local-rtld-compile-options.diff glibc-2
   		     -DNOT_IN_libc=1 -DIS_IN_rtld=1 -DIN_LIB=rtld)
 EOF
 	fi
+	echo "patching glibc to use multi-arch paths for headers in stage1"
+	patch -p1 <<'EOF'
+diff -Nru glibc-2.19/debian/rules.d/build.mk glibc-2.19/debian/rules.d/build.mk
+--- glibc-2.19/debian/rules.d/build.mk
++++ glibc-2.19/debian/rules.d/build.mk
+@@ -207,6 +207,7 @@
+ 	  $(MAKE) -f debian/generate-supported.mk IN=localedata/SUPPORTED \
+ 	    OUT=debian/tmp-$(curpass)/usr/share/i18n/SUPPORTED; \
+ 	fi
++endif
+ 
+ 	# Create the multiarch directories, and the configuration file in /etc/ld.so.conf.d
+ 	if [ $(curpass) = libc ]; then \
+@@ -261,6 +262,7 @@
+ 	  esac; \
+ 	fi
+ 
++ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
+ 	# Create the ld.so symlink to the multiarch directory
+ 	if [ $(curpass) = libc ]; then \
+ 	  rtld_so="$$(LANG=C LC_ALL=C readelf -l debian/tmp-$(curpass)/usr/bin/iconv | grep 'interpreter' | sed -e 's/.*interpreter: \(.*\)]/\1/g')" ; \
+EOF
 	echo "patching eglibc to avoid dependency on libc6 from libc6-dev in stage1"
 	patch -p1 <<'EOF'
 diff -Nru glibc-2.19/debian/control.in/amd64 glibc-2.19/debian/control.in/amd64
