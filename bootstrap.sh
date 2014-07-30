@@ -1539,7 +1539,7 @@ else
 	ls -l
 	pickup_packages *.changes
 	$APT_GET remove libc6-dev-i386
-	dpkg -i libc*-dev_*.deb
+	dpkg -i libc*.deb
 	test -d "$RESULT" && mkdir "$RESULT/${LIBC_NAME}1"
 	test -d "$RESULT" && cp -v libc*-dev_*.deb "$RESULT/${LIBC_NAME}1"
 	cd ..
