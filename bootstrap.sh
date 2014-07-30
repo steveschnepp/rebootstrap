@@ -659,36 +659,6 @@ ln -s ../include/`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_MULTIARCH` /usr/`dpk
 patch_glibc() {
 	echo "fixing glibc make ftbfs #747013"
 	sed -i 's/\(3\.\[89\]\*\))/\1 | 4.*)/' configure
-	echo "patching eglibc to avoid dependency on libc6 from libc6-dev in stage1"
-	patch -p1 <<EOF
-diff -Nru eglibc-2.18/debian/control.in/libc eglibc-2.18/debian/control.in/libc
---- eglibc-2.18/debian/control.in/libc
-+++ eglibc-2.18/debian/control.in/libc
-@@ -28,7 +28,7 @@
- Section: libdevel
- Priority: optional
- Multi-Arch: same
--Depends: @libc@ (= \${binary:Version}), libc-dev-bin (= \${binary:Version}), \${misc:Depends}, linux-libc-dev [linux-any], kfreebsd-kernel-headers (>= 0.11) [kfreebsd-any], gnumach-dev [hurd-i386], hurd-dev (>= 20080607-3) [hurd-i386]
-+Depends: @nobootstrap@ @libc@ (= \${binary:Version}), libc-dev-bin (= \${binary:Version}), \${misc:Depends}, linux-libc-dev [linux-any], kfreebsd-kernel-headers (>= 0.11) [kfreebsd-any], gnumach-dev [hurd-i386], hurd-dev (>= 20080607-3) [hurd-i386]
- Replaces: hurd-dev (<< 20120408-3) [hurd-i386]
- Recommends: gcc | c-compiler
- Suggests: glibc-doc, manpages-dev
-diff -Nru eglibc-2.18/debian/rules.d/control.mk eglibc-2.18/debian/rules.d/control.mk
---- eglibc-2.18/debian/rules.d/control.mk
-+++ eglibc-2.18/debian/rules.d/control.mk
-@@ -42,6 +42,10 @@
- 	cat debian/control.in/opt		>> \$@T
- 	cat debian/control.in/libnss-dns-udeb	>> \$@T
- 	cat debian/control.in/libnss-files-udeb	>> \$@T
--	sed -e 's%@libc@%\$(libc)%g' < \$@T > debian/control
-+ifneq (\$(filter stage1,\$(DEB_BUILD_PROFILES)),)
-+	sed -e 's%@libc@%\$(libc)%g;s%@nobootstrap@[^,]*,%%g' < \$@T > debian/control
-+else
-+	sed -e 's%@libc@%\$(libc)%g;s%@nobootstrap@%%g' < \$@T > debian/control
-+endif
- 	rm \$@T
- 	touch \$@
-EOF
 	echo "patching eglibc to include a libc6.so and place crt*.o in correct directory"
 	patch -p1 <<EOF
 diff -Nru eglibc-2.18/debian/rules.d/build.mk eglibc-2.18/debian/rules.d/build.mk
@@ -1520,6 +1490,205 @@ diff -Nru glibc-2.19/debian/patches/ia64/local-rtld-compile-options.diff glibc-2
   		     -DNOT_IN_libc=1 -DIS_IN_rtld=1 -DIN_LIB=rtld)
 EOF
 	fi
+	echo "patching eglibc to avoid dependency on libc6 from libc6-dev in stage1"
+	patch -p1 <<'EOF'
+diff -Nru glibc-2.19/debian/control.in/amd64 glibc-2.19/debian/control.in/amd64
+--- glibc-2.19/debian/control.in/amd64
++++ glibc-2.19/debian/control.in/amd64
+@@ -14,7 +14,7 @@
+ Architecture: i386 x32
+ Section: libdevel
+ Priority: optional
+-Depends: libc6-amd64 (= ${binary:Version}), libc6-dev (= ${binary:Version}), ${misc:Depends}
++Depends: @nobootstrap@ libc6-amd64 (= ${binary:Version}), libc6-dev (= ${binary:Version}), ${misc:Depends}
+ Recommends: gcc-multilib
+ Conflicts: libc6-dev (<< 2.13-14)
+ Replaces: amd64-libs-dev (<= 1.2), libc6-dev (<< 2.13-11)
+diff -Nru glibc-2.19/debian/control.in/armel glibc-2.19/debian/control.in/armel
+--- glibc-2.19/debian/control.in/armel
++++ glibc-2.19/debian/control.in/armel
+@@ -13,7 +13,7 @@
+ Architecture: armhf
+ Section: libdevel
+ Priority: optional
+-Depends: libc6-armel (= ${binary:Version}), libc6-dev (= ${binary:Version}), ${misc:Depends}
++Depends: @nobootstrap@ libc6-armel (= ${binary:Version}), libc6-dev (= ${binary:Version}), ${misc:Depends}
+ Recommends: gcc-multilib
+ Description: GNU C Library: ARM softfp development libraries for armhf
+  Contains the symlinks and object files needed to compile and link programs
+diff -Nru glibc-2.19/debian/control.in/armhf glibc-2.19/debian/control.in/armhf
+--- glibc-2.19/debian/control.in/armhf
++++ glibc-2.19/debian/control.in/armhf
+@@ -13,7 +13,7 @@
+ Architecture: armel
+ Section: libdevel
+ Priority: optional
+-Depends: libc6-armhf (= ${binary:Version}), libc6-dev (= ${binary:Version}), ${misc:Depends}
++Depends: @nobootstrap@ libc6-armhf (= ${binary:Version}), libc6-dev (= ${binary:Version}), ${misc:Depends}
+ Recommends: gcc-multilib
+ Description: GNU C Library: ARM hard float development libraries for armel
+  Contains the symlinks and object files needed to compile and link programs
+diff -Nru glibc-2.19/debian/control.in/i386 glibc-2.19/debian/control.in/i386
+--- glibc-2.19/debian/control.in/i386
++++ glibc-2.19/debian/control.in/i386
+@@ -18,7 +18,7 @@
+ Provides: lib32c-dev
+ Conflicts: libc6-i386 (<= 2.9-18), libc6-dev (<< 2.13-14)
+ Replaces: libc6-dev (<< 2.13-11)
+-Depends: libc6-i386 (= ${binary:Version}), libc6-dev (= ${binary:Version}), ${misc:Depends}
++Depends: @nobootstrap@ libc6-i386 (= ${binary:Version}), libc6-dev (= ${binary:Version}), ${misc:Depends}
+ Recommends: gcc-multilib
+ Description: GNU C Library: 32-bit development libraries for AMD64
+  Contains the symlinks and object files needed to compile and link programs
+diff -Nru glibc-2.19/debian/control.in/kfreebsd-i386 glibc-2.19/debian/control.in/kfreebsd-i386
+--- glibc-2.19/debian/control.in/kfreebsd-i386
++++ glibc-2.19/debian/control.in/kfreebsd-i386
+@@ -16,7 +16,7 @@
+ Provides: lib32c-dev
+ Conflicts: libc0.1-dev (<< 2.13-14)
+ Replaces: libc0.1-dev (<< 2.13-11)
+-Depends: libc0.1-i386 (= ${binary:Version}), libc0.1-dev (= ${binary:Version}), ${misc:Depends}
++Depends: @nobootstrap@ libc0.1-i386 (= ${binary:Version}), libc0.1-dev (= ${binary:Version}), ${misc:Depends}
+ Recommends: gcc-multilib
+ Description: GNU C Library: 32bit development libraries for AMD64
+  Contains the symlinks and object files needed to compile and link programs
+diff -Nru glibc-2.19/debian/control.in/libc glibc-2.19/debian/control.in/libc
+--- glibc-2.19/debian/control.in/libc
++++ glibc-2.19/debian/control.in/libc
+@@ -32,7 +32,7 @@
+ Section: libdevel
+ Priority: optional
+ Multi-Arch: same
+-Depends: @libc@ (= ${binary:Version}), libc-dev-bin (= ${binary:Version}), ${misc:Depends}, linux-libc-dev [linux-any], kfreebsd-kernel-headers (>= 0.11) [kfreebsd-any], gnumach-dev [hurd-i386], hurd-dev (>= 20080607-3) [hurd-i386]
++Depends: @nobootstrap@ @libc@ (= ${binary:Version}), libc-dev-bin (= ${binary:Version}), ${misc:Depends}, linux-libc-dev [linux-any], kfreebsd-kernel-headers (>= 0.11) [kfreebsd-any], gnumach-dev [hurd-i386], hurd-dev (>= 20080607-3) [hurd-i386]
+ Replaces: hurd-dev (<< 20120408-3) [hurd-i386]
+ Recommends: gcc | c-compiler
+ Suggests: glibc-doc, manpages-dev
+diff -Nru glibc-2.19/debian/control.in/mips32 glibc-2.19/debian/control.in/mips32
+--- glibc-2.19/debian/control.in/mips32
++++ glibc-2.19/debian/control.in/mips32
+@@ -16,7 +16,7 @@
+ Provides: lib32c-dev
+ Conflicts: libc6-dev (<< 2.13-14)
+ Replaces: libc6-dev (<< 2.13-11)
+-Depends: libc6-dev (= ${binary:Version}), libc6-mips32 (= ${binary:Version}),
++Depends: libc6-dev (= ${binary:Version}), @nobootstrap@ libc6-mips32 (= ${binary:Version}),
+    libc6-dev-mipsn32 (= ${binary:Version}) [mips64 mips64el],
+    libc6-dev-mips64 (= ${binary:Version}) [mipsn32 mipsn32el],
+    ${misc:Depends}
+diff -Nru glibc-2.19/debian/control.in/mips64 glibc-2.19/debian/control.in/mips64
+--- glibc-2.19/debian/control.in/mips64
++++ glibc-2.19/debian/control.in/mips64
+@@ -16,7 +16,7 @@
+ Provides: lib64c-dev
+ Conflicts: libc6-dev (<< 2.13-14)
+ Replaces: libc6-dev (<< 2.13-11)
+-Depends: libc6-mips64 (= ${binary:Version}), libc6-dev (= ${binary:Version}), ${misc:Depends}
++Depends: @nobootstrap@ libc6-mips64 (= ${binary:Version}), libc6-dev (= ${binary:Version}), ${misc:Depends}
+ Recommends: gcc-multilib
+ Description: GNU C Library: 64bit Development Libraries for MIPS64
+  Contains the symlinks and object files needed to compile and link programs
+diff -Nru glibc-2.19/debian/control.in/mipsn32 glibc-2.19/debian/control.in/mipsn32
+--- glibc-2.19/debian/control.in/mipsn32
++++ glibc-2.19/debian/control.in/mipsn32
+@@ -16,7 +16,7 @@
+ Provides: libn32c-dev
+ Conflicts: libc6-dev (<< 2.13-14)
+ Replaces: libc6-dev (<< 2.13-11)
+-Depends: libc6-mipsn32 (= ${binary:Version}), libc6-dev-mips64 (= ${binary:Version}) [mips mipsel], libc6-dev (= ${binary:Version}), ${misc:Depends}
++Depends: @nobootstrap@ libc6-mipsn32 (= ${binary:Version}), @nobootstrap@ libc6-dev-mips64 (= ${binary:Version}) [mips mipsel], libc6-dev (= ${binary:Version}), ${misc:Depends}
+ Recommends: gcc-multilib
+ Description: GNU C Library: n32 Development Libraries for MIPS64
+  Contains the symlinks and object files needed to compile and link programs
+diff -Nru glibc-2.19/debian/control.in/powerpc glibc-2.19/debian/control.in/powerpc
+--- glibc-2.19/debian/control.in/powerpc
++++ glibc-2.19/debian/control.in/powerpc
+@@ -16,7 +16,7 @@
+ Provides: lib32c-dev
+ Conflicts: libc6-dev (<< 2.13-14)
+ Replaces: libc6-dev (<< 2.13-11)
+-Depends: libc6-powerpc (= ${binary:Version}), libc6-dev (= ${binary:Version}), ${misc:Depends}
++Depends: @nobootstrap@ libc6-powerpc (= ${binary:Version}), libc6-dev (= ${binary:Version}), ${misc:Depends}
+ Recommends: gcc-multilib
+ Description: GNU C Library: 32bit powerpc development libraries for ppc64
+  Contains the symlinks and object files needed to compile and link programs
+diff -Nru glibc-2.19/debian/control.in/ppc64 glibc-2.19/debian/control.in/ppc64
+--- glibc-2.19/debian/control.in/ppc64
++++ glibc-2.19/debian/control.in/ppc64
+@@ -16,7 +16,7 @@
+ Provides: lib64c-dev
+ Conflicts: libc6-dev (<< 2.13-14)
+ Replaces: libc6-dev (<< 2.13-11)
+-Depends: libc6-ppc64 (= ${binary:Version}), libc6-dev (= ${binary:Version}), ${misc:Depends}
++Depends: @nobootstrap@ libc6-ppc64 (= ${binary:Version}), libc6-dev (= ${binary:Version}), ${misc:Depends}
+ Recommends: gcc-multilib
+ Description: GNU C Library: 64bit Development Libraries for PowerPC64
+  Contains the symlinks and object files needed to compile and link programs
+diff -Nru glibc-2.19/debian/control.in/s390 glibc-2.19/debian/control.in/s390
+--- glibc-2.19/debian/control.in/s390
++++ glibc-2.19/debian/control.in/s390
+@@ -16,7 +16,7 @@
+ Provides: lib32c-dev
+ Conflicts: libc6-dev (<< 2.13-14)
+ Replaces: libc6-dev (<< 2.13-11)
+-Depends: libc6-s390 (= ${binary:Version}), libc6-dev (= ${binary:Version}), ${misc:Depends}
++Depends: @nobootstrap@ libc6-s390 (= ${binary:Version}), libc6-dev (= ${binary:Version}), ${misc:Depends}
+ Recommends: gcc-multilib
+ Description: GNU C Library: 32bit Development Libraries for IBM zSeries
+  Contains the symlinks and object files needed to compile and link programs
+diff -Nru glibc-2.19/debian/control.in/sparc glibc-2.19/debian/control.in/sparc
+--- glibc-2.19/debian/control.in/sparc
++++ glibc-2.19/debian/control.in/sparc
+@@ -16,7 +16,7 @@
+ Provides: lib32c-dev
+ Conflicts: libc6-dev (<< 2.13-14)
+ Replaces: libc6-dev (<< 2.13-11)
+-Depends: libc6-sparc (= ${binary:Version}), libc6-dev (= ${binary:Version}), ${misc:Depends}
++Depends: @nobootstrap@ libc6-sparc (= ${binary:Version}), libc6-dev (= ${binary:Version}), ${misc:Depends}
+ Recommends: gcc-multilib
+ Description: GNU C Library: 32bit Development Libraries for SPARC
+  Contains the symlinks and object files needed to compile and link programs
+diff -Nru glibc-2.19/debian/control.in/sparc64 glibc-2.19/debian/control.in/sparc64
+--- glibc-2.19/debian/control.in/sparc64
++++ glibc-2.19/debian/control.in/sparc64
+@@ -16,7 +16,7 @@
+ Provides: lib64c-dev
+ Conflicts: libc6-dev (<< 2.13-14)
+ Replaces: libc6-dev (<< 2.13-11)
+-Depends: libc6-sparc64 (= ${binary:Version}), libc6-dev (= ${binary:Version}), ${misc:Depends}
++Depends: @nobootstrap@ libc6-sparc64 (= ${binary:Version}), libc6-dev (= ${binary:Version}), ${misc:Depends}
+ Recommends: gcc-multilib
+ Description: GNU C Library: 64bit Development Libraries for UltraSPARC
+  Contains the symlinks and object files needed to compile and link programs
+diff -Nru glibc-2.19/debian/control.in/x32 glibc-2.19/debian/control.in/x32
+--- glibc-2.19/debian/control.in/x32
++++ glibc-2.19/debian/control.in/x32
+@@ -13,8 +13,8 @@
+ Architecture: amd64 i386
+ Section: libdevel
+ Priority: optional
+-Depends: libc6-x32 (= ${binary:Version}), libc6-dev-i386 (= ${binary:Version}) [amd64], libc6-dev-amd64 (= ${binary:Version}) [i386], libc6-dev (= ${binary:Version}), ${misc:Depends}
++Depends: @nobootstrap@ libc6-x32 (= ${binary:Version}), libc6-dev-i386 (= ${binary:Version}) [amd64], libc6-dev-amd64 (= ${binary:Version}) [i386], libc6-dev (= ${binary:Version}), ${misc:Depends}
+ Build-Profiles: !nobiarch
+ Description: GNU C Library: X32 ABI Development Libraries for AMD64
+  Contains the symlinks and object files needed to compile and link programs
+  which use the standard C library. This is the X32 ABI version of the
+diff -Nru glibc-2.19/debian/rules.d/control.mk glibc-2.19/debian/rules.d/control.mk
+--- glibc-2.19/debian/rules.d/control.mk
++++ glibc-2.19/debian/rules.d/control.mk
+@@ -43,6 +43,10 @@
+ 	cat debian/control.in/opt		>> $@T
+ 	cat debian/control.in/libnss-dns-udeb	>> $@T
+ 	cat debian/control.in/libnss-files-udeb	>> $@T
+-	sed -e 's%@libc@%$(libc)%g' < $@T > debian/control
++ifneq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
++	sed -e 's%@libc@%$(libc)%g;s%@nobootstrap@[^,]*,%%g' < $@T > debian/control
++else
++	sed -e 's%@libc@%$(libc)%g;s%@nobootstrap@%%g' < $@T > debian/control
++endif
+ 	rm $@T
+ 	touch $@
+EOF
 }
 if test -d "$RESULT/${LIBC_NAME}1"; then
 	echo "skipping rebuild of $LIBC_NAME stage1"
