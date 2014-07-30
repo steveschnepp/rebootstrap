@@ -2294,3 +2294,6 @@ else
 	rm -Rf file_1
 fi
 echo "progress-mark:42:file cross build"
+
+cross_build debianutils
+echo "progress-mark:43:debianutils cross build"
