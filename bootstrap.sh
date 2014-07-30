@@ -2319,3 +2319,6 @@ echo "progress-mark:42:file cross build"
 
 cross_build debianutils
 echo "progress-mark:43:debianutils cross build"
+
+cross_build libunistring
+echo "progress-mark:44:libunistring cross build"
