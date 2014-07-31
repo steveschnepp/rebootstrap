@@ -1503,14 +1503,14 @@ diff -Nru glibc-2.19/debian/rules.d/build.mk glibc-2.19/debian/rules.d/build.mk
  
  	# Create the multiarch directories, and the configuration file in /etc/ld.so.conf.d
  	if [ $(curpass) = libc ]; then \
-@@ -261,6 +262,7 @@
- 	  esac; \
- 	fi
+@@ -251,6 +252,7 @@
+ 	  echo "$(call xx,libdir)" >> $$conffile; \
+ 	esac
  
 +ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
- 	# Create the ld.so symlink to the multiarch directory
+ 	# ARM: add dynamic linker name for the non-default multilib in ldd
  	if [ $(curpass) = libc ]; then \
- 	  rtld_so="$$(LANG=C LC_ALL=C readelf -l debian/tmp-$(curpass)/usr/bin/iconv | grep 'interpreter' | sed -e 's/.*interpreter: \(.*\)]/\1/g')" ; \
+ 	  case $(DEB_HOST_ARCH) in \
 EOF
 	echo "patching eglibc to avoid dependency on libc6 from libc6-dev in stage1"
 	patch -p1 <<'EOF'
