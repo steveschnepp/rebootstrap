@@ -2322,3 +2322,23 @@ echo "progress-mark:43:debianutils cross build"
 
 cross_build libunistring
 echo "progress-mark:44:libunistring cross build"
+
+patch_patch() {
+	echo "patching patch to not FTBFS on m68k et al #729132"
+	patch -p1 <<EOF
+diff -Nru patch-2.7.1/debian/rules patch-2.7.1/debian/rules
+--- patch-2.7.1/debian/rules
++++ patch-2.7.1/debian/rules
+@@ -38,7 +38,7 @@
+ 	\$(MAKE)
+ 	dh_auto_test
+ 	# make sure we call ed as "ed"
+-	[ "\$\$(strings -n 2 src/patch | grep -w 'ed\$\$')" = "ed" ]
++	[ "\$\$(strings -n 2 src/patch | grep -w 'ed\$\$' | uniq)" = "ed" ]
+ 	touch build-stamp
+ 
+ clean:
+EOF
+}
+cross_build patch
+echo "progress-mark:45:patch cross build"
