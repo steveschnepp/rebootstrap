@@ -2363,3 +2363,10 @@ EOF
 }
 cross_build patch
 echo "progress-mark:45:patch cross build"
+
+builddep_bash() {
+	# time dependency unsatisfiable #751776
+	$APT_GET install autoconf autotools-dev bison "libncurses5-dev:$HOST_ARCH" texinfo texi2html debhelper locales gettext sharutils time xz-utils dpkg-dev
+}
+cross_build bash
+echo "progress-mark:46:bash cross build"
