@@ -679,17 +679,39 @@ diff -Nru eglibc-2.18/debian/rules.d/build.mk eglibc-2.18/debian/rules.d/build.m
  else
  	: # FIXME: why just needed for ARM multilib?
  	case "\$(curpass)" in \\
-diff -Nru eglibc-2.18/debian/rules.d/debhelper.mk eglibc-2.18/debian/rules.d/debhelper.mk
---- eglibc-2.18/debian/rules.d/debhelper.mk
-+++ eglibc-2.18/debian/rules.d/debhelper.mk
-@@ -207,6 +207,7 @@
+diff -Nru glibc-2.19/debian/rules.d/debhelper.mk glibc-2.19/debian/rules.d/debhelper.mk
+--- glibc-2.19/debian/rules.d/debhelper.mk
++++ glibc-2.19/debian/rules.d/debhelper.mk
+@@ -197,7 +197,15 @@
+ 	curpass=\$(curpass) ; \\
+ 	templates="libc-dev" ;\\
+-	pass="" ; \\
+-	suffix="" ;\\
++	case "\$\$curpass:\$\$slibdir" in \\
++	  libc:*) \\
++	    pass="" \\
++	    suffix="" \\
++	    ;; \\
++	  *:/lib32 | *:/lib64 | *:/libo32 | *:/libx32 | *:/lib/arm-linux-gnueabi*) \\
++	    pass="-alt" \\
++	    suffix=-"\$(curpass)" \\
++	    ;; \\
++	esac ; \\
+ 	for t in \$\$templates ; do \\
+ 	  for s in debian/\$\$t\$\$pass.* ; do \\
+ 	    t=\`echo \$\$s | sed -e "s#libc\\(.*\\)\$\$pass#\$(libc)\\1\$\$suffix#"\` ; \\
+@@ -207,10 +215,10 @@
+ 	    sed -e "s#TMPDIR#debian/tmp-\$\$curpass#g" -i \$\$t; \\
+ 	    sed -e "s#RTLDDIR#\$\$rtlddir#g" -i \$\$t; \\
+ 	    sed -e "s#SLIBDIR#\$\$slibdir#g" -i \$\$t; \\
++	    sed -e "/LIBDIR.*\\.a /d" -i \$\$t; \\
++	    sed -e "s#LIBDIR#\$\$libdir#g" -i \$\$t; \\
+ 	  done ; \\
  	done
- 
+-
 -	sed -e "/LIBDIR.*.a /d" -e "s#LIBDIR#lib#g" -i debian/\$(libc)-dev.install
-+	libdir=\$(call xx,libdir) ; \\
-+	sed -e "/LIBDIR.*.a /d" -e "s#LIBDIR#\$\$libdir#g" -i debian/\$(libc)-dev.install
  else
- \$(patsubst %,debhelper_%,\$(EGLIBC_PASSES)) :: debhelper_% : \$(stamp)debhelper_%
+ \$(patsubst %,debhelper_%,\$(GLIBC_PASSES)) :: debhelper_% : \$(stamp)debhelper_%
  \$(stamp)debhelper_%: \$(stamp)debhelper-common \$(stamp)install_%
 EOF
 	echo "patching eglibc to build without selinux in stage2 #742640"
