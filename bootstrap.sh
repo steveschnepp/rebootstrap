@@ -673,7 +673,8 @@ diff -Nru eglibc-2.18/debian/rules.d/build.mk eglibc-2.18/debian/rules.d/build.m
 +	install -d \$(CURDIR)/debian/tmp-\$(curpass)/\$(call xx,libdir)
 +	install -m 644 \$(DEB_BUILDDIR)/csu/crt[1in].o \\
 +		\$(CURDIR)/debian/tmp-\$(curpass)/\$(call xx,libdir)
- 	\${CC} -nostdlib -nostartfiles -shared -x c /dev/null \\
+-	\${CC} -nostdlib -nostartfiles -shared -x c /dev/null \\
++	\$(call xx,CC) -nostdlib -nostartfiles -shared -x c /dev/null \\
 -	        -o \$(CURDIR)/debian/tmp-\$(curpass)/lib/libc.so
 +	        -o \$(CURDIR)/debian/tmp-\$(curpass)/\$(call xx,libdir)/libc.so
  else
