@@ -2116,20 +2116,6 @@ echo "progress-mark:20:ncurses cross build"
 patch_readline6() {
 	echo "patching readline6 to support nobiarch profile #737955"
 	patch -p1 <<EOF
-diff -Nru readline6-6.3/debian/changelog readline6-6.3/debian/changelog
---- readline6-6.3/debian/changelog
-+++ readline6-6.3/debian/changelog
-@@ -1,3 +1,10 @@
-+readline6 (6.3-6.1) UNRELEASED; urgency=low
-+
-+  * Non-maintainer upload.
-+  * Support nobiarch build profile. (Closes: #737955)
-+
-+ -- Helmut Grohne <helmut@dedup1.subdivi.de>  Sun, 04 May 2014 14:47:47 +0200
-+
- readline6 (6.3-6) unstable; urgency=medium
- 
-   * Really apply the patch to fix the display issue when a multiline
 diff -Nru readline6-6.3/debian/control readline6-6.3/debian/control
 --- readline6-6.3/debian/control
 +++ readline6-6.3/debian/control
