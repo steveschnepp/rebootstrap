@@ -2378,3 +2378,10 @@ builddep_build_essential() {
 }
 cross_build build-essential
 echo "progress-mark:47:build-essential cross build"
+
+builddep_bsdmainutils() {
+	# python-hdate dependency unsatisfiable
+	$APT_GET install debhelper "libncurses5-dev:$HOST_ARCH" quilt python python-hdate
+}
+cross_build bsdmainutils
+echo "progress-mark:48:bsdmainutils cross build"
