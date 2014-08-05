@@ -2371,3 +2371,6 @@ builddep_bsdmainutils() {
 }
 cross_build bsdmainutils
 echo "progress-mark:48:bsdmainutils cross build"
+
+cross_build libelf
+echo "progress-mark:49:libelf cross build"
