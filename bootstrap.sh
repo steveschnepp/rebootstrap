@@ -715,34 +715,6 @@ diff -Nru glibc-2.19/debian/rules.d/debhelper.mk glibc-2.19/debian/rules.d/debhe
  \$(patsubst %,debhelper_%,\$(GLIBC_PASSES)) :: debhelper_% : \$(stamp)debhelper_%
  \$(stamp)debhelper_%: \$(stamp)debhelper-common \$(stamp)install_%
 EOF
-	echo "patching eglibc to not depend on libgcc in stage2 #755580"
-	patch -p1 <<EOF
-diff -Nru glibc-2.19/debian/control.in/libc glibc-2.19/debian/control.in/libc
---- glibc-2.19/debian/control.in/libc
-+++ glibc-2.19/debian/control.in/libc
-@@ -3,7 +3,7 @@
- Section: libs
- Priority: required
- Multi-Arch: same
--Depends: \${shlibs:Depends}, libgcc1 [!hppa !m68k], libgcc2 [m68k], libgcc4 [hppa]
-+Depends: \${shlibs:Depends}, \${libgcc:Depends}
- Recommends: libc6-i686 [i386], libc0.1-i686 [kfreebsd-i386], libc0.3-i686 [hurd-i386] 
- Suggests: glibc-doc, debconf | debconf-2.0, locales [!hurd-i386]
- Provides: \${locale-compat:Depends}, libc6-sparcv9b [sparc sparc64]
-diff -Nru glibc-2.19/debian/rules.d/debhelper.mk glibc-2.19/debian/rules.d/debhelper.mk
---- glibc-2.19/debian/rules.d/debhelper.mk
-+++ glibc-2.19/debian/rules.d/debhelper.mk
-@@ -180,6 +180,9 @@
- 	# Generate common substvars files.
- 	echo "locale:Depends=\$(shell perl debian/debver2localesdep.pl \$(LOCALES_DEP_VER))" > tmp.substvars
- 	echo "locale-compat:Depends=\$(shell perl debian/debver2localesdep.pl \$(LOCALES_COMPAT_VER))" >> tmp.substvars
-+ifeq (\$(filter stage2,\$(DEB_BUILD_PROFILES)),)
-+	echo 'libgcc:Depends=libgcc1 [!hppa !m68k], libgcc2 [m68k], libgcc4 [hppa]' >> tmp.substvars
-+endif
- 
- 	for pkg in \$(DEB_ARCH_REGULAR_PACKAGES) \$(DEB_INDEP_REGULAR_PACKAGES) \$(DEB_UDEB_PACKAGES); do \\
- 	  cp tmp.substvars debian/\$\$pkg.substvars; \\
-EOF
 	echo "patching glibc to select the correct packages in stage1"
 	patch -p1 <<EOF
 diff -Nru glibc-2.19/debian/rules glibc-2.19/debian/rules
