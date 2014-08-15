@@ -715,19 +715,6 @@ diff -Nru glibc-2.19/debian/rules.d/debhelper.mk glibc-2.19/debian/rules.d/debhe
  \$(patsubst %,debhelper_%,\$(GLIBC_PASSES)) :: debhelper_% : \$(stamp)debhelper_%
  \$(stamp)debhelper_%: \$(stamp)debhelper-common \$(stamp)install_%
 EOF
-	echo "patching eglibc to build without selinux in stage2 #742640"
-	patch -p1 <<EOF
-diff -Nru eglibc-2.19/debian/sysdeps/linux.mk eglibc-2.19/debian/sysdeps/linux.mk
---- eglibc-2.19/debian/sysdeps/linux.mk
-+++ eglibc-2.19/debian/sysdeps/linux.mk
-@@ -11,5 +11,5 @@
- 
--ifneq (\$(filter stage1,\$(DEB_BUILD_PROFILES)),)
-+ifneq (\$(filter stage1 stage2,\$(DEB_BUILD_PROFILES)),)
-   libc_extra_config_options = \$(extra_config_options)
- else
-   libc_extra_config_options = --with-selinux --enable-systemtap \$(extra_config_options)
-EOF
 	echo "patching eglibc to not depend on libgcc in stage2 #755580"
 	patch -p1 <<EOF
 diff -Nru glibc-2.19/debian/control.in/libc glibc-2.19/debian/control.in/libc
