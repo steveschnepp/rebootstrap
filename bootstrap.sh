@@ -1658,3 +1658,11 @@ echo "progress-mark:48:bsdmainutils cross build"
 
 cross_build libelf
 echo "progress-mark:49:libelf cross build"
+
+builddep_libffi() {
+	# dejagnu dependency unsatisfiable
+	$APT_GET install debhelper dejagnu lsb-release texinfo dpkg-dev
+}
+cross_build libffi
+echo "progress-mark:50:libffi cross build"
+# needed by guile-2.0, p11-kit
