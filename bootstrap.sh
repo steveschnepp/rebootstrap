@@ -446,23 +446,6 @@ diff -u gcc-4.8-4.8.2/debian/rules.defs gcc-4.8-4.8.2/debian/rules.defs
    with_multiarch_lib := yes
 EOF
 }
-patch_gcc_4_9() {
-	echo "patching gcc for FTCBFS"
-	patch -p1 <<'EOF'
-diff -u gcc-4.9-4.9.1/debian/patches/cross-install-location.diff gcc-4.9-4.9.1/debian/patches/cross-install-location.diff
---- gcc-4.9-4.9.1/debian/patches/cross-install-location.diff
-+++ gcc-4.9-4.9.1/debian/patches/cross-install-location.diff
-@@ -148,7 +148,7 @@
- -  -DSTANDARD_LIBEXEC_PREFIX=\"$(libexecdir)/gcc/\" \
- +  -DSTANDARD_EXEC_PREFIX=\"$(libdir)/gcc-cross/\" \
- +  -DSTANDARD_LIBEXEC_PREFIX=\"$(libexecdir)/gcc-cross/\" \
--   -DDEFAULT_TARGET_VERSION=\"$(version)\" \
-+   -DDEFAULT_TARGET_VERSION=\"$(BASEVER_c)\" \
-    -DDEFAULT_TARGET_MACHINE=\"$(target_noncanonical)\" \
-    -DSTANDARD_BINDIR_PREFIX=\"$(bindir)/\" \
- @@ -3980,7 +3980,7 @@
-EOF
-}
 # choosing libatomic1 arbitrarily here, cause it never bumped soname
 BUILD_GCC_MULTIARCH_VER=`apt-cache show --no-all-versions libatomic1 | sed 's/^Source: gcc-\([0-9.]*\)$/\1/;t;d'`
 if test "$GCC_VER" != "$BUILD_GCC_MULTIARCH_VER"; then
@@ -611,8 +594,6 @@ else
 	$APT_GET remove gcc-multilib
 	rm -vf *multilib*.deb
 	dpkg -i cpp-$GCC_VER-*.deb gcc-$GCC_VER-*.deb
-	# gcc is broken
-	ln -s 4.9 "/usr/lib/gcc-cross/`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_GNU_TYPE`/4.9.1"
 	compiler="`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_GNU_TYPE`-gcc-$GCC_VER"
 	if ! which "$compiler"; then echo "$compiler missing in stage1 gcc package"; exit 1; fi
 	if ! $compiler -x c -c /dev/null -o test.o; then echo "stage1 gcc fails to execute"; exit 1; fi
