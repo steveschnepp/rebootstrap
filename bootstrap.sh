@@ -1647,3 +1647,7 @@ builddep_libffi() {
 cross_build libffi
 echo "progress-mark:50:libffi cross build"
 # needed by guile-2.0, p11-kit
+
+cross_build libdebian-installer
+echo "progress-mark:51:libdebian-installer cross build"
+# needed by cdebconf
