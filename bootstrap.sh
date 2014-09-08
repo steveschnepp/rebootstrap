@@ -1651,3 +1651,7 @@ echo "progress-mark:50:libffi cross build"
 cross_build libdebian-installer
 echo "progress-mark:51:libdebian-installer cross build"
 # needed by cdebconf
+
+cross_build libtasn1-6
+echo "progress-mark:52:libtasn1-6 cross build"
+# needed by gnutls28, p11-kit
