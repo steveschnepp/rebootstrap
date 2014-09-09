@@ -576,7 +576,7 @@ if test -d "$RESULT/gcc1"; then
 	$APT_GET remove gcc-multilib
 	dpkg -i $RESULT/gcc1/*.deb
 else
-	$APT_GET install debhelper gawk patchutils bison flex python realpath lsb-release quilt libc6-dbg libtool autoconf2.64 zlib1g-dev gperf texinfo locales sharutils procps libantlr-java libffi-dev fastjar libmagic-dev libecj-java zip libasound2-dev libxtst-dev libxt-dev libgtk2.0-dev libart-2.0-dev libcairo2-dev netbase libcloog-isl-dev libmpc-dev libmpfr-dev libgmp-dev dejagnu autogen chrpath binutils-multiarch binutils$HOST_ARCH_SUFFIX linux-libc-dev:$HOST_ARCH
+	$APT_GET install debhelper gawk patchutils bison flex lsb-release quilt libtool autoconf2.64 zlib1g-dev libcloog-isl-dev libmpc-dev libmpfr-dev libgmp-dev autogen systemtap-sdt-dev binutils-multiarch "binutils$HOST_ARCH_SUFFIX" "linux-libc-dev:$HOST_ARCH"
 	cross_build_setup "gcc-$GCC_VER" gcc1
 	dpkg-checkbuilddeps -B || : # tell unmet build depends
 	if test "$ENABLE_MULTILIB" = yes; then
@@ -1049,7 +1049,7 @@ if test -d "$RESULT/gcc2"; then
 	echo "skipping rebuild of gcc stage2"
 	dpkg -i "$RESULT"/gcc2/*.deb
 else
-	$APT_GET install debhelper gawk patchutils bison flex python realpath lsb-release quilt libc6-dbg libtool autoconf2.64 zlib1g-dev gperf texinfo locales sharutils procps libantlr-java libffi-dev fastjar libmagic-dev libecj-java zip libasound2-dev libxtst-dev libxt-dev libgtk2.0-dev libart-2.0-dev libcairo2-dev netbase libcloog-isl-dev libmpc-dev libmpfr-dev libgmp-dev dejagnu autogen chrpath binutils-multiarch binutils$HOST_ARCH_SUFFIX
+	$APT_GET install debhelper gawk patchutils bison flex lsb-release quilt libtool autoconf2.64 zlib1g-dev libcloog-isl-dev libmpc-dev libmpfr-dev libgmp-dev autogen systemtap-sdt-dev "libc-dev:$HOST_ARCH" binutils-multiarch "binutils$HOST_ARCH_SUFFIX"
 	cross_build_setup "gcc-$GCC_VER" gcc2
 	dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends
 	if test "$ENABLE_MULTILIB" = yes; then
@@ -1115,7 +1115,7 @@ if test -d "$RESULT/gcc3"; then
 	echo "skipping rebuild of gcc stage3"
 	dpkg -i "$RESULT"/gcc3/*.deb
 else
-	$APT_GET install debhelper gawk patchutils bison flex python realpath lsb-release quilt libc6-dbg libtool autoconf2.64 zlib1g-dev gperf texinfo locales sharutils procps libantlr-java libffi-dev fastjar libmagic-dev libecj-java zip libasound2-dev libxtst-dev libxt-dev libgtk2.0-dev libart-2.0-dev libcairo2-dev netbase libcloog-isl-dev libmpc-dev libmpfr-dev libgmp-dev dejagnu autogen chrpath binutils-multiarch binutils$HOST_ARCH_SUFFIX
+	$APT_GET install debhelper gawk patchutils bison flex lsb-release quilt libtool autoconf2.64 zlib1g-dev libcloog-isl-dev libmpc-dev libmpfr-dev libgmp-dev dejagnu autogen systemtap-sdt-dev binutils-multiarch "binutils$HOST_ARCH_SUFFIX" "libc-dev:$HOST_ARCH"
 	cross_build_setup "gcc-$GCC_VER" gcc3
 	dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends
 	if test "$ENABLE_MULTILIB" = yes; then
