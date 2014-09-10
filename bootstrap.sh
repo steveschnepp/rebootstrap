@@ -1655,3 +1655,7 @@ echo "progress-mark:51:libdebian-installer cross build"
 cross_build libtasn1-6
 echo "progress-mark:52:libtasn1-6 cross build"
 # needed by gnutls28, p11-kit
+
+cross_build gcc-defaults
+echo "progress-mark:53:gcc-defaults cross build"
+# needed for build-essential
