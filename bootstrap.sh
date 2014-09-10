@@ -1659,3 +1659,11 @@ echo "progress-mark:52:libtasn1-6 cross build"
 cross_build gcc-defaults
 echo "progress-mark:53:gcc-defaults cross build"
 # needed for build-essential
+
+builddep_dpkg() {
+	# libtimedate-perl dependency unsatisfiable
+	$APT_GET install debhelper pkg-config flex gettext po4a "zlib1g-dev:$1" "libbz2-dev:$1" "liblzma-dev:$1" "libselinux1-dev:$1" "libncursesw5-dev:$1" libtimedate-perl libio-string-perl
+}
+cross_build dpkg
+echo "progress-mark:54:dpkg cross build"
+# essential
