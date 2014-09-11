@@ -382,7 +382,7 @@ cross_build() {
 		echo "building $pkg with profiles $profiles"
 		if type "builddep_$mangledpkg" >/dev/null; then
 			echo "installing Build-Depends for $pkg using custom function"
-			"builddep_$mangledpkg" "$profiles"
+			"builddep_$mangledpkg" "$HOST_ARCH" "$profiles"
 		else
 			echo "installing Build-Depends for $pkg using apt-get build-dep"
 			$APT_GET build-dep -a$HOST_ARCH --arch-only -P "$profiles" "$pkg"
