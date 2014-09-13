@@ -1236,8 +1236,9 @@ cross_build zlib
 echo "progress-mark:8:zlib cross build"
 # needed by dpkg, file, gnutls28, libpng, libtool, libxml2, perl, slang2, tcl8.6, util-linux
 
+
 cross_build pcre3
-echo "progress-mark:9:pcre3 cross build"
+echo "progress-mark:10:pcre3 cross build"
 # needed by grep, libselinux, slang2
 
 builddep_attr() {
@@ -1245,7 +1246,7 @@ builddep_attr() {
 	$APT_GET install dpkg-dev debhelper autoconf automake gettext libtool
 }
 cross_build attr
-echo "progress-mark:10:attr cross build"
+echo "progress-mark:11:attr cross build"
 # needed by attr, coreutils, libcap-ng, tar
 
 builddep_acl() {
@@ -1253,11 +1254,8 @@ builddep_acl() {
 	$APT_GET install dpkg-dev debhelper autotools-dev autoconf automake gettext libtool libattr1-dev:$HOST_ARCH
 }
 cross_build acl
-echo "progress-mark:11:acl cross build"
+echo "progress-mark:12:acl cross build"
 # needed by coreutils, tar
-
-cross_build hostname
-echo "progress-mark:12:hostname cross build"
 
 if test "`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_ARCH_OS`" = "linux"; then
 	cross_build libsepol
@@ -1669,4 +1667,8 @@ builddep_dpkg() {
 }
 cross_build dpkg
 echo "progress-mark:54:dpkg cross build"
+# essential
+
+cross_build hostname
+echo "progress-mark:55:hostname cross build"
 # essential
