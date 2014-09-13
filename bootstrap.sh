@@ -614,8 +614,6 @@ ln -s ../include/`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_MULTIARCH` /usr/`dpk
 
 # libc
 patch_glibc() {
-	echo "fixing glibc make ftbfs #747013"
-	sed -i 's/\(3\.\[89\]\*\))/\1 | 4.*)/' configure
 	echo "patching eglibc to include a libc6.so and place crt*.o in correct directory"
 	patch -p1 <<EOF
 diff -Nru eglibc-2.18/debian/rules.d/build.mk eglibc-2.18/debian/rules.d/build.mk
