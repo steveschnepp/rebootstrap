@@ -1236,6 +1236,59 @@ cross_build zlib
 echo "progress-mark:8:zlib cross build"
 # needed by dpkg, file, gnutls28, libpng, libtool, libxml2, perl, slang2, tcl8.6, util-linux
 
+builddep_libtool() {
+	test "$1" = "$HOST_ARCH"
+	# gfortran dependency needs cross-translation
+	$APT_GET install debhelper texi2html texinfo file "gfortran-$GCC_VER$HOST_ARCH_SUFFIX" automake autoconf autotools-dev help2man "zlib1g-dev:$HOST_ARCH"
+	# also need B-D-I
+	$APT_GET install texinfo
+	$APT_GET remove gcj-jdk
+}
+patch_libtool() {
+	echo "patching libtool for multi-arch"
+	patch -p1 <<'EOF'
+diff -Nru libtool-2.4.2/debian/control libtool-2.4.2/debian/control
+--- libtool-2.4.2/debian/control
++++ libtool-2.4.2/debian/control
+@@ -21,11 +21,11 @@
+ Depends: gcc | c-compiler, cpp, libc6-dev | libc-dev,
+   file,
+   autotools-dev,
+-  libtool-bin (>= ${source:Version}),
+   ${misc:Depends}
+ Suggests: libtool-doc, autoconf (>> 2.50), automaken, gfortran | fortran95-compiler, gcj-jdk
+ Conflicts: autoconf (<= 2.12), automake (<= 1.3), libtool1.4
+ Recommends: libltdl-dev
++Multi-Arch: foreign
+ Description: Generic library support script
+  This is GNU libtool, a generic library support script.  Libtool hides
+  the complexity of generating special library types (such as shared
+EOF
+}
+if test -d "$RESULT/libtool"; then
+	echo "skipping rebuild of libtool"
+	# replace libtool with our patched version
+	dpkg -i "$RESULT/libtool/"libtool_*_all.deb
+	dpkg -r libtool-bin
+else
+	builddep_libtool "$HOST_ARCH"
+	cross_build_setup libtool
+	dpkg-checkbuilddeps "-a$HOST_ARCH" || : # tell unmet build depends
+	# also build arch:all here
+	dpkg-buildpackage "-a$HOST_ARCH" -d -b -uc -us
+	cd ..
+	ls -l
+	pickup_packages *.changes
+	test -d "$RESULT" && mkdir "$RESULT/libtool"
+	test -d "$RESULT" && cp ./*.deb "$RESULT/libtool"
+	# replace libtool with our patched version
+	dpkg -i ./libtool_*_all.deb
+	dpkg -r libtool-bin
+	cd ..
+	rm -Rf libtool
+fi
+echo "progress-mark:9:libtool cross build"
+# needed by guile-2.0 and fixed for attr, acl, manyothers.
 
 cross_build pcre3
 echo "progress-mark:10:pcre3 cross build"
