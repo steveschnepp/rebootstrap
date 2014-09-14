@@ -1725,3 +1725,11 @@ echo "progress-mark:54:dpkg cross build"
 cross_build hostname
 echo "progress-mark:55:hostname cross build"
 # essential
+
+builddep_findutils() {
+	# dejagnu dependency unsatisfiable
+	$APT_GET install texinfo debhelper autotools-dev "libselinux1-dev:$1" bison
+}
+cross_build findutils
+echo "progress-mark:56:findutils cross build"
+# essential
