@@ -256,6 +256,11 @@ obtain_source_package() {
 	apt-get source "$1"
 }
 
+if test -z "$HOST_ARCH" || ! dpkg-architecture "-a$HOST_ARCH"; then
+	echo "architecture $HOST_ARCH unknown to dpkg"
+	exit 1
+fi
+export PKG_CONFIG_LIBDIR="/usr/lib/`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_MULTIARCH`/pkgconfig:/usr/lib/pkgconfig:/usr/share/pkgconfig"
 for f in /etc/apt/sources.list /etc/apt/sources.list.d/*.list; do
 	test -f "$f" && sed -i "s/^deb /deb [ arch-=$HOST_ARCH ] /" $f
 done
@@ -270,10 +275,6 @@ if test -z "$GCC_VER"; then
 	GCC_VER=`apt-cache depends gcc | sed 's/^ *Depends: gcc-\([0-9.]*\)$/\1/;t;d'`
 fi
 
-if test -z "$HOST_ARCH" || ! dpkg-architecture -a$HOST_ARCH; then
-	echo "architecture $HOST_ARCH unknown to dpkg"
-	exit 1
-fi
 mkdir -p /tmp/buildd
 mkdir -p "$RESULT"
 
