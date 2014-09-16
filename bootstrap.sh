@@ -256,6 +256,10 @@ obtain_source_package() {
 	apt-get source "$1"
 }
 
+apt-get update
+$APT_GET install pinentry-curses # avoid installing pinentry-gtk (via reprepro)
+$APT_GET install build-essential debhelper reprepro
+
 if test -z "$HOST_ARCH" || ! dpkg-architecture "-a$HOST_ARCH"; then
 	echo "architecture $HOST_ARCH unknown to dpkg"
 	exit 1
@@ -268,8 +272,6 @@ grep -q '^deb-src ' /etc/apt/sources.list || echo "deb-src $MIRROR sid main" >> 
 
 dpkg --add-architecture $HOST_ARCH
 apt-get update
-$APT_GET install pinentry-curses # avoid installing pinentry-gtk (via reprepro)
-$APT_GET install build-essential reprepro
 
 if test -z "$GCC_VER"; then
 	GCC_VER=`apt-cache depends gcc | sed 's/^ *Depends: gcc-\([0-9.]*\)$/\1/;t;d'`
