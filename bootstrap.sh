@@ -1733,3 +1733,11 @@ builddep_findutils() {
 cross_build findutils
 echo "progress-mark:56:findutils cross build"
 # essential
+
+builddep_guile_2_0() {
+	$APT_GET build-dep --arch-only "-a$1" guile-2.0
+	$APT_GET install guile-2.0 # needs Build-Depends: guile-2.0 <profile.cross>
+}
+cross_build guile-2.0
+echo "progress-mark:57:guile-2.0 cross build"
+# needed by gnutls28, make-dfsg, autogen
