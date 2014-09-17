@@ -1744,3 +1744,7 @@ builddep_guile_2_0() {
 cross_build guile-2.0
 echo "progress-mark:57:guile-2.0 cross build"
 # needed by gnutls28, make-dfsg, autogen
+
+cross_build make-dfsg
+echo "progress-mark:58:make-dfsg cross build"
+# needed for build-essential
