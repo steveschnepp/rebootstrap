@@ -370,6 +370,33 @@ cross_build_setup() {
 	fi
 }
 
+check_binNMU() {
+	local src pkg srcversion binversion maxversion
+	srcversion=`dpkg-parsechangelog -SVersion`
+	for pkg in `dh_listpackages`; do
+		binversion=`apt-cache show "$pkg=$srcversion*" 2>/dev/null | sed -n 's/^Version: //p;T;q'`
+		test -z "$binversion" && continue
+		if dpkg --compare-versions "$maxversion" lt "$binversion"; then
+			maxversion=$binversion
+		fi
+	done
+	case "$maxversion" in
+		"$srcversion+b"*)
+			src=`dpkg-parsechangelog -SSource`
+			echo "rebootstrap-warning: binNMU detected for $src $srcversion/$maxversion"
+			cat - debian/changelog >debian/changelog.new <<EOF
+$src ($maxversion) unstable; urgency=medium, binary-only=yes
+
+  * Binary-only non-maintainer upload for $HOST_ARCH; no source changes.
+  * Bump to binNMU version of `dpkg --print-architecture`.
+
+ -- rebootstrap <invalid@invalid>  `date -R`
+EOF
+			mv debian/changelog.new debian/changelog
+		;;
+	esac
+}
+
 cross_build() {
 	local pkg profiles mangledpkg
 	pkg="$1"
@@ -391,6 +418,7 @@ cross_build() {
 			$APT_GET build-dep -a$HOST_ARCH --arch-only -P "$profiles" "$pkg"
 		fi
 		cross_build_setup "$pkg"
+		check_binNMU
 		if type "builddep_$mangledpkg" >/dev/null; then
 			if dpkg-checkbuilddeps -a$HOST_ARCH -P "$profiles"; then
 				echo "rebootstrap-warning: Build-Depends for $pkg satisfied even though a custom builddep_  function is in use"
@@ -1276,6 +1304,7 @@ if test -d "$RESULT/libtool"; then
 else
 	builddep_libtool "$HOST_ARCH"
 	cross_build_setup libtool
+	check_binNMU
 	dpkg-checkbuilddeps "-a$HOST_ARCH" || : # tell unmet build depends
 	# also build arch:all here
 	dpkg-buildpackage "-a$HOST_ARCH" -d -b -uc -us
