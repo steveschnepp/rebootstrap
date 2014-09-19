@@ -1785,3 +1785,7 @@ builddep_libpipeline() {
 cross_build libpipeline
 echo "progress-mark:59:libpipeline cross build"
 # man-db
+
+cross_build man-db
+echo "progress-mark:60:man-db cross build"
+# needed for debhelper
