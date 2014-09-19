@@ -1777,3 +1777,11 @@ echo "progress-mark:57:guile-2.0 cross build"
 cross_build make-dfsg
 echo "progress-mark:58:make-dfsg cross build"
 # needed for build-essential
+
+builddep_libpipeline() {
+	# check lacks nocheck build profile annotation
+	$APT_GET install dpkg-dev debhelper pkg-config check dh-autoreconf automake
+}
+cross_build libpipeline
+echo "progress-mark:59:libpipeline cross build"
+# man-db
