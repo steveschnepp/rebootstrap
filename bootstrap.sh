@@ -1789,3 +1789,7 @@ echo "progress-mark:59:libpipeline cross build"
 cross_build man-db
 echo "progress-mark:60:man-db cross build"
 # needed for debhelper
+
+cross_build libgpg-error
+echo "progress-mark:61:libgpg-error cross build"
+# needed by libgcrypt11, libgcrypt20
