@@ -1780,7 +1780,7 @@ echo "progress-mark:58:make-dfsg cross build"
 
 builddep_libpipeline() {
 	# check lacks nocheck build profile annotation
-	$APT_GET install dpkg-dev debhelper pkg-config check dh-autoreconf automake
+	$APT_GET install dpkg-dev debhelper pkg-config dh-autoreconf automake
 }
 cross_build libpipeline
 echo "progress-mark:59:libpipeline cross build"
