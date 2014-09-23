@@ -1793,3 +1793,7 @@ echo "progress-mark:60:man-db cross build"
 cross_build libgpg-error
 echo "progress-mark:61:libgpg-error cross build"
 # needed by libgcrypt11, libgcrypt20
+
+cross_build libtextwrap
+echo "progress-mark:62:libtextwrap cross build"
+# needed by cdebconf
