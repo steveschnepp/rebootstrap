@@ -1797,3 +1797,7 @@ echo "progress-mark:61:libgpg-error cross build"
 cross_build libtextwrap
 echo "progress-mark:62:libtextwrap cross build"
 # needed by cdebconf
+
+cross_build p11-kit
+echo "progress-mark:63:p11-kit cross build"
+# needed by gnutls28
