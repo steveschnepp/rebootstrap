@@ -2088,3 +2088,16 @@ EOF
 cross_build flex
 echo "progress-mark:65:flex cross build"
 # needed by pam
+
+builddep_glib2_0() {
+	# python-dbus dependency unsatisifable
+	$APT_GET install debhelper cdbs dh-autoreconf pkg-config gettext autotools-dev gnome-pkg-tools dpkg-dev "libelfg0-dev:$1" "libpcre3-dev:$1" desktop-file-utils gtk-doc-tools "libselinux1-dev:$1" "linux-libc-dev:$1" "zlib1g-dev:$1" dbus dbus-x11 shared-mime-info xterm python python-dbus python-gi libxml2-utils "libffi-dev:$1"
+	$APT_GET install libglib2.0-dev # missing B-D on libglib2.0-dev:any <profile.cross>
+}
+export glib_cv_stack_grows=no
+export glib_cv_uscore=no
+cross_build glib2.0
+unset glib_cv_stack_grows
+unset glib_cv_uscore
+echo "progress-mark:66:glib2.0 cross build"
+# needed by pkg-config, dbus, systemd, libxt
