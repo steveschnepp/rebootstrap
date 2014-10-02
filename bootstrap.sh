@@ -2096,8 +2096,12 @@ builddep_glib2_0() {
 }
 export glib_cv_stack_grows=no
 export glib_cv_uscore=no
+export ac_cv_func_posix_getgrgid_r=yes
+export ac_cv_func_posix_getpwuid_r=yes
 cross_build glib2.0
 unset glib_cv_stack_grows
 unset glib_cv_uscore
+unset ac_cv_func_posix_getpwuid_r
+unset ac_cv_func_posix_getgrgid_r
 echo "progress-mark:66:glib2.0 cross build"
 # needed by pkg-config, dbus, systemd, libxt
