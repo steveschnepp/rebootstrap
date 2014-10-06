@@ -779,25 +779,6 @@ Index: glibc-2.19/Makefile
  .PHONY: info dvi pdf html
 EOF
 	quilt push -a
-	if test "$HOST_ARCH" = ia64; then
-		echo "fixing patch application for ia64"
-		patch -p1 << 'EOF'
-diff -Nru glibc-2.19/debian/patches/ia64/local-rtld-compile-options.diff glibc-2.19/debian/patches/ia64/local-rtld-compile-options.diff
---- glibc-2.19/debian/patches/ia64/local-rtld-compile-options.diff
-+++ glibc-2.19/debian/patches/ia64/local-rtld-compile-options.diff
-@@ -6,8 +6,8 @@
-  		    -D'SLIBDIR="$(slibdir)"' -DIS_IN_ldconfig=1
-  CFLAGS-dl-cache.c = $(SYSCONF-FLAGS)
-  CFLAGS-cache.c = $(SYSCONF-FLAGS)
---CFLAGS-rtld.c = $(SYSCONF-FLAGS)
--+CFLAGS-rtld.c = $(SYSCONF-FLAGS) -O1 -fno-tree-copy-prop -fno-tree-dominator-opts -fno-tree-ccp
-+-CFLAGS-rtld.c += $(SYSCONF-FLAGS)
-++CFLAGS-rtld.c += $(SYSCONF-FLAGS) -O1 -fno-tree-copy-prop -fno-tree-dominator-opts -fno-tree-ccp
-  
-  CPPFLAGS-.os += $(if $(filter $(@F),$(patsubst %,%.os,$(all-rtld-routines))),\
-  		     -DNOT_IN_libc=1 -DIS_IN_rtld=1 -DIN_LIB=rtld)
-EOF
-	fi
 	echo "patching glibc to use multi-arch paths for headers in stage1"
 	patch -p1 <<'EOF'
 diff -Nru glibc-2.19/debian/rules.d/build.mk glibc-2.19/debian/rules.d/build.mk
