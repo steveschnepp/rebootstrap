@@ -1563,25 +1563,194 @@ fi
 echo "progress-mark:27:libselinux cross build"
 
 builddep_util_linux() {
-	# po-debconf dependency unsatisfiable
-	$APT_GET install "libncurses5-dev:$HOST_ARCH" "libslang2-dev:$HOST_ARCH" gettext "zlib1g-dev:$HOST_ARCH" dpkg-dev "libselinux1-dev:$HOST_ARCH" debhelper lsb-release pkg-config po-debconf autoconf automake autopoint libtool
+	# libsystemd-dev lacks profile annotation
+	$APT_GET install dh-systemd dpkg-dev gettext "libncurses5-dev:$1" "libselinux1-dev:$1" "libslang2-dev:$1" libtool lsb-release pkg-config po-debconf "zlib1g-dev:$1"
+	$APT_GET install quilt # needed by patch_util_linux
 }
-if test -d "$RESULT/util-linux"; then
-	echo "skipping rebuild of util-linux"
+patch_util_linux() {
+	echo "applying ah's stage1 patch for util-linux #757147"
+	patch -p1 <<'EOF'
+diff -Nru util-linux-2.25.1/debian/control util-linux-2.25.1/debian/control
+--- util-linux-2.25.1/debian/control
++++ util-linux-2.25.1/debian/control
+@@ -9,15 +9,15 @@
+                dpkg-dev (>=1.16.0),
+                gettext,
+                libncurses5-dev,
+-               libpam0g-dev,
++               libpam0g-dev <!profile.stage1>,
+                libselinux1-dev [linux-any],
+                libslang2-dev (>=2.0.4),
+-               libsystemd-dev [linux-any],
++               libsystemd-dev [linux-any] <!profile.stage1>,
+                libtool,
+                lsb-release,
+                pkg-config,
+                po-debconf,
+-               systemd [linux-any],
++               systemd [linux-any] <!profile.stage1>,
+                zlib1g-dev
+ Section: base
+ Priority: required
+@@ -32,6 +32,7 @@
+ 
+ Package: util-linux
+ Architecture: any
++Build-Profiles: !stage1
+ Section: utils
+ Essential: yes
+ Pre-Depends: ${misc:Pre-Depends}, ${shlibs:Depends}
+@@ -48,6 +49,7 @@
+ 
+ Package: util-linux-locales
+ Architecture: all
++Build-Profiles: !stage1
+ Section: localization
+ Priority: optional
+ Depends: util-linux (>= ${source:Upstream-Version}), ${misc:Depends}
+@@ -61,6 +63,7 @@
+ 
+ Package: mount
+ Architecture: linux-any
++Build-Profiles: !stage1
+ Essential: yes
+ Section: admin
+ Pre-Depends: ${misc:Pre-Depends}, ${shlibs:Depends}
+@@ -73,6 +76,7 @@
+ 
+ Package: bsdutils
+ Architecture: any
++Build-Profiles: !stage1
+ Essential: yes
+ Section: utils
+ Pre-Depends: ${misc:Pre-Depends}, ${shlibs:Depends}
+@@ -86,6 +90,7 @@
+ 
+ Package: fdisk-udeb
+ Architecture: hurd-any linux-any
++Build-Profiles: !stage1
+ Priority: extra
+ Section: debian-installer
+ Depends: ${misc:Depends}, ${shlibs:Depends}
+@@ -95,6 +100,7 @@
+ 
+ Package: cfdisk-udeb
+ Architecture: hurd-any linux-any
++Build-Profiles: !stage1
+ Priority: extra
+ Section: debian-installer
+ Depends: ${misc:Depends}, ${shlibs:Depends}
+@@ -224,6 +230,7 @@
+ 
+ Package: uuid-runtime
+ Architecture: any
++Build-Profiles: !stage1
+ Section: utils
+ Priority: optional
+ Pre-Depends: libuuid1 (>= 2.25-5~), ${misc:Pre-Depends}
+@@ -275,6 +282,7 @@
+ 
+ Package: util-linux-udeb
+ Architecture: any
++Build-Profiles: !stage1
+ Priority: optional
+ Section: debian-installer
+ Depends: ${misc:Depends}, ${shlibs:Depends}
+diff -Nru util-linux-2.25.1/debian/rules util-linux-2.25.1/debian/rules
+--- util-linux-2.25.1/debian/rules
++++ util-linux-2.25.1/debian/rules
+@@ -12,7 +12,11 @@
+ CONFOPTS += --enable-raw
+ CONFOPTS += --with-selinux
+ CONFOPTS += --enable-partx
+-CONFOPTS += --with-systemd
++ifneq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
++	CONFOPTS += --without-systemd
++else
++	CONFOPTS += --with-systemd
++endif
+ CONFOPTS += --enable-tunelp
+ endif
+ 
+@@ -117,7 +121,9 @@
+ 	dh_installman --language=C
+ 
+ override_dh_gencontrol:
++ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
+ 	dh_gencontrol --package=bsdutils -- -v1:$(DEB_VERSION_UPSTREAM_REVISION)
++endif
+ 	dh_gencontrol --remaining-packages
+ 
+ override_dh_installinit:
+EOF
+	echo "patching util-linux for broken libtool check #764387"
+	patch -p1 <<'EOF'
+diff -Nru util-linux-2.25.1/debian/patches/check-for-libtoolize-rather-than-libtool.patch util-linux-2.25.1/debian/patches/check-for-libtoolize-rather-than-libtool.patch
+--- util-linux-2.25.1/debian/patches/check-for-libtoolize-rather-than-libtool.patch
++++ util-linux-2.25.1/debian/patches/check-for-libtoolize-rather-than-libtool.patch
+@@ -0,0 +1,20 @@
++From: Helmut Grohne <helmut@subdivi.de>
++Subject: check for libtoolize rather than libtool
++Last-Update: 2014-10-07
++
++libtool lives in libtool-bin, but util-linux does not Build-Depend on
++libtool-bin (because it doesn't need it).
++
++Index: util-linux-2.25.1/autogen.sh
++===================================================================
++--- util-linux-2.25.1.orig/autogen.sh
+++++ util-linux-2.25.1/autogen.sh
++@@ -66,7 +66,7 @@
++ 	echo
++ 	DIE=1
++ }
++-(libtool --version) < /dev/null > /dev/null 2>&1 || {
+++(libtoolize --version) < /dev/null > /dev/null 2>&1 || {
++ 	echo
++ 	echo "You must have libtool-2 installed to generate util-linux build system."
++ 	echo
+diff -Nru util-linux-2.25.1/debian/patches/series util-linux-2.25.1/debian/patches/series
+--- util-linux-2.25.1/debian/patches/series
++++ util-linux-2.25.1/debian/patches/series
+@@ -11,3 +11,4 @@
+ libmount-only-include-context-on-linux.patch
+ build-sys-build-libmount-everywhere.patch
+ build-sys-use-lutil-for-BSD-only.patch
++check-for-libtoolize-rather-than-libtool.patch
+EOF
+	quilt push -a
+	echo "patching util-linux to not disable the c standard selection #764392"
+	patch -p1 <<'EOF'
+diff -Nru util-linux-2.25.1/debian/rules util-linux-2.25.1/debian/rules
+--- util-linux-2.25.1/debian/rules
++++ util-linux-2.25.1/debian/rules
+@@ -41,7 +41,7 @@
+ ifeq ($(DEB_BUILD_GNU_TYPE),$(DEB_HOST_GNU_TYPE))
+ 	CROSS :=
+ else
+-	CROSS := CC=$(DEB_HOST_GNU_TYPE)-gcc
++	CROSS := CC="$(DEB_HOST_GNU_TYPE)-gcc -std=gnu99"
+ endif
+ 
+ %:
+EOF
+}
+if test -d "$RESULT/util-linux_1"; then
+	echo "skipping rebuild of util-linux stage1"
 else
-	builddep_util_linux
-	cross_build_setup util-linux
-	dpkg-checkbuilddeps "-a$HOST_ARCH" || : # tell unmet build depends
-	scanf_cv_type_modifier=ms dpkg-buildpackage "-a$HOST_ARCH" -B -d -uc -us
+	builddep_util_linux "$HOST_ARCH"
+	cross_build_setup util-linux util-linux_1
+	scanf_cv_type_modifier=ms dpkg-buildpackage -B -uc -us "-a$HOST_ARCH" -Pstage1
 	cd ..
 	ls -l
-	pickup_packages ./*.changes
-	test -d "$RESULT" && mkdir "$RESULT/util-linux"
-	test -d "$RESULT" && cp ./*.deb "$RESULT/util-linux/"
+	pickup_packages *.changes
+	test -d "$RESULT" && mkdir "$RESULT/util-linux_1"
+	test -d "$RESULT" && cp ./*.deb "$RESULT/util-linux_1"
 	cd ..
-	rm -Rf util-linux
+	rm -Rf util-linux_1
 fi
-echo "progress-mark:28:util-linux cross build"
+echo "progress-mark:28:util-linux stage1 cross build"
+# essential, needed by e2fsprogs
 
 cross_build base-files
 echo "progress-mark:29:base-files cross build"
