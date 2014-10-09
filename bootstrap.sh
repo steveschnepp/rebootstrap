@@ -260,6 +260,9 @@ apt-get update
 $APT_GET install pinentry-curses # avoid installing pinentry-gtk (via reprepro)
 $APT_GET install build-essential debhelper reprepro
 
+# work around dpkg bug #764216
+sed -i 's/^\(use Dpkg::BuildProfiles qw(get_build_profiles\));$/\1 parse_build_profiles evaluate_restriction_formula);/' /usr/bin/dpkg-genchanges
+
 if test -z "$HOST_ARCH" || ! dpkg-architecture "-a$HOST_ARCH"; then
 	echo "architecture $HOST_ARCH unknown to dpkg"
 	exit 1
@@ -586,13 +589,13 @@ else
 	cross_build_setup "gcc-$GCC_VER" gcc1
 	dpkg-checkbuilddeps -B || : # tell unmet build depends
 	if test "$ENABLE_MULTILIB" = yes; then
-		DEB_TARGET_ARCH=$HOST_ARCH DEB_STAGE=stage1 dpkg-buildpackage -d -T control
+		DEB_STAGE=stage1 dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -T control
 		dpkg-checkbuilddeps -B || : # tell unmet build depends again after rewriting control
-		DEB_TARGET_ARCH=$HOST_ARCH DEB_STAGE=stage1 dpkg-buildpackage -d -B -uc -us
+		DEB_STAGE=stage1 dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -B -uc -us
 	else
-		DEB_TARGET_ARCH=$HOST_ARCH DEB_CROSS_NO_BIARCH=yes DEB_STAGE=stage1 dpkg-buildpackage -d -T control
+		DEB_CROSS_NO_BIARCH=yes DEB_STAGE=stage1 dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -T control
 		dpkg-checkbuilddeps -B || : # tell unmet build depends again after rewriting control
-		DEB_TARGET_ARCH=$HOST_ARCH DEB_CROSS_NO_BIARCH=yes DEB_STAGE=stage1 dpkg-buildpackage -d -B -uc -us
+		DEB_CROSS_NO_BIARCH=yes DEB_STAGE=stage1 dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -B -uc -us
 	fi
 	cd ..
 	ls -l
@@ -1038,13 +1041,13 @@ else
 	cross_build_setup "gcc-$GCC_VER" gcc2
 	dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends
 	if test "$ENABLE_MULTILIB" = yes; then
-		DEB_TARGET_ARCH=$HOST_ARCH DEB_STAGE=stage2 dpkg-buildpackage -d -T control
-		dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends again after rewriting control
-		gcc_cv_libc_provides_ssp=yes DEB_TARGET_ARCH=$HOST_ARCH DEB_STAGE=stage2 dpkg-buildpackage -d -b -uc -us
+		DEB_STAGE=stage2 dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -T control
+		dpkg-checkbuilddeps || : # tell unmet build depends again after rewriting control
+		gcc_cv_libc_provides_ssp=yes DEB_STAGE=stage2 dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -b -uc -us
 	else
-		DEB_TARGET_ARCH=$HOST_ARCH DEB_CROSS_NO_BIARCH=yes DEB_STAGE=stage2 dpkg-buildpackage -d -T control
-		dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends again after rewriting control
-		gcc_cv_libc_provides_ssp=yes DEB_TARGET_ARCH=$HOST_ARCH DEB_CROSS_NO_BIARCH=yes DEB_STAGE=stage2 dpkg-buildpackage -d -b -uc -us
+		DEB_CROSS_NO_BIARCH=yes DEB_STAGE=stage2 dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -T control
+		dpkg-checkbuilddeps || : # tell unmet build depends again after rewriting control
+		gcc_cv_libc_provides_ssp=yes DEB_CROSS_NO_BIARCH=yes DEB_STAGE=stage2 dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -b -uc -us
 	fi
 	cd ..
 	ls -l
@@ -1104,13 +1107,13 @@ else
 	cross_build_setup "gcc-$GCC_VER" gcc3
 	dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends
 	if test "$ENABLE_MULTILIB" = yes; then
-		DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=d,go,java,objc,obj-c++" with_deps_on_target_arch_pkgs=yes DEB_TARGET_ARCH=$HOST_ARCH dpkg-buildpackage -d -T control
-		dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends again after rewriting control
-		DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=d,go,java,objc,obj-c++" with_deps_on_target_arch_pkgs=yes DEB_TARGET_ARCH=$HOST_ARCH dpkg-buildpackage -d -b -uc -us
+		DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=d,go,java,objc,obj-c++" with_deps_on_target_arch_pkgs=yes dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -T control
+		dpkg-checkbuilddeps || : # tell unmet build depends again after rewriting control
+		DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=d,go,java,objc,obj-c++" with_deps_on_target_arch_pkgs=yes dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -b -uc -us
 	else
-		DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=d,go,java,objc,obj-c++" with_deps_on_target_arch_pkgs=yes DEB_TARGET_ARCH=$HOST_ARCH DEB_CROSS_NO_BIARCH=yes dpkg-buildpackage -d -T control
-		dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends again after rewriting control
-		DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=d,go,java,objc,obj-c++" with_deps_on_target_arch_pkgs=yes DEB_TARGET_ARCH=$HOST_ARCH DEB_CROSS_NO_BIARCH=yes dpkg-buildpackage -d -b -uc -us
+		DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=d,go,java,objc,obj-c++" with_deps_on_target_arch_pkgs=yes DEB_CROSS_NO_BIARCH=yes dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -T control
+		dpkg-checkbuilddeps || : # tell unmet build depends again after rewriting control
+		DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=d,go,java,objc,obj-c++" with_deps_on_target_arch_pkgs=yes DEB_CROSS_NO_BIARCH=yes dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -b -uc -us
 	fi
 	cd ..
 	ls -l
@@ -1578,17 +1581,17 @@ diff -Nru util-linux-2.25.1/debian/control util-linux-2.25.1/debian/control
                 gettext,
                 libncurses5-dev,
 -               libpam0g-dev,
-+               libpam0g-dev <!profile.stage1>,
++               libpam0g-dev <!stage1>,
                 libselinux1-dev [linux-any],
                 libslang2-dev (>=2.0.4),
 -               libsystemd-dev [linux-any],
-+               libsystemd-dev [linux-any] <!profile.stage1>,
++               libsystemd-dev [linux-any] <!stage1>,
                 libtool,
                 lsb-release,
                 pkg-config,
                 po-debconf,
 -               systemd [linux-any],
-+               systemd [linux-any] <!profile.stage1>,
++               systemd [linux-any] <!stage1>,
                 zlib1g-dev
  Section: base
  Priority: required
