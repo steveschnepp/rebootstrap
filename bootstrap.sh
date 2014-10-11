@@ -2258,3 +2258,7 @@ unset ac_cv_func_posix_getpwuid_r
 unset ac_cv_func_posix_getgrgid_r
 echo "progress-mark:66:glib2.0 cross build"
 # needed by pkg-config, dbus, systemd, libxt
+
+cross_build libxau
+echo "progress-mark:67:libxau cross build"
+# needed by libxcb
