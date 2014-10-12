@@ -1716,27 +1716,12 @@ diff -Nru util-linux-2.25.1/debian/patches/series util-linux-2.25.1/debian/patch
 --- util-linux-2.25.1/debian/patches/series
 +++ util-linux-2.25.1/debian/patches/series
 @@ -11,3 +11,4 @@
- libmount-only-include-context-on-linux.patch
- build-sys-build-libmount-everywhere.patch
  build-sys-use-lutil-for-BSD-only.patch
+ libmount-fix-mnt_is_readonly-ifdef.patch
+ flock-zero-timeout-is-valid.patch
 +check-for-libtoolize-rather-than-libtool.patch
 EOF
 	quilt push -a
-	echo "patching util-linux to not disable the c standard selection #764392"
-	patch -p1 <<'EOF'
-diff -Nru util-linux-2.25.1/debian/rules util-linux-2.25.1/debian/rules
---- util-linux-2.25.1/debian/rules
-+++ util-linux-2.25.1/debian/rules
-@@ -41,7 +41,7 @@
- ifeq ($(DEB_BUILD_GNU_TYPE),$(DEB_HOST_GNU_TYPE))
- 	CROSS :=
- else
--	CROSS := CC=$(DEB_HOST_GNU_TYPE)-gcc
-+	CROSS := CC="$(DEB_HOST_GNU_TYPE)-gcc -std=gnu99"
- endif
- 
- %:
-EOF
 }
 if test -d "$RESULT/util-linux_1"; then
 	echo "skipping rebuild of util-linux stage1"
