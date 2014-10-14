@@ -2267,3 +2267,7 @@ EOF
 cross_build libxdmcp
 echo "progress-mark:68:libxdmcp cross build"
 # needed by libxcb
+
+cross_build libpthread-stubs
+echo "progress-mark:69:libpthread-stubs cross build"
+# needed by libxcb
