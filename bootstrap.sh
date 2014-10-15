@@ -1522,7 +1522,6 @@ echo "progress-mark:27:libselinux cross build"
 builddep_util_linux() {
 	# libsystemd-dev lacks profile annotation
 	$APT_GET install dh-systemd dpkg-dev gettext "libncurses5-dev:$1" "libselinux1-dev:$1" "libslang2-dev:$1" libtool lsb-release pkg-config po-debconf "zlib1g-dev:$1"
-	$APT_GET install quilt # needed by patch_util_linux
 }
 patch_util_linux() {
 	echo "applying ah's stage1 patch for util-linux #757147"
@@ -1640,42 +1639,6 @@ diff -Nru util-linux-2.25.1/debian/rules util-linux-2.25.1/debian/rules
  
  override_dh_installinit:
 EOF
-	echo "patching util-linux for broken libtool check #764387"
-	patch -p1 <<'EOF'
-diff -Nru util-linux-2.25.1/debian/patches/check-for-libtoolize-rather-than-libtool.patch util-linux-2.25.1/debian/patches/check-for-libtoolize-rather-than-libtool.patch
---- util-linux-2.25.1/debian/patches/check-for-libtoolize-rather-than-libtool.patch
-+++ util-linux-2.25.1/debian/patches/check-for-libtoolize-rather-than-libtool.patch
-@@ -0,0 +1,20 @@
-+From: Helmut Grohne <helmut@subdivi.de>
-+Subject: check for libtoolize rather than libtool
-+Last-Update: 2014-10-07
-+
-+libtool lives in libtool-bin, but util-linux does not Build-Depend on
-+libtool-bin (because it doesn't need it).
-+
-+Index: util-linux-2.25.1/autogen.sh
-+===================================================================
-+--- util-linux-2.25.1.orig/autogen.sh
-++++ util-linux-2.25.1/autogen.sh
-+@@ -66,7 +66,7 @@
-+ 	echo
-+ 	DIE=1
-+ }
-+-(libtool --version) < /dev/null > /dev/null 2>&1 || {
-++(libtoolize --version) < /dev/null > /dev/null 2>&1 || {
-+ 	echo
-+ 	echo "You must have libtool-2 installed to generate util-linux build system."
-+ 	echo
-diff -Nru util-linux-2.25.1/debian/patches/series util-linux-2.25.1/debian/patches/series
---- util-linux-2.25.1/debian/patches/series
-+++ util-linux-2.25.1/debian/patches/series
-@@ -11,3 +11,4 @@
- build-sys-use-lutil-for-BSD-only.patch
- libmount-fix-mnt_is_readonly-ifdef.patch
- flock-zero-timeout-is-valid.patch
-+check-for-libtoolize-rather-than-libtool.patch
-EOF
-	quilt push -a
 }
 if test -d "$RESULT/util-linux_1"; then
 	echo "skipping rebuild of util-linux stage1"
