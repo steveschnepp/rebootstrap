@@ -2188,3 +2188,11 @@ echo "progress-mark:68:libxdmcp cross build"
 cross_build libpthread-stubs
 echo "progress-mark:69:libpthread-stubs cross build"
 # needed by libxcb
+
+builddep_libxcb() {
+	# check dependency lacks nocheck profile annotation
+	$APT_GET install "libxau-dev:$1" "libxdmcp-dev:$1" xcb-proto "libpthread-stubs0-dev:$1" debhelper pkg-config xsltproc  python-xcbgen libtool automake python dctrl-tools
+}
+cross_build libxcb
+echo "progress-mark:70:libxcb cross build"
+# needed by libx11
