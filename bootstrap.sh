@@ -2196,3 +2196,9 @@ builddep_libxcb() {
 cross_build libxcb
 echo "progress-mark:70:libxcb cross build"
 # needed by libx11
+
+export xorg_cv_malloc0_returns_null=no
+cross_build libx11
+unset xorg_cv_malloc0_returns_null
+echo "progress-mark:71:libx11 cross build"
+# needed by groff, dbus
