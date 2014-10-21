@@ -2202,3 +2202,7 @@ cross_build libx11
 unset xorg_cv_malloc0_returns_null
 echo "progress-mark:71:libx11 cross build"
 # needed by groff, dbus
+
+cross_build libice
+echo "progress-mark:72:libice cross build"
+# needed by libsm
