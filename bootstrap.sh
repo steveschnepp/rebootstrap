@@ -902,7 +902,7 @@ diff -Nru glibc-2.19/debian/control.in/x32 glibc-2.19/debian/control.in/x32
  Priority: optional
 -Depends: libc6-x32 (= ${binary:Version}), libc6-dev-i386 (= ${binary:Version}) [amd64], libc6-dev-amd64 (= ${binary:Version}) [i386], libc6-dev (= ${binary:Version}), ${misc:Depends}
 +Depends: @nobootstrap@ libc6-x32 (= ${binary:Version}), libc6-dev-i386 (= ${binary:Version}) [amd64], libc6-dev-amd64 (= ${binary:Version}) [i386], libc6-dev (= ${binary:Version}), ${misc:Depends}
- Build-Profiles: !nobiarch
+ Build-Profiles: <!nobiarch>
  Description: GNU C Library: X32 ABI Development Libraries for AMD64
   Contains the symlinks and object files needed to compile and link programs
   which use the standard C library. This is the X32 ABI version of the
