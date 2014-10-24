@@ -1158,10 +1158,6 @@ cross_build pcre3
 echo "progress-mark:10:pcre3 cross build"
 # needed by grep, libselinux, slang2
 
-builddep_attr() {
-	# libtool dependency unsatisfiable
-	$APT_GET install dpkg-dev debhelper autoconf automake gettext libtool
-}
 cross_build attr
 echo "progress-mark:11:attr cross build"
 # needed by attr, coreutils, libcap-ng, tar
