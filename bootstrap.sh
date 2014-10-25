@@ -1097,7 +1097,7 @@ diff -Nru zlib-1.2.8.dfsg/debian/control zlib-1.2.8.dfsg/debian/control
  Standards-Version: 3.9.4
  Homepage: http://zlib.net/
 -Build-Depends: debhelper (>= 8.1.3~), binutils (>= 2.18.1~cvs20080103-2) [mips mipsel], gcc-multilib [amd64 i386 kfreebsd-amd64 mips mipsel powerpc ppc64 s390 sparc s390x], dpkg-dev (>= 1.16.1)
-+Build-Depends: debhelper (>= 8.1.3~), binutils (>= 2.18.1~cvs20080103-2) [mips mipsel], gcc-multilib [amd64 i386 kfreebsd-amd64 mips mipsel powerpc ppc64 s390 sparc s390x] <!profile.nobiarch>, dpkg-dev (>= 1.16.1)
++Build-Depends: debhelper (>= 8.1.3~), binutils (>= 2.18.1~cvs20080103-2) [mips mipsel], gcc-multilib [amd64 i386 kfreebsd-amd64 mips mipsel powerpc ppc64 s390 sparc s390x] <!nobiarch>, dpkg-dev (>= 1.16.1)
  
  Package: zlib1g
  Architecture: any
@@ -1105,7 +1105,7 @@ diff -Nru zlib-1.2.8.dfsg/debian/control zlib-1.2.8.dfsg/debian/control
  Architecture: sparc s390 i386 powerpc mips mipsel
  Depends: \${shlibs:Depends}, \${misc:Depends}
  Replaces: amd64-libs (<< 1.4)
-+Build-Profiles: !nobiarch
++Build-Profiles: <!nobiarch>
  Description: compression library - 64 bit runtime
   zlib is a library implementing the deflate compression method found
   in gzip and PKZIP.  This package includes a 64 bit version of the
@@ -1113,7 +1113,7 @@ diff -Nru zlib-1.2.8.dfsg/debian/control zlib-1.2.8.dfsg/debian/control
  Depends: lib64z1 (= \${binary:Version}), zlib1g-dev (= \${binary:Version}), lib64c-dev, \${misc:Depends}
  Replaces: amd64-libs-dev (<< 1.4)
  Provides: lib64z-dev
-+Build-Profiles: !nobiarch
++Build-Profiles: <!nobiarch>
  Description: compression library - 64 bit development
   zlib is a library implementing the deflate compression method found
   in gzip and PKZIP.  This package includes the development support
@@ -1121,7 +1121,7 @@ diff -Nru zlib-1.2.8.dfsg/debian/control zlib-1.2.8.dfsg/debian/control
  Conflicts: libc6-i386 (<= 2.9-18)
  Depends: \${shlibs:Depends}, \${misc:Depends}
  Replaces: ia32-libs (<< 1.5)
-+Build-Profiles: !nobiarch
++Build-Profiles: <!nobiarch>
  Description: compression library - 32 bit runtime
   zlib is a library implementing the deflate compression method found
   in gzip and PKZIP.  This package includes a 32 bit version of the
@@ -1129,7 +1129,7 @@ diff -Nru zlib-1.2.8.dfsg/debian/control zlib-1.2.8.dfsg/debian/control
  Depends: lib32z1 (= \${binary:Version}), zlib1g-dev (= \${binary:Version}), lib32c-dev, \${misc:Depends}
  Provides: lib32z-dev
  Replaces: ia32-libs-dev (<< 1.5)
-+Build-Profiles: !nobiarch
++Build-Profiles: <!nobiarch>
  Description: compression library - 32 bit development
   zlib is a library implementing the deflate compression method found
   in gzip and PKZIP.  This package includes the development support
@@ -1137,7 +1137,7 @@ diff -Nru zlib-1.2.8.dfsg/debian/control zlib-1.2.8.dfsg/debian/control
  Package: libn32z1
  Architecture: mips mipsel
  Depends: \${shlibs:Depends}, \${misc:Depends}
-+Build-Profiles: !nobiarch
++Build-Profiles: <!nobiarch>
  Description: compression library - n32 runtime
   zlib is a library implementing the deflate compression method found
   in gzip and PKZIP.  This package includes a n32 version of the shared
@@ -1145,7 +1145,7 @@ diff -Nru zlib-1.2.8.dfsg/debian/control zlib-1.2.8.dfsg/debian/control
  Architecture: mips mipsel
  Depends: libn32z1 (= \${binary:Version}), zlib1g-dev (= \${binary:Version}), libn32c-dev, \${misc:Depends}
  Provides: libn32z-dev
-+Build-Profiles: !nobiarch
++Build-Profiles: <!nobiarch>
  Description: compression library - n32 development
   zlib is a library implementing the deflate compression method found
   in gzip and PKZIP.  This package includes the development support
@@ -1237,7 +1237,7 @@ diff -Nru ncurses-5.9+20140118/debian/control ncurses-5.9+20140118/debian/contro
  Build-Depends: debhelper (>= 8.1.3),
                 dpkg-dev (>= 1.15.7),
 -               g++-multilib [amd64 i386 powerpc ppc64 s390 sparc],
-+               g++-multilib [amd64 i386 powerpc ppc64 s390 sparc] <!profile.nobiarch>,
++               g++-multilib [amd64 i386 powerpc ppc64 s390 sparc] <!nobiarch>,
                 libgpm-dev [linux-any],
                 pkg-config,
  Standards-Version: 3.9.5
@@ -1245,7 +1245,7 @@ diff -Nru ncurses-5.9+20140118/debian/control ncurses-5.9+20140118/debian/contro
  Depends: lib64tinfo5 (= \${binary:Version}),
           \${shlibs:Depends}, \${misc:Depends}
  Replaces: amd64-libs (<= 1.2)
-+Build-Profiles: !nobiarch
++Build-Profiles: <!nobiarch>
  Description: shared libraries for terminal handling (64-bit)
   The ncurses library routines are a terminal-independent method of
   updating character screens with reasonable optimization.
@@ -1253,7 +1253,7 @@ diff -Nru ncurses-5.9+20140118/debian/control ncurses-5.9+20140118/debian/contro
           libncurses5-dev (= \${binary:Version}), lib64c-dev, \${misc:Depends}
  Suggests: ncurses-doc
  Replaces: amd64-libs-dev (<= 1.2), lib64tinfo5-dev
-+Build-Profiles: !nobiarch
++Build-Profiles: <!nobiarch>
  Description: developer's libraries for ncurses (64-bit)
   The ncurses library routines are a terminal-independent method of
   updating character screens with reasonable optimization.
@@ -1261,7 +1261,7 @@ diff -Nru ncurses-5.9+20140118/debian/control ncurses-5.9+20140118/debian/contro
  Depends: lib32tinfo5 (= \${binary:Version}),
           \${shlibs:Depends}, \${misc:Depends}
  Replaces: ia32-libs (<< 1.10)
-+Build-Profiles: !nobiarch
++Build-Profiles: <!nobiarch>
  Description: shared libraries for terminal handling (32-bit)
   The ncurses library routines are a terminal-independent method of
   updating character screens with reasonable optimization.
@@ -1269,7 +1269,7 @@ diff -Nru ncurses-5.9+20140118/debian/control ncurses-5.9+20140118/debian/contro
           lib32tinfo-dev (= \${binary:Version}),
           libncurses5-dev (= \${binary:Version}), lib32c-dev, \${misc:Depends}
  Suggests: ncurses-doc
-+Build-Profiles: !nobiarch
++Build-Profiles: <!nobiarch>
  Description: developer's libraries for ncurses (32-bit)
   The ncurses library routines are a terminal-independent method of
   updating character screens with reasonable optimization.
@@ -1277,7 +1277,7 @@ diff -Nru ncurses-5.9+20140118/debian/control ncurses-5.9+20140118/debian/contro
  Priority: optional
  Depends: lib32tinfo5 (= \${binary:Version}),
           \${shlibs:Depends}, \${misc:Depends}
-+Build-Profiles: !nobiarch
++Build-Profiles: <!nobiarch>
  Description: shared libraries for terminal handling (wide character support) (32-bit)
   The ncurses library routines are a terminal-independent method of
   updating character screens with reasonable optimization.
@@ -1285,7 +1285,7 @@ diff -Nru ncurses-5.9+20140118/debian/control ncurses-5.9+20140118/debian/contro
           lib32tinfo-dev (= \${binary:Version}),
           libncursesw5-dev (= \${binary:Version}), lib32c-dev, \${misc:Depends}
  Suggests: ncurses-doc
-+Build-Profiles: !nobiarch
++Build-Profiles: <!nobiarch>
  Description: developer's libraries for ncursesw (32-bit)
   The ncurses library routines are a terminal-independent method of
   updating character screens with reasonable optimization.
@@ -1293,7 +1293,7 @@ diff -Nru ncurses-5.9+20140118/debian/control ncurses-5.9+20140118/debian/contro
  Depends: \${shlibs:Depends}, \${misc:Depends}
  Replaces: lib64ncurses5 (<< 5.9-3)
  Breaks: lib64ncurses5 (<< 5.9-3)
-+Build-Profiles: !nobiarch
++Build-Profiles: <!nobiarch>
  Description: shared low-level terminfo library for terminal handling (64-bit)
   The ncurses library routines are a terminal-independent method of
   updating character screens with reasonable optimization.
@@ -1301,7 +1301,7 @@ diff -Nru ncurses-5.9+20140118/debian/control ncurses-5.9+20140118/debian/contro
  Depends: \${shlibs:Depends}, \${misc:Depends}
  Replaces: lib32ncurses5 (<< 5.9-3)
  Breaks: lib32ncurses5 (<< 5.9-3)
-+Build-Profiles: !nobiarch
++Build-Profiles: <!nobiarch>
  Description: shared low-level terminfo library for terminal handling (32-bit)
   The ncurses library routines are a terminal-independent method of
   updating character screens with reasonable optimization.
@@ -1309,7 +1309,7 @@ diff -Nru ncurses-5.9+20140118/debian/control ncurses-5.9+20140118/debian/contro
           lib32c-dev, \${misc:Depends}
  Replaces: lib32ncurses5-dev (<< 5.9-3), lib32tinfo5-dev
  Breaks: lib32ncurses5-dev (<< 5.9-3)
-+Build-Profiles: !nobiarch
++Build-Profiles: <!nobiarch>
  Description: developer's library for the low-level terminfo library (32-bit)
   The ncurses library routines are a terminal-independent method of
   updating character screens with reasonable optimization.
@@ -1348,13 +1348,13 @@ diff -Nru readline6-6.3/debian/control readline6-6.3/debian/control
  Standards-Version: 3.9.5
  Build-Depends: debhelper (>= 8.1.3),
 -  libtinfo-dev, lib32tinfo-dev [amd64 ppc64],
-+  libtinfo-dev, lib32tinfo-dev [amd64 ppc64] <!profile.nobiarch>,
++  libtinfo-dev, lib32tinfo-dev [amd64 ppc64] <!nobiarch>,
    libncursesw5-dev (>= 5.6),
 -  lib32ncursesw5-dev [amd64 ppc64], lib64ncurses5-dev [i386 powerpc sparc s390],
-+  lib32ncursesw5-dev [amd64 ppc64] <!profile.nobiarch>, lib64ncurses5-dev [i386 powerpc sparc s390] <!profile.nobiarch>,
++  lib32ncursesw5-dev [amd64 ppc64] <!nobiarch>, lib64ncurses5-dev [i386 powerpc sparc s390] <!nobiarch>,
    mawk | awk, texinfo, autotools-dev,
 -  gcc-multilib [amd64 i386 kfreebsd-amd64 powerpc ppc64 s390 sparc]
-+  gcc-multilib [amd64 i386 kfreebsd-amd64 powerpc ppc64 s390 sparc] <!profile.nobiarch>
++  gcc-multilib [amd64 i386 kfreebsd-amd64 powerpc ppc64 s390 sparc] <!nobiarch>
  
  Package: libreadline6
  Architecture: any
@@ -1362,7 +1362,7 @@ diff -Nru readline6-6.3/debian/control readline6-6.3/debian/control
  Depends: readline-common, \${shlibs:Depends}, \${misc:Depends}
  Section: libs
  Priority: optional
-+Build-Profiles: !nobiarch
++Build-Profiles: <!nobiarch>
  Description: GNU readline and history libraries, run-time libraries (64-bit)
   The GNU readline library aids in the consistency of user interface
   across discrete programs that need to provide a command line
@@ -1370,7 +1370,7 @@ diff -Nru readline6-6.3/debian/control readline6-6.3/debian/control
  Conflicts: lib64readline-dev, lib64readline-gplv2-dev
  Section: libdevel
  Priority: optional
-+Build-Profiles: !nobiarch
++Build-Profiles: <!nobiarch>
  Description: GNU readline and history libraries, development files (64-bit)
   The GNU readline library aids in the consistency of user interface
   across discrete programs that need to provide a command line
@@ -1378,7 +1378,7 @@ diff -Nru readline6-6.3/debian/control readline6-6.3/debian/control
  Depends: readline-common, \${shlibs:Depends}, \${misc:Depends}
  Section: libs
  Priority: optional
-+Build-Profiles: !nobiarch
++Build-Profiles: <!nobiarch>
  Description: GNU readline and history libraries, run-time libraries (32-bit)
   The GNU readline library aids in the consistency of user interface
   across discrete programs that need to provide a command line
@@ -1386,7 +1386,7 @@ diff -Nru readline6-6.3/debian/control readline6-6.3/debian/control
  Conflicts: lib32readline-dev, lib32readline-gplv2-dev
  Section: libdevel
  Priority: optional
-+Build-Profiles: !nobiarch
++Build-Profiles: <!nobiarch>
  Description: GNU readline and history libraries, development files (32-bit)
   The GNU readline library aids in the consistency of user interface
   across discrete programs that need to provide a command line
@@ -1496,7 +1496,7 @@ diff -Nru util-linux-2.25.1/debian/control util-linux-2.25.1/debian/control
  
  Package: util-linux
  Architecture: any
-+Build-Profiles: !stage1
++Build-Profiles: <!stage1>
  Section: utils
  Essential: yes
  Pre-Depends: ${misc:Pre-Depends}, ${shlibs:Depends}
@@ -1504,7 +1504,7 @@ diff -Nru util-linux-2.25.1/debian/control util-linux-2.25.1/debian/control
  
  Package: util-linux-locales
  Architecture: all
-+Build-Profiles: !stage1
++Build-Profiles: <!stage1>
  Section: localization
  Priority: optional
  Depends: util-linux (>= ${source:Upstream-Version}), ${misc:Depends}
@@ -1512,7 +1512,7 @@ diff -Nru util-linux-2.25.1/debian/control util-linux-2.25.1/debian/control
  
  Package: mount
  Architecture: linux-any
-+Build-Profiles: !stage1
++Build-Profiles: <!stage1>
  Essential: yes
  Section: admin
  Pre-Depends: ${misc:Pre-Depends}, ${shlibs:Depends}
@@ -1520,7 +1520,7 @@ diff -Nru util-linux-2.25.1/debian/control util-linux-2.25.1/debian/control
  
  Package: bsdutils
  Architecture: any
-+Build-Profiles: !stage1
++Build-Profiles: <!stage1>
  Essential: yes
  Section: utils
  Pre-Depends: ${misc:Pre-Depends}, ${shlibs:Depends}
@@ -1528,7 +1528,7 @@ diff -Nru util-linux-2.25.1/debian/control util-linux-2.25.1/debian/control
  
  Package: fdisk-udeb
  Architecture: hurd-any linux-any
-+Build-Profiles: !stage1
++Build-Profiles: <!stage1>
  Priority: extra
  Section: debian-installer
  Depends: ${misc:Depends}, ${shlibs:Depends}
@@ -1536,7 +1536,7 @@ diff -Nru util-linux-2.25.1/debian/control util-linux-2.25.1/debian/control
  
  Package: cfdisk-udeb
  Architecture: hurd-any linux-any
-+Build-Profiles: !stage1
++Build-Profiles: <!stage1>
  Priority: extra
  Section: debian-installer
  Depends: ${misc:Depends}, ${shlibs:Depends}
@@ -1544,7 +1544,7 @@ diff -Nru util-linux-2.25.1/debian/control util-linux-2.25.1/debian/control
  
  Package: uuid-runtime
  Architecture: any
-+Build-Profiles: !stage1
++Build-Profiles: <!stage1>
  Section: utils
  Priority: optional
  Pre-Depends: libuuid1 (>= 2.25-5~), ${misc:Pre-Depends}
@@ -1552,7 +1552,7 @@ diff -Nru util-linux-2.25.1/debian/control util-linux-2.25.1/debian/control
  
  Package: util-linux-udeb
  Architecture: any
-+Build-Profiles: !stage1
++Build-Profiles: <!stage1>
  Priority: optional
  Section: debian-installer
  Depends: ${misc:Depends}, ${shlibs:Depends}
