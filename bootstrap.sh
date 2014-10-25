@@ -480,6 +480,35 @@ diff -u gcc-4.8-4.8.2/debian/rules.defs gcc-4.8-4.8.2/debian/rules.defs
    with_multiarch_lib := yes
 EOF
 }
+patch_gcc_4_9() {
+	echo "reverting gcc multiarch cross breakage #766708"
+	patch -p1 <<'EOF'
+diff -u gcc-4.9-4.9.1/debian/rules.defs gcc-4.9-4.9.1/debian/rules.defs
+--- gcc-4.9-4.9.1/debian/rules.defs
++++ gcc-4.9-4.9.1/debian/rules.defs
+@@ -125,9 +125,6 @@
+   $(error Invalid architecure.)
+ endif
+ 
+-# Force this, people get confused about the default. See #760770.
+-with_deps_on_target_arch_pkgs :=
+-
+ # including unversiond symlinks for binaries
+ #with_unversioned = yes
+ 
+@@ -1449,7 +1447,9 @@
+ #ifeq ($(trunk_build),yes)
+ #  no_biarch_libs := yes
+ #endif
++ifdef DEB_CROSS_NO_BIARCH
++  no_biarch_libs := yes
++endif
+-no_biarch_libs :=
+ 
+ ifeq ($(no_biarch_libs),yes)
+   with_lib64gcc		:= no
+EOF
+}
 # choosing libatomic1 arbitrarily here, cause it never bumped soname
 BUILD_GCC_MULTIARCH_VER=`apt-cache show --no-all-versions libatomic1 | sed 's/^Source: gcc-\([0-9.]*\)$/\1/;t;d'`
 if test "$GCC_VER" != "$BUILD_GCC_MULTIARCH_VER"; then
