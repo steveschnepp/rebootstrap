@@ -261,6 +261,15 @@ apt-get update
 $APT_GET install pinentry-curses # avoid installing pinentry-gtk (via reprepro)
 $APT_GET install build-essential debhelper reprepro
 
+if test "$ENABLE_MULTIARCH_GCC" = yes; then
+	echo "deb $MIRROR experimental main" > /etc/apt/sources.list.d/tmp-experimental.list
+	apt-get update
+	$APT_GET install cross-gcc-dev
+	rm /etc/apt/sources.list.d/tmp-experimental.list
+	apt-get update
+	$APT_GET install quilt
+fi
+
 # work around dpkg bug #764216
 sed -i 's/^\(use Dpkg::BuildProfiles qw(get_build_profiles\));$/\1 parse_build_profiles evaluate_restriction_formula);/' /usr/bin/dpkg-genchanges
 
@@ -482,33 +491,10 @@ diff -u gcc-4.8-4.8.2/debian/rules.defs gcc-4.8-4.8.2/debian/rules.defs
 EOF
 }
 patch_gcc_4_9() {
-	echo "reverting gcc multiarch cross breakage #766708"
-	patch -p1 <<'EOF'
-diff -u gcc-4.9-4.9.1/debian/rules.defs gcc-4.9-4.9.1/debian/rules.defs
---- gcc-4.9-4.9.1/debian/rules.defs
-+++ gcc-4.9-4.9.1/debian/rules.defs
-@@ -125,9 +125,6 @@
-   $(error Invalid architecure.)
- endif
- 
--# Force this, people get confused about the default. See #760770.
--with_deps_on_target_arch_pkgs :=
--
- # including unversiond symlinks for binaries
- #with_unversioned = yes
- 
-@@ -1449,7 +1447,9 @@
- #ifeq ($(trunk_build),yes)
- #  no_biarch_libs := yes
- #endif
-+ifdef DEB_CROSS_NO_BIARCH
-+  no_biarch_libs := yes
-+endif
--no_biarch_libs :=
- 
- ifeq ($(no_biarch_libs),yes)
-   with_lib64gcc		:= no
-EOF
+	if test "$ENABLE_MULTIARCH_GCC" = yes; then
+		echo "applying patches for with_deps_on_target_arch_pkgs"
+		drop_privs QUILT_PATCHES=/usr/share/cross-gcc/template/debian/patches/ quilt push -a
+	fi
 }
 if test "$ENABLE_MULTIARCH_GCC" = yes; then
 # choosing libatomic1 arbitrarily here, cause it never bumped soname
