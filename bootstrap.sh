@@ -493,7 +493,7 @@ EOF
 patch_gcc_4_9() {
 	if test "$ENABLE_MULTIARCH_GCC" = yes; then
 		echo "applying patches for with_deps_on_target_arch_pkgs"
-		drop_privs QUILT_PATCHES=/usr/share/cross-gcc/template/debian/patches/ quilt push -a
+		QUILT_PATCHES=/usr/share/cross-gcc/template/debian/patches/ quilt push -a
 	fi
 }
 if test "$ENABLE_MULTIARCH_GCC" = yes; then
