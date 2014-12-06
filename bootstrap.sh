@@ -1569,6 +1569,19 @@ diff -Nru util-linux-2.25.1/debian/rules util-linux-2.25.1/debian/rules
  CONFOPTS += --enable-tunelp
  endif
  
+@@ -58,6 +58,12 @@
+ 
+ override_dh_auto_install:
+ 	dh_auto_install
++ifneq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
++	# dh-exec as used in util-linux.install does not support profiles
++	install -d debian/tmp/lib/systemd/system
++	install -m644 sys-utils/fstrim.service.in debian/tmp/lib/systemd/system/fstrim.service
++	install -m644 sys-utils/fstrim.timer debian/tmp/lib/systemd/system/fstrim.timer
++endif
+ 	#
+ 	# the version in bsdmainutils seems newer.
+ 	rm -f debian/tmp/usr/bin/look debian/tmp/usr/share/man/man1/look.1
 @@ -117,7 +121,9 @@
  	dh_installman --language=C
  
