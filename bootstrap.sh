@@ -619,8 +619,12 @@ else
 	ls -l
 	pickup_packages *.changes
 	$APT_GET remove gcc-multilib
-	rm -vf *multilib*.deb
-	dpkg -i cpp-$GCC_VER-*.deb gcc-$GCC_VER-*.deb
+	if test "$ENABLE_MULTILIB" = yes && ls | grep -q multilib; then
+		$APT_GET install "gcc-$GCC_VER-multilib$HOST_ARCH_SUFFIX"
+	else
+		rm -vf ./*multilib*.deb
+		$APT_GET install "gcc-$GCC_VER$HOST_ARCH_SUFFIX"
+	fi
 	compiler="`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_GNU_TYPE`-gcc-$GCC_VER"
 	if ! which "$compiler"; then echo "$compiler missing in stage1 gcc package"; exit 1; fi
 	if ! $compiler -x c -c /dev/null -o test.o; then echo "stage1 gcc fails to execute"; exit 1; fi
