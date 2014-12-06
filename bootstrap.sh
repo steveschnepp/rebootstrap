@@ -11,6 +11,7 @@ HOST_ARCH=undefined
 GCC_VER=
 MIRROR="http://ftp.stw-bonn.de/debian"
 ENABLE_MULTILIB=no
+ENABLE_MULTIARCH_GCC=yes
 REPODIR=/tmp/repo
 APT_GET="apt-get --no-install-recommends -y"
 DEFAULT_PROFILES=cross
@@ -509,6 +510,7 @@ diff -u gcc-4.9-4.9.1/debian/rules.defs gcc-4.9-4.9.1/debian/rules.defs
    with_lib64gcc		:= no
 EOF
 }
+if test "$ENABLE_MULTIARCH_GCC" = yes; then
 # choosing libatomic1 arbitrarily here, cause it never bumped soname
 BUILD_GCC_MULTIARCH_VER=`apt-cache show --no-all-versions libatomic1 | sed 's/^Source: gcc-\([0-9.]*\)$/\1/;t;d'`
 if test "$GCC_VER" != "$BUILD_GCC_MULTIARCH_VER"; then
@@ -536,6 +538,7 @@ fi
 echo "progress-mark:0:build compiler complete"
 else
 echo "host gcc version and build gcc version match. good for multiarch"
+fi
 fi
 
 # binutils
@@ -644,11 +647,13 @@ else
 fi
 echo "progress-mark:3:gcc stage1 complete"
 
-# $LIBC_NAME looks for linux headers in /usr/<triplet>/include/linux rather than /usr/include/linux
-# later gcc looks for pthread.h and stuff in /usr/<triplet>/include rather than /usr/include
-mkdir -p /usr/`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE`
-ln -s ../include /usr/`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE`/include
-ln -s ../include/`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_MULTIARCH` /usr/`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE`/sys-include
+if test "$ENABLE_MULTIARCH_GCC" = yes; then
+	# $LIBC_NAME looks for linux headers in /usr/<triplet>/include/linux rather than /usr/include/linux
+	# later gcc looks for pthread.h and stuff in /usr/<triplet>/include rather than /usr/include
+	mkdir -p "/usr/`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_GNU_TYPE`"
+	ln -s ../include "/usr/`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_GNU_TYPE`/include"
+	ln -s "../include/`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_MULTIARCH`" "/usr/`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_GNU_TYPE`/sys-include"
+fi
 
 # libc
 patch_glibc() {
@@ -977,9 +982,11 @@ else
 	rm -Rf "${LIBC_NAME}1"
 fi
 echo "progress-mark:4:$LIBC_NAME stage1 complete"
-# binutils looks for libc.so in /usr/<triplet>/lib rather than /usr/lib/<triplet>
-mkdir -p /usr/`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE`
-ln -s /usr/lib/`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_MULTIARCH` /usr/`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE`/lib
+if test "$ENABLE_MULTIARCH_GCC" = yes; then
+	# binutils looks for libc.so in /usr/<triplet>/lib rather than /usr/lib/<triplet>
+	mkdir -p "/usr/`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_GNU_TYPE`"
+	ln -s "/usr/lib/`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_MULTIARCH`" "/usr/`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_GNU_TYPE`/lib"
+fi
 
 if test -d "$RESULT/gcc2"; then
 	echo "skipping rebuild of gcc stage2"
