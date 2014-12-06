@@ -605,15 +605,15 @@ if test -d "$RESULT/gcc1"; then
 else
 	$APT_GET install debhelper gawk patchutils bison flex lsb-release quilt libtool autoconf2.64 zlib1g-dev libcloog-isl-dev libmpc-dev libmpfr-dev libgmp-dev autogen systemtap-sdt-dev binutils-multiarch "binutils$HOST_ARCH_SUFFIX" "linux-libc-dev:$HOST_ARCH"
 	cross_build_setup "gcc-$GCC_VER" gcc1
-	dpkg-checkbuilddeps -B || : # tell unmet build depends
+	dpkg-checkbuilddeps || : # tell unmet build depends
 	if test "$ENABLE_MULTILIB" = yes; then
 		DEB_STAGE=stage1 dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -T control
-		dpkg-checkbuilddeps -B || : # tell unmet build depends again after rewriting control
-		DEB_STAGE=stage1 dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -B -uc -us
+		dpkg-checkbuilddeps || : # tell unmet build depends again after rewriting control
+		DEB_STAGE=stage1 dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -b -uc -us
 	else
 		DEB_CROSS_NO_BIARCH=yes DEB_STAGE=stage1 dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -T control
-		dpkg-checkbuilddeps -B || : # tell unmet build depends again after rewriting control
-		DEB_CROSS_NO_BIARCH=yes DEB_STAGE=stage1 dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -B -uc -us
+		dpkg-checkbuilddeps || : # tell unmet build depends again after rewriting control
+		DEB_CROSS_NO_BIARCH=yes DEB_STAGE=stage1 dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -b -uc -us
 	fi
 	cd ..
 	ls -l
