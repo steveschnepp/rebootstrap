@@ -316,6 +316,12 @@ EOF
 export REPREPRO_BASE_DIR="$REPODIR"
 reprepro export
 echo "deb [ arch=`dpkg --print-architecture`,$HOST_ARCH trusted=yes ] file://$REPODIR rebootstrap main" >/etc/apt/sources.list.d/rebootstrap.list
+cat >/etc/apt/preferences.d/rebootstrap.pref <<EOF
+Explanation: prefer our own rebootstrap (toolchain) packages over everything
+Package: *
+Pin: release l=rebootstrap
+Pin-Priority: 1001
+EOF
 apt-get update
 
 pickup_packages() {
