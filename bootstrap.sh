@@ -2187,3 +2187,7 @@ echo "progress-mark:71:libx11 cross build"
 cross_build libice
 echo "progress-mark:72:libice cross build"
 # needed by libsm
+
+cross_build libsm
+echo "progress-mark:73:libsm cross build"
+# needed by libxt
