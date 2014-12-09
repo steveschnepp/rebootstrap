@@ -306,7 +306,7 @@ if test -z "$GCC_VER"; then
 	GCC_VER=`apt-cache depends gcc | sed 's/^ *Depends: gcc-\([0-9.]*\)$/\1/;t;d'`
 fi
 
-rmdir /tmp/buildd
+rmdir /tmp/buildd || :
 drop_privs mkdir -p /tmp/buildd
 drop_privs mkdir -p "$RESULT"
 
