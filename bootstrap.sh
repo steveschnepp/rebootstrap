@@ -16,6 +16,7 @@ REPODIR=/tmp/repo
 APT_GET="apt-get --no-install-recommends -y"
 DEFAULT_PROFILES=cross
 LIBC_NAME=glibc
+DROP_PRIVS=buildd
 
 # evaluate command line parameters of the form KEY=VALUE
 for param in "$*"; do
@@ -253,13 +254,24 @@ check_arch() {
 	return 0
 }
 
-obtain_source_package() {
-	apt-get source "$1"
-}
-
 apt-get update
 $APT_GET install pinentry-curses # avoid installing pinentry-gtk (via reprepro)
 $APT_GET install build-essential debhelper reprepro
+
+if test -z "$DROP_PRIVS"; then
+	drop_privs() {
+		env -- "$@"
+	}
+else
+	$APT_GET install adduser fakeroot
+	if ! getent passwd "$DROP_PRIVS" >/dev/null; then
+		adduser --system --group --home /tmp/buildd --no-create-home --shell /bin/false "$DROP_PRIVS"
+	fi
+	drop_privs() {
+		# Two "--" are necessary here. The first is for start-stop-daemon, the second is for env.
+		/sbin/start-stop-daemon --start --pidfile /dev/null --chuid "$DROP_PRIVS:$DROP_PRIVS" --chdir "`pwd`" --startas /usr/bin/env -- -- "$@"
+	}
+fi
 
 if test "$ENABLE_MULTIARCH_GCC" = yes; then
 	echo "deb $MIRROR experimental main" > /etc/apt/sources.list.d/tmp-experimental.list
@@ -269,6 +281,10 @@ if test "$ENABLE_MULTIARCH_GCC" = yes; then
 	apt-get update
 	$APT_GET install quilt
 fi
+
+obtain_source_package() {
+	drop_privs apt-get source "$1"
+}
 
 # work around dpkg bug #764216
 sed -i 's/^\(use Dpkg::BuildProfiles qw(get_build_profiles\));$/\1 parse_build_profiles evaluate_restriction_formula);/' /usr/bin/dpkg-genchanges
@@ -290,8 +306,9 @@ if test -z "$GCC_VER"; then
 	GCC_VER=`apt-cache depends gcc | sed 's/^ *Depends: gcc-\([0-9.]*\)$/\1/;t;d'`
 fi
 
-mkdir -p /tmp/buildd
-mkdir -p "$RESULT"
+rmdir /tmp/buildd
+drop_privs mkdir -p /tmp/buildd
+drop_privs mkdir -p "$RESULT"
 
 if test "$HOST_ARCH" = "i386" -a "$GCC_VER" != "4.8" ; then
 	echo "fixing dpkg's cputable for i386 #751363"
@@ -380,7 +397,7 @@ cross_build_setup() {
 	fi
 	mangledpkg=`echo "$pkg" | tr -- -. __` # - invalid in function names
 	cd /tmp/buildd
-	mkdir "$subdir"
+	drop_privs mkdir "$subdir"
 	cd "$subdir"
 	obtain_source_package "$pkg"
 	cd "${pkg}-"*
@@ -403,7 +420,7 @@ check_binNMU() {
 		"$srcversion+b"*)
 			src=`dpkg-parsechangelog -SSource`
 			echo "rebootstrap-warning: binNMU detected for $src $srcversion/$maxversion"
-			cat - debian/changelog >debian/changelog.new <<EOF
+			drop_privs cat - debian/changelog >debian/changelog.new <<EOF
 $src ($maxversion) unstable; urgency=medium, binary-only=yes
 
   * Binary-only non-maintainer upload for $HOST_ARCH; no source changes.
@@ -411,7 +428,7 @@ $src ($maxversion) unstable; urgency=medium, binary-only=yes
 
  -- rebootstrap <invalid@invalid>  `date -R`
 EOF
-			mv debian/changelog.new debian/changelog
+			drop_privs mv debian/changelog.new debian/changelog
 		;;
 	esac
 }
@@ -442,9 +459,9 @@ cross_build() {
 			if dpkg-checkbuilddeps -a$HOST_ARCH -P "$profiles"; then
 				echo "rebootstrap-warning: Build-Depends for $pkg satisfied even though a custom builddep_  function is in use"
 			fi
-			dpkg-buildpackage -a$HOST_ARCH -B "-P$profiles" -d -uc -us
+			drop_privs dpkg-buildpackage "-a$HOST_ARCH" -B "-P$profiles" -d -uc -us
 		else
-			dpkg-buildpackage -a$HOST_ARCH -B "-P$profiles" -uc -us
+			drop_privs dpkg-buildpackage "-a$HOST_ARCH" -B "-P$profiles" -uc -us
 		fi
 		cd ..
 		ls -l
@@ -452,14 +469,14 @@ cross_build() {
 		test -d "$RESULT" && mkdir "$RESULT/$pkg"
 		test -d "$RESULT" && cp *.deb "$RESULT/$pkg/"
 		cd ..
-		rm -Rf "$pkg"
+		drop_privs rm -Rf "$pkg"
 	fi
 }
 
 # gcc0
 patch_gcc_4_8() {
 	echo "patching gcc to honour DEB_CROSS_NO_BIARCH for hppa #745116"
-	patch -p1 <<EOF
+	drop_privs patch -p1 <<EOF
 diff -u gcc-4.8-4.8.2/debian/rules.defs gcc-4.8-4.8.2/debian/rules.defs
 --- gcc-4.8-4.8.2/debian/rules.defs
 +++ gcc-4.8-4.8.2/debian/rules.defs
@@ -478,7 +495,7 @@ diff -u gcc-4.8-4.8.2/debian/rules.defs gcc-4.8-4.8.2/debian/rules.defs
      with_hppa64 := disabled for snapshot build
 EOF
 	echo "patching gcc-4.8 to build common libraries. not a bug"
-	patch -p1 <<EOF
+	drop_privs patch -p1 <<EOF
 diff -u gcc-4.8-4.8.2/debian/rules.defs gcc-4.8-4.8.2/debian/rules.defs
 --- gcc-4.8-4.8.2/debian/rules.defs
 +++ gcc-4.8-4.8.2/debian/rules.defs
@@ -499,7 +516,7 @@ EOF
 patch_gcc_4_9() {
 	if test "$ENABLE_MULTIARCH_GCC" = yes; then
 		echo "applying patches for with_deps_on_target_arch_pkgs"
-		QUILT_PATCHES=/usr/share/cross-gcc/patches/ quilt push -a
+		drop_privs QUILT_PATCHES=/usr/share/cross-gcc/patches/ quilt push -a
 	fi
 }
 if test "$ENABLE_MULTIARCH_GCC" = yes; then
@@ -515,17 +532,17 @@ else
 	# dependencies for common libs no longer declared
 	$APT_GET install doxygen graphviz ghostscript texlive-latex-base xsltproc docbook-xsl-ns
 	cross_build_setup "gcc-$GCC_VER" gcc0
-	DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=biarch,d,go,java,objc,obj-c++" dpkg-buildpackage -T control -uc -us
-	DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=biarch,d,go,java,objc,obj-c++" dpkg-buildpackage -B -uc -us
+	drop_privs DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=biarch,d,go,java,objc,obj-c++" dpkg-buildpackage -T control -uc -us
+	drop_privs DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=biarch,d,go,java,objc,obj-c++" dpkg-buildpackage -B -uc -us
 	cd ..
 	ls -l
 	pickup_packages *.changes
-	rm -fv *-plugin-dev_*.deb *-dbg_*.deb
+	drop_privs rm -fv ./*-plugin-dev_*.deb ./*-dbg_*.deb
 	dpkg -i *.deb
 	test -d "$RESULT" && mkdir "$RESULT/gcc0"
 	test -d "$RESULT" && cp *.deb "$RESULT/gcc0"
 	cd ..
-	rm -Rf gcc0
+	drop_privs rm -Rf gcc0
 fi
 echo "progress-mark:0:build compiler complete"
 else
@@ -540,19 +557,19 @@ if test -f "$PKG"; then
 else
 	$APT_GET install autoconf bison flex gettext texinfo dejagnu quilt python3 file lsb-release zlib1g-dev
 	cross_build_setup binutils
-	WITH_SYSROOT=/ TARGET=$HOST_ARCH dpkg-buildpackage -B -uc -us
+	drop_privs WITH_SYSROOT=/ TARGET=$HOST_ARCH dpkg-buildpackage -B -uc -us
 	cd ..
 	ls -l
 	pickup_packages *.changes
 	$APT_GET install binutils$HOST_ARCH_SUFFIX
 	assembler="`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE`-as"
 	if ! which "$assembler"; then echo "$assembler missing in binutils package"; exit 1; fi
-	if ! $assembler -o test.o /dev/null; then echo "binutils fail to execute"; exit 1; fi
+	if ! drop_privs "$assembler" -o test.o /dev/null; then echo "binutils fail to execute"; exit 1; fi
 	if ! test -f test.o; then echo "binutils fail to create object"; exit 1; fi
 	check_arch test.o "$HOST_ARCH"
 	test -d "$RESULT" && cp -v binutils-*.deb "$RESULT"
 	cd ..
-	rm -Rf binutils
+	drop_privs rm -Rf binutils
 fi
 echo "progress-mark:1:binutils cross complete"
 
@@ -560,7 +577,7 @@ echo "progress-mark:1:binutils cross complete"
 patch_linux() {
 	if test "$HOST_ARCH" = arm; then
 		echo "patching linux for arm"
-		patch -p1 <<EOF
+		drop_privs patch -p1 <<EOF
 diff -Nru linux-3.14.7/debian/config/arm/defines linux-3.14.7/debian/config/arm/defines
 --- linux-3.14.7/debian/config/arm/defines
 +++ linux-3.14.7/debian/config/arm/defines
@@ -581,7 +598,7 @@ diff -Nru linux-3.14.7/debian/config/defines linux-3.14.7/debian/config/defines
   armel
   armhf
 EOF
-		./debian/rules debian/rules.gen || : # intentionally exits 1 to avoid being called automatically. we are doing it wrong
+		drop_privs ./debian/rules debian/rules.gen || : # intentionally exits 1 to avoid being called automatically. we are doing it wrong
 	fi
 }
 if test "`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS`" = "linux"; then
@@ -591,14 +608,18 @@ if test -f "$PKG"; then
 else
 	$APT_GET install bc cpio debhelper kernel-wedge patchutils python quilt python-six
 	cross_build_setup linux
-	dpkg-checkbuilddeps -B -a$HOST_ARCH || : # tell unmet build depends
-	KBUILD_VERBOSE=1 make -f debian/rules.gen binary-libc-dev_$HOST_ARCH
+	dpkg-checkbuilddeps -B "-a$HOST_ARCH" || : # tell unmet build depends
+	if test -n "$DROP_PRIVS"; then
+		drop_privs KBUILD_VERBOSE=1 fakeroot make -f debian/rules.gen "binary-libc-dev_$HOST_ARCH"
+	else
+		KBUILD_VERBOSE=1 make -f debian/rules.gen "binary-libc-dev_$HOST_ARCH"
+	fi
 	cd ..
 	ls -l
 	pickup_packages *.deb
 	test -d "$RESULT" && cp -v linux-libc-dev_*.deb "$RESULT"
 	cd ..
-	rm -Rf linux
+	drop_privs rm -Rf linux
 fi
 echo "progress-mark:2:linux-libc-dev complete"
 fi
@@ -613,13 +634,13 @@ else
 	cross_build_setup "gcc-$GCC_VER" gcc1
 	dpkg-checkbuilddeps || : # tell unmet build depends
 	if test "$ENABLE_MULTILIB" = yes; then
-		DEB_STAGE=stage1 dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -T control
+		drop_privs DEB_STAGE=stage1 dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -T control
 		dpkg-checkbuilddeps || : # tell unmet build depends again after rewriting control
-		DEB_STAGE=stage1 dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -b -uc -us
+		drop_privs DEB_STAGE=stage1 dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -b -uc -us
 	else
-		DEB_CROSS_NO_BIARCH=yes DEB_STAGE=stage1 dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -T control
+		drop_privs DEB_CROSS_NO_BIARCH=yes DEB_STAGE=stage1 dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -T control
 		dpkg-checkbuilddeps || : # tell unmet build depends again after rewriting control
-		DEB_CROSS_NO_BIARCH=yes DEB_STAGE=stage1 dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -b -uc -us
+		drop_privs DEB_CROSS_NO_BIARCH=yes DEB_STAGE=stage1 dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -b -uc -us
 	fi
 	cd ..
 	ls -l
@@ -633,13 +654,13 @@ else
 	fi
 	compiler="`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_GNU_TYPE`-gcc-$GCC_VER"
 	if ! which "$compiler"; then echo "$compiler missing in stage1 gcc package"; exit 1; fi
-	if ! $compiler -x c -c /dev/null -o test.o; then echo "stage1 gcc fails to execute"; exit 1; fi
+	if ! drop_privs "$compiler" -x c -c /dev/null -o test.o; then echo "stage1 gcc fails to execute"; exit 1; fi
 	if ! test -f test.o; then echo "stage1 gcc fails to create binaries"; exit 1; fi
 	check_arch test.o "$HOST_ARCH"
 	test -d "$RESULT" && mkdir "$RESULT/gcc1"
 	test -d "$RESULT" && cp cpp-$GCC_VER-*.deb gcc-$GCC_VER-*.deb "$RESULT/gcc1"
 	cd ..
-	rm -Rf gcc1
+	drop_privs rm -Rf gcc1
 fi
 echo "progress-mark:3:gcc stage1 complete"
 
@@ -654,7 +675,7 @@ fi
 # libc
 patch_glibc() {
 	echo "patching eglibc to include a libc6.so and place crt*.o in correct directory"
-	patch -p1 <<EOF
+	drop_privs patch -p1 <<EOF
 diff -Nru eglibc-2.18/debian/rules.d/build.mk eglibc-2.18/debian/rules.d/build.mk
 --- eglibc-2.18/debian/rules.d/build.mk
 +++ eglibc-2.18/debian/rules.d/build.mk
@@ -710,7 +731,7 @@ diff -Nru glibc-2.19/debian/rules.d/debhelper.mk glibc-2.19/debian/rules.d/debhe
  \$(stamp)debhelper_%: \$(stamp)debhelper-common \$(stamp)install_%
 EOF
 	echo "patching glibc to select the correct packages in stage1"
-	patch -p1 <<EOF
+	drop_privs patch -p1 <<EOF
 diff -Nru glibc-2.19/debian/rules glibc-2.19/debian/rules
 --- glibc-2.19/debian/rules
 +++ glibc-2.19/debian/rules
@@ -732,7 +753,7 @@ diff -Nru glibc-2.19/debian/rules glibc-2.19/debian/rules
  
 EOF
 	echo "patching glibc to use multi-arch paths for headers in stage1"
-	patch -p1 <<'EOF'
+	drop_privs patch -p1 <<'EOF'
 diff -Nru glibc-2.19/debian/rules.d/build.mk glibc-2.19/debian/rules.d/build.mk
 --- glibc-2.19/debian/rules.d/build.mk
 +++ glibc-2.19/debian/rules.d/build.mk
@@ -754,7 +775,7 @@ diff -Nru glibc-2.19/debian/rules.d/build.mk glibc-2.19/debian/rules.d/build.mk
  	  case $(DEB_HOST_ARCH) in \
 EOF
 	echo "patching eglibc to avoid dependency on libc6 from libc6-dev in stage1"
-	patch -p1 <<'EOF'
+	drop_privs patch -p1 <<'EOF'
 diff -Nru glibc-2.19/debian/control.in/amd64 glibc-2.19/debian/control.in/amd64
 --- glibc-2.19/debian/control.in/amd64
 +++ glibc-2.19/debian/control.in/amd64
@@ -962,10 +983,10 @@ else
 	cross_build_setup "$LIBC_NAME" "${LIBC_NAME}1"
 	if test "$ENABLE_MULTILIB" = yes; then
 		dpkg-checkbuilddeps -B "-a$HOST_ARCH" -Pstage1 || : # tell unmet build depends
-		DEB_GCC_VERSION=-$GCC_VER dpkg-buildpackage -B -uc -us "-a$HOST_ARCH" -d -Pstage1
+		drop_privs DEB_GCC_VERSION="-$GCC_VER" dpkg-buildpackage -B -uc -us "-a$HOST_ARCH" -d -Pstage1
 	else
 		dpkg-checkbuilddeps -B "-a$HOST_ARCH" -Pstage1,nobiarch || : # tell unmet build depends
-		DEB_GCC_VERSION=-$GCC_VER dpkg-buildpackage -B -uc -us "-a$HOST_ARCH" -d -Pstage1,nobiarch
+		drop_privs DEB_GCC_VERSION="-$GCC_VER" dpkg-buildpackage -B -uc -us "-a$HOST_ARCH" -d -Pstage1,nobiarch
 	fi
 	cd ..
 	ls -l
@@ -975,7 +996,7 @@ else
 	test -d "$RESULT" && mkdir "$RESULT/${LIBC_NAME}1"
 	test -d "$RESULT" && cp -v libc*-dev_*.deb "$RESULT/${LIBC_NAME}1"
 	cd ..
-	rm -Rf "${LIBC_NAME}1"
+	drop_privs rm -Rf "${LIBC_NAME}1"
 fi
 echo "progress-mark:4:$LIBC_NAME stage1 complete"
 if test "$ENABLE_MULTIARCH_GCC" = yes; then
@@ -992,28 +1013,28 @@ else
 	cross_build_setup "gcc-$GCC_VER" gcc2
 	dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends
 	if test "$ENABLE_MULTILIB" = yes; then
-		DEB_STAGE=stage2 dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -T control
+		drop_privs DEB_STAGE=stage2 dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -T control
 		dpkg-checkbuilddeps || : # tell unmet build depends again after rewriting control
-		gcc_cv_libc_provides_ssp=yes DEB_STAGE=stage2 dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -b -uc -us
+		drop_privs gcc_cv_libc_provides_ssp=yes DEB_STAGE=stage2 dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -b -uc -us
 	else
-		DEB_CROSS_NO_BIARCH=yes DEB_STAGE=stage2 dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -T control
+		drop_privs DEB_CROSS_NO_BIARCH=yes DEB_STAGE=stage2 dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -T control
 		dpkg-checkbuilddeps || : # tell unmet build depends again after rewriting control
-		gcc_cv_libc_provides_ssp=yes DEB_CROSS_NO_BIARCH=yes DEB_STAGE=stage2 dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -b -uc -us
+		drop_privs gcc_cv_libc_provides_ssp=yes DEB_CROSS_NO_BIARCH=yes DEB_STAGE=stage2 dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -b -uc -us
 	fi
 	cd ..
 	ls -l
 	pickup_packages *.changes
-	rm -vf *multilib*.deb
+	drop_privs rm -vf ./*multilib*.deb
 	dpkg -i *.deb
 	compiler="`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE`-gcc-$GCC_VER"
 	if ! which "$compiler"; then echo "$compiler missing in stage2 gcc package"; exit 1; fi
-	if ! $compiler -x c -c /dev/null -o test.o; then echo "stage2 gcc fails to execute"; exit 1; fi
+	if ! drop_privs "$compiler" -x c -c /dev/null -o test.o; then echo "stage2 gcc fails to execute"; exit 1; fi
 	if ! test -f test.o; then echo "stage2 gcc fails to create binaries"; exit 1; fi
 	check_arch test.o "$HOST_ARCH"
 	test -d "$RESULT" && mkdir "$RESULT/gcc2"
 	test -d "$RESULT" && cp *.deb "$RESULT/gcc2"
 	cd ..
-	rm -Rf gcc2
+	drop_privs rm -Rf gcc2
 fi
 echo "progress-mark:5:gcc stage2 complete"
 # libselinux wants unversioned gcc
@@ -1032,21 +1053,21 @@ else
 	$APT_GET install gettext file quilt autoconf gawk debhelper rdfind symlinks libaudit-dev libcap-dev libselinux-dev binutils bison netbase linux-libc-dev:$HOST_ARCH
 	cross_build_setup "$LIBC_NAME" "${LIBC_NAME}2"
 	if test "$ENABLE_MULTILIB" = yes; then
-		dpkg-checkbuilddeps -B -a$HOST_ARCH -Pstage2 || : # tell unmet build depends
-		DEB_GCC_VERSION=-$GCC_VER dpkg-buildpackage -B -uc -us -a$HOST_ARCH -d -Pstage2
+		dpkg-checkbuilddeps -B "-a$HOST_ARCH" -Pstage2 || : # tell unmet build depends
+		drop_privs DEB_GCC_VERSION=-$GCC_VER dpkg-buildpackage -B -uc -us "-a$HOST_ARCH" -d -Pstage2
 	else
-		dpkg-checkbuilddeps -B -a$HOST_ARCH -Pstage2,nobiarch || : # tell unmet build depends
-		DEB_GCC_VERSION=-$GCC_VER dpkg-buildpackage -B -uc -us -a$HOST_ARCH -d -Pstage2,nobiarch
+		dpkg-checkbuilddeps -B "-a$HOST_ARCH" -Pstage2,nobiarch || : # tell unmet build depends
+		drop_privs DEB_GCC_VERSION=-$GCC_VER dpkg-buildpackage -B -uc -us "-a$HOST_ARCH" -d -Pstage2,nobiarch
 	fi
 	cd ..
 	ls -l
 	pickup_packages *.changes
-	rm -f libc6-i686_*.deb
+	drop_privs rm -f ./libc6-i686_*.deb
 	dpkg -i libc*-dev_*.deb libc*[0-9]_*_*.deb
 	test -d "$RESULT" && mkdir "$RESULT/${LIBC_NAME}2"
 	test -d "$RESULT" && cp libc*-dev_*.deb libc*[0-9]_*_*.deb "$RESULT/${LIBC_NAME}2"
 	cd ..
-	rm -Rf "${LIBC_NAME}2"
+	drop_privs rm -Rf "${LIBC_NAME}2"
 fi
 echo "progress-mark:6:$LIBC_NAME stage2 complete"
 
@@ -1058,32 +1079,32 @@ else
 	cross_build_setup "gcc-$GCC_VER" gcc3
 	dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends
 	if test "$ENABLE_MULTILIB" = yes; then
-		DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=d,go,java,objc,obj-c++" with_deps_on_target_arch_pkgs=yes dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -T control
+		drop_privs DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=d,go,java,objc,obj-c++" with_deps_on_target_arch_pkgs=yes dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -T control
 		dpkg-checkbuilddeps || : # tell unmet build depends again after rewriting control
-		DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=d,go,java,objc,obj-c++" with_deps_on_target_arch_pkgs=yes dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -b -uc -us
+		drop_privs DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=d,go,java,objc,obj-c++" with_deps_on_target_arch_pkgs=yes dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -b -uc -us
 	else
-		DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=d,go,java,objc,obj-c++" with_deps_on_target_arch_pkgs=yes DEB_CROSS_NO_BIARCH=yes dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -T control
+		drop_privs DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=d,go,java,objc,obj-c++" with_deps_on_target_arch_pkgs=yes DEB_CROSS_NO_BIARCH=yes dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -T control
 		dpkg-checkbuilddeps || : # tell unmet build depends again after rewriting control
-		DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=d,go,java,objc,obj-c++" with_deps_on_target_arch_pkgs=yes DEB_CROSS_NO_BIARCH=yes dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -b -uc -us
+		drop_privs DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=d,go,java,objc,obj-c++" with_deps_on_target_arch_pkgs=yes DEB_CROSS_NO_BIARCH=yes dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -b -uc -us
 	fi
 	cd ..
 	ls -l
 	pickup_packages *.changes
-	rm -fv gcc-*-plugin-*.deb gcj-*.deb gdc-*.deb *objc*.deb *-dbg_*.deb
+	drop_privs rm -fv gcc-*-plugin-*.deb gcj-*.deb gdc-*.deb ./*objc*.deb ./*-dbg_*.deb
 	dpkg -i *.deb
 	apt-get check # test for #745036
 	compiler="`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE`-gcc-$GCC_VER"
 	if ! which "$compiler"; then echo "$compiler missing in stage3 gcc package"; exit 1; fi
-	if ! $compiler -x c -c /dev/null -o test.o; then echo "stage3 gcc fails to execute"; exit 1; fi
+	if ! drop_privs "$compiler" -x c -c /dev/null -o test.o; then echo "stage3 gcc fails to execute"; exit 1; fi
 	if ! test -f test.o; then echo "stage3 gcc fails to create binaries"; exit 1; fi
 	check_arch test.o "$HOST_ARCH"
 	touch /usr/include/`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_MULTIARCH`/include_path_test_header.h
 	preproc="`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE`-cpp-$GCC_VER"
-	if ! echo '#include "include_path_test_header.h"' | $preproc -E -; then echo "stage3 gcc fails to search /usr/include/<triplet>"; exit 1; fi
+	if ! echo '#include "include_path_test_header.h"' | drop_privs "$preproc" -E -; then echo "stage3 gcc fails to search /usr/include/<triplet>"; exit 1; fi
 	test -d "$RESULT" && mkdir "$RESULT/gcc3"
 	test -d "$RESULT" && cp *.deb "$RESULT/gcc3"
 	cd ..
-	rm -Rf gcc3
+	drop_privs rm -Rf gcc3
 fi
 echo "progress-mark:7:gcc stage3 complete"
 
@@ -1091,7 +1112,7 @@ $APT_GET remove libc6-i386 # breaks cross builds
 
 patch_zlib() {
 	echo "patching zlib to support nobiarch build profile #709623"
-	patch -p1 <<EOF
+	drop_privs patch -p1 <<EOF
 diff -Nru zlib-1.2.8.dfsg/debian/control zlib-1.2.8.dfsg/debian/control
 --- zlib-1.2.8.dfsg/debian/control
 +++ zlib-1.2.8.dfsg/debian/control
@@ -1231,7 +1252,7 @@ echo "progress-mark:19:gpm cross build"
 
 patch_ncurses() {
 	echo "patching ncurses to support the nobiarch profile #737946"
-	patch -p1 <<EOF
+	drop_privs patch -p1 <<EOF
 diff -Nru ncurses-5.9+20140118/debian/control ncurses-5.9+20140118/debian/control
 --- ncurses-5.9+20140118/debian/control
 +++ ncurses-5.9+20140118/debian/control
@@ -1342,7 +1363,7 @@ echo "progress-mark:20:ncurses cross build"
 
 patch_readline6() {
 	echo "patching readline6 to support nobiarch profile #737955"
-	patch -p1 <<EOF
+	drop_privs patch -p1 <<EOF
 diff -Nru readline6-6.3/debian/control readline6-6.3/debian/control
 --- readline6-6.3/debian/control
 +++ readline6-6.3/debian/control
@@ -1454,15 +1475,15 @@ else
 	# gem2deb dependency lacks profile annotation
 	$APT_GET install debhelper file libsepol1-dev:$HOST_ARCH libpcre3-dev:$HOST_ARCH pkg-config
 	cross_build_setup libselinux libselinux1
-	dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends
-	DEB_STAGE=stage1 dpkg-buildpackage -d -B -uc -us -a$HOST_ARCH
+	dpkg-checkbuilddeps -B "-a$HOST_ARCH" || : # tell unmet build depends
+	drop_privs DEB_STAGE=stage1 dpkg-buildpackage -d -B -uc -us "-a$HOST_ARCH"
 	cd ..
 	ls -l
 	pickup_packages *.changes
 	test -d "$RESULT" && mkdir "$RESULT/libselinux1"
 	test -d "$RESULT" && cp *.deb "$RESULT/libselinux1"
 	cd ..
-	rm -Rf libselinux1
+	drop_privs rm -Rf libselinux1
 fi
 echo "progress-mark:27:libselinux cross build"
 
@@ -1472,7 +1493,7 @@ builddep_util_linux() {
 }
 patch_util_linux() {
 	echo "applying ah's stage1 patch for util-linux #757147"
-	patch -p1 <<'EOF'
+	drop_privs patch -p1 <<'EOF'
 diff -Nru util-linux-2.25.1/debian/control util-linux-2.25.1/debian/control
 --- util-linux-2.25.1/debian/control
 +++ util-linux-2.25.1/debian/control
@@ -1605,14 +1626,14 @@ if test -d "$RESULT/util-linux_1"; then
 else
 	builddep_util_linux "$HOST_ARCH"
 	cross_build_setup util-linux util-linux_1
-	scanf_cv_type_modifier=ms dpkg-buildpackage -B -uc -us "-a$HOST_ARCH" -Pstage1
+	drop_privs scanf_cv_type_modifier=ms dpkg-buildpackage -B -uc -us "-a$HOST_ARCH" -Pstage1
 	cd ..
 	ls -l
 	pickup_packages *.changes
 	test -d "$RESULT" && mkdir "$RESULT/util-linux_1"
 	test -d "$RESULT" && cp ./*.deb "$RESULT/util-linux_1"
 	cd ..
-	rm -Rf util-linux_1
+	drop_privs rm -Rf util-linux_1
 fi
 echo "progress-mark:28:util-linux stage1 cross build"
 # essential, needed by e2fsprogs
@@ -1672,14 +1693,14 @@ else
 	builddep_file
 	cross_build_setup file file_1
 	dpkg-checkbuilddeps "-a$HOST_ARCH" || : # tell unmet build depends
-	dpkg-buildpackage "-a$HOST_ARCH" -B -d -uc -us -Pstage1
+	drop_privs dpkg-buildpackage "-a$HOST_ARCH" -B -d -uc -us -Pstage1
 	cd ..
 	ls -l
 	pickup_packages *.changes
 	test -d "$RESULT" && mkdir "$RESULT/file_1"
 	test -d "$RESULT" && cp ./*.deb "$RESULT/file_1/"
 	cd ..
-	rm -Rf file_1
+	drop_privs rm -Rf file_1
 fi
 echo "progress-mark:42:file cross build"
 
@@ -1794,7 +1815,7 @@ echo "progress-mark:63:p11-kit cross build"
 
 patch_ustr() {
 	echo "patching ustr to use only compile checks #721352"
-	patch -p1 <<'EOF'
+	drop_privs patch -p1 <<'EOF'
 From 2df8917753d227aa39c09fdc191e4a005a4e943f Mon Sep 17 00:00:00 2001
 From: Peter Pentchev <roam@ringlet.net>
 Date: Wed, 30 Jul 2014 00:21:20 +0300
@@ -1978,7 +1999,7 @@ index dab589a..ab05311 100644
 1.7.1
 EOF
 	echo "patching ustr to use cross tools #721352"
-	patch -p1 << 'EOF'
+	drop_privs patch -p1 << 'EOF'
 From c64fb406e8497898a33214f5afc2a6d8b12eb808 Mon Sep 17 00:00:00 2001
 From: Peter Pentchev <roam@ringlet.net>
 Date: Wed, 30 Jul 2014 19:30:25 +0300
@@ -2053,7 +2074,7 @@ builddep_flex() {
 }
 patch_flex() {
 	echo "patching flex to not run host arch executables #762180"
-	patch -p1 <<'EOF'
+	drop_privs patch -p1 <<'EOF'
 diff -Nru flex-2.5.39/debian/patches/help2man-cross.patch flex-2.5.39/debian/patches/help2man-cross.patch
 --- flex-2.5.39/debian/patches/help2man-cross.patch
 +++ flex-2.5.39/debian/patches/help2man-cross.patch
@@ -2127,7 +2148,7 @@ echo "progress-mark:67:libxau cross build"
 
 patch_libxdmcp() {
 	echo "patching libxdmcp to work around #761628"
-	patch -p1 <<'EOF'
+	drop_privs patch -p1 <<'EOF'
 --- libxdmcp-1.1.1.orig/doc/xdmcp.xml
 +++ libxdmcp-1.1.1/doc/xdmcp.xml
 @@ -23,7 +23,7 @@
