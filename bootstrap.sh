@@ -514,6 +514,93 @@ diff -u gcc-4.8-4.8.2/debian/rules.defs gcc-4.8-4.8.2/debian/rules.defs
 EOF
 }
 patch_gcc_4_9() {
+	echo "make gcc support dpkg-buildpackage --target-arch again"
+	drop_privs patch -p1 <<'EOF'
+diff -u gcc-4.9-4.9.2/debian/rules.defs gcc-4.9-4.9.2/debian/rules.defs
+--- gcc-4.9-4.9.2/debian/rules.defs
++++ gcc-4.9-4.9.2/debian/rules.defs
+@@ -31,23 +31,7 @@
+ # for rules.sonames
+ vafilt_defined = 1
+ 
+-dpkg_target_vars := $(shell (dpkg-architecture | grep -q DEB_TARGET) && echo yes)
+-ifeq ($(dpkg_target_vars),yes)
+-  DEB_TARGET_ARCH=
+-  DEB_TARGET_ARCH_BITS=
+-  DEB_TARGET_ARCH_CPU=
+-  DEB_TARGET_ARCH_ENDIAN=
+-  DEB_TARGET_ARCH_OS=
+-  DEB_TARGET_GNU_CPU=
+-  DEB_TARGET_GNU_SYSTEM=
+-  DEB_TARGET_GNU_TYPE=
+-  DEB_TARGET_MULTIARCH=
+-endif
+-
+ DPKG_VARS		:= $(shell dpkg-architecture)
+-ifeq ($(dpkg_target_vars),yes)
+-  DPKG_VARS		:= $(filter-out DEB_TARGET_%, $(DPKG_VARS))
+-endif
+ DEB_BUILD_ARCH		?= $(call vafilt,$(DPKG_VARS),DEB_BUILD_ARCH)
+ DEB_BUILD_GNU_TYPE	?= $(call vafilt,$(DPKG_VARS),DEB_BUILD_GNU_TYPE)
+ DEB_BUILD_MULTIARCH	?= $(call vafilt,$(DPKG_VARS),DEB_BUILD_MULTIARCH)
+@@ -97,7 +81,7 @@
+ 
+ # ---------------------------------------------------------------------------
+ # set target
+-# - GNU triplet via DEB_TARGET_GNU_TYPE
++# - dpkg-buildpackage --target-arch (via DEB_TARGET_ARCH)
+ # - Debian arch in debian/target
+ # - Debian arch via DEB_GCC_TARGET or GCC_TARGET
+ #
+@@ -105,32 +89,28 @@
+ ifdef GCC_TARGET
+   DEB_GCC_TARGET := $(GCC_TARGET)
+ endif
+-ifdef DEB_TARGET_GNU_TYPE
+-  TARGET_VARS := $(shell dpkg-architecture -f -t$(DEB_TARGET_GNU_TYPE) 2>/dev/null)
+-else
+-  # allow debian/target to be used instead of DEB_GCC_TARGET - this was requested
+-  # by toolchain-source maintainer
+-  DEBIAN_TARGET_FILE := $(strip $(if $(wildcard debian/target),$(shell cat debian/target 2>/dev/null)))
+-  ifndef DEB_TARGET_ARCH
+-    ifneq (,$(DEBIAN_TARGET_FILE))
+-      DEB_TARGET_ARCH := $(DEBIAN_TARGET_FILE)
+-    else
+-      ifdef DEB_GCC_TARGET
+-        DEB_TARGET_ARCH := $(DEB_GCC_TARGET)
+-      else
+-        DEB_TARGET_ARCH := $(DEB_HOST_ARCH)
+-      endif
++# since dpkg 1.17.14, DEB_TARGET_* default to DEB_HOST_*
++DEB_TARGET_ARCH ?= $(DEB_HOST_ARCH)
++# allow debian/target to be used instead of DEB_GCC_TARGET - this was requested
++# by toolchain-source maintainer
++DEBIAN_TARGET_FILE := $(strip $(if $(wildcard debian/target),$(shell cat debian/target 2>/dev/null)))
++# consider DEB_TARGET_* set, if it differs from DEB_HOST_*
++ifeq ($(DEB_TARGET_ARCH),$(DEB_HOST_ARCH))
++  ifneq (,$(DEBIAN_TARGET_FILE))
++    DEB_TARGET_ARCH := $(DEBIAN_TARGET_FILE)
++  else
++    ifdef DEB_GCC_TARGET
++      DEB_TARGET_ARCH := $(DEB_GCC_TARGET)
+     endif
+   endif
+-  TARGET_VARS := $(shell dpkg-architecture -f -a$(DEB_TARGET_ARCH) 2>/dev/null)
+-endif
+-ifeq ($(dpkg_target_vars),yes)
+-  TARGET_VARS		:= $(filter-out DEB_TARGET_%, $(TARGET_VARS))
+ endif
++TARGET_VARS := $(shell dpkg-architecture -f -a$(DEB_TARGET_ARCH) 2>/dev/null)
+ 
+ DEB_TARGET_ARCH		:= $(call vafilt,$(TARGET_VARS),DEB_HOST_ARCH)
++DEB_TARGET_ARCH_BITS	:= $(call vafilt,$(TARGET_VARS),DEB_HOST_ARCH_BITS)
+ DEB_TARGET_ARCH_OS	:= $(call vafilt,$(TARGET_VARS),DEB_HOST_ARCH_OS)
+ DEB_TARGET_ARCH_CPU	:= $(call vafilt,$(TARGET_VARS),DEB_HOST_ARCH_CPU)
++DEB_TARGET_ARCH_ENDIAN	:= $(call vafilt,$(TARGET_VARS),DEB_HOST_ARCH_ENDIAN)
+ DEB_TARGET_GNU_CPU	:= $(call vafilt,$(TARGET_VARS),DEB_HOST_GNU_CPU)
+ DEB_TARGET_GNU_TYPE	:= $(call vafilt,$(TARGET_VARS),DEB_HOST_GNU_TYPE)
+ DEB_TARGET_GNU_SYSTEM	:= $(call vafilt,$(TARGET_VARS),DEB_HOST_GNU_SYSTEM)
+EOF
 	if test "$ENABLE_MULTIARCH_GCC" = yes; then
 		echo "applying patches for with_deps_on_target_arch_pkgs"
 		drop_privs QUILT_PATCHES=/usr/share/cross-gcc/patches/ quilt push -a
