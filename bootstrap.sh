@@ -785,7 +785,7 @@ diff -Nru eglibc-2.18/debian/rules.d/build.mk eglibc-2.18/debian/rules.d/build.m
 diff -Nru glibc-2.19/debian/rules.d/debhelper.mk glibc-2.19/debian/rules.d/debhelper.mk
 --- glibc-2.19/debian/rules.d/debhelper.mk
 +++ glibc-2.19/debian/rules.d/debhelper.mk
-@@ -197,7 +197,15 @@
+@@ -197,7 +197,18 @@
  	curpass=\$(curpass) ; \\
  	templates="libc-dev" ;\\
 -	pass="" ; \\
@@ -798,6 +798,9 @@ diff -Nru glibc-2.19/debian/rules.d/debhelper.mk glibc-2.19/debian/rules.d/debhe
 +	  *:/lib32 | *:/lib64 | *:/libo32 | *:/libx32 | *:/lib/arm-linux-gnueabi*) \\
 +	    pass="-alt" \\
 +	    suffix=-"\$(curpass)" \\
++	    ;; \\
++	  *:* ) \\
++           templates="" \\
 +	    ;; \\
 +	esac ; \\
  	for t in \$\$templates ; do \\
