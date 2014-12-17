@@ -1545,10 +1545,6 @@ echo "progress-mark:23:xz-utils cross build"
 cross_build libonig
 echo "progress-mark:24:libonig cross build"
 
-builddep_libpng() {
-	# libtool dependency unsatisfiable
-	$APT_GET install debhelper libtool automake autoconf zlib1g-dev:$HOST_ARCH mawk
-}
 cross_build libpng
 echo "progress-mark:25:libpng cross build"
 
