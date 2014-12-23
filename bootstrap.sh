@@ -274,12 +274,7 @@ else
 fi
 
 if test "$ENABLE_MULTIARCH_GCC" = yes; then
-	echo "deb $MIRROR experimental main" > /etc/apt/sources.list.d/tmp-experimental.list
-	apt-get update
-	$APT_GET install cross-gcc-dev
-	rm /etc/apt/sources.list.d/tmp-experimental.list
-	apt-get update
-	$APT_GET install quilt
+	$APT_GET install cross-gcc-dev quilt
 fi
 
 obtain_source_package() {
