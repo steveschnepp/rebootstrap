@@ -509,8 +509,9 @@ diff -u gcc-4.8-4.8.2/debian/rules.defs gcc-4.8-4.8.2/debian/rules.defs
 EOF
 }
 patch_gcc_4_9() {
-	echo "make gcc support dpkg-buildpackage --target-arch again"
-	drop_privs patch -p1 <<'EOF'
+	if test "$ENABLE_MULTIARCH_GCC" != yes; then # cross-gcc-dev carries this patch
+		echo "make gcc support dpkg-buildpackage --target-arch again #773065"
+		drop_privs patch -p1 <<'EOF'
 diff -u gcc-4.9-4.9.2/debian/rules.defs gcc-4.9-4.9.2/debian/rules.defs
 --- gcc-4.9-4.9.2/debian/rules.defs
 +++ gcc-4.9-4.9.2/debian/rules.defs
@@ -596,6 +597,7 @@ diff -u gcc-4.9-4.9.2/debian/rules.defs gcc-4.9-4.9.2/debian/rules.defs
  DEB_TARGET_GNU_TYPE	:= $(call vafilt,$(TARGET_VARS),DEB_HOST_GNU_TYPE)
  DEB_TARGET_GNU_SYSTEM	:= $(call vafilt,$(TARGET_VARS),DEB_HOST_GNU_SYSTEM)
 EOF
+	fi
 	echo "fixing i386 stage1 build"
 	drop_privs patch -p1 <<'EOF'
 diff -u gcc-4.9-4.9.2/debian/rules.conf gcc-4.9-4.9.2/debian/rules.conf
