@@ -598,20 +598,6 @@ diff -u gcc-4.9-4.9.2/debian/rules.defs gcc-4.9-4.9.2/debian/rules.defs
  DEB_TARGET_GNU_SYSTEM	:= $(call vafilt,$(TARGET_VARS),DEB_HOST_GNU_SYSTEM)
 EOF
 	fi
-	echo "fixing i386 stage1 build"
-	drop_privs patch -p1 <<'EOF'
-diff -u gcc-4.9-4.9.2/debian/rules.conf gcc-4.9-4.9.2/debian/rules.conf
---- gcc-4.9-4.9.2/debian/rules.conf
-+++ gcc-4.9-4.9.2/debian/rules.conf
-@@ -650,6 +650,7 @@
-   endif
-   addons += $(if $(findstring armel,$(biarchhfarchs)),armml)
-   addons += $(if $(findstring armhf,$(biarchsfarchs)),armml)
-+  addons += $(if $(findstring amd64,$(biarchx32archs)),x32dev)
-   ifeq ($(DEB_STAGE),stage2)
-     addons += libgcc gccxbase
-     ifeq ($(multilib),yes)
-EOF
 	if test "$ENABLE_MULTIARCH_GCC" = yes; then
 		echo "applying patches for with_deps_on_target_arch_pkgs"
 		drop_privs QUILT_PATCHES=/usr/share/cross-gcc/patches/ quilt push -a
