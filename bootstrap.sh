@@ -601,6 +601,27 @@ EOF
 	if test "$ENABLE_MULTIARCH_GCC" = yes; then
 		echo "applying patches for with_deps_on_target_arch_pkgs"
 		drop_privs QUILT_PATCHES=/usr/share/cross-gcc/patches/ quilt push -a
+		echo "applying extra patch for with_deps_on_target_arch_pkgs and stage2 #774010"
+		drop_privs patch -p1 <<'EOF'
+Index: gcc-4.9-4.9.2/debian/rules.conf
+===================================================================
+--- gcc-4.9-4.9.2.orig/debian/rules.conf
++++ gcc-4.9-4.9.2/debian/rules.conf
+@@ -654,7 +654,12 @@
+   addons += $(if $(findstring armel,$(biarchhfarchs)),armml)
+   addons += $(if $(findstring armhf,$(biarchsfarchs)),armml)
+   ifeq ($(DEB_STAGE),stage2)
+-    addons += libgcc gccxbase
++    addons += libgcc
++    ifeq ($(with_deps_on_target_arch_pkgs),yes)
++      addons += gccbase
++    else
++      addons += gccxbase
++    endif
+     ifeq ($(multilib),yes)
+       addons += lib32gcc lib64gcc libn32gcc
+       addons += $(if $(findstring amd64,$(biarchx32archs)),libx32gcc)
+EOF
 	fi
 }
 if test "$ENABLE_MULTIARCH_GCC" = yes; then
@@ -1100,13 +1121,13 @@ else
 	cross_build_setup "gcc-$GCC_VER" gcc2
 	dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends
 	if test "$ENABLE_MULTILIB" = yes; then
-		drop_privs DEB_STAGE=stage2 dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -T control
+		drop_privs with_deps_on_target_arch_pkgs=yes DEB_STAGE=stage2 dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -T control
 		dpkg-checkbuilddeps || : # tell unmet build depends again after rewriting control
-		drop_privs gcc_cv_libc_provides_ssp=yes DEB_STAGE=stage2 dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -b -uc -us
+		drop_privs with_deps_on_target_arch_pkgs=yes gcc_cv_libc_provides_ssp=yes DEB_STAGE=stage2 dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -b -uc -us
 	else
-		drop_privs DEB_CROSS_NO_BIARCH=yes DEB_STAGE=stage2 dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -T control
+		drop_privs with_deps_on_target_arch_pkgs=yes DEB_CROSS_NO_BIARCH=yes DEB_STAGE=stage2 dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -T control
 		dpkg-checkbuilddeps || : # tell unmet build depends again after rewriting control
-		drop_privs gcc_cv_libc_provides_ssp=yes DEB_CROSS_NO_BIARCH=yes DEB_STAGE=stage2 dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -b -uc -us
+		drop_privs with_deps_on_target_arch_pkgs=yes gcc_cv_libc_provides_ssp=yes DEB_CROSS_NO_BIARCH=yes DEB_STAGE=stage2 dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -b -uc -us
 	fi
 	cd ..
 	ls -l
