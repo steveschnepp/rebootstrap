@@ -1498,6 +1498,60 @@ diff -Nru ncurses-5.9+20140118/debian/rules ncurses-5.9+20140118/debian/rules
  with_gpm = --with-gpm
  endif
 EOF
+	echo "patching ncurses to use the correct multilib compiler #774404"
+	drop_privs patch -p1 <<'EOF'
+diff -Nru ncurses-5.9+20140913/debian/rules ncurses-5.9+20140913/debian/rules
+--- ncurses-5.9+20140913/debian/rules
++++ ncurses-5.9+20140913/debian/rules
+@@ -7,6 +7,14 @@
+ export CXXFLAGS := $(shell dpkg-buildflags --get CXXFLAGS)
+ export LDFLAGS := $(shell dpkg-buildflags --get LDFLAGS)
+ 
++ifneq ($(DEB_BUILD_GNU_TYPE),$(DEB_HOST_GNU_TYPE))
++HOST_CC ?= $(DEB_HOST_GNU_TYPE)-gcc
++HOST_CXX ?= $(DEB_HOST_GNU_TYPE)-g++
++else
++HOST_CC ?= gcc
++HOST_CXX ?= g++
++endif
++
+ # These are important since this is a library package
+ soname=5
+ sodepver = (>= 5.9+20140712)
+@@ -191,8 +199,8 @@
+ 
+ 	cf_cv_type_of_bool='unsigned char'; export cf_cv_type_of_bool; \
+ 	cf_cv_working_poll=yes; export cf_cv_working_poll; \
+-	cd $(objdir-32) && CFLAGS="$(CFLAGS)" CC="gcc -m32" \
+-		BUILD_CC="gcc" CXX="g++ -m32" \
++	cd $(objdir-32) && CFLAGS="$(CFLAGS)" CC="$(HOST_CC) -m32" \
++		BUILD_CC="gcc" CXX="$(HOST_CXX) -m32" \
+ 		$(srcdir)/configure \
+ 		$(CONFARGS) \
+ 		--host=$(build_32_target) \
+@@ -205,8 +213,8 @@
+ 
+ 	cf_cv_type_of_bool='unsigned char'; export cf_cv_type_of_bool; \
+ 	cf_cv_working_poll=yes; export cf_cv_working_poll; \
+-	cd $(objdir-64) && CFLAGS="$(CFLAGS)" CC="gcc -m64" \
+-		BUILD_CC="gcc" CXX="g++ -m64" \
++	cd $(objdir-64) && CFLAGS="$(CFLAGS)" CC="$(HOST_CC) -m64" \
++		BUILD_CC="gcc" CXX="$(HOST_CXX) -m64" \
+ 		$(srcdir)/configure \
+ 		$(CONFARGS) \
+ 		--host=$(build_64_target) \
+@@ -254,8 +262,8 @@
+ 
+ 	cf_cv_type_of_bool='unsigned char'; export cf_cv_type_of_bool; \
+ 	cf_cv_working_poll=yes; export cf_cv_working_poll; \
+-	cd $(wobjdir-32) && CFLAGS="$(CFLAGS)" CC="gcc -m32" \
+-		BUILD_CC="gcc" BUILD_CPPFLAGS="-D_GNU_SOURCE" CXX="g++ -m32" \
++	cd $(wobjdir-32) && CFLAGS="$(CFLAGS)" CC="$(HOST_CC) -m32" \
++		BUILD_CC="gcc" BUILD_CPPFLAGS="-D_GNU_SOURCE" CXX="$(HOST_CXX) -m32" \
+ 		$(srcdir)/configure \
+ 		$(CONFARGS) \
+ 		--host=$(build_32_target) \
+EOF
 }
 builddep_ncurses() {
 	# g++-multilib dependency unsatisfiable
