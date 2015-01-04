@@ -1555,7 +1555,15 @@ EOF
 }
 builddep_ncurses() {
 	# g++-multilib dependency unsatisfiable
-	$APT_GET install debhelper dpkg-dev libgpm-dev:$HOST_ARCH pkg-config
+	$APT_GET install debhelper dpkg-dev "libgpm-dev:$1" pkg-config
+	case "$ENABLE_MULTILIB:$HOST_ARCH" in
+		yes:amd64|yes:i386|yes:powerpc|yes:ppc64|yes:s390|yes:sparc)
+			test "$1" = "$HOST_ARCH"
+			$APT_GET install "g++-$GCC_VER-multilib$HOST_ARCH_SUFFIX"
+			# the unversioned gcc-multilib$HOST_ARCH_SUFFIX should contain the following link
+			ln -sf "`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_MULTIARCH`/asm" /usr/include/asm
+		;;
+	esac
 }
 cross_build ncurses
 echo "progress-mark:20:ncurses cross build"
