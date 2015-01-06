@@ -1118,6 +1118,21 @@ diff -Nru glibc-2.19/debian/rules.d/control.mk glibc-2.19/debian/rules.d/control
  	rm $@T
  	touch $@
 EOF
+	echo "patching glibc to pass -l to dh_shlibdeps for multilib"
+	drop_privs patch -p1 <<'EOF'
+diff -Nru glibc-2.19/debian/rules.d/debhelper.mk glibc-2.19/debian/rules.d/debhelper.mk
+--- glibc-2.19/debian/rules.d/debhelper.mk
++++ glibc-2.19/debian/rules.d/debhelper.mk
+@@ -109,7 +109,7 @@
+ 	./debian/shlibs-add-udebs $(curpass)
+ 
+ 	dh_installdeb -p$(curpass)
+-	dh_shlibdeps -p$(curpass)
++	dh_shlibdeps $(if $($(lastword $(subst -, ,$(curpass)))_slibdir),-l$(CURDIR)/debian/$(curpass)/$($(lastword $(subst -, ,$(curpass)))_slibdir)) -p$(curpass)
+ 	dh_gencontrol -p$(curpass)
+ 	if [ $(curpass) = nscd ] ; then \
+ 		sed -i -e "s/\(Depends:.*libc[0-9.]\+\)-[a-z0-9]\+/\1/" debian/nscd/DEBIAN/control ; \
+EOF
 }
 if test -d "$RESULT/${LIBC_NAME}1"; then
 	echo "skipping rebuild of $LIBC_NAME stage1"
