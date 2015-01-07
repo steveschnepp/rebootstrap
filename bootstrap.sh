@@ -1655,7 +1655,21 @@ EOF
 }
 builddep_readline6() {
 	# gcc-multilib dependency unsatisfiable
-	$APT_GET install debhelper libtinfo-dev:$HOST_ARCH libncurses5-dev:$HOST_ARCH mawk texinfo autotools-dev
+	$APT_GET install debhelper "libtinfo-dev:$1" "libncursesw5-dev:$1" mawk texinfo autotools-dev
+	case "$ENABLE_MULTILIB:$HOST_ARCH" in
+		yes:amd64|yes:ppc64)
+			test "$1" = "$HOST_ARCH"
+			$APT_GET install "gcc-$GCC_VER-multilib$HOST_ARCH_SUFFIX" "lib32tinfo-dev:$1" "lib32ncursesw5-dev:$1"
+			# the unversioned gcc-multilib$HOST_ARCH_SUFFIX should contain the following link
+			ln -sf "`dpkg-architecture -a$1 -qDEB_HOST_MULTIARCH`/asm" /usr/include/asm
+		;;
+		yes:i386|yes:powerpc|yes:sparc|yes:s390)
+			test "$1" = "$HOST_ARCH"
+			$APT_GET install "gcc-$GCC_VER-multilib$HOST_ARCH_SUFFIX" "lib64ncurses5-dev:$1"
+			# the unversioned gcc-multilib$HOST_ARCH_SUFFIX should contain the following link
+			ln -sf "`dpkg-architecture -a$1 -qDEB_HOST_MULTIARCH`/asm" /usr/include/asm
+		;;
+	esac
 }
 cross_build readline6
 echo "progress-mark:21:readline6 cross build"
