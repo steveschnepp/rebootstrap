@@ -2423,3 +2423,9 @@ echo "progress-mark:72:libice cross build"
 cross_build libsm
 echo "progress-mark:73:libsm cross build"
 # needed by libxt
+
+export xorg_cv_malloc0_returns_null=no
+cross_build libxt
+unset xorg_cv_malloc0_returns_null
+echo "progress-mark:74:libxt cross build"
+# needed by libxaw, libxmu, groff
