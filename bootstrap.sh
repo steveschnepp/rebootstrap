@@ -806,14 +806,6 @@ else
 fi
 echo "progress-mark:3:gcc stage1 complete"
 
-if test "$ENABLE_MULTIARCH_GCC" = yes; then
-	# $LIBC_NAME looks for linux headers in /usr/<triplet>/include/linux rather than /usr/include/linux
-	# later gcc looks for pthread.h and stuff in /usr/<triplet>/include rather than /usr/include
-	mkdir -p "/usr/`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_GNU_TYPE`"
-	ln -s ../include "/usr/`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_GNU_TYPE`/include"
-	ln -s "../include/`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_MULTIARCH`" "/usr/`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_GNU_TYPE`/sys-include"
-fi
-
 # libc
 patch_glibc() {
 	echo "patching eglibc to include a libc6.so and place crt*.o in correct directory"
@@ -1132,6 +1124,21 @@ diff -Nru glibc-2.19/debian/rules.d/debhelper.mk glibc-2.19/debian/rules.d/debhe
  	dh_gencontrol -p$(curpass)
  	if [ $(curpass) = nscd ] ; then \
  		sed -i -e "s/\(Depends:.*libc[0-9.]\+\)-[a-z0-9]\+/\1/" debian/nscd/DEBIAN/control ; \
+EOF
+	echo "patching glibc to find standard linux headers"
+	drop_privs patch -p1 <<'EOF'
+diff -Nru glibc-2.19/debian/sysdeps/linux.mk glibc-2.19/debian/sysdeps/linux.mk
+--- glibc-2.19/debian/sysdeps/linux.mk
++++ glibc-2.19/debian/sysdeps/linux.mk
+@@ -16,7 +16,7 @@
+ endif
+
+ ifndef LINUX_SOURCE
+-  ifeq ($(DEB_HOST_GNU_TYPE),$(DEB_BUILD_GNU_TYPE))
++  ifeq ($(shell dpkg-query --status linux-libc-dev-$(DEB_HOST_ARCH)-cross 2>/dev/null),)
+     LINUX_HEADERS := /usr/include
+   else
+     LINUX_HEADERS := /usr/$(DEB_HOST_GNU_TYPE)/include
 EOF
 }
 if test -d "$RESULT/${LIBC_NAME}1"; then
