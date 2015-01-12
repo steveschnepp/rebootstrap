@@ -1166,11 +1166,6 @@ else
 	drop_privs rm -Rf "${LIBC_NAME}1"
 fi
 echo "progress-mark:4:$LIBC_NAME stage1 complete"
-if test "$ENABLE_MULTIARCH_GCC" = yes; then
-	# binutils looks for libc.so in /usr/<triplet>/lib rather than /usr/lib/<triplet>
-	mkdir -p "/usr/`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_GNU_TYPE`"
-	ln -s "/usr/lib/`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_MULTIARCH`" "/usr/`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_GNU_TYPE`/lib"
-fi
 
 if test -d "$RESULT/gcc2"; then
 	echo "skipping rebuild of gcc stage2"
