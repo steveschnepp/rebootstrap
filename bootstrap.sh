@@ -1203,8 +1203,7 @@ else
 	cd ..
 	ls -l
 	pickup_packages *.changes
-	drop_privs rm -f ./libc6-i686_*.deb
-	dpkg -i libc*-dev_*.deb libc*[0-9]_*_*.deb
+	$APT_GET dist-upgrade
 	test -d "$RESULT" && mkdir "$RESULT/${LIBC_NAME}2"
 	test -d "$RESULT" && cp libc*-dev_*.deb libc*[0-9]_*_*.deb "$RESULT/${LIBC_NAME}2"
 	cd ..
