@@ -638,27 +638,6 @@ EOF
 	if test "$ENABLE_MULTIARCH_GCC" = yes; then
 		echo "applying patches for with_deps_on_target_arch_pkgs"
 		drop_privs QUILT_PATCHES=/usr/share/cross-gcc/patches/ quilt push -a
-		echo "applying extra patch for with_deps_on_target_arch_pkgs and stage2 #774010"
-		drop_privs patch -p1 <<'EOF'
-Index: gcc-4.9-4.9.2/debian/rules.conf
-===================================================================
---- gcc-4.9-4.9.2.orig/debian/rules.conf
-+++ gcc-4.9-4.9.2/debian/rules.conf
-@@ -654,7 +654,12 @@
-   addons += $(if $(findstring armel,$(biarchhfarchs)),armml)
-   addons += $(if $(findstring armhf,$(biarchsfarchs)),armml)
-   ifeq ($(DEB_STAGE),stage2)
--    addons += libgcc gccxbase
-+    addons += libgcc
-+    ifeq ($(with_deps_on_target_arch_pkgs),yes)
-+      addons += gccbase
-+    else
-+      addons += gccxbase
-+    endif
-     ifeq ($(multilib),yes)
-       addons += lib32gcc lib64gcc libn32gcc
-       addons += $(if $(findstring amd64,$(biarchx32archs)),libx32gcc)
-EOF
 	fi
 }
 if test "$ENABLE_MULTIARCH_GCC" = yes; then
