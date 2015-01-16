@@ -505,6 +505,10 @@ cross_build() {
 	fi
 }
 
+if test "$ENABLE_MULTIARCH_GCC" != yes; then
+	$APT_GET install dpkg-cross
+fi
+
 # gcc0
 patch_gcc_4_8() {
 	echo "patching gcc to honour DEB_CROSS_NO_BIARCH for hppa #745116"
@@ -737,6 +741,9 @@ else
 	fi
 	cd ..
 	ls -l
+	if test "$ENABLE_MULTIARCH_GCC" != yes; then
+		drop_privs dpkg-cross -M -a "$HOST_ARCH" -b *.deb
+	fi
 	pickup_packages *.deb
 	test -d "$RESULT" && cp -v linux-libc-dev_*.deb "$RESULT"
 	cd ..
@@ -1125,7 +1132,11 @@ if test -d "$RESULT/${LIBC_NAME}1"; then
 	$APT_GET remove libc6-dev-i386
 	dpkg -i "$RESULT/${LIBC_NAME}1/"*.deb
 else
-	$APT_GET install gettext file quilt autoconf gawk debhelper rdfind symlinks libaudit-dev libcap-dev libselinux-dev binutils bison netbase linux-libc-dev:$HOST_ARCH
+	if test "$ENABLE_MULTIARCH_GCC" = yes; then
+		$APT_GET install gettext file quilt autoconf gawk debhelper rdfind symlinks libaudit-dev libcap-dev libselinux-dev binutils bison netbase "linux-libc-dev:$HOST_ARCH" "gcc-$GCC_VER$HOST_ARCH_SUFFIX"
+	else
+		$APT_GET install gettext file quilt autoconf gawk debhelper rdfind symlinks libaudit-dev libcap-dev libselinux-dev binutils bison netbase "linux-libc-dev-$HOST_ARCH-cross" "gcc-$GCC_VER$HOST_ARCH_SUFFIX"
+	fi
 	cross_build_setup "$LIBC_NAME" "${LIBC_NAME}1"
 	if test "$ENABLE_MULTILIB" = yes; then
 		dpkg-checkbuilddeps -B "-a$HOST_ARCH" -Pstage1 || : # tell unmet build depends
