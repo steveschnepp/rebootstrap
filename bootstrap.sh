@@ -17,6 +17,7 @@ APT_GET="apt-get --no-install-recommends -y"
 DEFAULT_PROFILES=cross
 LIBC_NAME=glibc
 DROP_PRIVS=buildd
+ENABLE_DEBBINDIFF=no
 
 # evaluate command line parameters of the form KEY=VALUE
 for param in "$*"; do
@@ -373,6 +374,65 @@ Pin-Priority: 1001
 EOF
 apt-get update
 
+chdist_native() {
+	local command
+	command="$1"
+	shift
+	chdist --data-dir /tmp/chdist_native --arch "$HOST_ARCH" "$command" native "$@"
+}
+
+if test "$ENABLE_DEBBINDIFF" = yes; then
+	$APT_GET install devscripts
+	chdist_native create "$MIRROR" sid main
+	if ! chdist_native apt-get update; then
+		echo "rebootstrap-warning: not comparing packages to native builds"
+		rm -Rf /tmp/chdist_native
+		ENABLE_DEBBINDIFF=no
+	fi
+fi
+if test "$ENABLE_DEBBINDIFF" = yes; then
+	$APT_GET install debbindiff
+	compare_native() {
+		local pkg pkgname tmpdir downloadname
+		for pkg in "$@"; do
+			if test "`dpkg-deb -f "$pkg" Architecture`" != "$HOST_ARCH"; then
+				echo "not comparing $pkg: wrong architecture"
+				continue
+			fi
+			pkgname=`dpkg-deb -f "$pkg" Package`
+			tmpdir=`mktemp -d`
+			if ! (cd "$tmpdir" && chdist_native apt-get download "$pkgname"); then
+				echo "not comparing $pkg: download failed"
+				rm -R "$tmpdir"
+				continue
+			fi
+			downloadname=`dpkg-deb -W --showformat '${Package}_${Version}_${Architecture}.deb' "$pkg" | sed 's/:/%3a/'`
+			if ! test -f "$tmpdir/$downloadname"; then
+				echo "not comparing $pkg: downloaded different version"
+				rm -R "$tmpdir"
+				continue
+			fi
+			if debbindiff --html "$tmpdir/out" "$pkg" "$tmpdir/$downloadname"; then
+				echo "debbindiff-success: $pkg"
+			else
+				if ! test -f "$tmpdir/out"; then
+					echo "rebootstrap-warning: debbindiff failed for $pkg"
+				elif test "`wc -l < "$tmpdir/out"`" -gt 1000; then
+					echo "truncated debbindiff output for $pkg:"
+					head -n1000 "$tmpdir/out"
+				else
+					echo "debbindiff output for $pkg:"
+					cat "$tmpdir/out"
+				fi
+			fi
+			rm -R "$tmpdir"
+		done
+	}
+else
+	compare_native() { :
+	}
+fi
+
 pickup_packages() {
 	local sources
 	local source
@@ -499,7 +559,8 @@ cross_build() {
 		ls -l
 		pickup_packages *.changes
 		test -d "$RESULT" && mkdir "$RESULT/$pkg"
-		test -d "$RESULT" && cp *.deb "$RESULT/$pkg/"
+		test -d "$RESULT" && cp ./*.deb "$RESULT/$pkg/"
+		compare_native ./*.deb
 		cd ..
 		drop_privs rm -Rf "$pkg"
 	fi
@@ -746,6 +807,7 @@ else
 	fi
 	pickup_packages *.deb
 	test -d "$RESULT" && cp -v linux-libc-dev_*.deb "$RESULT"
+	compare_native ./*.deb
 	cd ..
 	drop_privs rm -Rf linux
 fi
@@ -1217,6 +1279,7 @@ else
 	$APT_GET dist-upgrade
 	test -d "$RESULT" && mkdir "$RESULT/${LIBC_NAME}2"
 	test -d "$RESULT" && cp libc*-dev_*.deb libc*[0-9]_*_*.deb "$RESULT/${LIBC_NAME}2"
+	compare_native ./*.deb
 	cd ..
 	drop_privs rm -Rf "${LIBC_NAME}2"
 fi
@@ -1254,6 +1317,9 @@ else
 	if ! echo '#include "include_path_test_header.h"' | drop_privs "$preproc" -E -; then echo "stage3 gcc fails to search /usr/include/<triplet>"; exit 1; fi
 	test -d "$RESULT" && mkdir "$RESULT/gcc3"
 	test -d "$RESULT" && cp *.deb "$RESULT/gcc3"
+	if test "$ENABLE_MULTIARCH_GCC" = yes; then
+		compare_native ./*.deb
+	fi
 	cd ..
 	drop_privs rm -Rf gcc3
 fi
@@ -1705,6 +1771,7 @@ else
 	pickup_packages *.changes
 	test -d "$RESULT" && mkdir "$RESULT/libselinux1"
 	test -d "$RESULT" && cp *.deb "$RESULT/libselinux1"
+	compare_native ./*.deb
 	cd ..
 	drop_privs rm -Rf libselinux1
 fi
@@ -1855,6 +1922,7 @@ else
 	pickup_packages *.changes
 	test -d "$RESULT" && mkdir "$RESULT/util-linux_1"
 	test -d "$RESULT" && cp ./*.deb "$RESULT/util-linux_1"
+	compare_native ./*.deb
 	cd ..
 	drop_privs rm -Rf util-linux_1
 fi
@@ -1922,6 +1990,7 @@ else
 	pickup_packages *.changes
 	test -d "$RESULT" && mkdir "$RESULT/file_1"
 	test -d "$RESULT" && cp ./*.deb "$RESULT/file_1/"
+	compare_native ./*.deb
 	cd ..
 	drop_privs rm -Rf file_1
 fi
