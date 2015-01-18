@@ -1209,9 +1209,17 @@ else
 	fi
 	cd ..
 	ls -l
-	pickup_packages *.changes
 	$APT_GET remove libc6-dev-i386
-	dpkg -i libc*.deb
+	if test "$ENABLE_MULTIARCH_GCC" = yes; then
+		pickup_packages *.changes
+		dpkg -i libc*.deb
+	else
+		for pkg in *.deb; do
+			drop_privs dpkg-cross -M -a "$HOST_ARCH" -X tzdata -X libc-bin -X libc-dev-bin -b "$pkg"
+		done
+		pickup_packages *.changes *-cross_*.deb
+		dpkg -i libc*-cross_*.deb
+	fi
 	test -d "$RESULT" && mkdir "$RESULT/${LIBC_NAME}1"
 	test -d "$RESULT" && cp -v libc*-dev_*.deb "$RESULT/${LIBC_NAME}1"
 	cd ..
