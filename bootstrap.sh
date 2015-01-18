@@ -412,11 +412,12 @@ if test "$ENABLE_DEBBINDIFF" = yes; then
 				rm -R "$tmpdir"
 				continue
 			fi
-			if debbindiff --html "$tmpdir/out" "$pkg" "$tmpdir/$downloadname"; then
+			if timeout --kill-after=1m 1h debbindiff --html "$tmpdir/out" "$pkg" "$tmpdir/$downloadname"; then
 				echo "debbindiff-success: $pkg"
 			else
 				if ! test -f "$tmpdir/out"; then
 					echo "rebootstrap-warning: debbindiff failed for $pkg"
+					exit 1
 				elif test "`wc -l < "$tmpdir/out"`" -gt 1000; then
 					echo "truncated debbindiff output for $pkg:"
 					head -n1000 "$tmpdir/out"
