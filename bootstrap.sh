@@ -439,7 +439,7 @@ pickup_packages() {
 	local f
 	local i
 	# collect source package names referenced
-	for f in "$*"; do
+	for f in "$@"; do
 		if test "${f%.deb}" != "$f"; then
 			source=`dpkg-deb -f "$f" Source`
 			test -z "$source" && source=${f%%_*}
@@ -467,7 +467,7 @@ pickup_packages() {
 		reprepro removesrc rebootstrap "$source"
 	done
 	# add new contents
-	for f in "$*"; do
+	for f in "$@"; do
 		if test "${f%.deb}" != "$f"; then
 			reprepro includedeb rebootstrap "$f"
 		elif test "${f%.changes}" != "$f"; then
