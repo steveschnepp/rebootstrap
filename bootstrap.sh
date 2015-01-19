@@ -177,12 +177,15 @@ check_arch() {
 			fi
 		;;
 		*", PowerPC or cisco 4500, version "*)
-			if test powerpc != `dpkg-architecture -a$2 -qDEB_HOST_ARCH_CPU`; then
-				echo "cpu mismatch"
-				echo "expected $2"
-				echo "got $FILE_RES"
-				return 1
-			fi
+			case `dpkg-architecture "-a$2" -qDEB_HOST_ARCH_CPU` in
+				powerpc|powerpcel) ;;
+				*)
+					echo "cpu mismatch"
+					echo "expected $2"
+					echo "got $FILE_RES"
+					return 1
+				;;
+			esac
 		;;
 		*", 64-bit PowerPC or cisco 7500, version "*)
 			case "`dpkg-architecture -a$2 -qDEB_HOST_ARCH_CPU`" in
