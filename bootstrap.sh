@@ -707,6 +707,21 @@ EOF
 	if test "$ENABLE_MULTIARCH_GCC" = yes; then
 		echo "applying patches for with_deps_on_target_arch_pkgs"
 		drop_privs QUILT_PATCHES=/usr/share/cross-gcc/patches/ quilt push -a
+		echo "patching to fix powerpc multilib stage2 build #774356"
+		drop_privs patch -p1 <<'EOF'
+diff -u gcc-4.9-*/debian/rules2 gcc-4.9-*/debian/rules2
+--- gcc-4.9-*/debian/rules2
++++ gcc-4.9-*/debian/rules2
+@@ -2173,7 +2173,7 @@
+ #	done
+ #  endif
+ 
+-ifeq ($(DEB_CROSS)-$(multilib),yes-yes)
++ifeq ($(DEB_CROSS)-$(multilib)-$(with_deps_on_target_arch_pkgs),yes-yes-)
+   ifneq ($(DEB_STAGE),stage1)
+     ifeq ($(DEB_TARGET_ARCH)-$(biarch64),s390-yes)
+ 	: # s390 64bit stuff happens to be in s390x-linux-gnu/lib64/
+EOF
 	fi
 }
 if test "$ENABLE_MULTIARCH_GCC" = yes; then
