@@ -1302,8 +1302,19 @@ else
 	fi
 	cd ..
 	ls -l
-	pickup_packages *.changes
-	$APT_GET dist-upgrade
+	if test "$ENABLE_MULTIARCH_GCC" = yes; then
+		pickup_packages *.changes
+		$APT_GET dist-upgrade
+	else
+		for pkg in libc[0-9]*.deb; do
+			# dpkg-cross cannot handle these
+			test "${pkg%%_*}" = "libc6-loongson2f" && continue
+			test "${pkg%%_*}" = "libc6.1-alphaev67" && continue
+			drop_privs dpkg-cross -M -a "$HOST_ARCH" -X tzdata -X libc-bin -X libc-dev-bin -X multiarch-support -b "$pkg"
+		done
+		pickup_packages *.changes *-cross_*.deb
+		$APT_GET dist-upgrade
+	fi
 	test -d "$RESULT" && mkdir "$RESULT/${LIBC_NAME}2"
 	test -d "$RESULT" && cp libc*-dev_*.deb libc*[0-9]_*_*.deb "$RESULT/${LIBC_NAME}2"
 	compare_native ./*.deb
