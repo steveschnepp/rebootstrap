@@ -805,6 +805,31 @@ diff -Nru linux-3.14.7/debian/config/defines linux-3.14.7/debian/config/defines
 EOF
 		drop_privs ./debian/rules debian/rules.gen || : # intentionally exits 1 to avoid being called automatically. we are doing it wrong
 	fi
+	if test "$HOST_ARCH" = powerpcel; then
+		echo "patching linux for powerpcel"
+		drop_privs patch -p1 <<'EOF'
+diff -Nru linux-*/debian/config/powerpcel/defines linux-*/debian/config/powerpcel/defines
+--- linux-*/debian/config/powerpcel/defines
++++ linux-*/debian/config/powerpcel/defines
+@@ -0,0 +1,4 @@
++[base]
++kernel-arch: powerpc
++featuresets:
++# empty; just building headers yet
+diff -Nru linux-*/debian/config/defines linux-*/debian/config/defines
+--- linux-*/debian/config/defines
++++ linux-*/debian/config/defines
+@@ -22,6 +22,7 @@
+  mips64el
+  or1k
+  powerpc
++ powerpcel
+  powerpcspe
+  ppc64
+  ppc64el
+EOF
+		drop_privs ./debian/rules debian/rules.gen || : # intentionally exits 1 to avoid being called automatically. we are doing it wrong
+	fi
 }
 if test "`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS`" = "linux"; then
 PKG=`echo $RESULT/linux-libc-dev_*.deb`
