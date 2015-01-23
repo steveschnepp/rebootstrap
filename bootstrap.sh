@@ -2552,3 +2552,9 @@ cross_build libxt
 unset xorg_cv_malloc0_returns_null
 echo "progress-mark:74:libxt cross build"
 # needed by libxaw, libxmu, groff
+
+export xorg_cv_malloc0_returns_null=no
+cross_build libxext
+unset xorg_cv_malloc0_returns_null
+echo "progress-mark:75:libxext cross build"
+# needed by libxmu
