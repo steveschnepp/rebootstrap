@@ -567,7 +567,11 @@ cross_build() {
 }
 
 if test "$ENABLE_MULTIARCH_GCC" != yes; then
+	echo "deb $MIRROR experimental main" > /etc/apt/sources.list.d/tmp-experimental.list
+	$APT_GET update
 	$APT_GET install dpkg-cross
+	rm /etc/apt/sources.list.d/tmp-experimental.list
+	$APT_GET update
 fi
 
 # gcc0
