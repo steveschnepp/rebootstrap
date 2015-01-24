@@ -1232,6 +1232,24 @@ diff -Nru glibc-2.19/debian/sysdeps/linux.mk glibc-2.19/debian/sysdeps/linux.mk
    else
      LINUX_HEADERS := /usr/$(DEB_HOST_GNU_TYPE)/include
 EOF
+	if test "$HOST_ARCH" = powerpcel; then
+		echo "patching glibc for powerpcel"
+		drop_privs patch -p1 <<'EOF'
+diff -Nru glibc-2.19/debian/rules.d/control.mk glibc-2.19/debian/rules.d/control.mk
+--- glibc-2.19/debian/rules.d/control.mk
++++ glibc-2.19/debian/rules.d/control.mk
+@@ -1,7 +1,7 @@
+ libc_packages := libc6 libc6.1 libc0.1 libc0.3
+ libc0_1_archs := kfreebsd-amd64 kfreebsd-i386
+ libc0_3_archs := hurd-i386
+-libc6_archs   := amd64 arm arm64 armel armhf hppa i386 m68k mips mipsel mipsn32 mipsn32el mips64 mips64el powerpc powerpcspe ppc64 ppc64el sparc sparc64 s390x sh4 x32
++libc6_archs   := amd64 arm arm64 armel armhf hppa i386 m68k mips mipsel mipsn32 mipsn32el mips64 mips64el powerpc powerpcel powerpcspe ppc64 ppc64el sparc sparc64 s390x sh4 x32
+ libc6_1_archs := alpha
+ 
+ control_deps := $(wildcard debian/control.in/*) $(addprefix debian/control.in/, $(libc_packages))
+EOF
+		drop_privs ./debian/rules debian/control
+	fi
 }
 if test -d "$RESULT/${LIBC_NAME}1"; then
 	echo "skipping rebuild of $LIBC_NAME stage1"
