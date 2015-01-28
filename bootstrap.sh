@@ -706,7 +706,7 @@ EOF
 	fi
 	if test "$ENABLE_MULTIARCH_GCC" = yes; then
 		echo "applying patches for with_deps_on_target_arch_pkgs"
-		drop_privs QUILT_PATCHES=/usr/share/cross-gcc/patches/ quilt push -a
+		drop_privs QUILT_PATCHES="/usr/share/cross-gcc/patches/gcc-$GCC_VER" quilt push -a
 		echo "patching to fix powerpc multilib stage2 build #774356"
 		drop_privs patch -p1 <<'EOF'
 diff -u gcc-4.9-*/debian/rules2 gcc-4.9-*/debian/rules2
