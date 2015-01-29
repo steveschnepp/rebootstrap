@@ -1373,6 +1373,9 @@ else
 	$APT_GET install debhelper gawk patchutils bison flex lsb-release quilt libtool autoconf2.64 zlib1g-dev libcloog-isl-dev libmpc-dev libmpfr-dev libgmp-dev dejagnu autogen systemtap-sdt-dev binutils-multiarch "binutils$HOST_ARCH_SUFFIX" "libc-dev:$HOST_ARCH"
 	cross_build_setup "gcc-$GCC_VER" gcc3
 	dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends
+	if test "$ENABLE_MULTIARCH_GCC" != yes; then
+		export WITH_SYSROOT=/
+	fi
 	if test "$ENABLE_MULTILIB" = yes; then
 		drop_privs DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=d,go,java,objc,obj-c++" with_deps_on_target_arch_pkgs=yes dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -T control
 		dpkg-checkbuilddeps || : # tell unmet build depends again after rewriting control
@@ -1382,6 +1385,7 @@ else
 		dpkg-checkbuilddeps || : # tell unmet build depends again after rewriting control
 		drop_privs DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=d,go,java,objc,obj-c++" with_deps_on_target_arch_pkgs=yes DEB_CROSS_NO_BIARCH=yes dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -b -uc -us
 	fi
+	unset WITH_SYSROOT
 	cd ..
 	ls -l
 	pickup_packages *.changes
