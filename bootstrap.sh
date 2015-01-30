@@ -13,7 +13,7 @@ MIRROR="http://ftp.stw-bonn.de/debian"
 ENABLE_MULTILIB=no
 ENABLE_MULTIARCH_GCC=yes
 REPODIR=/tmp/repo
-APT_GET="apt-get --no-install-recommends -y"
+APT_GET="apt-get --no-install-recommends -y -o Debug::pkgProblemResolver=true -o Debug::pkgDepCache::Marker=1 -o Debug::pkgDepCache::AutoInstall=1"
 DEFAULT_PROFILES=cross
 LIBC_NAME=glibc
 DROP_PRIVS=buildd
