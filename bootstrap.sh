@@ -2580,3 +2580,7 @@ echo "progress-mark:75:libxext cross build"
 cross_build libxmu
 echo "progress-mark:76:libxmu cross build"
 # needed by groff, libxaw
+
+cross_build libxpm
+echo "progress-mark:77:libxpm cross build"
+# needed by libxaw
