@@ -1296,15 +1296,22 @@ else
 	$APT_GET install debhelper gawk patchutils bison flex lsb-release quilt libtool autoconf2.64 zlib1g-dev libcloog-isl-dev libmpc-dev libmpfr-dev libgmp-dev autogen systemtap-sdt-dev "libc-dev:$HOST_ARCH" binutils-multiarch "binutils$HOST_ARCH_SUFFIX"
 	cross_build_setup "gcc-$GCC_VER" gcc2
 	dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends
-	if test "$ENABLE_MULTILIB" = yes; then
-		drop_privs with_deps_on_target_arch_pkgs=yes DEB_STAGE=stage2 dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -T control
-		dpkg-checkbuilddeps || : # tell unmet build depends again after rewriting control
-		drop_privs with_deps_on_target_arch_pkgs=yes gcc_cv_libc_provides_ssp=yes DEB_STAGE=stage2 dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -b -uc -us
+	if test "$ENABLE_MULTIARCH_GCC" = yes; then
+		export with_deps_on_target_arch_pkgs=yes
 	else
-		drop_privs with_deps_on_target_arch_pkgs=yes DEB_CROSS_NO_BIARCH=yes DEB_STAGE=stage2 dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -T control
-		dpkg-checkbuilddeps || : # tell unmet build depends again after rewriting control
-		drop_privs with_deps_on_target_arch_pkgs=yes gcc_cv_libc_provides_ssp=yes DEB_CROSS_NO_BIARCH=yes DEB_STAGE=stage2 dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -b -uc -us
+		export gcc_cv_libc_provides_ssp=yes
 	fi
+	if test "$ENABLE_MULTILIB" = yes; then
+		drop_privs DEB_STAGE=stage2 dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -T control
+		dpkg-checkbuilddeps || : # tell unmet build depends again after rewriting control
+		drop_privs DEB_STAGE=stage2 dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -b -uc -us
+	else
+		drop_privs DEB_CROSS_NO_BIARCH=yes DEB_STAGE=stage2 dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -T control
+		dpkg-checkbuilddeps || : # tell unmet build depends again after rewriting control
+		drop_privs DEB_CROSS_NO_BIARCH=yes DEB_STAGE=stage2 dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -b -uc -us
+	fi
+	unset with_deps_on_target_arch_pkgs
+	unset gcc_cv_libc_provides_ssp
 	cd ..
 	ls -l
 	pickup_packages *.changes
