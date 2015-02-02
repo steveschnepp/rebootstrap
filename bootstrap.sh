@@ -1524,10 +1524,6 @@ cross_build attr
 echo "progress-mark:11:attr cross build"
 # needed by attr, coreutils, libcap-ng, tar
 
-builddep_acl() {
-	# libtool dependency unsatisfiable
-	$APT_GET install dpkg-dev debhelper autotools-dev autoconf automake gettext libtool libattr1-dev:$HOST_ARCH
-}
 cross_build acl
 echo "progress-mark:12:acl cross build"
 # needed by coreutils, tar
