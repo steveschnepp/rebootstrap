@@ -439,6 +439,7 @@ pickup_packages() {
 	local f
 	local i
 	# collect source package names referenced
+	sources=""
 	for f in "$@"; do
 		if test "${f%.deb}" != "$f"; then
 			source=`dpkg-deb -f "$f" Source`
@@ -483,10 +484,7 @@ pickup_packages() {
 cross_build_setup() {
 	local pkg mangledpkg subdir
 	pkg="$1"
-	subdir="$2"
-	if test -z "$subdir"; then
-		subdir="$pkg"
-	fi
+	subdir="${2:-$pkg}"
 	mangledpkg=`echo "$pkg" | tr -- -. __` # - invalid in function names
 	cd /tmp/buildd
 	drop_privs mkdir "$subdir"
@@ -501,6 +499,7 @@ cross_build_setup() {
 check_binNMU() {
 	local src pkg srcversion binversion maxversion
 	srcversion=`dpkg-parsechangelog -SVersion`
+	maxversion=$srcversion
 	for pkg in `dh_listpackages`; do
 		binversion=`apt-cache show "$pkg=$srcversion*" 2>/dev/null | sed -n 's/^Version: //p;T;q'`
 		test -z "$binversion" && continue
@@ -528,7 +527,7 @@ EOF
 cross_build() {
 	local pkg profiles mangledpkg
 	pkg="$1"
-	profiles="$DEFAULT_PROFILES $2"
+	profiles="$DEFAULT_PROFILES ${2:-}"
 	mangledpkg=`echo "$pkg" | tr -- -. __` # - invalid in function names
 	if test "$ENABLE_MULTILIB" = "no"; then
 		profiles="$profiles nobiarch"
