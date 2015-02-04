@@ -9,7 +9,7 @@ RESULT="/tmp/result"
 HOST_ARCH=undefined
 # select gcc version from gcc-defaults package unless set
 GCC_VER=
-MIRROR="http://ftp.stw-bonn.de/debian"
+: ${MIRROR:="http://http.debian.net/debian"}
 ENABLE_MULTILIB=no
 ENABLE_MULTIARCH_GCC=yes
 REPODIR=/tmp/repo
