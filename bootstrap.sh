@@ -2520,22 +2520,6 @@ cross_build libxau
 echo "progress-mark:67:libxau cross build"
 # needed by libxcb
 
-patch_libxdmcp() {
-	echo "patching libxdmcp to work around #761628"
-	drop_privs patch -p1 <<'EOF'
---- libxdmcp-1.1.1.orig/doc/xdmcp.xml
-+++ libxdmcp-1.1.1/doc/xdmcp.xml
-@@ -23,7 +23,7 @@
- <bookinfo>
-    <title>X Display Manager Control Protocol</title>
-    <subtitle>X.Org Standard</subtitle>
--   <releaseinfo>X Version 11, Release &fullrelvers;</releaseinfo>
-+   <releaseinfo>X Version 11, Release 7.6</releaseinfo>
-    <releaseinfo>Version 1.1</releaseinfo>
-    <authorgroup>
-    <author>
-EOF
-}
 cross_build libxdmcp
 echo "progress-mark:68:libxdmcp cross build"
 # needed by libxcb
