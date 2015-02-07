@@ -25,6 +25,47 @@ for param in "$*"; do
 	eval $param
 done
 
+# test whether element $2 is in set $1
+set_contains() {
+	case " $1 " in
+		*" $2 "*) return 0; ;;
+		*) return 1; ;;
+	esac
+}
+
+# add element $2 to set $1
+set_add() {
+	case " $1 " in
+		"  ") echo "$2" ;;
+		*" $2 "*) echo "$1" ;;
+		*) echo "$1 $2" ;;
+	esac
+}
+
+# remove element $2 from set $1
+set_discard() {
+	local word result
+	if set_contains "$1" "$2"; then
+		result=
+		for word in $1; do
+			test "$word" = "$2" || result="$result $word"
+		done
+		echo "${result# }"
+	else
+		echo "$1"
+	fi
+}
+
+# create a set from a string of words with duplicates and excess white space
+set_create() {
+	local word result
+	result=
+	for word in $1; do
+		result=`set_add "$result" "$word"`
+	done
+	echo "$result"
+}
+
 check_arch() {
 	local FILE_RES
 	FILE_RES=`file -b "$1"`
@@ -1418,6 +1459,55 @@ echo "progress-mark:7:gcc stage3 complete"
 
 $APT_GET remove libc6-i386 # breaks cross builds
 
+$APT_GET install dose-builddebcheck
+call_dose_builddebcheck() {
+	local package_list source_list errcode
+	package_list=`mktemp packages.XXXXXXXXXX`
+	source_list=`mktemp sources.XXXXXXXXXX`
+	cat /var/lib/apt/lists/*_Packages - > "$package_list" <<EOF
+Package: crossbuild-essential-$HOST_ARCH
+Version: 0
+Architecture: $HOST_ARCH
+Multi-Arch: foreign
+Depends: libc-dev
+Description: fake crossbuild-essential package for dose-builddebcheck
+
+EOF
+	cat /var/lib/apt/lists/*_Sources > "$source_list"
+	errcode=0
+	dose-builddebcheck "--deb-native-arch=`dpkg --print-architecture`" "--deb-host-arch=$HOST_ARCH" "$@" "$package_list" "$source_list" || errcode=$?
+	if test "$errcode" -gt 1; then
+		echo "dose-builddebcheck failed with error code $errcode" 1>&2
+		exit 1
+	fi
+	rm -f "$package_list" "$source_list"
+}
+
+need_packages=
+add_need() { need_packages=`set_add "$need_packages" "$1"`; }
+add_need pcre3 # by grep, libselinux, slang2
+
+automatically_cross_build_packages() {
+	local need_packages_comma_sep buildable pkg
+	while test -n "$need_packages"; do
+		echo "checking packages with dose-builddebcheck: $need_packages"
+		need_packages_comma_sep=`echo $need_packages | sed 's/ /,/g'`
+		buildable=`call_dose_builddebcheck --successes --explain-minimal --latest --DropBuildIndep "--checkonly=$need_packages_comma_sep" | sed 's/^  package: src://;t;d'`
+		buildable=`set_create "$buildable"`
+		echo "buildable packages: $buildable"
+		test -z "$buildable" && break
+		for pkg in $buildable; do
+			echo "cross building $pkg"
+			cross_build "$pkg"
+			echo "progress-mark:*:$pkg cross build"
+			need_packages=`set_discard "$need_packages" "$pkg"`
+		done
+	done
+	echo "done automatically cross building packages. left: $need_packages"
+}
+
+automatically_cross_build_packages
+
 patch_zlib() {
 	echo "patching zlib to support nobiarch build profile #709623"
 	drop_privs patch -p1 <<EOF
@@ -1506,6 +1596,8 @@ cross_build zlib
 echo "progress-mark:8:zlib cross build"
 # needed by dpkg, file, gnutls28, libpng, libtool, libxml2, perl, slang2, tcl8.6, util-linux
 
+automatically_cross_build_packages
+
 builddep_libtool() {
 	test "$1" = "$HOST_ARCH"
 	# gfortran dependency needs cross-translation
@@ -1515,9 +1607,7 @@ cross_build libtool
 echo "progress-mark:9:libtool cross build"
 # needed by guile-2.0
 
-cross_build pcre3
-echo "progress-mark:10:pcre3 cross build"
-# needed by grep, libselinux, slang2
+automatically_cross_build_packages
 
 cross_build attr
 echo "progress-mark:11:attr cross build"
