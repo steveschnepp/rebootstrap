@@ -744,6 +744,21 @@ diff -u gcc-4.9-4.9.2/debian/rules.defs gcc-4.9-4.9.2/debian/rules.defs
  DEB_TARGET_GNU_SYSTEM	:= $(call vafilt,$(TARGET_VARS),DEB_HOST_GNU_SYSTEM)
 EOF
 	fi
+	echo "patching gcc to apply biarch-cross.diff for all multilibs"
+	drop_privs patch -p1 <<'EOF'
+diff -u gcc-4.9-*/debian/rules.patch gcc-4.9-*/debian/rules.patch
+--- gcc-4.9-*/debian/rules.patch
++++ gcc-4.9-*/debian/rules.patch
+@@ -289,7 +289,7 @@
+ ifeq ($(DEB_CROSS),yes)
+   debian_patches += cross-no-locale-include
+ endif
+-ifeq ($(biarch64),yes)
++ifneq ($(filter yes,$(biarch32) $(biarch64) $(biarchhf) $(biarchn32) $(biarchsf) $(biarchx32)),)
+   ifeq ($(DEB_CROSS),yes)
+     debian_patches += cross-biarch
+   endif
+EOF
 	if test "$ENABLE_MULTIARCH_GCC" = yes; then
 		echo "applying patches for with_deps_on_target_arch_pkgs"
 		drop_privs QUILT_PATCHES="/usr/share/cross-gcc/patches/gcc-$GCC_VER" quilt push -a
