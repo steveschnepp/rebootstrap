@@ -66,6 +66,18 @@ set_create() {
 	echo "$result"
 }
 
+# intersect two sets
+set_intersect() {
+	local word result
+	result=
+	for word in $1; do
+		if set_contains "$2" "$word"; then
+			result=`set_add "$result" "$word"`
+		fi
+	done
+	echo "$result"
+}
+
 check_arch() {
 	local FILE_RES
 	FILE_RES=`file -b "$1"`
@@ -1524,7 +1536,19 @@ automatically_cross_build_packages() {
 	echo "done automatically cross building packages. left: $need_packages"
 }
 
+assert_built() {
+	local assert_pkgs assert_pkgs_comma_sep
+	assert_pkgs=`set_intersect "$1" "$need_packages"`
+	test -z "$assert_pkgs" && return 0
+	echo "rebootstrap-error: missing asserted packages: $assert_pkgs"
+	assert_pkgs_comma_sep=`echo $assert_pkgs | sed 's/ /,/g'`
+	call_dose_builddebcheck --failures --explain --latest --DropBuildIndep "--checkonly=$assert_pkgs_comma_sep"
+	return 1
+}
+
 automatically_cross_build_packages
+
+assert_built "$need_packages"
 
 patch_zlib() {
 	echo "patching zlib to support nobiarch build profile #709623"
