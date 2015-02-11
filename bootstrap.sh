@@ -1515,6 +1515,7 @@ EOF
 
 need_packages=
 add_need() { need_packages=`set_add "$need_packages" "$1"`; }
+add_need attr # by acl, coreutils, libcap-ng, libcap2, tar
 add_need pcre3 # by grep, libselinux, slang2
 
 automatically_cross_build_packages() {
@@ -1547,8 +1548,6 @@ assert_built() {
 }
 
 automatically_cross_build_packages
-
-assert_built "$need_packages"
 
 patch_zlib() {
 	echo "patching zlib to support nobiarch build profile #709623"
@@ -1651,9 +1650,7 @@ echo "progress-mark:9:libtool cross build"
 
 automatically_cross_build_packages
 
-cross_build attr
-echo "progress-mark:11:attr cross build"
-# needed by attr, coreutils, libcap-ng, tar
+assert_built "$need_packages"
 
 cross_build acl
 echo "progress-mark:12:acl cross build"
