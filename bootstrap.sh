@@ -2698,3 +2698,11 @@ echo "progress-mark:77:libxpm cross build"
 cross_build libxaw
 echo "progress-mark:78:libxaw cross build"
 # needed by groff
+
+builddep_groff() {
+	# netpbm lacks M-A:foreign #700007
+	$APT_GET install bison debhelper dpkg-dev ghostscript netpbm psutils xutils-dev x11proto-core-dev "libx11-dev:$1" "libxmu-dev:$1" "libxt-dev:$1" "libxaw7-dev:$1" texinfo dh-autoreconf
+}
+cross_build groff
+echo "progress-mark:79:groff cross build"
+# needed for man-db
