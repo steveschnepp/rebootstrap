@@ -771,6 +771,29 @@ diff -u gcc-4.9-*/debian/rules.patch gcc-4.9-*/debian/rules.patch
      debian_patches += cross-biarch
    endif
 EOF
+	echo "patching gcc to fix placement of biarch libs in i386 build"
+	drop_privs patch -p1 <<'EOF'
+diff -u gcc-4.9-4.9.2/debian/rules2 gcc-4.9-4.9.2/debian/rules2
+--- gcc-4.9-4.9.2/debian/rules2
++++ gcc-4.9-4.9.2/debian/rules2
+@@ -2185,6 +2185,16 @@
+ 	mkdir -p $(d)/$(PF)/powerpc-linux-gnu/lib64
+ 	cp -a $(d)/$(PF)/powerpc64-linux-gnu/lib64/* $(d)/$(PF)/powerpc-linux-gnu/lib64/
+     endif
++    ifeq ($(DEB_TARGET_ARCH)-$(biarch64),i386-yes)
++	: # i386 64bit build happens to be in x86_64-linux-gnu/lib64
++	mkdir -p $(d)/$(PF)/i586-linux-gnu/lib64
++	cp -a $(d)/$(PF)/x86_64-linux-gnu/lib64/* $(d)/$(PF)/i586-linux-gnu/lib64/
++    endif
++    ifeq ($(DEB_TARGET_ARCH)-$(biarchx32),i386-yes)
++	: # i386 x32 build happens to be in x86_64-linux-gnux32/libx32
++	mkdir -p $(d)/$(PF)/i586-linux-gnu/libx32
++	cp -a $(d)/$(PF)/x86_64-linux-gnux32/libx32/* $(d)/$(PF)/i586-linux-gnu/libx32/
++    endif
+   endif
+ endif
+ 
+EOF
 	if test "$ENABLE_MULTIARCH_GCC" = yes; then
 		echo "applying patches for with_deps_on_target_arch_pkgs"
 		drop_privs QUILT_PATCHES="/usr/share/cross-gcc/patches/gcc-$GCC_VER" quilt push -a
