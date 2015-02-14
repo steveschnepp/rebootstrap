@@ -2242,10 +2242,6 @@ builddep_bash() {
 cross_build bash
 echo "progress-mark:46:bash cross build"
 
-builddep_build_essential() {
-	# python3 dependency unsatisfiable #750976
-	$APT_GET install debhelper python3
-}
 cross_build build-essential
 echo "progress-mark:47:build-essential cross build"
 
