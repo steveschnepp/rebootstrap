@@ -1538,6 +1538,7 @@ EOF
 
 need_packages=
 add_need() { need_packages=`set_add "$need_packages" "$1"`; }
+add_need acl # by coreutils, systemd, tar
 add_need attr # by acl, coreutils, libcap-ng, libcap2, tar
 add_need pcre3 # by grep, libselinux, slang2
 
@@ -1674,10 +1675,6 @@ echo "progress-mark:9:libtool cross build"
 automatically_cross_build_packages
 
 assert_built "$need_packages"
-
-cross_build acl
-echo "progress-mark:12:acl cross build"
-# needed by coreutils, tar
 
 if test "`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_ARCH_OS`" = "linux"; then
 	cross_build libsepol
