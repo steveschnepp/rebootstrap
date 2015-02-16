@@ -445,7 +445,7 @@ fi
 if test "$ENABLE_DEBBINDIFF" = yes; then
 	$APT_GET install debbindiff
 	compare_native() {
-		local pkg pkgname tmpdir downloadname
+		local pkg pkgname tmpdir downloadname errcode
 		for pkg in "$@"; do
 			if test "`dpkg-deb -f "$pkg" Architecture`" != "$HOST_ARCH"; then
 				echo "not comparing $pkg: wrong architecture"
@@ -464,20 +464,32 @@ if test "$ENABLE_DEBBINDIFF" = yes; then
 				rm -R "$tmpdir"
 				continue
 			fi
-			if timeout --kill-after=1m 1h debbindiff --html "$tmpdir/out" "$pkg" "$tmpdir/$downloadname"; then
-				echo "debbindiff-success: $pkg"
-			else
-				if ! test -f "$tmpdir/out"; then
-					echo "rebootstrap-warning: debbindiff failed for $pkg"
+			errcode=0
+			timeout --kill-after=1m 1h debbindiff --text "$tmpdir/out" "$pkg" "$tmpdir/$downloadname" || errcode=$?
+			case $errcode in
+				0)
+					echo "debbindiff-success: $pkg"
+				;;
+				1)
+					if ! test -f "$tmpdir/out"; then
+						echo "rebootstrap-error: no debbindiff output for $pkg"
+						exit 1
+					elif test "`wc -l < "$tmpdir/out"`" -gt 1000; then
+						echo "truncated debbindiff output for $pkg:"
+						head -n1000 "$tmpdir/out"
+					else
+						echo "debbindiff output for $pkg:"
+						cat "$tmpdir/out"
+					fi
+				;;
+				124)
+					echo "rebootstrap-warning: debbindiff timed out"
+				;;
+				*)
+					echo "rebootstrap-error: debbindiff terminated with abnormal exit code $errcode"
 					exit 1
-				elif test "`wc -l < "$tmpdir/out"`" -gt 1000; then
-					echo "truncated debbindiff output for $pkg:"
-					head -n1000 "$tmpdir/out"
-				else
-					echo "debbindiff output for $pkg:"
-					cat "$tmpdir/out"
-				fi
-			fi
+				;;
+			esac
 			rm -R "$tmpdir"
 		done
 	}
