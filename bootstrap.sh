@@ -794,6 +794,32 @@ diff -u gcc-4.9-4.9.2/debian/rules2 gcc-4.9-4.9.2/debian/rules2
  endif
  
 EOF
+	echo "fixing cross-biarch.diff to remap lib32 to libo32 on mips64el"
+	drop_privs patch -p1 <<'EOF'
+diff -u gcc-4.9-4.9.2/debian/patches/cross-biarch.diff gcc-4.9-4.9.2/debian/patches/cross-biarch.diff
+--- gcc-4.9-4.9.2/debian/patches/cross-biarch.diff
++++ gcc-4.9-4.9.2/debian/patches/cross-biarch.diff
+@@ -4,13 +4,18 @@
+ 
+ --- a/src/config-ml.in	2010-08-24 01:48:38.000000000 -0400
+ +++ b/src/config-ml.in	2010-08-24 03:56:12.000000000 -0400
+-@@ -540,7 +540,12 @@
++@@ -540,7 +540,17 @@
+  	    else \
+  	      if [ -d ../$${dir}/$${lib} ]; then \
+  		flags=`echo $$i | sed -e 's/^[^;]*;//' -e 's/@/ -/g'`; \
+ -		if (cd ../$${dir}/$${lib}; $(MAKE) $(FLAGS_TO_PASS) \
+ +		libsuffix_="$${dir}"; \
+ +		if [ "$${dir}" = "n32" ]; then libsuffix_=32; fi; \
+++EOF
+++cat >>Multi.tem <<EOF
+++		case "\$\${dir}:${host}" in 32:mips*) libsuffix_=o32; ;; esac; \\
+++EOF
+++cat >>Multi.tem <<\EOF
+ +		if (cd ../$${dir}/$${lib}; $(MAKE) $(subst \
+ +				-B$(build_tooldir)/lib/, \
+ +				-B$(build_tooldir)/lib$${libsuffix_}/, \
+EOF
 	if test "$ENABLE_MULTIARCH_GCC" = yes; then
 		echo "applying patches for with_deps_on_target_arch_pkgs"
 		drop_privs QUILT_PATCHES="/usr/share/cross-gcc/patches/gcc-$GCC_VER" quilt push -a
