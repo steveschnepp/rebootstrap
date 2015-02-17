@@ -1578,7 +1578,16 @@ need_packages=
 add_need() { need_packages=`set_add "$need_packages" "$1"`; }
 add_need acl # by coreutils, systemd, tar
 add_need attr # by acl, coreutils, libcap-ng, libcap2, tar
+add_need cloog # by gcc-4.9
+add_need gmp # by cloog, gnutls28, guile-2.0, isl, mpclib3, mpfr4, nettle
+add_need isl # by cloog
+add_need libonig # by slang2
+add_need libpng # by slang2
+test "`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS`" = linux && add_need libsepol # by libselinux
+add_need mpclib3 # by gcc-4.9
+add_need mpfr4 # by gcc-4.9
 add_need pcre3 # by grep, libselinux, slang2
+add_need slang2 # by cdebconf, newt
 
 automatically_cross_build_packages() {
 	local need_packages_comma_sep buildable pkg
@@ -1712,34 +1721,15 @@ echo "progress-mark:9:libtool cross build"
 
 automatically_cross_build_packages
 
-assert_built "$need_packages"
-
-if test "`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_ARCH_OS`" = "linux"; then
-	cross_build libsepol
-	echo "progress-mark:13:libsepol cross build"
-fi
-
-cross_build gmp
-echo "progress-mark:14:gmp cross build"
-
-cross_build mpfr4
-echo "progress-mark:15:mpfr4 cross build"
-
-cross_build mpclib3
-echo "progress-mark:16:mpclib3 cross build"
-
-cross_build isl
-echo "progress-mark:17:isl cross build"
-
-cross_build cloog
-echo "progress-mark:18:cloog cross build"
-
 builddep_gpm() {
 	# texlive-base dependency unsatisfiable
 	$APT_GET install autoconf autotools-dev quilt debhelper mawk bison texlive-base texinfo texi2html
 }
 cross_build gpm
 echo "progress-mark:19:gpm cross build"
+# needed by ncurses
+
+automatically_cross_build_packages
 
 patch_ncurses() {
 	echo "patching ncurses to support the nobiarch profile #737946"
@@ -1913,6 +1903,9 @@ builddep_ncurses() {
 }
 cross_build ncurses
 echo "progress-mark:20:ncurses cross build"
+# needed by bash, bsdmainutils, dpkg, guile-2.0, readline6, slang2
+
+automatically_cross_build_packages
 
 patch_readline6() {
 	echo "patching readline6 to support nobiarch profile #737955"
@@ -2004,6 +1997,9 @@ builddep_readline6() {
 }
 cross_build readline6
 echo "progress-mark:21:readline6 cross build"
+# needed by gnupg, guile-2.0, libxml2
+
+automatically_cross_build_packages
 
 builddep_bzip2() {
 	# unused gcc-multilib dependency unsatisfiable
@@ -2011,6 +2007,9 @@ builddep_bzip2() {
 }
 cross_build bzip2
 echo "progress-mark:22:bzip2 cross build"
+# needed by dpkg, perl
+
+automatically_cross_build_packages
 
 builddep_xz_utils() {
 	# autopoint dependency unsatisfiable
@@ -2018,15 +2017,11 @@ builddep_xz_utils() {
 }
 cross_build xz-utils
 echo "progress-mark:23:xz-utils cross build"
+# needed by dpkg, libxml2
 
-cross_build libonig
-echo "progress-mark:24:libonig cross build"
+automatically_cross_build_packages
 
-cross_build libpng
-echo "progress-mark:25:libpng cross build"
-
-cross_build slang2
-echo "progress-mark:26:slang2 cross build"
+assert_built "$need_packages"
 
 if test -d "$RESULT/libselinux1"; then
 	echo "skipping rebuild of libselinux stage1"
