@@ -2755,3 +2755,9 @@ builddep_groff() {
 cross_build groff
 echo "progress-mark:79:groff cross build"
 # needed for man-db
+
+export tcl_cv_strtod_buggy=ok
+cross_build tcl8.6
+unset tcl_cv_strtod_buggy
+echo "progress-mark:80:tcl8.6 cross build"
+# needed by newt
