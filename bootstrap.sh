@@ -316,19 +316,22 @@ $APT_GET install pinentry-curses # avoid installing pinentry-gtk (via reprepro)
 $APT_GET install build-essential debhelper reprepro
 
 if test -z "$DROP_PRIVS"; then
-	drop_privs() {
-		env -- "$@"
+	drop_privs_exec() {
+		exec env -- "$@"
 	}
 else
 	$APT_GET install adduser fakeroot
 	if ! getent passwd "$DROP_PRIVS" >/dev/null; then
 		adduser --system --group --home /tmp/buildd --no-create-home --shell /bin/false "$DROP_PRIVS"
 	fi
-	drop_privs() {
+	drop_privs_exec() {
 		# Two "--" are necessary here. The first is for start-stop-daemon, the second is for env.
-		/sbin/start-stop-daemon --start --pidfile /dev/null --chuid "$DROP_PRIVS:$DROP_PRIVS" --chdir "`pwd`" --startas /usr/bin/env -- -- "$@"
+		exec /sbin/start-stop-daemon --start --pidfile /dev/null --chuid "$DROP_PRIVS:$DROP_PRIVS" --chdir "`pwd`" --startas /usr/bin/env -- -- "$@"
 	}
 fi
+drop_privs() {
+	( drop_privs_exec "$@" )
+}
 
 if test "$ENABLE_MULTIARCH_GCC" = yes; then
 	$APT_GET install cross-gcc-dev quilt
@@ -590,7 +593,7 @@ EOF
 }
 
 cross_build() {
-	local pkg profiles mangledpkg
+	local pkg profiles mangledpkg ignorebd
 	pkg="$1"
 	profiles="$DEFAULT_PROFILES ${2:-}"
 	mangledpkg=`echo "$pkg" | tr -- -. __` # - invalid in function names
@@ -611,13 +614,20 @@ cross_build() {
 		fi
 		cross_build_setup "$pkg"
 		check_binNMU
+		ignorebd=
 		if type "builddep_$mangledpkg" >/dev/null; then
 			if dpkg-checkbuilddeps -a$HOST_ARCH -P "$profiles"; then
 				echo "rebootstrap-warning: Build-Depends for $pkg satisfied even though a custom builddep_  function is in use"
 			fi
-			drop_privs dpkg-buildpackage "-a$HOST_ARCH" -B "-P$profiles" -d -uc -us
-		else
-			drop_privs dpkg-buildpackage "-a$HOST_ARCH" -B "-P$profiles" -uc -us
+			ignorebd=-d
+		fi
+		(
+			if type "buildenv_$mangledpkg" >/dev/null; then
+				echo "adding environment variables via buildenv_$mangledpkg hook"
+				"buildenv_$mangledpkg"
+			fi
+			drop_privs_exec dpkg-buildpackage "-a$HOST_ARCH" -B "-P$profiles" $ignorebd -uc -us
+		)
 		fi
 		cd ..
 		ls -l
@@ -2680,15 +2690,13 @@ builddep_glib2_0() {
 	$APT_GET install debhelper cdbs dh-autoreconf pkg-config gettext autotools-dev gnome-pkg-tools dpkg-dev "libelfg0-dev:$1" "libpcre3-dev:$1" desktop-file-utils gtk-doc-tools "libselinux1-dev:$1" "linux-libc-dev:$1" "zlib1g-dev:$1" dbus dbus-x11 shared-mime-info xterm python python-dbus python-gi libxml2-utils "libffi-dev:$1"
 	$APT_GET install libglib2.0-dev # missing B-D on libglib2.0-dev:any <profile.cross>
 }
-export glib_cv_stack_grows=no
-export glib_cv_uscore=no
-export ac_cv_func_posix_getgrgid_r=yes
-export ac_cv_func_posix_getpwuid_r=yes
+buildenv_glib2_0() {
+	export glib_cv_stack_grows=no
+	export glib_cv_uscore=no
+	export ac_cv_func_posix_getgrgid_r=yes
+	export ac_cv_func_posix_getpwuid_r=yes
+}
 cross_build glib2.0
-unset glib_cv_stack_grows
-unset glib_cv_uscore
-unset ac_cv_func_posix_getpwuid_r
-unset ac_cv_func_posix_getgrgid_r
 echo "progress-mark:66:glib2.0 cross build"
 # needed by pkg-config, dbus, systemd, libxt
 
