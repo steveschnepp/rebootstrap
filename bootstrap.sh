@@ -628,7 +628,6 @@ cross_build() {
 			fi
 			drop_privs_exec dpkg-buildpackage "-a$HOST_ARCH" -B "-P$profiles" $ignorebd -uc -us
 		)
-		fi
 		cd ..
 		ls -l
 		pickup_packages *.changes
