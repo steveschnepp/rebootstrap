@@ -1589,16 +1589,29 @@ need_packages=
 add_need() { need_packages=`set_add "$need_packages" "$1"`; }
 add_need acl # by coreutils, systemd, tar
 add_need attr # by acl, coreutils, libcap-ng, libcap2, tar
+add_need base-files # essential
 add_need cloog # by gcc-4.9
+add_need dash # essential
+add_need db-defaults # by apt, perl, python2.7
+add_need diffutils # essential
+add_need gdbm # by man-db, perl, python2.7
 add_need gmp # by cloog, gnutls28, guile-2.0, isl, mpclib3, mpfr4, nettle
+add_need grep # essential
+add_need gzip # essential
 add_need isl # by cloog
+add_need libatomic-ops # by gcc-4.9, libgc
+add_need libgc # by guile-2.0
 add_need libonig # by slang2
 add_need libpng # by slang2
 test "`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS`" = linux && add_need libsepol # by libselinux
+add_need mawk # for base-files (alternatively: gawk)
 add_need mpclib3 # by gcc-4.9
 add_need mpfr4 # by gcc-4.9
+add_need nettle # by gnutls28
 add_need pcre3 # by grep, libselinux, slang2
+add_need sed # essential
 add_need slang2 # by cdebconf, newt
+add_need tar # essential
 
 automatically_cross_build_packages() {
 	local need_packages_comma_sep buildable pkg
@@ -2032,13 +2045,15 @@ echo "progress-mark:23:xz-utils cross build"
 
 automatically_cross_build_packages
 
-assert_built "$need_packages"
-
+builddep_libselinux() {
+	assert_built "libsepol pcre3"
+	# gem2deb dependency lacks profile annotation
+	$APT_GET install debhelper file "libsepol1-dev:$1" "libpcre3-dev:$1" pkg-config
+}
 if test -d "$RESULT/libselinux1"; then
 	echo "skipping rebuild of libselinux stage1"
 else
-	# gem2deb dependency lacks profile annotation
-	$APT_GET install debhelper file libsepol1-dev:$HOST_ARCH libpcre3-dev:$HOST_ARCH pkg-config
+	builddep_libselinux "$HOST_ARCH"
 	cross_build_setup libselinux libselinux1
 	dpkg-checkbuilddeps -B "-a$HOST_ARCH" || : # tell unmet build depends
 	drop_privs DEB_STAGE=stage1 dpkg-buildpackage -d -B -uc -us "-a$HOST_ARCH"
@@ -2052,6 +2067,9 @@ else
 	drop_privs rm -Rf libselinux1
 fi
 echo "progress-mark:27:libselinux cross build"
+# needed by coreutils, dpkg, findutils, glibc, sed, tar, util-linux
+
+automatically_cross_build_packages
 
 builddep_util_linux() {
 	# libsystemd-dev lacks profile annotation
@@ -2205,45 +2223,9 @@ fi
 echo "progress-mark:28:util-linux stage1 cross build"
 # essential, needed by e2fsprogs
 
-cross_build base-files
-echo "progress-mark:29:base-files cross build"
+automatically_cross_build_packages
 
-cross_build dash
-echo "progress-mark:30:dash cross build"
-
-cross_build tar
-echo "progress-mark:31:tar cross build"
-
-cross_build sed
-echo "progress-mark:32:sed cross build"
-
-cross_build gzip
-echo "progress-mark:33:gzip cross build"
-
-cross_build grep
-echo "progress-mark:34:grep cross build"
-
-cross_build nettle
-echo "progress-mark:35:nettle cross build"
-# needed by gnutls28
-
-cross_build db-defaults
-echo "progress-mark:36:db-defaults cross build"
-
-cross_build mawk
-echo "progress-mark:37:mawk cross build"
-
-cross_build libatomic-ops
-echo "progress-mark:38:libatomic-ops cross build"
-
-cross_build diffutils
-echo "progress-mark:39:diffutils cross build"
-
-cross_build libgc
-echo "progress-mark:40:libgc cross build"
-
-cross_build gdbm
-echo "progress-mark:41:gdbm cross build"
+assert_built "$need_packages"
 
 builddep_file() {
 	# python-all lacks build profile annotation
