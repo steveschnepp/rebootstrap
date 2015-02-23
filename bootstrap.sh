@@ -2752,3 +2752,10 @@ cross_build tcl8.6
 unset tcl_cv_strtod_buggy
 echo "progress-mark:80:tcl8.6 cross build"
 # needed by newt
+
+buildenv_libxss() {
+	export xorg_cv_malloc0_returns_null=no
+}
+cross_build libxss
+echo "progress-mark:81:libxss cross build"
+# needed by tk8.6
