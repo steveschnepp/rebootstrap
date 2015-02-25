@@ -1607,24 +1607,38 @@ add_need() { need_packages=`set_add "$need_packages" "$1"`; }
 add_need acl # by coreutils, systemd, tar
 add_need attr # by acl, coreutils, libcap-ng, libcap2, tar
 add_need base-files # essential
+add_need build-essential # build-essential
 add_need cloog # by gcc-4.9
 add_need dash # essential
 add_need db-defaults # by apt, perl, python2.7
+add_need debianutils # essential
 add_need diffutils # essential
+add_need gcc-defaults # for build-essential
 add_need gdbm # by man-db, perl, python2.7
 add_need gmp # by cloog, gnutls28, guile-2.0, isl, mpclib3, mpfr4, nettle
 add_need grep # essential
 add_need gzip # essential
+add_need hostname # essential
 add_need isl # by cloog
 add_need libatomic-ops # by gcc-4.9, libgc
+add_need libdebian-installer # by cdebconf
+add_need libelf # by systemtap, glib2.0
 add_need libgc # by guile-2.0
+add_need libgpg-error # for libgcrypt11, libgcrypt20
 add_need libonig # by slang2
 add_need libpng # by slang2
 test "`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS`" = linux && add_need libsepol # by libselinux
+add_need libtasn1-6 # by gnutls28, p11-kit
+add_need libtextwrap # by cdebconf
+add_need libunistring # by guile-2.0
+add_need make-dfsg # for build-essential
+add_need man-db # for debhelper
 add_need mawk # for base-files (alternatively: gawk)
 add_need mpclib3 # by gcc-4.9
 add_need mpfr4 # by gcc-4.9
 add_need nettle # by gnutls28
+add_need p11-kit # by gnutls28
+add_need patch # for dpkg-dev
 add_need pcre3 # by grep, libselinux, slang2
 add_need sed # essential
 add_need slang2 # by cdebconf, newt
@@ -2242,9 +2256,8 @@ echo "progress-mark:28:util-linux stage1 cross build"
 
 automatically_cross_build_packages
 
-assert_built "$need_packages"
-
 builddep_file() {
+	assert_built "zlib"
 	# python-all lacks build profile annotation
 	$APT_GET install debhelper dh-autoreconf "zlib1g-dev:$HOST_ARCH"
 }
@@ -2265,35 +2278,30 @@ else
 	drop_privs rm -Rf file_1
 fi
 echo "progress-mark:42:file cross build"
+# needed by gcc-4.9, needed for debhelper
 
-cross_build debianutils
-echo "progress-mark:43:debianutils cross build"
-
-cross_build libunistring
-echo "progress-mark:44:libunistring cross build"
-
-cross_build patch
-echo "progress-mark:45:patch cross build"
+automatically_cross_build_packages
 
 builddep_bash() {
+	assert_built "ncurses"
 	# time dependency unsatisfiable #751776
 	$APT_GET install autoconf autotools-dev bison "libncurses5-dev:$HOST_ARCH" texinfo texi2html debhelper locales gettext sharutils time xz-utils dpkg-dev
 }
 cross_build bash
 echo "progress-mark:46:bash cross build"
 
-cross_build build-essential
-echo "progress-mark:47:build-essential cross build"
+automatically_cross_build_packages
 
 builddep_bsdmainutils() {
+	assert_built "ncurses"
 	# python-hdate dependency unsatisfiable
 	$APT_GET install debhelper "libncurses5-dev:$HOST_ARCH" quilt python python-hdate
 }
 cross_build bsdmainutils
 echo "progress-mark:48:bsdmainutils cross build"
+# needed for man-db
 
-cross_build libelf
-echo "progress-mark:49:libelf cross build"
+automatically_cross_build_packages
 
 builddep_libffi() {
 	# dejagnu dependency unsatisfiable
@@ -2303,19 +2311,10 @@ cross_build libffi
 echo "progress-mark:50:libffi cross build"
 # needed by guile-2.0, p11-kit
 
-cross_build libdebian-installer
-echo "progress-mark:51:libdebian-installer cross build"
-# needed by cdebconf
-
-cross_build libtasn1-6
-echo "progress-mark:52:libtasn1-6 cross build"
-# needed by gnutls28, p11-kit
-
-cross_build gcc-defaults
-echo "progress-mark:53:gcc-defaults cross build"
-# needed for build-essential
+automatically_cross_build_packages
 
 builddep_dpkg() {
+	assert_built "bzip2 libselinux ncurses xz-utils zlib"
 	# libtimedate-perl dependency unsatisfiable
 	$APT_GET install debhelper pkg-config flex gettext po4a "zlib1g-dev:$1" "libbz2-dev:$1" "liblzma-dev:$1" "libselinux1-dev:$1" "libncursesw5-dev:$1" libtimedate-perl libio-string-perl
 }
@@ -2323,11 +2322,10 @@ cross_build dpkg
 echo "progress-mark:54:dpkg cross build"
 # essential
 
-cross_build hostname
-echo "progress-mark:55:hostname cross build"
-# essential
+automatically_cross_build_packages
 
 builddep_findutils() {
+	assert_built "libselinux"
 	# dejagnu dependency unsatisfiable
 	$APT_GET install texinfo debhelper autotools-dev "libselinux1-dev:$1" bison
 }
@@ -2335,7 +2333,10 @@ cross_build findutils
 echo "progress-mark:56:findutils cross build"
 # essential
 
+automatically_cross_build_packages
+
 builddep_guile_2_0() {
+	assert_built "gmp libffi libgc libtool libunistring ncurses readline6"
 	$APT_GET build-dep --arch-only "-a$1" guile-2.0
 	$APT_GET install guile-2.0 # needs Build-Depends: guile-2.0 <profile.cross>
 }
@@ -2343,9 +2344,7 @@ cross_build guile-2.0
 echo "progress-mark:57:guile-2.0 cross build"
 # needed by gnutls28, make-dfsg, autogen
 
-cross_build make-dfsg
-echo "progress-mark:58:make-dfsg cross build"
-# needed for build-essential
+automatically_cross_build_packages
 
 builddep_libpipeline() {
 	# check lacks nocheck build profile annotation
@@ -2355,21 +2354,9 @@ cross_build libpipeline
 echo "progress-mark:59:libpipeline cross build"
 # man-db
 
-cross_build man-db
-echo "progress-mark:60:man-db cross build"
-# needed for debhelper
+automatically_cross_build_packages
 
-cross_build libgpg-error
-echo "progress-mark:61:libgpg-error cross build"
-# needed by libgcrypt11, libgcrypt20
-
-cross_build libtextwrap
-echo "progress-mark:62:libtextwrap cross build"
-# needed by cdebconf
-
-cross_build p11-kit
-echo "progress-mark:63:p11-kit cross build"
-# needed by gnutls28
+assert_built "$need_packages"
 
 patch_ustr() {
 	echo "patching ustr to use only compile checks #721352"
