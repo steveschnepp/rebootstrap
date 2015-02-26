@@ -2763,3 +2763,7 @@ buildenv_libxss() {
 cross_build libxss
 echo "progress-mark:81:libxss cross build"
 # needed by tk8.6
+
+cross_build freetype
+echo "progress-mark:82:freetype cross build"
+# needed by fontconfig
