@@ -1597,6 +1597,258 @@ echo "progress-mark:7:gcc stage3 complete"
 
 $APT_GET remove libc6-i386 # breaks cross builds
 
+patch_ustr() {
+	echo "patching ustr to use only compile checks #721352"
+	drop_privs patch -p1 <<'EOF'
+From 2df8917753d227aa39c09fdc191e4a005a4e943f Mon Sep 17 00:00:00 2001
+From: Peter Pentchev <roam@ringlet.net>
+Date: Wed, 30 Jul 2014 00:21:20 +0300
+Subject: [PATCH] Make the configuration compile-time only, no running.
+
+---
+ debian/patches/debian/config-compile.diff |  153 +++++++++++++++++++++++++++++
+ debian/patches/series                     |    1 +
+ 2 files changed, 154 insertions(+), 0 deletions(-)
+ create mode 100644 debian/patches/debian/config-compile.diff
+
+diff --git a/debian/patches/debian/config-compile.diff b/debian/patches/debian/config-compile.diff
+new file mode 100644
+index 0000000..8303014
+--- /dev/null
++++ b/debian/patches/debian/config-compile.diff
+@@ -0,0 +1,153 @@
++Description: Keep the configuration compile-time only, no running.
++ Make the autoconfiguration stage cross-compile-friendly - do not attempt
++ to run any of the just compiled code:
++ - modify the autoconf_64b.c test a little bit to break during compilation
++   if the type's size is different
++ - modify the autoconf_vsnprintf.c test a little bit to always break during
++   compilation, since we assume a POSIX-compatible libc
++ - add a "real" test for stdint.h usability - try to compile a program that
++   includes it.
++Forwarded: not yet
++Author: Peter Pentchev <roam@ringlet.net>
++Last-Update: 2014-07-29
++
++--- ustr.orig/Makefile
+++++ ustr/Makefile
++@@ -447,7 +447,7 @@
++ 
++ distclean: clean
++ 		rm -f ustr-import
++-		rm -f autoconf_64b autoconf_vsnprintf
+++		rm -f autoconf_64b autoconf_stdint autoconf_vsnprintf
++ 		rm -f ustr-conf.h ustr-conf-debug.h
++ 		rm -rf lcov-output
++ 
++@@ -459,13 +459,17 @@
++ 		$(HIDE)chmod 755 $@
++ 
++ # Use CFLAGS so that CFLAGS="... -m32" does the right thing
++-autoconf_64b: autoconf_64b.c
++-		$(HIDE)echo Compiling: auto configuration test:  64bit
++-		$(HIDE)$(CC) $(CFLAGS) -o $@ $<
++-
++-autoconf_vsnprintf: autoconf_vsnprintf.c
++-		$(HIDE)echo Compiling: auto configuration test:  vsnprintf
++-		$(HIDE)$(CC) -o $@ $<
+++autoconf_64b: autoconf_64b.c check_compile.sh
+++		$(HIDE)echo Running: auto configuration test:  64bit
+++		$(HIDE)CC="$(CC)" CFLAGS="$(CFLAGS) -DCHECK_TYPE=size_t -DCHECK_SIZE=8" sh check_compile.sh $@ $@.c
+++
+++autoconf_stdint: autoconf_stdint.c check_compile.sh
+++		$(HIDE)echo Running: auto configuration test:  stdint.h
+++		$(HIDE)CC="$(CC)" CFLAGS="$(CFLAGS)" sh check_compile.sh $@ $@.c
+++
+++autoconf_vsnprintf: autoconf_vsnprintf.c check_compile.sh
+++		$(HIDE)echo Running: auto configuration test:  vsnprintf
+++		$(HIDE)CC="$(CC)" CFLAGS="$(CFLAGS)" sh check_compile.sh $@ $@.c
++ 
++ # Use LDFLAGS for LDFLAGS="-m32"
++ $(OPT_LIB_SHARED): $(LIB_SHARED_OPT)
++@@ -485,22 +489,18 @@
++ 		$(HIDE)$(AR) ru $@ $^
++ 		$(HIDE)$(RANLIB) $@
++ 
++-ustr-conf.h: ustr-conf.h.in autoconf_64b autoconf_vsnprintf
+++ustr-conf.h: ustr-conf.h.in autoconf_64b autoconf_stdint autoconf_vsnprintf
++ 		$(HIDE)echo Creating $@
++-		$(HIDE)have_stdint_h=0; dbg1=0; dbg2=0; \
+++		$(HIDE)dbg1=0; dbg2=0; \
++                 sz64=`./autoconf_64b`; vsnp=`./autoconf_vsnprintf`; \
++-                if test -f "/usr/include/stdint.h"; then have_stdint_h=1; fi; \
++-                if test -f "$(prefix)/include/stdint.h"; then have_stdint_h=1; fi; \
++-                if test -f "$(includedir)/stdint.h"; then have_stdint_h=1; fi; \
+++		have_stdint_h=`./autoconf_stdint`; \
++ 		sed -e "s,@HAVE_STDINT_H@,$$have_stdint_h,g" -e "s,@USE_ASSERT@,$$dbg1,g" -e "s,@USE_EOS_MARK@,$$dbg2,g" -e "s,@HAVE_64bit_SIZE_MAX@,$$sz64,g" -e "s,@HAVE_RETARDED_VSNPRINTF@,$$vsnp,g" < $< > $@
++ 
++ ustr-conf-debug.h: ustr-conf.h.in autoconf_64b autoconf_vsnprintf
++ 		$(HIDE)echo Creating $@
++-		$(HIDE)have_stdint_h=0; dbg1=1; dbg2=1; \
+++		$(HIDE)dbg1=1; dbg2=1; \
++                 sz64=`./autoconf_64b`; vsnp=`./autoconf_vsnprintf`; \
++-                if test -f "/usr/include/stdint.h"; then have_stdint_h=1; fi; \
++-                if test -f "$(prefix)/include/stdint.h"; then have_stdint_h=1; fi; \
++-                if test -f "$(includedir)/stdint.h"; then have_stdint_h=1; fi; \
+++		have_stdint_h=`./autoconf_stdint`; \
++ 		sed -e "s,@HAVE_STDINT_H@,$$have_stdint_h,g" -e "s,@USE_ASSERT@,$$dbg1,g" -e "s,@USE_EOS_MARK@,$$dbg2,g" -e "s,@HAVE_64bit_SIZE_MAX@,$$sz64,g" -e "s,@HAVE_RETARDED_VSNPRINTF@,$$vsnp,g" < $< > $@
++ 
++ 
++--- ustr.orig/autoconf_64b.c
+++++ ustr/autoconf_64b.c
++@@ -1,11 +1,17 @@
++ #include <stdlib.h>
++-#include <stdio.h>
++ 
++-int main(void)
++-{ /* output a "1" is it's a 64 bit platform. Major hack. */
++-	size_t val = -1;
+++struct check_lower {
+++	int arr[sizeof(CHECK_TYPE) - CHECK_SIZE];
+++};
+++
+++struct check_higher {
+++	int arr[CHECK_SIZE - sizeof(CHECK_TYPE)];
+++};
++ 
++-	puts((val == 0xFFFFFFFF) ? "0" : "1");
+++int main(void)
+++{
+++	struct check_lower lower;
+++	struct check_higher higher;
++ 
++-	return 0;
+++	return sizeof(lower) + sizeof(higher);
++ }
++--- /dev/null
+++++ ustr/autoconf_stdint.c
++@@ -0,0 +1,7 @@
+++#include <stdint.h>
+++
+++int
+++main(void)
+++{
+++	return sizeof(intmax_t) - sizeof(uintmax_t) + SIZE_MAX;
+++}
++--- ustr.orig/autoconf_vsnprintf.c
+++++ ustr/autoconf_vsnprintf.c
++@@ -6,6 +6,10 @@
++ 
++ #define USE_FMT_1_3 0
++ 
+++All right, I know this test will always "return" false, but let's
+++actually assume that Debian's libc will follow POSIX at least
+++inasmuch as the standard I/O library, okay?
+++
++ static int my_autoconf(const char *fmt, ...)
++ {
++   va_list ap;
++--- /dev/null
+++++ ustr/check_compile.sh
++@@ -0,0 +1,24 @@
+++#!/bin/sh
+++
+++set -e
+++
+++tgtscript=$1
+++source=$2
+++
+++conftmp=`mktemp conftmp.o.XXXXXX`
+++trap "rm -f '$conftmp'" EXIT QUIT TERM INT HUP
+++
+++if $CC -c $CFLAGS -o "$conftmp" "$source" > /dev/null 2>&1; then
+++	res=1
+++else
+++	res=0
+++fi
+++rm -f "$conftmp"
+++
+++cat > "$tgtscript" <<EOF
+++#!/bin/sh
+++
+++echo '$res'
+++EOF
+++
+++chmod +x "$tgtscript"
+diff --git a/debian/patches/series b/debian/patches/series
+index dab589a..ab05311 100644
+--- a/debian/patches/series
++++ b/debian/patches/series
+@@ -3,3 +3,4 @@ debian/reentrant.diff -p1
+ fixes/man-cleanup.diff -p1
+ fixes/man-spelling.diff -p1
+ fixes/nonlinux.diff -p1
++debian/config-compile.diff -p1
+-- 
+1.7.1
+EOF
+	echo "patching ustr to use cross tools #721352"
+	drop_privs patch -p1 << 'EOF'
+From c64fb406e8497898a33214f5afc2a6d8b12eb808 Mon Sep 17 00:00:00 2001
+From: Peter Pentchev <roam@ringlet.net>
+Date: Wed, 30 Jul 2014 19:30:25 +0300
+Subject: [PATCH] Use the proper build tools when cross-building.
+
+---
+ debian/patches/debian/cross-build.diff |   34 ++++++++++++++++++++++++++++++++
+ debian/patches/series                  |    1 +
+ 2 files changed, 35 insertions(+), 0 deletions(-)
+ create mode 100644 debian/patches/debian/cross-build.diff
+
+diff --git a/debian/patches/debian/cross-build.diff b/debian/patches/debian/cross-build.diff
+new file mode 100644
+index 0000000..fa2ba5d
+--- /dev/null
++++ b/debian/patches/debian/cross-build.diff
+@@ -0,0 +1,34 @@
++Description: Use the proper tools for cross-building.
++ Mostly based on a Ubuntu patch by Matthias Klose <doko@ubuntu.com>, but
++ rebased onto the Debian compile-config patch that obviates the need for
++ preseeding the results of the 64-bit, vsprintf, and stdint.h checks.
++Forwarded: not yet
++Author: Peter Pentchev <roam@ringlet.net>
++Last-Update: 2014-07-30
++
++Index: ustr-1.0.4/Makefile
++===================================================================
++--- ustr-1.0.4.orig/Makefile
+++++ ustr-1.0.4/Makefile
++@@ -28,10 +28,20 @@ MBINDIR=$(libexecdir)/ustr-$(VERS_FULL)
++ ###############################################################################
++ HIDE=@
++ 
++-CC = cc
+++DEB_HOST_GNU_TYPE := $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
+++DEB_HOST_MULTIARCH := $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
+++DEB_HOST_ARCH := $(shell dpkg-architecture -qDEB_HOST_ARCH)
+++DEB_BUILD_ARCH := $(shell dpkg-architecture -qDEB_BUILD_ARCH)
+++CC = $(DEB_HOST_GNU_TYPE)-gcc
+++ifneq ($(DEB_BUILD_ARCH),$(DEB_HOST_ARCH))
+++AR = $(DEB_HOST_GNU_TYPE)-ar
+++RANLIB = $(DEB_HOST_GNU_TYPE)-ranlib
+++LDCONFIG = true
+++else
++ AR = ar
++ RANLIB = ranlib
++ LDCONFIG = /sbin/ldconfig
+++endif
++ 
++ CFLAGS  = -O2 -g
++ 
+diff --git a/debian/patches/series b/debian/patches/series
+index ab05311..57d0d0a 100644
+--- a/debian/patches/series
++++ b/debian/patches/series
+@@ -4,3 +4,4 @@ fixes/man-cleanup.diff -p1
+ fixes/man-spelling.diff -p1
+ fixes/nonlinux.diff -p1
+ debian/config-compile.diff -p1
++debian/cross-build.diff -p1
+-- 
+1.7.1
+EOF
+}
+
 $APT_GET install dose-builddebcheck
 call_dose_builddebcheck() {
 	local package_list source_list errcode
@@ -1662,6 +1914,7 @@ add_need pcre3 # by grep, libselinux, slang2
 add_need sed # essential
 add_need slang2 # by cdebconf, newt
 add_need tar # essential
+add_need ustr # by libsemanage
 
 automatically_cross_build_packages() {
 	local need_packages_comma_sep buildable pkg
@@ -2376,261 +2629,6 @@ echo "progress-mark:59:libpipeline cross build"
 automatically_cross_build_packages
 
 assert_built "$need_packages"
-
-patch_ustr() {
-	echo "patching ustr to use only compile checks #721352"
-	drop_privs patch -p1 <<'EOF'
-From 2df8917753d227aa39c09fdc191e4a005a4e943f Mon Sep 17 00:00:00 2001
-From: Peter Pentchev <roam@ringlet.net>
-Date: Wed, 30 Jul 2014 00:21:20 +0300
-Subject: [PATCH] Make the configuration compile-time only, no running.
-
----
- debian/patches/debian/config-compile.diff |  153 +++++++++++++++++++++++++++++
- debian/patches/series                     |    1 +
- 2 files changed, 154 insertions(+), 0 deletions(-)
- create mode 100644 debian/patches/debian/config-compile.diff
-
-diff --git a/debian/patches/debian/config-compile.diff b/debian/patches/debian/config-compile.diff
-new file mode 100644
-index 0000000..8303014
---- /dev/null
-+++ b/debian/patches/debian/config-compile.diff
-@@ -0,0 +1,153 @@
-+Description: Keep the configuration compile-time only, no running.
-+ Make the autoconfiguration stage cross-compile-friendly - do not attempt
-+ to run any of the just compiled code:
-+ - modify the autoconf_64b.c test a little bit to break during compilation
-+   if the type's size is different
-+ - modify the autoconf_vsnprintf.c test a little bit to always break during
-+   compilation, since we assume a POSIX-compatible libc
-+ - add a "real" test for stdint.h usability - try to compile a program that
-+   includes it.
-+Forwarded: not yet
-+Author: Peter Pentchev <roam@ringlet.net>
-+Last-Update: 2014-07-29
-+
-+--- ustr.orig/Makefile
-++++ ustr/Makefile
-+@@ -447,7 +447,7 @@
-+ 
-+ distclean: clean
-+ 		rm -f ustr-import
-+-		rm -f autoconf_64b autoconf_vsnprintf
-++		rm -f autoconf_64b autoconf_stdint autoconf_vsnprintf
-+ 		rm -f ustr-conf.h ustr-conf-debug.h
-+ 		rm -rf lcov-output
-+ 
-+@@ -459,13 +459,17 @@
-+ 		$(HIDE)chmod 755 $@
-+ 
-+ # Use CFLAGS so that CFLAGS="... -m32" does the right thing
-+-autoconf_64b: autoconf_64b.c
-+-		$(HIDE)echo Compiling: auto configuration test:  64bit
-+-		$(HIDE)$(CC) $(CFLAGS) -o $@ $<
-+-
-+-autoconf_vsnprintf: autoconf_vsnprintf.c
-+-		$(HIDE)echo Compiling: auto configuration test:  vsnprintf
-+-		$(HIDE)$(CC) -o $@ $<
-++autoconf_64b: autoconf_64b.c check_compile.sh
-++		$(HIDE)echo Running: auto configuration test:  64bit
-++		$(HIDE)CC="$(CC)" CFLAGS="$(CFLAGS) -DCHECK_TYPE=size_t -DCHECK_SIZE=8" sh check_compile.sh $@ $@.c
-++
-++autoconf_stdint: autoconf_stdint.c check_compile.sh
-++		$(HIDE)echo Running: auto configuration test:  stdint.h
-++		$(HIDE)CC="$(CC)" CFLAGS="$(CFLAGS)" sh check_compile.sh $@ $@.c
-++
-++autoconf_vsnprintf: autoconf_vsnprintf.c check_compile.sh
-++		$(HIDE)echo Running: auto configuration test:  vsnprintf
-++		$(HIDE)CC="$(CC)" CFLAGS="$(CFLAGS)" sh check_compile.sh $@ $@.c
-+ 
-+ # Use LDFLAGS for LDFLAGS="-m32"
-+ $(OPT_LIB_SHARED): $(LIB_SHARED_OPT)
-+@@ -485,22 +489,18 @@
-+ 		$(HIDE)$(AR) ru $@ $^
-+ 		$(HIDE)$(RANLIB) $@
-+ 
-+-ustr-conf.h: ustr-conf.h.in autoconf_64b autoconf_vsnprintf
-++ustr-conf.h: ustr-conf.h.in autoconf_64b autoconf_stdint autoconf_vsnprintf
-+ 		$(HIDE)echo Creating $@
-+-		$(HIDE)have_stdint_h=0; dbg1=0; dbg2=0; \
-++		$(HIDE)dbg1=0; dbg2=0; \
-+                 sz64=`./autoconf_64b`; vsnp=`./autoconf_vsnprintf`; \
-+-                if test -f "/usr/include/stdint.h"; then have_stdint_h=1; fi; \
-+-                if test -f "$(prefix)/include/stdint.h"; then have_stdint_h=1; fi; \
-+-                if test -f "$(includedir)/stdint.h"; then have_stdint_h=1; fi; \
-++		have_stdint_h=`./autoconf_stdint`; \
-+ 		sed -e "s,@HAVE_STDINT_H@,$$have_stdint_h,g" -e "s,@USE_ASSERT@,$$dbg1,g" -e "s,@USE_EOS_MARK@,$$dbg2,g" -e "s,@HAVE_64bit_SIZE_MAX@,$$sz64,g" -e "s,@HAVE_RETARDED_VSNPRINTF@,$$vsnp,g" < $< > $@
-+ 
-+ ustr-conf-debug.h: ustr-conf.h.in autoconf_64b autoconf_vsnprintf
-+ 		$(HIDE)echo Creating $@
-+-		$(HIDE)have_stdint_h=0; dbg1=1; dbg2=1; \
-++		$(HIDE)dbg1=1; dbg2=1; \
-+                 sz64=`./autoconf_64b`; vsnp=`./autoconf_vsnprintf`; \
-+-                if test -f "/usr/include/stdint.h"; then have_stdint_h=1; fi; \
-+-                if test -f "$(prefix)/include/stdint.h"; then have_stdint_h=1; fi; \
-+-                if test -f "$(includedir)/stdint.h"; then have_stdint_h=1; fi; \
-++		have_stdint_h=`./autoconf_stdint`; \
-+ 		sed -e "s,@HAVE_STDINT_H@,$$have_stdint_h,g" -e "s,@USE_ASSERT@,$$dbg1,g" -e "s,@USE_EOS_MARK@,$$dbg2,g" -e "s,@HAVE_64bit_SIZE_MAX@,$$sz64,g" -e "s,@HAVE_RETARDED_VSNPRINTF@,$$vsnp,g" < $< > $@
-+ 
-+ 
-+--- ustr.orig/autoconf_64b.c
-++++ ustr/autoconf_64b.c
-+@@ -1,11 +1,17 @@
-+ #include <stdlib.h>
-+-#include <stdio.h>
-+ 
-+-int main(void)
-+-{ /* output a "1" is it's a 64 bit platform. Major hack. */
-+-	size_t val = -1;
-++struct check_lower {
-++	int arr[sizeof(CHECK_TYPE) - CHECK_SIZE];
-++};
-++
-++struct check_higher {
-++	int arr[CHECK_SIZE - sizeof(CHECK_TYPE)];
-++};
-+ 
-+-	puts((val == 0xFFFFFFFF) ? "0" : "1");
-++int main(void)
-++{
-++	struct check_lower lower;
-++	struct check_higher higher;
-+ 
-+-	return 0;
-++	return sizeof(lower) + sizeof(higher);
-+ }
-+--- /dev/null
-++++ ustr/autoconf_stdint.c
-+@@ -0,0 +1,7 @@
-++#include <stdint.h>
-++
-++int
-++main(void)
-++{
-++	return sizeof(intmax_t) - sizeof(uintmax_t) + SIZE_MAX;
-++}
-+--- ustr.orig/autoconf_vsnprintf.c
-++++ ustr/autoconf_vsnprintf.c
-+@@ -6,6 +6,10 @@
-+ 
-+ #define USE_FMT_1_3 0
-+ 
-++All right, I know this test will always "return" false, but let's
-++actually assume that Debian's libc will follow POSIX at least
-++inasmuch as the standard I/O library, okay?
-++
-+ static int my_autoconf(const char *fmt, ...)
-+ {
-+   va_list ap;
-+--- /dev/null
-++++ ustr/check_compile.sh
-+@@ -0,0 +1,24 @@
-++#!/bin/sh
-++
-++set -e
-++
-++tgtscript=$1
-++source=$2
-++
-++conftmp=`mktemp conftmp.o.XXXXXX`
-++trap "rm -f '$conftmp'" EXIT QUIT TERM INT HUP
-++
-++if $CC -c $CFLAGS -o "$conftmp" "$source" > /dev/null 2>&1; then
-++	res=1
-++else
-++	res=0
-++fi
-++rm -f "$conftmp"
-++
-++cat > "$tgtscript" <<EOF
-++#!/bin/sh
-++
-++echo '$res'
-++EOF
-++
-++chmod +x "$tgtscript"
-diff --git a/debian/patches/series b/debian/patches/series
-index dab589a..ab05311 100644
---- a/debian/patches/series
-+++ b/debian/patches/series
-@@ -3,3 +3,4 @@ debian/reentrant.diff -p1
- fixes/man-cleanup.diff -p1
- fixes/man-spelling.diff -p1
- fixes/nonlinux.diff -p1
-+debian/config-compile.diff -p1
--- 
-1.7.1
-EOF
-	echo "patching ustr to use cross tools #721352"
-	drop_privs patch -p1 << 'EOF'
-From c64fb406e8497898a33214f5afc2a6d8b12eb808 Mon Sep 17 00:00:00 2001
-From: Peter Pentchev <roam@ringlet.net>
-Date: Wed, 30 Jul 2014 19:30:25 +0300
-Subject: [PATCH] Use the proper build tools when cross-building.
-
----
- debian/patches/debian/cross-build.diff |   34 ++++++++++++++++++++++++++++++++
- debian/patches/series                  |    1 +
- 2 files changed, 35 insertions(+), 0 deletions(-)
- create mode 100644 debian/patches/debian/cross-build.diff
-
-diff --git a/debian/patches/debian/cross-build.diff b/debian/patches/debian/cross-build.diff
-new file mode 100644
-index 0000000..fa2ba5d
---- /dev/null
-+++ b/debian/patches/debian/cross-build.diff
-@@ -0,0 +1,34 @@
-+Description: Use the proper tools for cross-building.
-+ Mostly based on a Ubuntu patch by Matthias Klose <doko@ubuntu.com>, but
-+ rebased onto the Debian compile-config patch that obviates the need for
-+ preseeding the results of the 64-bit, vsprintf, and stdint.h checks.
-+Forwarded: not yet
-+Author: Peter Pentchev <roam@ringlet.net>
-+Last-Update: 2014-07-30
-+
-+Index: ustr-1.0.4/Makefile
-+===================================================================
-+--- ustr-1.0.4.orig/Makefile
-++++ ustr-1.0.4/Makefile
-+@@ -28,10 +28,20 @@ MBINDIR=$(libexecdir)/ustr-$(VERS_FULL)
-+ ###############################################################################
-+ HIDE=@
-+ 
-+-CC = cc
-++DEB_HOST_GNU_TYPE := $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
-++DEB_HOST_MULTIARCH := $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
-++DEB_HOST_ARCH := $(shell dpkg-architecture -qDEB_HOST_ARCH)
-++DEB_BUILD_ARCH := $(shell dpkg-architecture -qDEB_BUILD_ARCH)
-++CC = $(DEB_HOST_GNU_TYPE)-gcc
-++ifneq ($(DEB_BUILD_ARCH),$(DEB_HOST_ARCH))
-++AR = $(DEB_HOST_GNU_TYPE)-ar
-++RANLIB = $(DEB_HOST_GNU_TYPE)-ranlib
-++LDCONFIG = true
-++else
-+ AR = ar
-+ RANLIB = ranlib
-+ LDCONFIG = /sbin/ldconfig
-++endif
-+ 
-+ CFLAGS  = -O2 -g
-+ 
-diff --git a/debian/patches/series b/debian/patches/series
-index ab05311..57d0d0a 100644
---- a/debian/patches/series
-+++ b/debian/patches/series
-@@ -4,3 +4,4 @@ fixes/man-cleanup.diff -p1
- fixes/man-spelling.diff -p1
- fixes/nonlinux.diff -p1
- debian/config-compile.diff -p1
-+debian/cross-build.diff -p1
--- 
-1.7.1
-EOF
-}
-cross_build ustr
-echo "progress-mark:64:ustr cross build"
-# needed by libsemanage
 
 builddep_flex() {
 	$APT_GET build-dep "-a$1" --arch-only flex
