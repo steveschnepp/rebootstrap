@@ -338,7 +338,15 @@ if test "$ENABLE_MULTIARCH_GCC" = yes; then
 fi
 
 obtain_source_package() {
+	if test "$1" = gcc-5; then
+		echo "deb-src $MIRROR experimental main" > /etc/apt/sources.list.d/tmp-experimental.list
+		apt-get update
+	fi
 	drop_privs apt-get source "$1"
+	if test -f /etc/apt/sources.list.d/tmp-experimental.list; then
+		rm /etc/apt/sources.list.d/tmp-experimental.list
+		apt-get update
+	fi
 }
 
 # work around dpkg bug #764216
