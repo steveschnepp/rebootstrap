@@ -2698,3 +2698,90 @@ echo "progress-mark:81:libxss cross build"
 cross_build freetype
 echo "progress-mark:82:freetype cross build"
 # needed by fontconfig
+
+patch_expat() {
+	echo "patching expat to add nobiarch build profile #779459"
+	drop_privs patch -p1 <<'EOF'
+diff -Nru expat-2.1.0/debian/control expat-2.1.0/debian/control
+--- expat-2.1.0/debian/control
++++ expat-2.1.0/debian/control
+@@ -5,7 +5,7 @@
+ Standards-Version: 3.9.5
+ Build-Depends: debhelper (>= 9), docbook-to-man, dh-autoreconf,
+  dpkg-dev (>= 1.16.0),
+- gcc-multilib [i386 powerpc sparc s390]
++ gcc-multilib [i386 powerpc sparc s390] <!nobiarch>
+ Homepage: http://expat.sourceforge.net
+ Vcs-Browser: http://svn.debian.org/wsvn/debian-xml-sgml/packages/expat/trunk/
+ Vcs-Svn: svn://svn.debian.org/svn/debian-xml-sgml/packages/expat/trunk/
+@@ -14,6 +14,7 @@
+ Section: libdevel
+ Architecture: i386 powerpc sparc s390
+ Depends: ${misc:Depends}, lib64expat1 (= ${binary:Version}), libexpat1-dev, gcc-multilib
++Build-Profiles: <!nobiarch>
+ Description: XML parsing C library - development kit (64bit)
+  This package contains the header file and development libraries of
+  expat, the C library for parsing XML.  Expat is a stream oriented XML
+@@ -30,6 +31,7 @@
+ Section: libs
+ Architecture: i386 powerpc sparc s390
+ Depends: ${shlibs:Depends}, ${misc:Depends}
++Build-Profiles: <!nobiarch>
+ Description: XML parsing C library - runtime library (64bit)
+  This package contains the runtime, shared library of expat, the C
+  library for parsing XML. Expat is a stream-oriented parser in
+diff -Nru expat-2.1.0/debian/rules expat-2.1.0/debian/rules
+--- expat-2.1.0/debian/rules
++++ expat-2.1.0/debian/rules
+@@ -11,7 +11,9 @@
+ DEB_HOST_ARCH      ?= $(shell dpkg-architecture -qDEB_HOST_ARCH)
+ DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
+ 
++ifeq ($(filter nobiarch,$(DEB_BUILD_PROFILES)),)
+ BUILD64 = $(filter $(DEB_HOST_ARCH), i386 powerpc sparc s390)
++endif
+ 
+ ifeq ($(DEB_BUILD_GNU_TYPE), $(DEB_HOST_GNU_TYPE))
+ 	CONFFLAGS = --build=$(DEB_HOST_GNU_TYPE)
+EOF
+	echo "patching expat to use the cross compiler for multilib builds #775942"
+	drop_privs patch -p1 <<'EOF'
+diff -Nru expat-2.1.0/debian/rules expat-2.1.0/debian/rules
+--- expat-2.1.0/debian/rules
++++ expat-2.1.0/debian/rules
+@@ -32,6 +32,10 @@
+ 	HOST64FLAG = --host=s390x-linux-gnu
+ endif
+ 
++ifeq ($(origin CC),default)
++CC = $(DEB_HOST_GNU_TYPE)-cc
++endif
++
+ # -pthread -D_REENTRANT #551079
+ CFLAGS  = `dpkg-buildflags --get CFLAGS`
+ CFLAGS  += -Wall
+@@ -65,13 +69,13 @@
+ 
+ build64/config.status: config-common-stamp
+ 	dh_testdir
+-	(mkdir -p $(@D); cd $(@D); CFLAGS="-m64 $(CFLAGS)" CPPFLAGS="$(CPPFLAGS)"  LDFLAGS="$(LDFLAGS)" \
++	(mkdir -p $(@D); cd $(@D); CC="$(CC) -m64" CFLAGS="$(CFLAGS)" CPPFLAGS="$(CPPFLAGS)"  LDFLAGS="$(LDFLAGS)" \
+ 	 ../configure $(CONFFLAGS) $(HOST64FLAG) --prefix=/usr --mandir=\$${prefix}/share/man \
+ 	 --libdir=\$${prefix}/lib64)
+ 
+ buildw64/config.status: config-common-stamp
+ 	dh_testdir
+-	(mkdir -p $(@D); cd $(@D); CFLAGS="-m64 $(CFLAGS) -DXML_UNICODE" CPPFLAGS="$(CPPFLAGS)" LDFLAGS="$(LDFLAGS)" \
++	(mkdir -p $(@D); cd $(@D); CC="$(CC) -m64" CFLAGS="$(CFLAGS) -DXML_UNICODE" CPPFLAGS="$(CPPFLAGS)" LDFLAGS="$(LDFLAGS)" \
+ 	 ../configure $(CONFFLAGS) $(HOST64FLAG) --prefix=/usr --mandir=\$${prefix}/share/man \
+ 	 --libdir=\$${prefix}/lib64)
+ 
+EOF
+}
+builddep_expat() {
+	# gcc-multilib lacks nobiarch profile
+	$APT_GET install debhelper docbook-to-man dh-autoreconf dpkg-dev
+}
+cross_build expat
+echo "progress-mark:83:expat cross build"
+# needed by fontconfig
