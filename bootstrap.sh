@@ -798,6 +798,12 @@ diff -u gcc-4.9-*/debian/rules2 gcc-4.9-*/debian/rules2
 EOF
 	fi
 }
+patch_gcc_5() {
+	if test "$ENABLE_MULTIARCH_GCC" = yes; then
+		echo "applying patches for with_deps_on_target_arch_pkgs"
+		drop_privs QUILT_PATCHES="/usr/share/cross-gcc/patches/gcc-$GCC_VER" quilt push -a
+	fi
+}
 if test "$ENABLE_MULTIARCH_GCC" = yes; then
 # choosing libatomic1 arbitrarily here, cause it never bumped soname
 BUILD_GCC_MULTIARCH_VER=`apt-cache show --no-all-versions libatomic1 | sed 's/^Source: gcc-\([0-9.]*\)$/\1/;t;d'`
