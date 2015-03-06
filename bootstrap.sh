@@ -1518,6 +1518,26 @@ echo "progress-mark:7:gcc stage3 complete"
 
 $APT_GET remove libc6-i386 # breaks cross builds
 
+buildenv_libx11() {
+	export xorg_cv_malloc0_returns_null=no
+}
+
+buildenv_libxext() {
+	export xorg_cv_malloc0_returns_null=no
+}
+
+buildenv_libxss() {
+	export xorg_cv_malloc0_returns_null=no
+}
+
+buildenv_libxt() {
+	export xorg_cv_malloc0_returns_null=no
+}
+
+buildenv_tcl8_6() {
+	export tcl_cv_strtod_buggy=ok
+}
+
 patch_ustr() {
 	echo "patching ustr to use only compile checks #721352"
 	drop_privs patch -p1 <<'EOF'
@@ -1805,6 +1825,7 @@ add_need dash # essential
 add_need db-defaults # by apt, perl, python2.7
 add_need debianutils # essential
 add_need diffutils # essential
+add_need freetype # by fontconfig
 add_need gcc-defaults # for build-essential
 add_need gdbm # by man-db, perl, python2.7
 add_need gmp # by cloog, gnutls28, guile-2.0, isl, mpclib3, mpfr4, nettle
@@ -1817,12 +1838,24 @@ add_need libdebian-installer # by cdebconf
 add_need libelf # by systemtap, glib2.0
 add_need libgc # by guile-2.0
 add_need libgpg-error # for libgcrypt11, libgcrypt20
+add_need libice # by libsm
 add_need libonig # by slang2
 add_need libpng # by slang2
+add_need libpthread-stubs # by libxcb
 test "`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS`" = linux && add_need libsepol # by libselinux
+add_need libsm # by libxt
 add_need libtasn1-6 # by gnutls28, p11-kit
 add_need libtextwrap # by cdebconf
 add_need libunistring # by guile-2.0
+add_need libx11 # by dbus, groff
+add_need libxau # by libxcb
+add_need libxaw # by groff
+add_need libxdmcp # by libxcb
+add_need libxext # by libxmu
+add_need libxmu # by groff, libxaw
+add_need libxpm # by libxaw
+add_need libxss # by tk8.6
+add_need libxt # by groff, libxaw, libxmu
 add_need make-dfsg # for build-essential
 add_need man-db # for debhelper
 add_need mawk # for base-files (alternatively: gawk)
@@ -1835,6 +1868,7 @@ add_need pcre3 # by grep, libselinux, slang2
 add_need sed # essential
 add_need slang2 # by cdebconf, newt
 add_need tar # essential
+add_need tcl8.6 # by newt
 add_need ustr # by libsemanage
 
 automatically_cross_build_packages() {
@@ -2549,8 +2583,6 @@ echo "progress-mark:59:libpipeline cross build"
 
 automatically_cross_build_packages
 
-assert_built "$need_packages"
-
 builddep_flex() {
 	$APT_GET build-dep "-a$1" --arch-only flex
 	$APT_GET install flex # needs Build-Depends: flex <profile.cross>
@@ -2608,7 +2640,10 @@ cross_build flex
 echo "progress-mark:65:flex cross build"
 # needed by pam
 
+automatically_cross_build_packages
+
 builddep_glib2_0() {
+	assert_built "libelf libffi libselinux linux pcre3 zlib"
 	# python-dbus dependency unsatisifable
 	$APT_GET install debhelper cdbs dh-autoreconf pkg-config gettext autotools-dev gnome-pkg-tools dpkg-dev "libelfg0-dev:$1" "libpcre3-dev:$1" desktop-file-utils gtk-doc-tools "libselinux1-dev:$1" "linux-libc-dev:$1" "zlib1g-dev:$1" dbus dbus-x11 shared-mime-info xterm python python-dbus python-gi libxml2-utils "libffi-dev:$1"
 	$APT_GET install libglib2.0-dev # missing B-D on libglib2.0-dev:any <profile.cross>
@@ -2623,19 +2658,10 @@ cross_build glib2.0
 echo "progress-mark:66:glib2.0 cross build"
 # needed by pkg-config, dbus, systemd, libxt
 
-cross_build libxau
-echo "progress-mark:67:libxau cross build"
-# needed by libxcb
-
-cross_build libxdmcp
-echo "progress-mark:68:libxdmcp cross build"
-# needed by libxcb
-
-cross_build libpthread-stubs
-echo "progress-mark:69:libpthread-stubs cross build"
-# needed by libxcb
+automatically_cross_build_packages
 
 builddep_libxcb() {
+	assert_built "libxau libxdmcp libpthread-stubs"
 	# check dependency lacks nocheck profile annotation
 	$APT_GET install "libxau-dev:$1" "libxdmcp-dev:$1" xcb-proto "libpthread-stubs0-dev:$1" debhelper pkg-config xsltproc  python-xcbgen libtool automake python dctrl-tools
 }
@@ -2643,45 +2669,10 @@ cross_build libxcb
 echo "progress-mark:70:libxcb cross build"
 # needed by libx11
 
-export xorg_cv_malloc0_returns_null=no
-cross_build libx11
-unset xorg_cv_malloc0_returns_null
-echo "progress-mark:71:libx11 cross build"
-# needed by groff, dbus
-
-cross_build libice
-echo "progress-mark:72:libice cross build"
-# needed by libsm
-
-cross_build libsm
-echo "progress-mark:73:libsm cross build"
-# needed by libxt
-
-export xorg_cv_malloc0_returns_null=no
-cross_build libxt
-unset xorg_cv_malloc0_returns_null
-echo "progress-mark:74:libxt cross build"
-# needed by libxaw, libxmu, groff
-
-export xorg_cv_malloc0_returns_null=no
-cross_build libxext
-unset xorg_cv_malloc0_returns_null
-echo "progress-mark:75:libxext cross build"
-# needed by libxmu
-
-cross_build libxmu
-echo "progress-mark:76:libxmu cross build"
-# needed by groff, libxaw
-
-cross_build libxpm
-echo "progress-mark:77:libxpm cross build"
-# needed by libxaw
-
-cross_build libxaw
-echo "progress-mark:78:libxaw cross build"
-# needed by groff
+automatically_cross_build_packages
 
 builddep_groff() {
+	assert_built "libx11 libxaw libxmu libxt"
 	# netpbm lacks M-A:foreign #700007
 	$APT_GET install bison debhelper dpkg-dev ghostscript netpbm psutils xutils-dev x11proto-core-dev "libx11-dev:$1" "libxmu-dev:$1" "libxt-dev:$1" "libxaw7-dev:$1" texinfo dh-autoreconf
 }
@@ -2689,22 +2680,9 @@ cross_build groff
 echo "progress-mark:79:groff cross build"
 # needed for man-db
 
-export tcl_cv_strtod_buggy=ok
-cross_build tcl8.6
-unset tcl_cv_strtod_buggy
-echo "progress-mark:80:tcl8.6 cross build"
-# needed by newt
+automatically_cross_build_packages
 
-buildenv_libxss() {
-	export xorg_cv_malloc0_returns_null=no
-}
-cross_build libxss
-echo "progress-mark:81:libxss cross build"
-# needed by tk8.6
-
-cross_build freetype
-echo "progress-mark:82:freetype cross build"
-# needed by fontconfig
+assert_built "$need_packages"
 
 patch_expat() {
 	echo "patching expat to add nobiarch build profile #779459"
