@@ -336,6 +336,21 @@ drop_privs() {
 
 if test "$ENABLE_MULTIARCH_GCC" = yes; then
 	$APT_GET install cross-gcc-dev quilt
+	echo "fixing cross-gcc patches for gcc5 #776509"
+	patch /usr/share/cross-gcc/patches/gcc-5/0004-reverted-removal-of-with_deps_on_target_arch_pkgs-in.patch <<'EOF'
+diff -Nru cross-gcc-13/patches/gcc-5/0004-reverted-removal-of-with_deps_on_target_arch_pkgs-in.patch cross-gcc-13+nmu1/patches/gcc-5/0004-reverted-removal-of-with_deps_on_target_arch_pkgs-in.patch
+--- cross-gcc-13/patches/gcc-5/0004-reverted-removal-of-with_deps_on_target_arch_pkgs-in.patch
++++ cross-gcc-13+nmu1/patches/gcc-5/0004-reverted-removal-of-with_deps_on_target_arch_pkgs-in.patch
+@@ -171,7 +171,7 @@
+ +-fi
+ ++nover_glibgo_toolexecdir='${libdir}/gcc/${host_alias}'
+ ++nover_glibgo_toolexeclibdir='${libdir}'
+-+ multi_os_directory=`$CC -print-multi-os-directory`
+++ multi_os_directory=`$GOC -print-multi-os-directory`
+ + case $multi_os_directory in
+ +   .) ;; # Avoid trailing /.
+ +Index: b/src/libgomp/configure.ac
+EOF
 fi
 
 obtain_source_package() {
