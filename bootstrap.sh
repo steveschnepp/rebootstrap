@@ -633,6 +633,12 @@ EOF
 	esac
 }
 
+PROGRESS_MARK=1
+progress_mark() {
+	echo "progress-mark:$PROGRESS_MARK:$*"
+	PROGRESS_MARK=$(($PROGRESS_MARK + 1 ))
+}
+
 cross_build() {
 	local pkg profiles mangledpkg ignorebd
 	pkg="$1"
@@ -678,6 +684,7 @@ cross_build() {
 		cd ..
 		drop_privs rm -Rf "$pkg"
 	fi
+	progress_mark "$pkg cross build"
 }
 
 if test "$ENABLE_MULTIARCH_GCC" != yes; then
@@ -855,7 +862,7 @@ else
 	cd ..
 	drop_privs rm -Rf gcc0
 fi
-echo "progress-mark:0:build compiler complete"
+progress_mark "build compiler complete"
 else
 echo "host gcc version and build gcc version match. good for multiarch"
 fi
@@ -882,7 +889,7 @@ else
 	cd ..
 	drop_privs rm -Rf binutils
 fi
-echo "progress-mark:1:binutils cross complete"
+progress_mark "cross binutils"
 
 # linux
 patch_linux() {
@@ -961,7 +968,7 @@ else
 	cd ..
 	drop_privs rm -Rf linux
 fi
-echo "progress-mark:2:linux-libc-dev complete"
+progress_mark "linux-libc-dev cross build"
 fi
 
 # gcc
@@ -1003,7 +1010,7 @@ else
 	cd ..
 	drop_privs rm -Rf gcc1
 fi
-echo "progress-mark:3:gcc stage1 complete"
+progress_mark "cross gcc stage1 build"
 
 # libc
 patch_glibc() {
@@ -1394,7 +1401,7 @@ else
 	cd ..
 	drop_privs rm -Rf "${LIBC_NAME}1"
 fi
-echo "progress-mark:4:$LIBC_NAME stage1 complete"
+progress_mark "$LIBC_NAME stage1 cross build"
 
 if test -d "$RESULT/gcc2"; then
 	echo "skipping rebuild of gcc stage2"
@@ -1435,7 +1442,7 @@ else
 	cd ..
 	drop_privs rm -Rf gcc2
 fi
-echo "progress-mark:5:gcc stage2 complete"
+progress_mark "cross gcc stage2 build"
 # libselinux wants unversioned gcc
 for prog in c++ cpp g++ gcc gcc-ar gcc-ranlib gfortran; do
 	ln -vs "`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_GNU_TYPE`-$prog-$GCC_VER" "/usr/bin/`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_GNU_TYPE`-$prog"
@@ -1481,7 +1488,7 @@ else
 	cd ..
 	drop_privs rm -Rf "${LIBC_NAME}2"
 fi
-echo "progress-mark:6:$LIBC_NAME stage2 complete"
+progress_mark "$LIBC_NAME stage2 cross build"
 
 if test -d "$RESULT/gcc3"; then
 	echo "skipping rebuild of gcc stage3"
@@ -1529,7 +1536,7 @@ else
 	cd ..
 	drop_privs rm -Rf gcc3
 fi
-echo "progress-mark:7:gcc stage3 complete"
+progress_mark "cross gcc stage3 build"
 
 $APT_GET remove libc6-i386 # breaks cross builds
 
@@ -1898,7 +1905,6 @@ automatically_cross_build_packages() {
 		for pkg in $buildable; do
 			echo "cross building $pkg"
 			cross_build "$pkg"
-			echo "progress-mark:*:$pkg cross build"
 			need_packages=`set_discard "$need_packages" "$pkg"`
 		done
 	done
@@ -2002,7 +2008,6 @@ builddep_zlib() {
 	$APT_GET install debhelper binutils dpkg-dev
 }
 cross_build zlib
-echo "progress-mark:8:zlib cross build"
 # needed by dpkg, file, gnutls28, libpng, libtool, libxml2, perl, slang2, tcl8.6, util-linux
 
 automatically_cross_build_packages
@@ -2013,7 +2018,6 @@ builddep_libtool() {
 	$APT_GET install debhelper texi2html texinfo file "gfortran-$GCC_VER$HOST_ARCH_SUFFIX" automake autoconf autotools-dev help2man "zlib1g-dev:$HOST_ARCH"
 }
 cross_build libtool
-echo "progress-mark:9:libtool cross build"
 # needed by guile-2.0
 
 automatically_cross_build_packages
@@ -2023,7 +2027,6 @@ builddep_gpm() {
 	$APT_GET install autoconf autotools-dev quilt debhelper mawk bison texlive-base texinfo texi2html
 }
 cross_build gpm
-echo "progress-mark:19:gpm cross build"
 # needed by ncurses
 
 automatically_cross_build_packages
@@ -2199,7 +2202,6 @@ builddep_ncurses() {
 	esac
 }
 cross_build ncurses
-echo "progress-mark:20:ncurses cross build"
 # needed by bash, bsdmainutils, dpkg, guile-2.0, readline6, slang2
 
 automatically_cross_build_packages
@@ -2293,7 +2295,6 @@ builddep_readline6() {
 	esac
 }
 cross_build readline6
-echo "progress-mark:21:readline6 cross build"
 # needed by gnupg, guile-2.0, libxml2
 
 automatically_cross_build_packages
@@ -2303,7 +2304,6 @@ builddep_bzip2() {
 	$APT_GET install dpkg-dev debhelper dh-exec
 }
 cross_build bzip2
-echo "progress-mark:22:bzip2 cross build"
 # needed by dpkg, perl
 
 automatically_cross_build_packages
@@ -2313,7 +2313,6 @@ builddep_xz_utils() {
 	$APT_GET install debhelper perl dpkg-dev autoconf automake libtool gettext autopoint
 }
 cross_build xz-utils
-echo "progress-mark:23:xz-utils cross build"
 # needed by dpkg, libxml2
 
 automatically_cross_build_packages
@@ -2339,7 +2338,7 @@ else
 	cd ..
 	drop_privs rm -Rf libselinux1
 fi
-echo "progress-mark:27:libselinux cross build"
+progress_mark "libselinux stage1 cross build"
 # needed by coreutils, dpkg, findutils, glibc, sed, tar, util-linux
 
 automatically_cross_build_packages
@@ -2493,7 +2492,7 @@ else
 	cd ..
 	drop_privs rm -Rf util-linux_1
 fi
-echo "progress-mark:28:util-linux stage1 cross build"
+progress_mark "util-linux stage1 cross build"
 # essential, needed by e2fsprogs
 
 automatically_cross_build_packages
@@ -2519,7 +2518,7 @@ else
 	cd ..
 	drop_privs rm -Rf file_1
 fi
-echo "progress-mark:42:file cross build"
+progress_mark "file stage1 cross build"
 # needed by gcc-4.9, needed for debhelper
 
 automatically_cross_build_packages
@@ -2530,7 +2529,7 @@ builddep_bash() {
 	$APT_GET install autoconf autotools-dev bison "libncurses5-dev:$HOST_ARCH" texinfo texi2html debhelper locales gettext sharutils time xz-utils dpkg-dev
 }
 cross_build bash
-echo "progress-mark:46:bash cross build"
+# essential
 
 automatically_cross_build_packages
 
@@ -2540,7 +2539,6 @@ builddep_bsdmainutils() {
 	$APT_GET install debhelper "libncurses5-dev:$HOST_ARCH" quilt python python-hdate
 }
 cross_build bsdmainutils
-echo "progress-mark:48:bsdmainutils cross build"
 # needed for man-db
 
 automatically_cross_build_packages
@@ -2550,7 +2548,6 @@ builddep_libffi() {
 	$APT_GET install debhelper dejagnu lsb-release texinfo dpkg-dev
 }
 cross_build libffi
-echo "progress-mark:50:libffi cross build"
 # needed by guile-2.0, p11-kit
 
 automatically_cross_build_packages
@@ -2561,7 +2558,6 @@ builddep_dpkg() {
 	$APT_GET install debhelper pkg-config flex gettext po4a "zlib1g-dev:$1" "libbz2-dev:$1" "liblzma-dev:$1" "libselinux1-dev:$1" "libncursesw5-dev:$1" libtimedate-perl libio-string-perl
 }
 cross_build dpkg
-echo "progress-mark:54:dpkg cross build"
 # essential
 
 automatically_cross_build_packages
@@ -2572,7 +2568,6 @@ builddep_findutils() {
 	$APT_GET install texinfo debhelper autotools-dev "libselinux1-dev:$1" bison
 }
 cross_build findutils
-echo "progress-mark:56:findutils cross build"
 # essential
 
 automatically_cross_build_packages
@@ -2583,7 +2578,6 @@ builddep_guile_2_0() {
 	$APT_GET install guile-2.0 # needs Build-Depends: guile-2.0 <profile.cross>
 }
 cross_build guile-2.0
-echo "progress-mark:57:guile-2.0 cross build"
 # needed by gnutls28, make-dfsg, autogen
 
 automatically_cross_build_packages
@@ -2593,7 +2587,6 @@ builddep_libpipeline() {
 	$APT_GET install dpkg-dev debhelper pkg-config dh-autoreconf automake
 }
 cross_build libpipeline
-echo "progress-mark:59:libpipeline cross build"
 # man-db
 
 automatically_cross_build_packages
@@ -2652,7 +2645,6 @@ diff -Nru flex-2.5.39/debian/patches/series flex-2.5.39/debian/patches/series
 EOF
 }
 cross_build flex
-echo "progress-mark:65:flex cross build"
 # needed by pam
 
 automatically_cross_build_packages
@@ -2670,7 +2662,6 @@ buildenv_glib2_0() {
 	export ac_cv_func_posix_getpwuid_r=yes
 }
 cross_build glib2.0
-echo "progress-mark:66:glib2.0 cross build"
 # needed by pkg-config, dbus, systemd, libxt
 
 automatically_cross_build_packages
@@ -2681,7 +2672,6 @@ builddep_libxcb() {
 	$APT_GET install "libxau-dev:$1" "libxdmcp-dev:$1" xcb-proto "libpthread-stubs0-dev:$1" debhelper pkg-config xsltproc  python-xcbgen libtool automake python dctrl-tools
 }
 cross_build libxcb
-echo "progress-mark:70:libxcb cross build"
 # needed by libx11
 
 automatically_cross_build_packages
@@ -2692,7 +2682,6 @@ builddep_groff() {
 	$APT_GET install bison debhelper dpkg-dev ghostscript netpbm psutils xutils-dev x11proto-core-dev "libx11-dev:$1" "libxmu-dev:$1" "libxt-dev:$1" "libxaw7-dev:$1" texinfo dh-autoreconf
 }
 cross_build groff
-echo "progress-mark:79:groff cross build"
 # needed for man-db
 
 automatically_cross_build_packages
@@ -2783,7 +2772,6 @@ builddep_expat() {
 	$APT_GET install debhelper docbook-to-man dh-autoreconf dpkg-dev
 }
 cross_build expat
-echo "progress-mark:83:expat cross build"
 # needed by fontconfig
 
 builddep_fontconfig() {
@@ -2826,5 +2814,4 @@ EOF
 	drop_privs quilt push -a
 }
 cross_build fontconfig
-echo "progress-mark:84:fontconfig cross build"
 # needed by cairo, xft
