@@ -826,19 +826,23 @@ patch_gcc_5() {
 		drop_privs QUILT_PATCHES="/usr/share/cross-gcc/patches/gcc-$GCC_VER" quilt push -a
 	fi
 }
-if test "$ENABLE_MULTIARCH_GCC" = yes; then
 # choosing libatomic1 arbitrarily here, cause it never bumped soname
 BUILD_GCC_MULTIARCH_VER=`apt-cache show --no-all-versions libatomic1 | sed 's/^Source: gcc-\([0-9.]*\)$/\1/;t;d'`
 if test "$GCC_VER" = 5 -a "$BUILD_GCC_MULTIARCH_VER" = "4.9"; then
 	echo "deb [ arch=`dpkg --print-architecture` ] $MIRROR experimental main" > /etc/apt/sources.list.d/tmp-experimental.list
 	apt-get update
-	cat >/etc/apt/preferences.d/experimental_unstable_gcc <<EOF
+	if test "$ENABLE_MULTIARCH_GCC" = yes; then
+		cat >/etc/apt/preferences.d/experimental_unstable_gcc <<EOF
 Package: cpp* g++* gcc* libcilkrts* libasan* libatomic* libgcc* libgomp* libitm* liblsan* libquadmath* libstdc++* libtsan* libubsan*
 Pin: release a=experimental
 Pin-Priority: 1000
 EOF
-	$APT_GET dist-upgrade
-	rm /etc/apt/sources.list.d/tmp-experimental.list /etc/apt/preferences.d/experimental_unstable_gcc
+		$APT_GET dist-upgrade
+		rm /etc/apt/preferences.d/experimental_unstable_gcc
+	else
+		$APT_GET install "gcc-$GCC_VER-base"
+	fi
+	rm /etc/apt/sources.list.d/tmp-experimental.list
 	apt-get update
 elif test "$GCC_VER" != "$BUILD_GCC_MULTIARCH_VER"; then
 	echo "host gcc version ($GCC_VER) and build gcc version ($BUILD_GCC_MULTIARCH_VER) mismatch. need different build gcc"
@@ -865,7 +869,6 @@ fi
 progress_mark "build compiler complete"
 else
 echo "host gcc version and build gcc version match. good for multiarch"
-fi
 fi
 
 # binutils
