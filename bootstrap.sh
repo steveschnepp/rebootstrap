@@ -1367,6 +1367,21 @@ diff -Nru glibc-2.19/debian/rules.d/control.mk glibc-2.19/debian/rules.d/control
 EOF
 		drop_privs ./debian/rules debian/control
 	fi
+	echo "fixing glibc stage2 regression in -16 #780431"
+	drop_privs patch -p1 <<'EOF'
+diff -Nru glibc-2.19/debian/rules.d/debhelper.mk glibc-2.19/debian/rules.d/debhelper.mk
+--- glibc-2.19/debian/rules.d/debhelper.mk
++++ glibc-2.19/debian/rules.d/debhelper.mk
+@@ -180,6 +180,8 @@
+ 	# Generate common substvars files.
+ ifeq ($(filter stage2,$(DEB_BUILD_PROFILES)),)
+ 	echo 'libgcc:Depends=libgcc1 [!hppa !m68k], libgcc2 [m68k], libgcc4 [hppa]' > tmp.substvars
++else
++	touch tmp.substvars
+ endif
+ 
+ 	for pkg in $(DEB_ARCH_REGULAR_PACKAGES) $(DEB_INDEP_REGULAR_PACKAGES) $(DEB_UDEB_PACKAGES); do \
+EOF
 }
 if test -d "$RESULT/${LIBC_NAME}1"; then
 	echo "skipping rebuild of $LIBC_NAME stage1"
