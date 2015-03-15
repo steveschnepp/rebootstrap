@@ -2818,3 +2818,9 @@ EOF
 }
 cross_build fontconfig
 # needed by cairo, xft
+
+buildenv_libxrender() {
+	export xorg_cv_malloc0_returns_null=no
+}
+cross_build libxrender
+# needed by cairo, xft
