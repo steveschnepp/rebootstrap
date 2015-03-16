@@ -821,6 +821,21 @@ EOF
 	fi
 }
 patch_gcc_5() {
+	echo "patching gcc-5 to always mark libcc1 arch:any"
+	drop_privs patch -p1 <<'EOF'
+diff -u gcc-5-5-20150307/debian/control.m4 gcc-5-5-20150307/debian/control.m4
+--- gcc-5-5-20150307/debian/control.m4
++++ gcc-5-5-20150307/debian/control.m4
+@@ -2975,7 +2975,7 @@
+ 
+ Package: libcc1-`'CC1_SO
+ Section: ifdef(`TARGET',`devel',`libs')
+-Architecture: ifdef(`TARGET',`CROSS_ARCH',`any')
++Architecture: any
+ ifdef(`MULTIARCH', `Multi-Arch: same
+ Pre-Depends: multiarch-support
+ ')`'dnl
+EOF
 	if test "$ENABLE_MULTIARCH_GCC" = yes; then
 		echo "applying patches for with_deps_on_target_arch_pkgs"
 		drop_privs QUILT_PATCHES="/usr/share/cross-gcc/patches/gcc-$GCC_VER" quilt push -a
