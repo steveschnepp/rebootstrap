@@ -312,6 +312,17 @@ check_arch() {
 	return 0
 }
 
+apt_get_remove() {
+	local pkg pkgs
+	pkgs=""
+	for pkg in "$@"; do
+		dpkg-query -s "$pkg" >/dev/null 2>&1 && pkgs=`set_add "$pkgs" "$pkg"`
+	done
+	if test -n "$pkgs"; then
+		$APT_GET remove $pkgs
+	fi
+}
+
 apt-get update
 $APT_GET install pinentry-curses # avoid installing pinentry-gtk (via reprepro)
 $APT_GET install build-essential debhelper reprepro
@@ -992,7 +1003,7 @@ fi
 # gcc
 if test -d "$RESULT/gcc1"; then
 	echo "skipping rebuild of gcc stage1"
-	$APT_GET remove gcc-multilib
+	apt_get_remove gcc-multilib
 	dpkg -i $RESULT/gcc1/*.deb
 else
 	$APT_GET install debhelper gawk patchutils bison flex lsb-release quilt libtool autoconf2.64 zlib1g-dev libcloog-isl-dev libmpc-dev libmpfr-dev libgmp-dev autogen systemtap-sdt-dev binutils-multiarch "binutils$HOST_ARCH_SUFFIX" "linux-libc-dev:$HOST_ARCH"
@@ -1011,7 +1022,7 @@ else
 	cd ..
 	ls -l
 	pickup_packages *.changes
-	$APT_GET remove gcc-multilib
+	apt_get_remove gcc-multilib
 	if test "$ENABLE_MULTILIB" = yes && ls | grep -q multilib; then
 		$APT_GET install "gcc-$GCC_VER-multilib$HOST_ARCH_SUFFIX"
 	else
@@ -1385,7 +1396,7 @@ EOF
 }
 if test -d "$RESULT/${LIBC_NAME}1"; then
 	echo "skipping rebuild of $LIBC_NAME stage1"
-	$APT_GET remove libc6-dev-i386
+	apt_get_remove libc6-dev-i386
 	dpkg -i "$RESULT/${LIBC_NAME}1/"*.deb
 else
 	if test "$ENABLE_MULTIARCH_GCC" = yes; then
@@ -1403,7 +1414,7 @@ else
 	fi
 	cd ..
 	ls -l
-	$APT_GET remove libc6-dev-i386
+	apt_get_remove libc6-dev-i386
 	if test "$ENABLE_MULTIARCH_GCC" = yes; then
 		pickup_packages *.changes
 		dpkg -i libc*.deb
@@ -1468,7 +1479,7 @@ done
 ln -s "`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_GNU_TYPE`-gcc-$GCC_VER" "/usr/bin/`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_GNU_TYPE`-cc"
 
 if test "$HOST_ARCH" = "sparc"; then
-	$APT_GET remove libc6-i386 # undeclared file conflict #745552
+	apt_get_remove libc6-i386 # undeclared file conflict #745552
 fi
 if test -d "$RESULT/${LIBC_NAME}2"; then
 	echo "skipping rebuild of $LIBC_NAME stage2"
@@ -1556,7 +1567,7 @@ else
 fi
 progress_mark "cross gcc stage3 build"
 
-$APT_GET remove libc6-i386 # breaks cross builds
+apt_get_remove libc6-i386 # breaks cross builds
 
 buildenv_libx11() {
 	export xorg_cv_malloc0_returns_null=no
