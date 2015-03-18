@@ -1569,6 +1569,23 @@ progress_mark "cross gcc stage3 build"
 
 apt_get_remove libc6-i386 # breaks cross builds
 
+patch_libgpg_error() {
+	echo "fixing libgpg-error FTBFS with gcc-5 #777374"
+	drop_privs patch -p1 <<'EOF'
+diff -Nru libgpg-error-1.17/debian/rules libgpg-error-1.17/debian/rules
+--- libgpg-error-1.17/debian/rules
++++ libgpg-error-1.17/debian/rules
+@@ -6,6 +6,7 @@
+ export CFLAGS   := $(shell dpkg-buildflags --get CFLAGS)
+ export CXXFLAGS := $(shell dpkg-buildflags --get CXXFLAGS)
+ export LDFLAGS  := $(shell dpkg-buildflags --get LDFLAGS)
++export CPP	:= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)-gcc -E -P
+ 
+ export DEB_BUILD_MULTIARCH ?= $(shell dpkg-architecture -qDEB_BUILD_MULTIARCH)
+ export DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
+EOF
+}
+
 buildenv_libx11() {
 	export xorg_cv_malloc0_returns_null=no
 }
