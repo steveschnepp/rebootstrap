@@ -21,7 +21,7 @@ GCC_NOLANG=d,go,java,jit,objc,objc++
 ENABLE_DEBBINDIFF=no
 
 # evaluate command line parameters of the form KEY=VALUE
-for param in "$*"; do
+for param in "$@"; do
 	echo "bootstrap-configuration: $param"
 	eval $param
 done
