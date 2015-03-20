@@ -2867,3 +2867,6 @@ buildenv_libxrender() {
 }
 cross_build libxrender
 # needed by cairo, xft
+
+cross_build xft
+# needed by tk8.6
