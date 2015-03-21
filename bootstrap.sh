@@ -482,23 +482,6 @@ if test "$ENABLE_DEBBINDIFF" = yes; then
 fi
 if test "$ENABLE_DEBBINDIFF" = yes; then
 	$APT_GET install debbindiff
-	echo "fixing debbindiff to not crash with UnicodeDecodeError #778641"
-	patch /usr/lib/python2.7/dist-packages/debbindiff/presenters/text.py <<'EOF'
-diff -Nru debbindiff-9/debbindiff/presenters/text.py debbindiff-9+nmu1/debbindiff/presenters/text.py
---- debbindiff-9/debbindiff/presenters/text.py
-+++ debbindiff-9+nmu1/debbindiff/presenters/text.py
-@@ -34,7 +34,9 @@
-         for line in g:
-             if line.startswith('--- ') or line.startswith('+++ '):
-                 continue
--            print_func("│ %s" % line.encode('utf-8'), end='')
-+            if isinstance(line, unicode):
-+                line = line.encode('utf-8')
-+            print_func("│ %s" % line, end='')
- 
- def print_details(difference, print_func):
-     if not difference.details:
-EOF
 	compare_native() {
 		local pkg pkgname tmpdir downloadname errcode
 		for pkg in "$@"; do
