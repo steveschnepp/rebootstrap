@@ -503,7 +503,7 @@ if test "$ENABLE_DEBBINDIFF" = yes; then
 				continue
 			fi
 			errcode=0
-			timeout --kill-after=1m 1h debbindiff --text "$tmpdir/out" "$pkg" "$tmpdir/$downloadname" || errcode=$?
+			LC_CTYPE=C.UTF-8 timeout --kill-after=1m 1h debbindiff --text "$tmpdir/out" "$pkg" "$tmpdir/$downloadname" || errcode=$?
 			case $errcode in
 				0)
 					echo "debbindiff-success: $pkg"
