@@ -1956,12 +1956,31 @@ add_need tcl8.6 # by newt
 add_need ustr # by libsemanage
 
 automatically_cross_build_packages() {
-	local need_packages_comma_sep buildable pkg
+	local need_packages_comma_sep dosetmp buildable line pkg missing
 	while test -n "$need_packages"; do
 		echo "checking packages with dose-builddebcheck: $need_packages"
 		need_packages_comma_sep=`echo $need_packages | sed 's/ /,/g'`
-		buildable=`call_dose_builddebcheck --successes --explain-minimal --latest --DropBuildIndep "--checkonly=$need_packages_comma_sep" | sed 's/^  package: src://;t;d'`
-		buildable=`set_create "$buildable"`
+		dosetmp=`mktemp -t doseoutput.XXXXXXXXXX`
+		call_dose_builddebcheck --successes --failures --explain --latest --DropBuildIndep "--checkonly=$need_packages_comma_sep" >"$dosetmp"
+		buildable=
+		while IFS= read -r line; do
+			case "$line" in
+				"  package: src:"*)
+					pkg=${line#*src:}
+				;;
+				"  status: ok")
+					buildable=`set_add "$buildable" "$pkg"`
+				;;
+				"      unsat-dependency: "*)
+					missing=${line#*: }
+					missing=${missing#*:} # skip architecture
+					missing=${missing%% | *} # drop alternatives
+					missing=${missing% (* *)} # drop version constraint
+					echo "rebootstrap-debug: source package $pkg misses build dependency $missing"
+				;;
+			esac
+		done < "$dosetmp"
+		rm "$dosetmp"
 		echo "buildable packages: $buildable"
 		test -z "$buildable" && break
 		for pkg in $buildable; do
