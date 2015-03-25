@@ -2941,3 +2941,9 @@ cross_build libxrender
 
 cross_build xft
 # needed by tk8.6
+
+buildenv_tk8_6() {
+	export tcl_cv_strtod_buggy=ok
+}
+cross_build tk8.6
+# needed by blt
