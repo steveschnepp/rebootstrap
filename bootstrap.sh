@@ -1892,7 +1892,8 @@ index ab05311..57d0d0a 100644
 EOF
 }
 
-$APT_GET install dose-builddebcheck
+$APT_GET install dose-builddebcheck dctrl-tools
+
 call_dose_builddebcheck() {
 	local package_list source_list errcode
 	package_list=`mktemp packages.XXXXXXXXXX`
@@ -1914,6 +1915,26 @@ EOF
 		exit 1
 	fi
 	rm -f "$package_list" "$source_list"
+}
+
+# determine whether a given binary package refers to an arch:all package
+# $1 is a binary package name
+is_arch_all() {
+	grep-dctrl -P -X "$1" -a -F Architecture all -s /var/lib/apt/lists/*_Packages
+}
+
+# determine which source packages build a given binary package
+# $1 is a binary package name
+# prints a set of source packages
+what_builds() {
+	local newline pattern source
+	newline='
+'
+	pattern=`echo "$1" | sed 's/[+.]/\\\\&/g'`
+	pattern="$newline $pattern "
+	# exit codes 0 and 1 signal successful operation
+	source=`grep-dctrl -F Package-List -e "$pattern" -s Package -n /var/lib/apt/lists/*_Sources || test "$?" -eq 1`
+	set_create "$source"
 }
 
 need_packages=
@@ -1974,7 +1995,7 @@ add_need tcl8.6 # by newt
 add_need ustr # by libsemanage
 
 automatically_cross_build_packages() {
-	local need_packages_comma_sep dosetmp buildable line pkg missing
+	local need_packages_comma_sep dosetmp buildable line pkg missing source
 	while test -n "$need_packages"; do
 		echo "checking packages with dose-builddebcheck: $need_packages"
 		need_packages_comma_sep=`echo $need_packages | sed 's/ /,/g'`
@@ -1994,7 +2015,26 @@ automatically_cross_build_packages() {
 					missing=${missing#*:} # skip architecture
 					missing=${missing%% | *} # drop alternatives
 					missing=${missing% (* *)} # drop version constraint
-					echo "rebootstrap-debug: source package $pkg misses build dependency $missing"
+					if is_arch_all "$missing"; then
+						echo "rebootstrap-warning: $pkg misses dependency $missing which is arch:all"
+					else
+						source=`what_builds "$missing"`
+						case "$source" in
+							"")
+								echo "rebootstrap-warning: $pkg transitively build-depends on $missing, but no source package could be determined"
+							;;
+							*" "*)
+								echo "rebootstrap-warning: $pkg transitively build-depends on $missing, but it is build from multiple source packages: $source"
+							;;
+							*)
+								if set_contains "$need_packages" "$source"; then
+									echo "rebootstrap-debug: $pkg transitively build-depends on $missing, which is built from $source and already scheduled for building"
+								else
+									echo "rebootstrap-debug: source package $pkg misses build dependency $missing, which is built from $source"
+								fi
+							;;
+						esac
+					fi
 				;;
 			esac
 		done < "$dosetmp"
