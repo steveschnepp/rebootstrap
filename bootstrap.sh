@@ -500,6 +500,8 @@ diff -Nru debbindiff-9/debbindiff/presenters/text.py debbindiff-9+nmu1/debbindif
      if not difference.details:
 EOF
 	sed -i 's/ open(\(.*\))/ codecs.open(\1, encoding="utf-8")/;/^import logging/aimport codecs' /usr/bin/debbindiff
+	echo "fixing debbindiff IndexError #781280"
+	sed -i 's/if not \(difference.lines.\)/if \1 and not \1/' /usr/lib/python2.7/dist-packages/debbindiff/presenters/text.py
 	compare_native() {
 		local pkg pkgname tmpdir downloadname errcode
 		for pkg in "$@"; do
