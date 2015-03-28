@@ -3008,3 +3008,6 @@ buildenv_tk8_6() {
 }
 cross_build tk8.6
 # needed by blt
+
+cross_build tcltk-defaults
+# needed by python2.7
