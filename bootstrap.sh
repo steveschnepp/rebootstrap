@@ -2,6 +2,7 @@
 
 set -v
 set -e
+set -u
 
 export DEB_BUILD_OPTIONS="nocheck parallel=1"
 export DH_VERBOSE=1
