@@ -80,6 +80,18 @@ set_intersect() {
 	echo "$result"
 }
 
+# compute the set of elements in set $1 but not in set $2
+set_difference() {
+	local word result
+	result=
+	for word in $1; do
+		if ! set_contains "$2" "$word"; then
+			result=`set_add "$result" "$word"`
+		fi
+	done
+	echo "$result"
+}
+
 check_arch() {
 	local FILE_RES
 	FILE_RES=`file -b "$1"`
@@ -1922,6 +1934,12 @@ what_builds() {
 
 need_packages=
 add_need() { need_packages=`set_add "$need_packages" "$1"`; }
+built_packages=
+mark_built() {
+	need_packages=`set_discard "$need_packages" "$1"`
+	built_packages=`set_add "$built_packages" "$1"`
+}
+
 add_need acl # by coreutils, systemd, tar
 add_need attr # by acl, coreutils, libcap-ng, libcap2, tar
 add_need base-files # essential
@@ -2010,7 +2028,9 @@ automatically_cross_build_packages() {
 								echo "rebootstrap-warning: $pkg transitively build-depends on $missing, but it is build from multiple source packages: $source"
 							;;
 							*)
-								if set_contains "$need_packages" "$source"; then
+								if set_contains "$built_packages" "$source"; then
+									echo "rebootstrap-warning: $pkg transitively build-depends on $missing, which is built from $source, which is supposedly already built"
+								elif set_contains "$need_packages" "$source"; then
 									echo "rebootstrap-debug: $pkg transitively build-depends on $missing, which is built from $source and already scheduled for building"
 								else
 									echo "rebootstrap-debug: source package $pkg misses build dependency $missing, which is built from $source"
@@ -2027,7 +2047,7 @@ automatically_cross_build_packages() {
 		for pkg in $buildable; do
 			echo "cross building $pkg"
 			cross_build "$pkg"
-			need_packages=`set_discard "$need_packages" "$pkg"`
+			mark_built "$pkg"
 		done
 	done
 	echo "done automatically cross building packages. left: $need_packages"
@@ -2035,7 +2055,7 @@ automatically_cross_build_packages() {
 
 assert_built() {
 	local assert_pkgs assert_pkgs_comma_sep
-	assert_pkgs=`set_intersect "$1" "$need_packages"`
+	assert_pkgs=`set_difference "$1" "$built_packages"`
 	test -z "$assert_pkgs" && return 0
 	echo "rebootstrap-error: missing asserted packages: $assert_pkgs"
 	assert_pkgs_comma_sep=`echo $assert_pkgs | sed 's/ /,/g'`
@@ -2130,6 +2150,7 @@ builddep_zlib() {
 	$APT_GET install debhelper binutils dpkg-dev
 }
 cross_build zlib
+mark_built zlib
 # needed by dpkg, file, gnutls28, libpng, libtool, libxml2, perl, slang2, tcl8.6, util-linux
 
 automatically_cross_build_packages
@@ -2140,6 +2161,7 @@ builddep_libtool() {
 	$APT_GET install debhelper texi2html texinfo file "gfortran-$GCC_VER$HOST_ARCH_SUFFIX" automake autoconf autotools-dev help2man "zlib1g-dev:$HOST_ARCH"
 }
 cross_build libtool
+mark_built libtool
 # needed by guile-2.0
 
 automatically_cross_build_packages
@@ -2149,6 +2171,7 @@ builddep_gpm() {
 	$APT_GET install autoconf autotools-dev quilt debhelper mawk bison texlive-base texinfo texi2html
 }
 cross_build gpm
+mark_built gpm
 # needed by ncurses
 
 automatically_cross_build_packages
@@ -2324,6 +2347,7 @@ builddep_ncurses() {
 	esac
 }
 cross_build ncurses
+mark_built ncurses
 # needed by bash, bsdmainutils, dpkg, guile-2.0, readline6, slang2
 
 automatically_cross_build_packages
@@ -2417,6 +2441,7 @@ builddep_readline6() {
 	esac
 }
 cross_build readline6
+mark_built readline6
 # needed by gnupg, guile-2.0, libxml2
 
 automatically_cross_build_packages
@@ -2426,6 +2451,7 @@ builddep_bzip2() {
 	$APT_GET install dpkg-dev debhelper dh-exec
 }
 cross_build bzip2
+mark_built bzip2
 # needed by dpkg, perl
 
 automatically_cross_build_packages
@@ -2435,6 +2461,7 @@ builddep_xz_utils() {
 	$APT_GET install debhelper perl dpkg-dev autoconf automake libtool gettext autopoint
 }
 cross_build xz-utils
+mark_built xz-utils
 # needed by dpkg, libxml2
 
 automatically_cross_build_packages
@@ -2461,6 +2488,7 @@ else
 	drop_privs rm -Rf libselinux1
 fi
 progress_mark "libselinux stage1 cross build"
+mark_built libselinux
 # needed by coreutils, dpkg, findutils, glibc, sed, tar, util-linux
 
 automatically_cross_build_packages
@@ -2615,6 +2643,7 @@ else
 	drop_privs rm -Rf util-linux_1
 fi
 progress_mark "util-linux stage1 cross build"
+mark_built util-linux
 # essential, needed by e2fsprogs
 
 automatically_cross_build_packages
@@ -2641,6 +2670,7 @@ else
 	drop_privs rm -Rf file_1
 fi
 progress_mark "file stage1 cross build"
+mark_built file
 # needed by gcc-4.9, needed for debhelper
 
 automatically_cross_build_packages
@@ -2651,6 +2681,7 @@ builddep_bash() {
 	$APT_GET install autoconf autotools-dev bison "libncurses5-dev:$HOST_ARCH" texinfo texi2html debhelper locales gettext sharutils time xz-utils dpkg-dev
 }
 cross_build bash
+mark_built bash
 # essential
 
 automatically_cross_build_packages
@@ -2661,6 +2692,7 @@ builddep_bsdmainutils() {
 	$APT_GET install debhelper "libncurses5-dev:$HOST_ARCH" quilt python python-hdate
 }
 cross_build bsdmainutils
+mark_built bsdmainutils
 # needed for man-db
 
 automatically_cross_build_packages
@@ -2670,6 +2702,7 @@ builddep_libffi() {
 	$APT_GET install debhelper dejagnu lsb-release texinfo dpkg-dev
 }
 cross_build libffi
+mark_built libffi
 # needed by guile-2.0, p11-kit
 
 automatically_cross_build_packages
@@ -2680,6 +2713,7 @@ builddep_dpkg() {
 	$APT_GET install debhelper pkg-config flex gettext po4a "zlib1g-dev:$1" "libbz2-dev:$1" "liblzma-dev:$1" "libselinux1-dev:$1" "libncursesw5-dev:$1" libtimedate-perl libio-string-perl
 }
 cross_build dpkg
+mark_built dpkg
 # essential
 
 automatically_cross_build_packages
@@ -2690,6 +2724,7 @@ builddep_findutils() {
 	$APT_GET install texinfo debhelper autotools-dev "libselinux1-dev:$1" bison
 }
 cross_build findutils
+mark_built findutils
 # essential
 
 automatically_cross_build_packages
@@ -2736,6 +2771,7 @@ diff -Nru guile-2.0-2.0.11+1/debian/rules guile-2.0-2.0.11+1/debian/rules
 EOF
 }
 cross_build guile-2.0
+mark_built guile-2.0
 # needed by gnutls28, make-dfsg, autogen
 
 automatically_cross_build_packages
@@ -2745,6 +2781,7 @@ builddep_libpipeline() {
 	$APT_GET install dpkg-dev debhelper pkg-config dh-autoreconf automake
 }
 cross_build libpipeline
+mark_built libpipeline
 # man-db
 
 automatically_cross_build_packages
@@ -2803,12 +2840,13 @@ diff -Nru flex-2.5.39/debian/patches/series flex-2.5.39/debian/patches/series
 EOF
 }
 cross_build flex
+mark_built flex
 # needed by pam
 
 automatically_cross_build_packages
 
 builddep_glib2_0() {
-	assert_built "libelf libffi libselinux linux pcre3 zlib"
+	assert_built "libelf libffi libselinux pcre3 zlib" # also linux-libc-dev
 	# python-dbus dependency unsatisifable
 	$APT_GET install debhelper cdbs dh-autoreconf pkg-config gettext autotools-dev gnome-pkg-tools dpkg-dev "libelfg0-dev:$1" "libpcre3-dev:$1" desktop-file-utils gtk-doc-tools "libselinux1-dev:$1" "linux-libc-dev:$1" "zlib1g-dev:$1" dbus dbus-x11 shared-mime-info xterm python python-dbus python-gi libxml2-utils "libffi-dev:$1"
 	$APT_GET install libglib2.0-dev # missing B-D on libglib2.0-dev:any <profile.cross>
@@ -2820,6 +2858,7 @@ buildenv_glib2_0() {
 	export ac_cv_func_posix_getpwuid_r=yes
 }
 cross_build glib2.0
+mark_built glib2.0
 # needed by pkg-config, dbus, systemd, libxt
 
 automatically_cross_build_packages
@@ -2830,6 +2869,7 @@ builddep_libxcb() {
 	$APT_GET install "libxau-dev:$1" "libxdmcp-dev:$1" xcb-proto "libpthread-stubs0-dev:$1" debhelper pkg-config xsltproc  python-xcbgen libtool automake python dctrl-tools
 }
 cross_build libxcb
+mark_built libxcb
 # needed by libx11
 
 automatically_cross_build_packages
@@ -2840,6 +2880,7 @@ builddep_groff() {
 	$APT_GET install bison debhelper dpkg-dev ghostscript netpbm psutils xutils-dev x11proto-core-dev "libx11-dev:$1" "libxmu-dev:$1" "libxt-dev:$1" "libxaw7-dev:$1" texinfo dh-autoreconf
 }
 cross_build groff
+mark_built groff
 # needed for man-db
 
 automatically_cross_build_packages
@@ -2930,6 +2971,7 @@ builddep_expat() {
 	$APT_GET install debhelper docbook-to-man dh-autoreconf dpkg-dev
 }
 cross_build expat
+mark_built expat
 # needed by fontconfig
 
 builddep_fontconfig() {
