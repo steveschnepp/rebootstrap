@@ -883,7 +883,7 @@ EOF
 		$APT_GET dist-upgrade
 		rm /etc/apt/preferences.d/experimental_unstable_gcc
 	else
-		$APT_GET install "gcc-$GCC_VER-base"
+		$APT_GET install "gcc-$GCC_VER-base" libcc1-0
 	fi
 	rm /etc/apt/sources.list.d/tmp-experimental.list
 	apt-get update
