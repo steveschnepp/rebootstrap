@@ -597,19 +597,26 @@ pickup_packages() {
 	apt-get update
 }
 
+# compute a function name from a hook prefix $1 and a package name $2
+# returns success if the function actually exists
+get_hook() {
+	local hook
+	hook=`echo "$2" | tr -- -. __` # - and . are invalid in function names
+	hook="${1}_$hook"
+	echo "$hook"
+	type "$hook" >/dev/null 2>&1 || return 1
+}
+
 cross_build_setup() {
-	local pkg mangledpkg subdir
+	local pkg subdir hook
 	pkg="$1"
 	subdir="${2:-$pkg}"
-	mangledpkg=`echo "$pkg" | tr -- -. __` # - invalid in function names
 	cd /tmp/buildd
 	drop_privs mkdir "$subdir"
 	cd "$subdir"
 	obtain_source_package "$pkg"
 	cd "${pkg}-"*
-	if type "patch_$mangledpkg" >/dev/null; then
-		"patch_$mangledpkg"
-	fi
+	hook=`get_hook patch "$pkg"` && "$hook"
 }
 
 check_binNMU() {
@@ -647,10 +654,9 @@ progress_mark() {
 }
 
 cross_build() {
-	local pkg profiles mangledpkg ignorebd
+	local pkg profiles ignorebd hook
 	pkg="$1"
 	profiles="$DEFAULT_PROFILES ${2:-}"
-	mangledpkg=`echo "$pkg" | tr -- -. __` # - invalid in function names
 	if test "$ENABLE_MULTILIB" = "no"; then
 		profiles="$profiles nobiarch"
 	fi
@@ -659,9 +665,9 @@ cross_build() {
 		echo "skipping rebuild of $pkg with profiles $profiles"
 	else
 		echo "building $pkg with profiles $profiles"
-		if type "builddep_$mangledpkg" >/dev/null; then
+		if hook=`get_hook builddep "$pkg"`; then
 			echo "installing Build-Depends for $pkg using custom function"
-			"builddep_$mangledpkg" "$HOST_ARCH" "$profiles"
+			"$hook" "$HOST_ARCH" "$profiles"
 		else
 			echo "installing Build-Depends for $pkg using apt-get build-dep"
 			$APT_GET build-dep -a$HOST_ARCH --arch-only -P "$profiles" "$pkg"
@@ -669,16 +675,16 @@ cross_build() {
 		cross_build_setup "$pkg"
 		check_binNMU
 		ignorebd=
-		if type "builddep_$mangledpkg" >/dev/null; then
+		if get_hook builddep "$pkg" >/dev/null; then
 			if dpkg-checkbuilddeps -a$HOST_ARCH -P "$profiles"; then
 				echo "rebootstrap-warning: Build-Depends for $pkg satisfied even though a custom builddep_  function is in use"
 			fi
 			ignorebd=-d
 		fi
 		(
-			if type "buildenv_$mangledpkg" >/dev/null; then
-				echo "adding environment variables via buildenv_$mangledpkg hook"
-				"buildenv_$mangledpkg"
+			if hook=`get_hook buildenv "$pkg"`; then
+				echo "adding environment variables via buildenv hook for $pkg"
+				"$hook"
 			fi
 			drop_privs_exec dpkg-buildpackage "-a$HOST_ARCH" -B "-P$profiles" $ignorebd -uc -us
 		)
