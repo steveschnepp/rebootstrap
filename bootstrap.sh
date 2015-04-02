@@ -617,6 +617,7 @@ cross_build_setup() {
 	obtain_source_package "$pkg"
 	cd "${pkg}-"*
 	hook=`get_hook patch "$pkg"` && "$hook"
+	return 0
 }
 
 check_binNMU() {
