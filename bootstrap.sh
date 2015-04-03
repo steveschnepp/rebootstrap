@@ -3040,3 +3040,6 @@ cross_build tk8.6
 
 cross_build tcltk-defaults
 # needed by python2.7
+
+cross_build openssl
+# needed by curl
