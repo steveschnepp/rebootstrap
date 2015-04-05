@@ -1605,6 +1605,16 @@ progress_mark "cross gcc stage3 build"
 
 apt_get_remove libc6-i386 # breaks cross builds
 
+automatic_packages=
+add_automatic() { automatic_packages=`set_add "$automatic_packages" "$1"`; }
+
+add_automatic acl
+add_automatic attr
+add_automatic gdbm
+add_automatic gmp
+add_automatic isl
+add_automatic libatomic-ops
+
 patch_libgpg_error() {
 	echo "fixing libgpg-error FTBFS with gcc-5 #777374"
 	drop_privs patch -p1 <<'EOF'
@@ -1622,6 +1632,9 @@ diff -Nru libgpg-error-1.17/debian/rules libgpg-error-1.17/debian/rules
 EOF
 }
 
+add_automatic libtasn1-6
+
+add_automatic libx11
 buildenv_libx11() {
 	export xorg_cv_malloc0_returns_null=no
 }
@@ -1947,8 +1960,8 @@ mark_built() {
 	built_packages=`set_add "$built_packages" "$1"`
 }
 
-add_need acl # by coreutils, systemd, tar
-add_need attr # by acl, coreutils, libcap-ng, libcap2, tar
+add_need acl # by coreutils, systemd
+add_need attr # by coreutils, libcap-ng, libcap2
 add_need base-files # essential
 add_need build-essential # build-essential
 add_need cloog # by gcc-4.9
@@ -1958,13 +1971,12 @@ add_need debianutils # essential
 add_need diffutils # essential
 add_need freetype # by fontconfig
 add_need gcc-defaults # for build-essential
-add_need gdbm # by man-db, perl, python2.7
-add_need gmp # by cloog, gnutls28, guile-2.0, isl, mpclib3, mpfr4, nettle
+add_need gdbm # by perl, python2.7
+add_need gmp # by gnutls28, guile-2.0, mpclib3, mpfr4, nettle
 add_need grep # essential
 add_need gzip # essential
 add_need hostname # essential
-add_need isl # by cloog
-add_need libatomic-ops # by gcc-4.9, libgc
+add_need libatomic-ops # by gcc-4.9
 add_need libdebian-installer # by cdebconf
 add_need libelf # by systemtap, glib2.0
 add_need libgc # by guile-2.0
@@ -1975,7 +1987,7 @@ add_need libpng # by slang2
 add_need libpthread-stubs # by libxcb
 test "`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS`" = linux && add_need libsepol # by libselinux
 add_need libsm # by libxt
-add_need libtasn1-6 # by gnutls28, p11-kit
+add_need libtasn1-6 # by gnutls28
 add_need libtextwrap # by cdebconf
 add_need libunistring # by guile-2.0
 add_need libx11 # by dbus, groff
@@ -2003,13 +2015,14 @@ add_need tcl8.6 # by newt
 add_need ustr # by libsemanage
 
 automatically_cross_build_packages() {
-	local need_packages_comma_sep dosetmp buildable line pkg missing source
+	local need_packages_comma_sep dosetmp buildable new_needed line pkg missing source
 	while test -n "$need_packages"; do
 		echo "checking packages with dose-builddebcheck: $need_packages"
 		need_packages_comma_sep=`echo $need_packages | sed 's/ /,/g'`
 		dosetmp=`mktemp -t doseoutput.XXXXXXXXXX`
 		call_dose_builddebcheck --successes --failures --explain --latest --DropBuildIndep "--checkonly=$need_packages_comma_sep" >"$dosetmp"
 		buildable=
+		new_needed=
 		while IFS= read -r line; do
 			case "$line" in
 				"  package: src:"*)
@@ -2039,8 +2052,10 @@ automatically_cross_build_packages() {
 									echo "rebootstrap-warning: $pkg transitively build-depends on $missing, which is built from $source, which is supposedly already built"
 								elif set_contains "$need_packages" "$source"; then
 									echo "rebootstrap-debug: $pkg transitively build-depends on $missing, which is built from $source and already scheduled for building"
+								elif set_contains "$automatic_packages" "$source"; then
+									new_needed=`set_add "$new_needed" "$source"`
 								else
-									echo "rebootstrap-debug: source package $pkg misses build dependency $missing, which is built from $source"
+									echo "rebootstrap-warning: $pkg transitively build-depends on $missing, which is built from $source but not automatic"
 								fi
 							;;
 						esac
@@ -2050,12 +2065,14 @@ automatically_cross_build_packages() {
 		done < "$dosetmp"
 		rm "$dosetmp"
 		echo "buildable packages: $buildable"
-		test -z "$buildable" && break
+		echo "new packages needed: $new_needed"
+		test -z "$buildable" -a -z "$new_needed" && break
 		for pkg in $buildable; do
 			echo "cross building $pkg"
 			cross_build "$pkg"
 			mark_built "$pkg"
 		done
+		need_packages=`set_union "$need_packages" "$new_needed"`
 	done
 	echo "done automatically cross building packages. left: $need_packages"
 }
