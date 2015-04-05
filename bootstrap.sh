@@ -92,6 +92,16 @@ set_difference() {
 	echo "$result"
 }
 
+# compute the union of two sets $1 and $2
+set_union() {
+	local word result
+	result=$1
+	for word in $2; do
+		result=`set_add "$result" "$word"`
+	done
+	echo "$result"
+}
+
 check_arch() {
 	local FILE_RES
 	FILE_RES=`file -b "$1"`
