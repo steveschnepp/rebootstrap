@@ -1653,6 +1653,10 @@ buildenv_libxext() {
 	export xorg_cv_malloc0_returns_null=no
 }
 
+buildenv_libxrender() {
+	export xorg_cv_malloc0_returns_null=no
+}
+
 buildenv_libxss() {
 	export xorg_cv_malloc0_returns_null=no
 }
@@ -1662,6 +1666,10 @@ buildenv_libxt() {
 }
 
 buildenv_tcl8_6() {
+	export tcl_cv_strtod_buggy=ok
+}
+
+buildenv_tk8_6() {
 	export tcl_cv_strtod_buggy=ok
 }
 
@@ -2007,6 +2015,7 @@ add_need libxdmcp # by libxcb
 add_need libxext # by libxmu
 add_need libxmu # by groff, libxaw
 add_need libxpm # by libxaw
+add_need libxrender # by cairo, xft
 add_need libxss # by tk8.6
 add_need libxt # by groff, libxaw, libxmu
 add_need make-dfsg # for build-essential
@@ -2015,6 +2024,7 @@ add_need mawk # for base-files (alternatively: gawk)
 add_need mpclib3 # by gcc-4.9
 add_need mpfr4 # by gcc-4.9
 add_need nettle # by gnutls28
+add_need openssl # by curl
 add_need p11-kit # by gnutls28
 add_need patch # for dpkg-dev
 add_need pcre3 # by grep, libselinux, slang2
@@ -2022,7 +2032,10 @@ add_need sed # essential
 add_need slang2 # by cdebconf, newt
 add_need tar # essential
 add_need tcl8.6 # by newt
+add_need tcltk-defaults # by python2.7
+add_need tk8.6 # by blt
 add_need ustr # by libsemanage
+add_need xft # by tk8.6
 
 automatically_cross_build_packages() {
 	local need_packages_comma_sep dosetmp buildable new_needed line pkg missing source
@@ -2919,8 +2932,6 @@ mark_built groff
 
 automatically_cross_build_packages
 
-assert_built "$need_packages"
-
 patch_expat() {
 	echo "patching expat to add nobiarch build profile #779459"
 	drop_privs patch -p1 <<'EOF'
@@ -3008,6 +3019,8 @@ cross_build expat
 mark_built expat
 # needed by fontconfig
 
+automatically_cross_build_packages
+
 builddep_fontconfig() {
 	assert_built "expat freetype"
 	# versioned dependency on binutils needs cross-translation #779460
@@ -3050,23 +3063,6 @@ EOF
 cross_build fontconfig
 # needed by cairo, xft
 
-buildenv_libxrender() {
-	export xorg_cv_malloc0_returns_null=no
-}
-cross_build libxrender
-# needed by cairo, xft
+automatically_cross_build_packages
 
-cross_build xft
-# needed by tk8.6
-
-buildenv_tk8_6() {
-	export tcl_cv_strtod_buggy=ok
-}
-cross_build tk8.6
-# needed by blt
-
-cross_build tcltk-defaults
-# needed by python2.7
-
-cross_build openssl
-# needed by curl
+assert_built "$need_packages"
