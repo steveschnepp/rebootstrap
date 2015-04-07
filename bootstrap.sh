@@ -385,6 +385,32 @@ diff -Nru cross-gcc-13/patches/gcc-5/0004-reverted-removal-of-with_deps_on_targe
  +   .) ;; # Avoid trailing /.
  +Index: b/src/libgomp/configure.ac
 EOF
+	echo "fixing cross-gcc patches for gcc5 #782071"
+	patch /usr/share/cross-gcc/patches/gcc-5/0004-reverted-removal-of-with_deps_on_target_arch_pkgs-in.patch <<'EOF'
+diff -Nru cross-gcc-13/patches/gcc-5/0004-reverted-removal-of-with_deps_on_target_arch_pkgs-in.patch cross-gcc-13+nmu1/patches/gcc-5/0004-reverted-removal-of-with_deps_on_target_arch_pkgs-in.patch
+--- cross-gcc-13/patches/gcc-5/0004-reverted-removal-of-with_deps_on_target_arch_pkgs-in.patch	2015-01-28 07:18:12.000000000 +0100
++++ cross-gcc-13+nmu1/patches/gcc-5/0004-reverted-removal-of-with_deps_on_target_arch_pkgs-in.patch	2015-04-07 13:11:17.000000000 +0200
+@@ -712,19 +712,6 @@
+    endif
+  else
+    usr_lib = $(PFL)/$(libdir)
+-@@ -921,7 +942,11 @@ ifneq ($(DEB_CROSS),yes)
+-     cxx_inc_dir	= $(PF)/include/c++/$(GCC_VERSION)
+-   endif
+- else
+--  cxx_inc_dir	= $(PF)/$(TARGET_ALIAS)/include/c++/$(GCC_VERSION)
+-+  ifeq ($(with_deps_on_target_arch_pkgs),yes)
+-+    cxx_inc_dir	= $(PF)/include/c++/$(BASE_VERSION)
+-+  else
+-+    cxx_inc_dir	= $(PF)/$(TARGET_ALIAS)/include/c++/$(GCC_VERSION)
+-+  endif
+- endif
+- 
+- # FIXME: MULTIARCH_DIRNAME needed for g++-multiarch-incdir.diff
+ @@ -1750,8 +1775,13 @@ ifneq ($(DEB_CROSS),yes)
+    p_lgcc = libgcc$(GCC_SONAME)
+  else
+EOF
 fi
 
 obtain_source_package() {
