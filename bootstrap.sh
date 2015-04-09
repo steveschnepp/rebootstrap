@@ -1668,6 +1668,8 @@ diff -Nru libgpg-error-1.17/debian/rules libgpg-error-1.17/debian/rules
 EOF
 }
 
+add_automatic libice
+add_automatic libsm
 add_automatic libtasn1-6
 
 add_automatic libx11
@@ -1675,18 +1677,25 @@ buildenv_libx11() {
 	export xorg_cv_malloc0_returns_null=no
 }
 
+add_automatic libxext
 buildenv_libxext() {
 	export xorg_cv_malloc0_returns_null=no
 }
+
+add_automatic libxmu
 
 buildenv_libxrender() {
 	export xorg_cv_malloc0_returns_null=no
 }
 
+add_automatic libxpm
+
+add_automatic libxss
 buildenv_libxss() {
 	export xorg_cv_malloc0_returns_null=no
 }
 
+add_automatic libxt
 buildenv_libxt() {
 	export xorg_cv_malloc0_returns_null=no
 }
@@ -1735,6 +1744,8 @@ diff -Nru openssl-1.0.1k/debian/patches/series openssl-1.0.1k/debian/patches/ser
 EOF
 	drop_privs quilt push -a
 }
+
+add_automatic pcre3
 
 buildenv_tcl8_6() {
 	export tcl_cv_strtod_buggy=ok
@@ -1996,6 +2007,8 @@ index ab05311..57d0d0a 100644
 EOF
 }
 
+add_automatic xft
+
 $APT_GET install dose-builddebcheck dctrl-tools
 
 call_dose_builddebcheck() {
@@ -2061,7 +2074,7 @@ add_need diffutils # essential
 add_need freetype # by fontconfig
 add_need gcc-defaults # for build-essential
 add_need gdbm # by perl, python2.7
-add_need gmp # by gnutls28, guile-2.0, mpclib3, mpfr4, nettle
+add_need gmp # by gnutls28, guile-2.0, mpclib3, nettle
 add_need grep # essential
 add_need gzip # essential
 add_need hostname # essential
@@ -2070,12 +2083,10 @@ add_need libdebian-installer # by cdebconf
 add_need libelf # by systemtap, glib2.0
 add_need libgc # by guile-2.0
 add_need libgpg-error # for libgcrypt11, libgcrypt20
-add_need libice # by libsm
 add_need libonig # by slang2
 add_need libpng # by slang2
 add_need libpthread-stubs # by libxcb
 test "`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS`" = linux && add_need libsepol # by libselinux
-add_need libsm # by libxt
 add_need libtasn1-6 # by gnutls28
 add_need libtextwrap # by cdebconf
 add_need libunistring # by guile-2.0
@@ -2083,12 +2094,9 @@ add_need libx11 # by dbus, groff
 add_need libxau # by libxcb
 add_need libxaw # by groff
 add_need libxdmcp # by libxcb
-add_need libxext # by libxmu
-add_need libxmu # by groff, libxaw
-add_need libxpm # by libxaw
-add_need libxrender # by cairo, xft
-add_need libxss # by tk8.6
-add_need libxt # by groff, libxaw, libxmu
+add_need libxmu # by groff
+add_need libxrender # by cairo
+add_need libxt # by groff
 add_need make-dfsg # for build-essential
 add_need man-db # for debhelper
 add_need mawk # for base-files (alternatively: gawk)
@@ -2098,7 +2106,7 @@ add_need nettle # by gnutls28
 add_need openssl # by curl
 add_need p11-kit # by gnutls28
 add_need patch # for dpkg-dev
-add_need pcre3 # by grep, libselinux, slang2
+add_need pcre3 # by libselinux, slang2
 add_need sed # essential
 add_need slang2 # by cdebconf, newt
 add_need tar # essential
@@ -2106,7 +2114,6 @@ add_need tcl8.6 # by newt
 add_need tcltk-defaults # by python2.7
 add_need tk8.6 # by blt
 add_need ustr # by libsemanage
-add_need xft # by tk8.6
 
 automatically_cross_build_packages() {
 	local need_packages_comma_sep dosetmp buildable new_needed line pkg missing source
