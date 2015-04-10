@@ -1746,6 +1746,7 @@ EOF
 }
 
 add_automatic pcre3
+add_automatic sqlite3
 
 buildenv_tcl8_6() {
 	export tcl_cv_strtod_buggy=ok
@@ -2109,6 +2110,7 @@ add_need patch # for dpkg-dev
 add_need pcre3 # by libselinux, slang2
 add_need sed # essential
 add_need slang2 # by cdebconf, newt
+add_need sqlite3 # by nss, python2.7
 add_need tar # essential
 add_need tcl8.6 # by newt
 add_need tcltk-defaults # by python2.7
