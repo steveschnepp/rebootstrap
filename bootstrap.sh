@@ -2283,6 +2283,7 @@ mark_built zlib
 automatically_cross_build_packages
 
 builddep_libtool() {
+	assert_built "zlib"
 	test "$1" = "$HOST_ARCH"
 	# gfortran dependency needs cross-translation
 	$APT_GET install debhelper texi2html texinfo file "gfortran-$GCC_VER$HOST_ARCH_SUFFIX" automake autoconf autotools-dev help2man "zlib1g-dev:$HOST_ARCH"
@@ -2462,6 +2463,7 @@ diff -Nru ncurses-5.9+20140913/debian/rules ncurses-5.9+20140913/debian/rules
 EOF
 }
 builddep_ncurses() {
+	assert_built gpm
 	# g++-multilib dependency unsatisfiable
 	$APT_GET install debhelper dpkg-dev "libgpm-dev:$1" pkg-config
 	case "$ENABLE_MULTILIB:$HOST_ARCH" in
@@ -2550,6 +2552,7 @@ diff -Nru readline6-6.3/debian/rules readline6-6.3/debian/rules
 EOF
 }
 builddep_readline6() {
+	assert_built "ncurses"
 	# gcc-multilib dependency unsatisfiable
 	$APT_GET install debhelper "libtinfo-dev:$1" "libncursesw5-dev:$1" mawk texinfo autotools-dev
 	case "$ENABLE_MULTILIB:$HOST_ARCH" in
@@ -2621,6 +2624,7 @@ mark_built libselinux
 automatically_cross_build_packages
 
 builddep_util_linux() {
+	assert_built "libselinux ncurses slang2 zlib"
 	# libsystemd-dev lacks profile annotation
 	$APT_GET install dh-systemd dpkg-dev gettext "libncurses5-dev:$1" "libselinux1-dev:$1" "libslang2-dev:$1" libtool lsb-release pkg-config po-debconf "zlib1g-dev:$1"
 }
@@ -3141,6 +3145,7 @@ EOF
 	drop_privs quilt push -a
 }
 cross_build fontconfig
+mark_built fontconfig
 # needed by cairo, xft
 
 automatically_cross_build_packages
