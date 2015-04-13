@@ -737,6 +737,10 @@ cross_build() {
 	progress_mark "$pkg cross build"
 }
 
+case "$HOST_ARCH" in
+	musl-linux-*) LIBC_NAME=musl ;;
+esac
+
 if test "$ENABLE_MULTIARCH_GCC" != yes; then
 	echo "deb [ arch=`dpkg --print-architecture` ] $MIRROR experimental main" > /etc/apt/sources.list.d/tmp-experimental.list
 	$APT_GET update
@@ -1043,6 +1047,17 @@ diff -Nru linux-*/debian/config/defines linux-*/debian/config/defines
   ppc64el
 EOF
 		drop_privs ./debian/rules debian/rules.gen || : # intentionally exits 1 to avoid being called automatically. we are doing it wrong
+	fi
+	if test "$LIBC_NAME" = musl; then
+		echo "patching linux for musl-linux-any"
+		drop_privs sed -i "/^arches:/a\ $HOST_ARCH" debian/config/defines
+		drop_privs mkdir -p "debian/config/$HOST_ARCH"
+		drop_privs cat > "debian/config/$HOST_ARCH/defines" <<EOF
+[base]
+kernel-arch: `sed 's/^kernel-arch: //;t;d' < "debian/config/${HOST_ARCH#musl-linux-}"`
+featuresets:
+# empty; $HOST_ARCH must be part of a multiarch installation with an ${HOST_ARCH#musl-linux-} kernel
+EOF
 	fi
 }
 if test "`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS`" = "linux"; then
@@ -1504,6 +1519,8 @@ else
 fi
 progress_mark "$LIBC_NAME stage1 cross build"
 
+if test "$LIBC_NAME" != musl; then
+
 if test -d "$RESULT/gcc2"; then
 	echo "skipping rebuild of gcc stage2"
 	dpkg -i "$RESULT"/gcc2/*.deb
@@ -1590,6 +1607,8 @@ else
 	drop_privs rm -Rf "${LIBC_NAME}2"
 fi
 progress_mark "$LIBC_NAME stage2 cross build"
+
+fi # $LIBC_NAME != musl
 
 if test -d "$RESULT/gcc3"; then
 	echo "skipping rebuild of gcc stage3"
