@@ -1054,7 +1054,7 @@ EOF
 		drop_privs mkdir -p "debian/config/$HOST_ARCH"
 		drop_privs cat > "debian/config/$HOST_ARCH/defines" <<EOF
 [base]
-kernel-arch: `sed 's/^kernel-arch: //;t;d' < "debian/config/${HOST_ARCH#musl-linux-}"`
+kernel-arch: `sed 's/^kernel-arch: //;t;d' < "debian/config/${HOST_ARCH#musl-linux-}/defines"`
 featuresets:
 # empty; $HOST_ARCH must be part of a multiarch installation with an ${HOST_ARCH#musl-linux-} kernel
 EOF
