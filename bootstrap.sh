@@ -2219,12 +2219,13 @@ automatically_cross_build_packages() {
 }
 
 assert_built() {
-	local assert_pkgs assert_pkgs_comma_sep
-	assert_pkgs=`set_difference "$1" "$built_packages"`
-	test -z "$assert_pkgs" && return 0
-	echo "rebootstrap-error: missing asserted packages: $assert_pkgs"
-	assert_pkgs_comma_sep=`echo $assert_pkgs | sed 's/ /,/g'`
-	call_dose_builddebcheck --failures --explain --latest --DropBuildIndep "--checkonly=$assert_pkgs_comma_sep"
+	local missing_pkgs missing_pkgs_comma_sep
+	missing_pkgs=`set_difference "$1" "$built_packages"`
+	test -z "$missing_pkgs" && return 0
+	echo "rebootstrap-error: missing asserted packages: $missing_pkgs"
+	missing_pkgs=`set_union "$missing_pkgs" "$need_packages"`
+	missing_pkgs_comma_sep=`echo $missing_pkgs | sed 's/ /,/g'`
+	call_dose_builddebcheck --failures --explain --latest --DropBuildIndep "--checkonly=$missing_pkgs_comma_sep"
 	return 1
 }
 
