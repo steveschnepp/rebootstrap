@@ -875,21 +875,6 @@ EOF
 	fi
 }
 patch_gcc_5() {
-	echo "patching gcc-5 to always mark libcc1 arch:any"
-	drop_privs patch -p1 <<'EOF'
-diff -u gcc-5-5-20150307/debian/control.m4 gcc-5-5-20150307/debian/control.m4
---- gcc-5-5-20150307/debian/control.m4
-+++ gcc-5-5-20150307/debian/control.m4
-@@ -2975,7 +2975,7 @@
- 
- Package: libcc1-`'CC1_SO
- Section: ifdef(`TARGET',`devel',`libs')
--Architecture: ifdef(`TARGET',`CROSS_ARCH',`any')
-+Architecture: any
- ifdef(`MULTIARCH', `Multi-Arch: same
- Pre-Depends: multiarch-support
- ')`'dnl
-EOF
 	echo "fixing cross-install-location.diff for libcc1plugin.so"
 	drop_privs patch -p1 <<'EOF'
 diff -u gcc-5-5-20150321/debian/patches/cross-install-location.diff gcc-5-5-20150321/debian/patches/cross-install-location.diff
