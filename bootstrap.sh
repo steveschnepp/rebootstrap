@@ -1674,6 +1674,11 @@ add_automatic gmp
 add_automatic isl
 add_automatic libatomic-ops
 
+add_automatic libgcrypt20
+buildenv_libgcrypt20() {
+	export ac_cv_sys_symbol_underscore=no
+}
+
 patch_libgpg_error() {
 	echo "fixing libgpg-error FTBFS with gcc-5 #777374"
 	drop_privs patch -p1 <<'EOF'
@@ -2106,7 +2111,7 @@ add_need libatomic-ops # by gcc-4.9
 add_need libdebian-installer # by cdebconf
 add_need libelf # by systemtap, glib2.0
 add_need libgc # by guile-2.0
-add_need libgpg-error # for libgcrypt11, libgcrypt20
+add_need libgcrypt20 # by libprelude, libssh2, cryptsetup
 add_need libonig # by slang2
 add_need libpng # by slang2
 add_need libpthread-stubs # by libxcb
