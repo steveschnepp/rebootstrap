@@ -1669,16 +1669,21 @@ add_automatic() { automatic_packages=`set_add "$automatic_packages" "$1"`; }
 
 add_automatic acl
 add_automatic attr
+add_automatic freetype
 add_automatic gdbm
 add_automatic gmp
 add_automatic isl
 add_automatic libatomic-ops
+add_automatic libdebian-installer
+add_automatic libelf
+add_automatic libgc
 
 add_automatic libgcrypt20
 buildenv_libgcrypt20() {
 	export ac_cv_sys_symbol_underscore=no
 }
 
+add_automatic libgpg-error
 patch_libgpg_error() {
 	echo "fixing libgpg-error FTBFS with gcc-5 #777374"
 	drop_privs patch -p1 <<'EOF'
@@ -1697,13 +1702,23 @@ EOF
 }
 
 add_automatic libice
+add_automatic libonig
+add_automatic libpng
+add_automatic libpthread-stubs
+add_automatic libsepol
 add_automatic libsm
 add_automatic libtasn1-6
+add_automatic libtextwrap
+add_automatic libunistring
 
 add_automatic libx11
 buildenv_libx11() {
 	export xorg_cv_malloc0_returns_null=no
 }
+
+add_automatic libxau
+add_automatic libxaw
+add_automatic libxdmcp
 
 add_automatic libxext
 buildenv_libxext() {
@@ -1712,6 +1727,7 @@ buildenv_libxext() {
 
 add_automatic libxmu
 
+add_automatic libxrender
 buildenv_libxrender() {
 	export xorg_cv_malloc0_returns_null=no
 }
@@ -1728,6 +1744,11 @@ buildenv_libxt() {
 	export xorg_cv_malloc0_returns_null=no
 }
 
+add_automatic mpclib3
+add_automatic mpfr4
+add_automatic nettle
+
+add_automatic openssl
 patch_openssl() {
 	echo "fixing cross compilation of openssl for mips* architectures"
 	drop_privs patch -p1 <<'EOF'
@@ -1773,17 +1794,24 @@ EOF
 	drop_privs quilt push -a
 }
 
+add_automatic p11-kit
 add_automatic pcre3
+add_automatic slang2
 add_automatic sqlite3
 
+add_automatic tcl8.6
 buildenv_tcl8_6() {
 	export tcl_cv_strtod_buggy=ok
 }
 
+add_automatic tcltk-defaults
+
+add_automatic tk8.6
 buildenv_tk8_6() {
 	export tcl_cv_strtod_buggy=ok
 }
 
+add_automatic ustr
 patch_ustr() {
 	echo "patching ustr to use only compile checks #721352"
 	drop_privs patch -p1 <<'EOF'
@@ -2103,7 +2131,7 @@ add_need diffutils # essential
 add_need freetype # by fontconfig
 add_need gcc-defaults # for build-essential
 add_need gdbm # by perl, python2.7
-add_need gmp # by gnutls28, guile-2.0, mpclib3, nettle
+add_need gmp # by gnutls28, guile-2.0, nettle
 add_need grep # essential
 add_need gzip # essential
 add_need hostname # essential
@@ -2112,7 +2140,6 @@ add_need libdebian-installer # by cdebconf
 add_need libelf # by systemtap, glib2.0
 add_need libgc # by guile-2.0
 add_need libgcrypt20 # by libprelude, libssh2, cryptsetup
-add_need libonig # by slang2
 add_need libpng # by slang2
 add_need libpthread-stubs # by libxcb
 test "`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS`" = linux && add_need libsepol # by libselinux
@@ -2135,7 +2162,7 @@ add_need nettle # by gnutls28
 add_need openssl # by curl
 add_need p11-kit # by gnutls28
 add_need patch # for dpkg-dev
-add_need pcre3 # by libselinux, slang2
+add_need pcre3 # by libselinux
 add_need sed # essential
 add_need slang2 # by cdebconf, newt
 add_need sqlite3 # by nss, python2.7
