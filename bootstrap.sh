@@ -1497,7 +1497,9 @@ if test -d "$RESULT/${LIBC_NAME}1"; then
 	apt_get_remove libc6-dev-i386
 	dpkg -i "$RESULT/${LIBC_NAME}1/"*.deb
 else
-	if test "$ENABLE_MULTIARCH_GCC" = yes; then
+	if test "$LIBC_NAME" = musl; then
+		$APT_GET build-dep "-a$HOST_ARCH" --arch-only musl
+	elif test "$ENABLE_MULTIARCH_GCC" = yes; then
 		$APT_GET install gettext file quilt autoconf gawk debhelper rdfind symlinks libaudit-dev libcap-dev libselinux-dev binutils bison netbase "linux-libc-dev:$HOST_ARCH" "gcc-$GCC_VER$HOST_ARCH_SUFFIX"
 	else
 		$APT_GET install gettext file quilt autoconf gawk debhelper rdfind symlinks libaudit-dev libcap-dev libselinux-dev binutils bison netbase "linux-libc-dev-$HOST_ARCH-cross" "gcc-$GCC_VER$HOST_ARCH_SUFFIX"
