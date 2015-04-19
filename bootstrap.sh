@@ -1133,6 +1133,12 @@ else
 fi
 progress_mark "cross gcc stage1 build"
 
+# replacement for cross-gcc-defaults
+for prog in c++ cpp g++ gcc gcc-ar gcc-ranlib gfortran; do
+	ln -vs "`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_GNU_TYPE`-$prog-$GCC_VER" "/usr/bin/`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_GNU_TYPE`-$prog"
+done
+ln -s "`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_GNU_TYPE`-gcc-$GCC_VER" "/usr/bin/`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_GNU_TYPE`-cc"
+
 # libc
 patch_glibc() {
 	echo "patching eglibc to include a libc6.so and place crt*.o in correct directory"
@@ -1566,11 +1572,6 @@ else
 	drop_privs rm -Rf gcc2
 fi
 progress_mark "cross gcc stage2 build"
-# libselinux wants unversioned gcc
-for prog in c++ cpp g++ gcc gcc-ar gcc-ranlib gfortran; do
-	ln -vs "`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_GNU_TYPE`-$prog-$GCC_VER" "/usr/bin/`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_GNU_TYPE`-$prog"
-done
-ln -s "`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_GNU_TYPE`-gcc-$GCC_VER" "/usr/bin/`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_GNU_TYPE`-cc"
 
 if test "$HOST_ARCH" = "sparc"; then
 	apt_get_remove libc6-i386 # undeclared file conflict #745552
