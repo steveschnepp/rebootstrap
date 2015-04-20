@@ -1492,6 +1492,70 @@ EOF
 		drop_privs ./debian/rules debian/control
 	fi
 }
+patch_musl() {
+	echo "patching musl to build for musl-linux-* and to provide libc-dev"
+	drop_privs patch -p1 <<'EOF'
+--- musl-1.1.5/debian/control
++++ musl-1.1.5/debian/control
+@@ -11,7 +11,7 @@
+ 
+ Package: musl
+ Section: libs
+-Architecture: armel armhf i386 amd64 mips mipsel
++Architecture: armel musl-linux-armel armhf musl-linux-armhf i386 musl-linux-i386 amd64 musl-linux-amd64 mips musl-linux-mips mipsel musl-linux-mipsel
+ Multi-Arch: same
+ Depends: ${misc:Depends}
+ Description: standard C library
+@@ -23,7 +23,8 @@
+ 
+ Package: musl-dev
+ Section: libdevel
+-Architecture: armel armhf i386 amd64 mips mipsel
++Architecture: armel musl-linux-armel armhf musl-linux-armhf i386 musl-linux-i386 amd64 musl-linux-amd64 mips musl-linux-mips mipsel musl-linux-mipsel
++Provides: ${libc-dev:Provides}
+ Depends: ${misc:Depends}, musl (= ${binary:Version})
+ Description: standard C library development files
+  musl is lightweight, fast, simple, free and strives
+--- musl-1.1.5/debian/rules
++++ musl-1.1.5/debian/rules
+@@ -4,23 +4,24 @@
+ DEB_HOST_GNU_TYPE ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
+ DEB_BUILD_GNU_TYPE ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
+ DEB_HOST_GNU_CPU ?= $(shell dpkg-architecture -qDEB_HOST_GNU_CPU)
++DEB_HOST_ARCH_CPU ?= $(shell dpkg-architecture -qDEB_HOST_GNU_CPU)
+ DEB_HOST_ARCH ?= $(shell dpkg-architecture -qDEB_HOST_ARCH)
+ 
+ # Calculating musl based architecture
+ MUSL_ARCH=$(DEB_HOST_GNU_CPU)
+ MUSL_TRIPLE=$(DEB_HOST_GNU_CPU)-linux-musl
+ 
+-ifeq ($(DEB_HOST_ARCH),armel)
++ifneq (,$(findstring armel,$(DEB_HOST_ARCH)))
+   MUSL_ARCH=arm
+   MUSL_TRIPLE=arm-linux-musleabi
+ endif
+ 
+-ifeq ($(DEB_HOST_ARCH),armhf)
++ifneq (,$(findstring armhf,$(DEB_HOST_ARCH)))
+   MUSL_ARCH=armhf
+   MUSL_TRIPLE=arm-linux-musleabihf
+ endif
+ 
+-ifeq ($(DEB_HOST_ARCH),i386)
++ifeq ($(DEB_HOST_ARCH_CPU),i386)
+   MUSL_ARCH=i386
+   MUSL_TRIPLE=i386-linux-musl
+ endif
+@@ -58,3 +59,7 @@
+ override_dh_fixperms:
+ 	dh_fixperms --exclude libc.so
+ 
++ifneq (,$(findstring musl-linux-,$(DEB_HOST_ARCH)))
++override_dh_gencontrol:
++	dh_gencontrol -- -Vlibc-dev:Provides=libc-dev
++endif
+EOF
+}
 if test -d "$RESULT/${LIBC_NAME}1"; then
 	echo "skipping rebuild of $LIBC_NAME stage1"
 	apt_get_remove libc6-dev-i386
