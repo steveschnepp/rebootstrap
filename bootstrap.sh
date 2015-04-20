@@ -1752,6 +1752,76 @@ add_automatic mpclib3
 add_automatic mpfr4
 add_automatic nettle
 
+add_automatic nspr
+patch_nspr() {
+	echo "patching nspr to build build tools using cc #782983"
+	drop_privs patch -p1 <<'EOF'
+diff -Nru nspr-4.10.7/debian/patches/cross.diff nspr-4.10.7/debian/patches/cross.diff
+--- nspr-4.10.7/debian/patches/cross.diff
++++ nspr-4.10.7/debian/patches/cross.diff
+@@ -0,0 +1,19 @@
++Description: use cc to build build tools
++Author: Helmut Grohne <helmut@subdivi.de>
++Last-Update: 2014-02-27
++
++--- nspr-4.10.7.orig/nspr/config/Makefile.in
+++++ nspr-4.10.7/nspr/config/Makefile.in
++@@ -111,9 +111,11 @@ export::
++ 	$(INSTALL) system_wrappers $(dist_includedir)
++ endif
++ 
+++$(addprefix $(OBJDIR)/,$(CSRCS:.c=.$(OBJ_SUFFIX))): CC=cc
+++
++ $(OBJDIR)/%$(PROG_SUFFIX): $(OBJDIR)/%.$(OBJ_SUFFIX)
++ 	@$(MAKE_OBJDIR)
++-	$(CC) $(XCFLAGS) $< $(LDFLAGS) $(XLDOPTS) $(OUTOPTION)$@
+++	cc $(XCFLAGS) $< $(LDFLAGS) $(XLDOPTS) $(OUTOPTION)$@
++ 
++ install:: nspr.m4
++ 	$(NSINSTALL) -D $(DESTDIR)$(datadir)/aclocal
+diff -Nru nspr-4.10.7/debian/patches/series nspr-4.10.7/debian/patches/series
+--- nspr-4.10.7/debian/patches/series
++++ nspr-4.10.7/debian/patches/series
+@@ -0,0 +1 @@
++cross.diff
+EOF
+	echo "fixing nspr FTBFS on x32 #699185"
+	drop_privs patch -p1 <<'EOF'
+diff -Nru nspr-4.10.7/debian/libnspr4.symbols nspr-4.10.7/debian/libnspr4.symbols
+--- nspr-4.10.7/debian/libnspr4.symbols
++++ nspr-4.10.7/debian/libnspr4.symbols
+@@ -395,10 +395,10 @@
+  SetExecutionEnvironment@Base 1.8.0.10
+  _pr_push_ipv6toipv4_layer@Base 1.8.0.10
+  _pr_test_ipv6_socket@Base 1.8.0.10
+- (arch=amd64 kfreebsd-amd64)_PR_x86_64_AtomicAdd@Base 1.8.0.10
+- (arch=amd64 kfreebsd-amd64)_PR_x86_64_AtomicDecrement@Base 1.8.0.10
+- (arch=amd64 kfreebsd-amd64)_PR_x86_64_AtomicIncrement@Base 1.8.0.10
+- (arch=amd64 kfreebsd-amd64)_PR_x86_64_AtomicSet@Base 1.8.0.10
++ (arch=amd64 kfreebsd-amd64 x32)_PR_x86_64_AtomicAdd@Base 1.8.0.10
++ (arch=amd64 kfreebsd-amd64 x32)_PR_x86_64_AtomicDecrement@Base 1.8.0.10
++ (arch=amd64 kfreebsd-amd64 x32)_PR_x86_64_AtomicIncrement@Base 1.8.0.10
++ (arch=amd64 kfreebsd-amd64 x32)_PR_x86_64_AtomicSet@Base 1.8.0.10
+  (arch=i386 kfreebsd-i386 hurd-i386)_PR_x86_AtomicAdd@Base 1.8.0.10
+  (arch=i386 kfreebsd-i386 hurd-i386)_PR_x86_AtomicDecrement@Base 1.8.0.10
+  (arch=i386 kfreebsd-i386 hurd-i386)_PR_x86_AtomicIncrement@Base 1.8.0.10
+diff -Nru nspr-4.10.7/debian/rules nspr-4.10.7/debian/rules
+--- nspr-4.10.7/debian/rules
++++ nspr-4.10.7/debian/rules
+@@ -25,6 +25,9 @@
+ ifeq (64,$(shell dpkg-architecture -qDEB_HOST_ARCH_BITS))
+ 	CONFIGURE_FLAGS += --enable-64bit
+ endif
++ifeq (x32,$(shell dpkg-architecture -qDEB_HOST_ARCH))
++	CONFIGURE_FLAGS += --enable-x32
++endif
+ 
+ $(call lazy,DEB_HOST_MULTIARCH,$$(shell dpkg-architecture -qDEB_HOST_MULTIARCH))
+ 
+EOF
+	drop_privs quilt push -a
+}
+
 add_automatic openssl
 patch_openssl() {
 	echo "fixing cross compilation of openssl for mips* architectures"
@@ -2163,6 +2233,7 @@ add_need mawk # for base-files (alternatively: gawk)
 add_need mpclib3 # by gcc-4.9
 add_need mpfr4 # by gcc-4.9
 add_need nettle # by gnutls28
+add_need nspr # by nss
 add_need openssl # by curl
 add_need p11-kit # by gnutls28
 add_need patch # for dpkg-dev
