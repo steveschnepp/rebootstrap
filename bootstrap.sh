@@ -1581,7 +1581,11 @@ else
 	apt_get_remove libc6-dev-i386
 	if test "$ENABLE_MULTIARCH_GCC" = yes; then
 		pickup_packages *.changes
-		dpkg -i libc*.deb
+		if test "$LIBC_NAME" = musl; then
+			dpkg -i musl*.deb
+		else
+			dpkg -i libc*.deb
+		fi
 	else
 		for pkg in *.deb; do
 			drop_privs dpkg-cross -M -a "$HOST_ARCH" -X tzdata -X libc-bin -X libc-dev-bin -b "$pkg"
@@ -1590,7 +1594,11 @@ else
 		dpkg -i libc*-cross_*.deb
 	fi
 	test -d "$RESULT" && mkdir "$RESULT/${LIBC_NAME}1"
-	test -d "$RESULT" && cp -v libc*-dev_*.deb "$RESULT/${LIBC_NAME}1"
+	if test "$LIBC_NAME" = musl; then
+		test -d "$RESULT" && cp -v musl*.deb "$RESULT/${LIBC_NAME}1"
+	else
+		test -d "$RESULT" && cp -v libc*-dev_*.deb "$RESULT/${LIBC_NAME}1"
+	fi
 	cd ..
 	drop_privs rm -Rf "${LIBC_NAME}1"
 fi
