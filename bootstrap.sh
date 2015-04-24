@@ -1794,7 +1794,12 @@ buildenv_libx11() {
 
 add_automatic libxau
 add_automatic libxaw
+
 add_automatic libxdmcp
+buildenv_libxdmcp() {
+	# xdmcp.txt.gz is LC_CTYPE dependent and the latest amd64 build happens to use C #783223
+	export LC_ALL=C
+}
 
 add_automatic libxext
 buildenv_libxext() {
