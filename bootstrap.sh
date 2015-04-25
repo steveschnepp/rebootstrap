@@ -854,6 +854,39 @@ diff -u gcc-4.9-4.9.2/debian/patches/cross-biarch.diff gcc-4.9-4.9.2/debian/patc
  +				-B$(build_tooldir)/lib/, \
  +				-B$(build_tooldir)/lib$${libsuffix_}/, \
 EOF
+	echo "cherry picking gcc-trunk 219388 for musl"
+	drop_privs patch -p1 <<'EOF'
+diff -u gcc-4.9-4.9.2/debian/rules.patch gcc-4.9-4.9.2/debian/rules.patch
+--- gcc-4.9-4.9.2/debian/rules.patch
++++ gcc-4.9-4.9.2/debian/rules.patch
+@@ -216,6 +216,10 @@
+   debian_patches += fix-powerpcspe
+ endif
+ 
++ifneq (,$(findstring musl-linux-,$(DEB_TARGET_ARCH)))
++  debian_patches += musl
++endif
++
+ #debian_patches += link-libs
+ 
+ # all patches below this line are applied for gcc-snapshot builds as well
+--- gcc-4.9-4.9.2.orig/debian/patches/musl.diff
++++ gcc-4.9-4.9.2/debian/patches/musl.diff
+@@ -0,0 +1,13 @@
++gcc svn revision 219388
++--- a/src/libstdc++-v3/configure.host
+++++ b/src/libstdc++-v3/configure.host
++@@ -271,6 +271,9 @@
++   freebsd*)
++     os_include_dir="os/bsd/freebsd"
++     ;;
+++  linux-musl*)
+++    os_include_dir="os/generic"
+++    ;;
++   gnu* | linux* | kfreebsd*-gnu | knetbsd*-gnu)
++     if [ "$uclibc" = "yes" ]; then
++       os_include_dir="os/uclibc"
+EOF
 	if test "$ENABLE_MULTIARCH_GCC" = yes; then
 		echo "applying patches for with_deps_on_target_arch_pkgs"
 		drop_privs QUILT_PATCHES="/usr/share/cross-gcc/patches/gcc-$GCC_VER" quilt push -a
