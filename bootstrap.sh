@@ -1784,6 +1784,7 @@ add_automatic libpng
 add_automatic libpthread-stubs
 add_automatic libsepol
 add_automatic libsm
+add_automatic libssh2
 add_automatic libtasn1-6
 add_automatic libtextwrap
 add_automatic libunistring
@@ -2291,10 +2292,11 @@ add_need libatomic-ops # by gcc-4.9
 add_need libdebian-installer # by cdebconf
 add_need libelf # by systemtap, glib2.0
 add_need libgc # by guile-2.0
-add_need libgcrypt20 # by libprelude, libssh2, cryptsetup
+add_need libgcrypt20 # by libprelude, cryptsetup
 add_need libpng # by slang2
 add_need libpthread-stubs # by libxcb
 test "`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS`" = linux && add_need libsepol # by libselinux
+add_need libssh2 # by curl
 add_need libtasn1-6 # by gnutls28
 add_need libtextwrap # by cdebconf
 add_need libunistring # by guile-2.0
