@@ -918,25 +918,6 @@ diff -u gcc-5-5-20150321/debian/patches/cross-install-location.diff gcc-5-5-2015
 + @ENABLE_PLUGIN_TRUE@plugin_LTLIBRARIES = libcc1plugin.la
 + @ENABLE_PLUGIN_TRUE@cc1lib_LTLIBRARIES = libcc1.la
 EOF
-	echo "fixing gcc-5 after cxx_inc_dir removal"
-	drop_privs patch -p1 <<'EOF'
-diff -u a/debian/rules.d/binary-libstdcxx.mk b/debian/rules.d/binary-libstdcxx.mk
---- a/debian/rules.d/binary-libstdcxx.mk
-+++ b/debian/rules.d/binary-libstdcxx.mk
-@@ -104,10 +104,10 @@
- 	$(docdir)/$(p_base)/C++ \
- 	$(usr_lib) \
- 	$(gcc_lib_dir)/include \
--	$(PF)/include/c++
-+	$(PFL)/include/c++
- 
- files_dev = \
--	$(PF)/include/c++/$(BASE_VERSION) \
-+	$(PFL)/include/c++/$(BASE_VERSION) \
- 	$(gcc_lib_dir)/libstdc++.{a,so} \
- 	$(gcc_lib_dir)/libsupc++.a
- 
-EOF
 	patch_gcc_os_include_dir_musl
 	if test "$ENABLE_MULTIARCH_GCC" = yes; then
 		echo "applying patches for with_deps_on_target_arch_pkgs"
