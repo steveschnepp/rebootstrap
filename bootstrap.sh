@@ -793,6 +793,20 @@ diff -u gcc-4.8-4.8.2/debian/rules.defs gcc-4.8-4.8.2/debian/rules.defs
 EOF
 }
 patch_gcc_4_9() {
+	echo "patching gcc-4.9 to build common libraries. not a bug"
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/rules.defs
++++ b/debian/rules.defs
+@@ -378,8 +378,6 @@ with_common_pkgs := yes
+ with_common_libs := yes
+ # XXX: should with_common_libs be "yes" only if this is the default compiler
+ # version on the targeted arch?
+-with_common_pkgs :=
+-with_common_libs :=
+ 
+ # is this a multiarch-enabled build?
+ ifeq (,$(filter $(distrelease),lenny etch squeeze dapper hardy jaunty karmic lucid maverick))
+EOF
 	echo "patching gcc to apply biarch-cross.diff for all multilibs"
 	drop_privs patch -p1 <<'EOF'
 diff -u gcc-4.9-*/debian/rules.patch gcc-4.9-*/debian/rules.patch
