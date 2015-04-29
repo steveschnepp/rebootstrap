@@ -943,6 +943,11 @@ else
 	pickup_packages *.changes
 	drop_privs rm -fv ./*-plugin-dev_*.deb ./*-dbg_*.deb
 	dpkg -i *.deb
+	cat >/etc/apt/preferences.d/keep_gcc <<EOF
+Package: $(echo *.deb | sed 's/_[^ ]*//g')
+Pin: release a=unstable
+Pin-Priority: -5
+EOF
 	test -d "$RESULT" && mkdir "$RESULT/gcc0"
 	test -d "$RESULT" && cp *.deb "$RESULT/gcc0"
 	cd ..
