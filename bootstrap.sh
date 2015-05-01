@@ -1902,15 +1902,8 @@ diff -Nru openssl-1.0.1k/debian/patches/mips-cross.patch openssl-1.0.1k/debian/p
 + "debian-netbsd-i386",	"gcc:-DL_ENDIAN -DTERMIOS ${debian_cflags} -m486::(unknown):::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${no_asm}:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 + "debian-netbsd-m68k",	"gcc:-DB_ENDIAN -DTERMIOS ${debian_cflags}::(unknown):::BN_LLONG MD2_CHAR RC4_INDEX DES_UNROLL:${no_asm}:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 + "debian-netbsd-sparc",	"gcc:-DB_ENDIAN -DTERMIOS ${debian_cflags} -mv8::(unknown):::BN_LLONG MD2_CHAR RC4_INDEX DES_UNROLL:${no_asm}:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-diff -Nru openssl-1.0.1k/debian/patches/series openssl-1.0.1k/debian/patches/series
---- openssl-1.0.1k/debian/patches/series
-+++ openssl-1.0.1k/debian/patches/series
-@@ -29,3 +29,4 @@
- 0001-Fix-a-failure-to-NULL-a-pointer-freed-on-error.patch
- 0001-Check-public-key-is-not-NULL.patch
- 0008-Fix-a-failure-to-NULL-a-pointer-freed-on-error.patch
-+mips-cross.patch
 EOF
+	echo mips-cross.patch >> debian/patches/series
 	drop_privs quilt push -a
 }
 
