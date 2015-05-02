@@ -457,6 +457,13 @@ Architectures: `dpkg --print-architecture` $HOST_ARCH
 Components: main
 UDebComponents: main
 Description: cross toolchain and build results for $HOST_ARCH
+
+Codename: rebootstrap-native
+Label: rebootstrap-native
+Architectures: `dpkg --print-architecture`
+Components: main
+UDebComponents: main
+Description: native packages needed for bootstrap
 EOF
 cat > "$REPODIR/conf/options" <<EOF
 verbose
@@ -465,11 +472,17 @@ EOF
 export REPREPRO_BASE_DIR="$REPODIR"
 reprepro export
 echo "deb [ arch=`dpkg --print-architecture`,$HOST_ARCH trusted=yes ] file://$REPODIR rebootstrap main" >/etc/apt/sources.list.d/rebootstrap.list
+echo "deb [ arch=`dpkg --print-architecture` trusted=yes ] file://$REPODIR rebootstrap-native main" >/etc/apt/sources.list.d/rebootstrap-native.list
 cat >/etc/apt/preferences.d/rebootstrap.pref <<EOF
+Explanation: prefer our own rebootstrap (native) packages over everything
+Package: *
+Pin: release l=rebootstrap-native
+Pin-Priority: 1001
+
 Explanation: prefer our own rebootstrap (toolchain) packages over everything
 Package: *
 Pin: release l=rebootstrap
-Pin-Priority: 1001
+Pin-Priority: 1002
 EOF
 apt-get update
 
@@ -927,14 +940,9 @@ else
 	drop_privs DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=biarch,$GCC_NOLANG" dpkg-buildpackage -B -uc -us
 	cd ..
 	ls -l
-	pickup_packages *.changes
+	reprepro include rebootstrap-native ./*.changes
 	drop_privs rm -fv ./*-plugin-dev_*.deb ./*-dbg_*.deb
 	dpkg -i *.deb
-	cat >/etc/apt/preferences.d/keep_gcc <<EOF
-Package: $(echo *.deb | sed 's/_[^ ]*//g')
-Pin: release a=unstable
-Pin-Priority: -5
-EOF
 	test -d "$RESULT" && mkdir "$RESULT/gcc0"
 	test -d "$RESULT" && cp *.deb "$RESULT/gcc0"
 	cd ..
