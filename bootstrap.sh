@@ -1608,9 +1608,9 @@ else
 fi
 progress_mark "cross gcc stage2 build"
 
-if test "$HOST_ARCH" = "sparc"; then
-	apt_get_remove libc6-i386 # undeclared file conflict #745552
-fi
+# several undeclared file conflicts such as #745552 or #784015
+apt_get_remove $(dpkg-query -W "libc[0-9]*:$(dpkg --print-architecture)" | sed "s/\\s.*//;/:$(dpkg --print-architecture)/d")
+
 if test -d "$RESULT/${LIBC_NAME}2"; then
 	echo "skipping rebuild of $LIBC_NAME stage2"
 	dpkg -i "$RESULT/${LIBC_NAME}2/"*.deb
