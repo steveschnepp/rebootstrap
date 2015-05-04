@@ -901,49 +901,6 @@ diff -u gcc-5-5-20150321/debian/patches/cross-install-location.diff gcc-5-5-2015
 + @ENABLE_PLUGIN_TRUE@plugin_LTLIBRARIES = libcc1plugin.la
 + @ENABLE_PLUGIN_TRUE@cc1lib_LTLIBRARIES = libcc1.la
 EOF
-	echo "allowing application of cross-biarch.diff when building without d (e.g. stage1)"
-	drop_privs patch -p1 <<'EOF'
-diff -u gcc-5-5.1.1/debian/patches/cross-biarch.diff gcc-5-5.1.1/debian/patches/cross-biarch.diff
---- gcc-5-5.1.1/debian/patches/cross-biarch.diff
-+++ gcc-5-5.1.1/debian/patches/cross-biarch.diff
-@@ -87,9 +86,0 @@
--@@ -891,6 +915,8 @@
-- 	  case $arg in
-- 	  -[BIL]"${ML_POPDIR}"/*)
-- 	    GDC_="${GDC_}"`echo "X${arg}" | sed -n "s/X\\(-[BIL]${popdir_rx}\\).*/\\1/p"`/${ml_dir}`echo "X${arg}" | sed -n "s/X-[BIL]${popdir_rx}\\(.*\\)/\\1/p"`' ' ;;
--+	  -B*/lib/)
--+	    GDC_="${GDC_}"`echo "X${arg}" | sed -n "$FILTER_"`' ' ;;
-- 	  "${ML_POPDIR}"/*)
-- 	    GDC_="${GDC_}"`echo "X${arg}" | sed -n "s/X\\(${popdir_rx}\\).*/\\1/p"`/${ml_dir}`echo "X${arg}" | sed -n "s/X${popdir_rx}\\(.*\\)/\\1/p"`' ' ;;
-- 	  *)
-diff -u gcc-5-5.1.1/debian/rules.patch gcc-5-5.1.1/debian/rules.patch
---- gcc-5-5.1.1/debian/rules.patch
-+++ gcc-5-5.1.1/debian/rules.patch
-@@ -275,6 +275,9 @@
- ifneq (,$(filter $(build_type), build-cross cross-build-cross))
-   debian_patches += cross-no-locale-include
-   debian_patches += cross-biarch
-+  ifeq ($(with_d),yes)
-+    debian_patches += cross-biarch-d
-+  endif
- endif
- debian_patches += gcc-multilib-multiarch
- 
---- gcc-5-5.1.1.orig/debian/patches/cross-biarch-d.diff
-+++ gcc-5-5.1.1/debian/patches/cross-biarch-d.diff
-@@ -0,0 +1,11 @@
-+--- a/src/config-ml.in
-++++ b/src/config-ml.in
-+@@ -891,6 +915,8 @@
-+ 	  case $arg in
-+ 	  -[BIL]"${ML_POPDIR}"/*)
-+ 	    GDC_="${GDC_}"`echo "X${arg}" | sed -n "s/X\\(-[BIL]${popdir_rx}\\).*/\\1/p"`/${ml_dir}`echo "X${arg}" | sed -n "s/X-[BIL]${popdir_rx}\\(.*\\)/\\1/p"`' ' ;;
-++	  -B*/lib/)
-++	    GDC_="${GDC_}"`echo "X${arg}" | sed -n "$FILTER_"`' ' ;;
-+ 	  "${ML_POPDIR}"/*)
-+ 	    GDC_="${GDC_}"`echo "X${arg}" | sed -n "s/X\\(${popdir_rx}\\).*/\\1/p"`/${ml_dir}`echo "X${arg}" | sed -n "s/X${popdir_rx}\\(.*\\)/\\1/p"`' ' ;;
-+ 	  *)
-EOF
 	patch_gcc_os_include_dir_musl
 	if test "$ENABLE_MULTIARCH_GCC" = yes; then
 		echo "applying patches for with_deps_on_target_arch_pkgs"
