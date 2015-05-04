@@ -842,10 +842,10 @@ diff -u gcc-4.9-4.9.2/debian/patches/cross-biarch.diff gcc-4.9-4.9.2/debian/patc
 +++ gcc-4.9-4.9.2/debian/patches/cross-biarch.diff
 @@ -4,13 +4,18 @@
  
- --- a/src/config-ml.in	2010-08-24 01:48:38.000000000 -0400
- +++ b/src/config-ml.in	2010-08-24 03:56:12.000000000 -0400
--@@ -540,7 +540,12 @@
-+@@ -540,7 +540,17 @@
+ --- a/src/config-ml.in
+ +++ b/src/config-ml.in
+-@@ -514,7 +514,12 @@ multi-do:
++@@ -514,7 +514,17 @@ multi-do:
   	    else \
   	      if [ -d ../$${dir}/$${lib} ]; then \
   		flags=`echo $$i | sed -e 's/^[^;]*;//' -e 's/@/ -/g'`; \
