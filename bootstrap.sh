@@ -812,21 +812,6 @@ patch_gcc_4_9() {
  # is this a multiarch-enabled build?
  ifeq (,$(filter $(distrelease),lenny etch squeeze dapper hardy jaunty karmic lucid maverick))
 EOF
-	echo "patching gcc to apply biarch-cross.diff for all multilibs"
-	drop_privs patch -p1 <<'EOF'
-diff -u gcc-4.9-*/debian/rules.patch gcc-4.9-*/debian/rules.patch
---- gcc-4.9-*/debian/rules.patch
-+++ gcc-4.9-*/debian/rules.patch
-@@ -289,7 +289,7 @@
- ifeq ($(DEB_CROSS),yes)
-   debian_patches += cross-no-locale-include
- endif
--ifeq ($(biarch64),yes)
-+ifneq ($(filter yes,$(biarch32) $(biarch64) $(biarchhf) $(biarchn32) $(biarchsf) $(biarchx32)),)
-   ifeq ($(DEB_CROSS),yes)
-     debian_patches += cross-biarch
-   endif
-EOF
 	echo "patching gcc to fix placement of biarch libs in i386 build"
 	drop_privs patch -p1 <<'EOF'
 diff -u gcc-4.9-4.9.2/debian/rules2 gcc-4.9-4.9.2/debian/rules2
