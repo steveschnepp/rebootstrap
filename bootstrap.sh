@@ -1565,6 +1565,9 @@ else
 fi
 progress_mark "$LIBC_NAME stage1 cross build"
 
+# dpkg happily breaks depends when upgrading build arch multilibs to host arch multilibs
+apt_get_remove $(dpkg-query -W "lib*gcc*:$(dpkg --print-architecture)" | sed "s/\\s.*//;/:$(dpkg --print-architecture)/d")
+
 if test "$LIBC_NAME" != musl; then
 
 if test -d "$RESULT/gcc2"; then
