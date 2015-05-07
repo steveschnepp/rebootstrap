@@ -1713,6 +1713,7 @@ add_automatic freetype
 add_automatic gdbm
 add_automatic gmp
 add_automatic isl
+add_automatic keyutils
 add_automatic libatomic-ops
 add_automatic libdebian-installer
 add_automatic libelf
@@ -2244,6 +2245,7 @@ add_need gmp # by gnutls28, guile-2.0, nettle
 add_need grep # essential
 add_need gzip # essential
 add_need hostname # essential
+test "`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS`" = linux && add_need keyutils # by krb5
 add_need libatomic-ops # by gcc-4.9
 add_need libdebian-installer # by cdebconf
 add_need libelf # by systemtap, glib2.0
