@@ -1709,9 +1709,19 @@ add_automatic() { automatic_packages=`set_add "$automatic_packages" "$1"`; }
 
 add_automatic acl
 add_automatic attr
+add_automatic base-files
+add_automatic build-essential
+add_automatic cloog
+add_automatic dash
+add_automatic db-defaults
+add_automatic debianutils
 add_automatic freetype
+add_automatic gcc-defaults
 add_automatic gdbm
 add_automatic gmp
+add_automatic grep
+add_automatic gzip
+add_automatic hostname
 add_automatic isl
 add_automatic keyutils
 add_automatic libatomic-ops
@@ -1773,13 +1783,12 @@ buildenv_libxext() {
 }
 
 add_automatic libxmu
+add_automatic libxpm
 
 add_automatic libxrender
 buildenv_libxrender() {
 	export xorg_cv_malloc0_returns_null=no
 }
-
-add_automatic libxpm
 
 add_automatic libxss
 buildenv_libxss() {
@@ -1791,6 +1800,9 @@ buildenv_libxt() {
 	export xorg_cv_malloc0_returns_null=no
 }
 
+add_automatic make-dfsg
+add_automatic man-db
+add_automatic mawk
 add_automatic mpclib3
 add_automatic mpfr4
 add_automatic nettle
@@ -1905,9 +1917,12 @@ EOF
 }
 
 add_automatic p11-kit
+add_automatic patch
 add_automatic pcre3
+add_automatic sed
 add_automatic slang2
 add_automatic sqlite3
+add_automatic tar
 
 add_automatic tcl8.6
 buildenv_tcl8_6() {
