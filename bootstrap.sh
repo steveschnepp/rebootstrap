@@ -868,38 +868,34 @@ EOF
 	fi
 }
 patch_gcc_5() {
-	echo "fixing cross-install-location.diff for libcc1plugin.so"
-	drop_privs patch -p1 <<'EOF'
-diff -u gcc-5-5-20150321/debian/patches/cross-install-location.diff gcc-5-5-20150321/debian/patches/cross-install-location.diff
---- gcc-5-5-20150321/debian/patches/cross-install-location.diff
-+++ gcc-5-5-20150321/debian/patches/cross-install-location.diff
-@@ -357,0 +358,26 @@
-+Index: b/src/libcc1/Makefile.am
-+===================================================================
-+--- a/src/libcc1/Makefile.am
-++++ b/src/libcc1/Makefile.am
-+@@ -35,7 +35,7 @@
-+ 	    $(Wc)$(libiberty_normal)))
-+ libiberty_dep = $(patsubst $(Wc)%,%,$(libiberty))
-+ 
-+-plugindir = $(libdir)/gcc/$(target_noncanonical)/$(gcc_version)/plugin
-++plugindir = $(libdir)/gcc-cross/$(target_noncanonical)/$(gcc_version)/plugin
-+ cc1libdir = $(libdir)/$(libsuffix)
-+ 
-+ if ENABLE_PLUGIN
-+Index: b/src/libcc1/Makefile.in
-+===================================================================
-+--- a/src/libcc1/Makefile.in
-++++ b/src/libcc1/Makefile.in
-+@@ -262,7 +262,7 @@
-+ 	    $(Wc)$(libiberty_normal)))
-+ 
-+ libiberty_dep = $(patsubst $(Wc)%,%,$(libiberty))
-+-plugindir = $(libdir)/gcc/$(target_noncanonical)/$(gcc_version)/plugin
-++plugindir = $(libdir)/gcc-cross/$(target_noncanonical)/$(gcc_version)/plugin
-+ cc1libdir = $(libdir)/$(libsuffix)
-+ @ENABLE_PLUGIN_TRUE@plugin_LTLIBRARIES = libcc1plugin.la
-+ @ENABLE_PLUGIN_TRUE@cc1lib_LTLIBRARIES = libcc1.la
+	echo "fixing cross-install-location.diff for libcc1plugin.so #783236"
+	cat >>debian/patches/cross-install-location.diff <<'EOF'
+Index: b/src/libcc1/Makefile.am
+===================================================================
+--- a/src/libcc1/Makefile.am
++++ b/src/libcc1/Makefile.am
+@@ -35,7 +35,7 @@
+ 	    $(Wc)$(libiberty_normal)))
+ libiberty_dep = $(patsubst $(Wc)%,%,$(libiberty))
+ 
+-plugindir = $(libdir)/gcc/$(target_noncanonical)/$(gcc_version)/plugin
++plugindir = $(libdir)/gcc-cross/$(target_noncanonical)/$(gcc_version)/plugin
+ cc1libdir = $(libdir)/$(libsuffix)
+ 
+ if ENABLE_PLUGIN
+Index: b/src/libcc1/Makefile.in
+===================================================================
+--- a/src/libcc1/Makefile.in
++++ b/src/libcc1/Makefile.in
+@@ -262,7 +262,7 @@
+ 	    $(Wc)$(libiberty_normal)))
+ 
+ libiberty_dep = $(patsubst $(Wc)%,%,$(libiberty))
+-plugindir = $(libdir)/gcc/$(target_noncanonical)/$(gcc_version)/plugin
++plugindir = $(libdir)/gcc-cross/$(target_noncanonical)/$(gcc_version)/plugin
+ cc1libdir = $(libdir)/$(libsuffix)
+ @ENABLE_PLUGIN_TRUE@plugin_LTLIBRARIES = libcc1plugin.la
+ @ENABLE_PLUGIN_TRUE@cc1lib_LTLIBRARIES = libcc1.la
 EOF
 	patch_gcc_os_include_dir_musl
 	if test "$ENABLE_MULTIARCH_GCC" = yes; then
