@@ -906,8 +906,7 @@ echo "host gcc version and build gcc version match. good for multiarch"
 fi
 
 # binutils
-PKG=`echo $RESULT/binutils-*.deb`
-if test -f "$PKG"; then
+if test -f "`echo $RESULT/binutils${HOST_ARCH_SUFFIX}_*.deb`"; then
 	echo "skipping rebuild of binutils-target"
 else
 	$APT_GET install autoconf bison flex gettext texinfo dejagnu quilt python3 file lsb-release zlib1g-dev
@@ -927,6 +926,23 @@ else
 	drop_privs rm -Rf binutils
 fi
 progress_mark "cross binutils"
+
+if test "$HOST_ARCH" = hppa && ! test -f "`echo $RESULT/binutils-hppa64-linux-gnu_*.deb`"; then
+	cross_build_setup binutils binutils-hppa64
+	drop_privs WITH_SYSROOT=/ TARGET=hppa64-linux-gnu dpkg-buildpackage -B -uc -us
+	cd ..
+	ls -l
+	pickup_additional_packages *.changes
+	$APT_GET install binutils-hppa64-linux-gnu
+	if ! which hppa64-linux-gnu-as; then echo "hppa64-linux-gnu-as missing in binutils package"; exit 1; fi
+	if ! drop_privs hppa64-linux-gnu-as -o test.o /dev/null; then echo "binutils-hppa64 fail to execute"; exit 1; fi
+	if ! test -f test.o; then echo "binutils-hppa64 fail to create object"; exit 1; fi
+	check_arch test.o hppa64
+	test -d "$RESULT" && cp -v binutils-hppa64-linux-gnu_*.deb "$RESULT"
+	cd ..
+	drop_privs rm -Rf binutils-hppa64-linux-gnu
+	progress_mark "cross binutils-hppa64"
+fi
 
 # linux
 patch_linux() {
@@ -1027,6 +1043,9 @@ if test -d "$RESULT/gcc1"; then
 	dpkg -i $RESULT/gcc1/*.deb
 else
 	$APT_GET install debhelper gawk patchutils bison flex lsb-release quilt libtool autoconf2.64 zlib1g-dev libcloog-isl-dev libmpc-dev libmpfr-dev libgmp-dev autogen systemtap-sdt-dev binutils-multiarch "binutils$HOST_ARCH_SUFFIX" "linux-libc-dev:$HOST_ARCH"
+	if test "$HOST_ARCH" = hppa; then
+		$APT_GET install binutils-hppa64-linux-gnu
+	fi
 	cross_build_setup "gcc-$GCC_VER" gcc1
 	dpkg-checkbuilddeps || : # tell unmet build depends
 	echo "$HOST_ARCH" > debian/target
@@ -1542,6 +1561,9 @@ if test -d "$RESULT/gcc2"; then
 	dpkg -i "$RESULT"/gcc2/*.deb
 else
 	$APT_GET install debhelper gawk patchutils bison flex lsb-release quilt libtool autoconf2.64 zlib1g-dev libcloog-isl-dev libmpc-dev libmpfr-dev libgmp-dev autogen systemtap-sdt-dev "libc-dev:$HOST_ARCH" binutils-multiarch "binutils$HOST_ARCH_SUFFIX"
+	if test "$HOST_ARCH" = hppa; then
+		$APT_GET install binutils-hppa64-linux-gnu
+	fi
 	cross_build_setup "gcc-$GCC_VER" gcc2
 	dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends
 	echo "$HOST_ARCH" > debian/target
@@ -1626,6 +1648,9 @@ if test -d "$RESULT/gcc3"; then
 	dpkg -i "$RESULT"/gcc3/*.deb
 else
 	$APT_GET install debhelper gawk patchutils bison flex lsb-release quilt libtool autoconf2.64 zlib1g-dev libcloog-isl-dev libmpc-dev libmpfr-dev libgmp-dev dejagnu autogen systemtap-sdt-dev binutils-multiarch "binutils$HOST_ARCH_SUFFIX" "libc-dev:$HOST_ARCH"
+	if test "$HOST_ARCH" = hppa; then
+		$APT_GET install binutils-hppa64-linux-gnu
+	fi
 	cross_build_setup "gcc-$GCC_VER" gcc3
 	dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends
 	echo "$HOST_ARCH" > debian/target
