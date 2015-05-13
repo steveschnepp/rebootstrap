@@ -558,6 +558,21 @@ else
 	}
 fi
 
+pickup_additional_packages() {
+	local f
+	for f in "$@"; do
+		if test "${f%.deb}" != "$f"; then
+			reprepro includedeb rebootstrap "$f"
+		elif test "${f%.changes}" != "$f"; then
+			reprepro include rebootstrap "$f"
+		else
+			echo "cannot pick up package $f"
+			exit 1
+		fi
+	done
+	apt-get update
+}
+
 pickup_packages() {
 	local sources
 	local source
@@ -593,17 +608,7 @@ pickup_packages() {
 		reprepro removesrc rebootstrap "$source"
 	done
 	# add new contents
-	for f in "$@"; do
-		if test "${f%.deb}" != "$f"; then
-			reprepro includedeb rebootstrap "$f"
-		elif test "${f%.changes}" != "$f"; then
-			reprepro include rebootstrap "$f"
-		else
-			echo "cannot pick up package $f"
-			exit 1
-		fi
-	done
-	apt-get update
+	pickup_additional_packages "$@"
 }
 
 # compute a function name from a hook prefix $1 and a package name $2
