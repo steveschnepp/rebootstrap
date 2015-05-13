@@ -1911,6 +1911,49 @@ EOF
 add_automatic p11-kit
 add_automatic patch
 add_automatic pcre3
+
+add_automatic readline5
+patch_readline5() {
+	echo "patching readline5 to use the correct compiler #784669"
+	drop_privs patch -p1 <<'EOF'
+diff -u readline5-5.2+dfsg/debian/rules readline5-5.2+dfsg/debian/rules
+--- readline5-5.2+dfsg/debian/rules
++++ readline5-5.2+dfsg/debian/rules
+@@ -15,9 +15,13 @@
+ 
+ distribution := $(shell lsb_release -is)
+ 
++ifeq ($(origin CC),default)
++CC = $(DEB_HOST_GNU_TYPE)-cc
++endif
++
+ ifneq (,$(findstring /$(DEB_HOST_ARCH)/,/i386/powerpc/sparc/s390/))
+   build64 = yes
+-  CC64 = gcc -m64
++  CC64 = $(CC) -m64
+   gencontrol_flags = -- \
+ 	'-Vdevxx:Depends=libc6-dev-$(ARCH64)'
+   ifeq ($(DEB_HOST_ARCH),i386)
+@@ -40,7 +44,7 @@
+ 
+ ifneq (,$(findstring /$(DEB_HOST_ARCH)/,/amd64/ppc64/))
+   build32 = yes
+-  CC32 = gcc -m32
++  CC32 = $(CC) -m32
+   lib32dir = lib32
+   lib32devdir = usr/lib32
+   gencontrol_flags = -- \
+@@ -63,7 +67,6 @@
+ else
+   CC_LINK_FLAGS = -Wl,
+ endif
+-CC	= gcc
+ 
+ SHELL	= bash
+ 
+EOF
+}
+
 add_automatic sed
 add_automatic slang2
 add_automatic sqlite3
@@ -2034,6 +2077,7 @@ add_need pcre3 # by libselinux
 add_need sed # essential
 add_need slang2 # by cdebconf, newt
 add_need sqlite3 # by nss, python2.7
+add_need readline5 # by lvm2
 add_need tar # essential
 add_need tcl8.6 # by newt
 add_need tcltk-defaults # by python2.7
