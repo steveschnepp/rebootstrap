@@ -1917,7 +1917,6 @@ add_automatic p11-kit
 add_automatic patch
 add_automatic pcre3
 
-add_automatic readline5
 patch_readline5() {
 	echo "patching readline5 to use the correct compiler #784669"
 	drop_privs patch -p1 <<'EOF'
@@ -2082,7 +2081,6 @@ add_need pcre3 # by libselinux
 add_need sed # essential
 add_need slang2 # by cdebconf, newt
 add_need sqlite3 # by nss, python2.7
-add_need readline5 # by lvm2
 add_need tar # essential
 add_need tcl8.6 # by newt
 add_need tcltk-defaults # by python2.7
@@ -3120,6 +3118,30 @@ EOF
 cross_build fontconfig
 mark_built fontconfig
 # needed by cairo, xft
+
+automatically_cross_build_packages
+
+builddep_readline5() {
+	# gcc-multilib dependency unsatisfiable
+	$APT_GET install debhelper dpatch lsb-release "libtinfo-dev:$1" "libncurses5-dev:$1" mawk texinfo autotools-dev
+	case "$ENABLE_MULTILIB:$HOST_ARCH" in
+		yes:amd64|yes:ppc64)
+			test "$1" = "$HOST_ARCH"
+			$APT_GET install "gcc-$GCC_VER-multilib$HOST_ARCH_SUFFIX" "lib32tinfo-dev:$1" "lib32ncursesw5-dev:$1"
+			# the unversioned gcc-multilib$HOST_ARCH_SUFFIX should contain the following link
+			ln -sf "`dpkg-architecture "-a$1" -qDEB_HOST_MULTIARCH`/asm" /usr/include/asm
+		;;
+		yes:i386|yes:powerpc|yes:sparc|yes:s390)
+			test "$1" = "$HOST_ARCH"
+			$APT_GET install "gcc-$GCC_VER-multilib$HOST_ARCH_SUFFIX" "lib64ncurses5-dev:$1"
+			# the unversioned gcc-multilib$HOST_ARCH_SUFFIX should contain the following link
+			ln -sf "`dpkg-architecture "-a$1" -qDEB_HOST_MULTIARCH`/asm" /usr/include/asm
+		;;
+	esac
+}
+cross_build readline5
+mark_built readline5
+# needed by lvm2
 
 automatically_cross_build_packages
 
