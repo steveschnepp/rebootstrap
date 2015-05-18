@@ -115,7 +115,8 @@ check_arch() {
 			fi
 		;;
 		"ELF 64-bit "*)
-			if test 64 != `dpkg-architecture -a$2 -qDEB_HOST_ARCH_BITS`; then
+			if test "$2" = hppa64; then :
+			elif test 64 != "`dpkg-architecture "-a$2" -qDEB_HOST_ARCH_BITS`"; then
 				echo "bit mismatch"
 				echo "expected $2"
 				echo "got $FILE_RES"
@@ -138,7 +139,8 @@ check_arch() {
 			fi
 		;;
 		*"-bit MSB "*)
-			if test big != `dpkg-architecture -a$2 -qDEB_HOST_ARCH_ENDIAN`; then
+			if test "$2" = hppa64; then :
+			elif test big != "`dpkg-architecture "-a$2" -qDEB_HOST_ARCH_ENDIAN`"; then
 				echo "endianess mismatch"
 				echo "expected $2"
 				echo "got $FILE_RES"
@@ -312,6 +314,14 @@ check_arch() {
 		;;
 		*", PA-RISC, version "*)
 			if test hppa != `dpkg-architecture -a$2 -qDEB_HOST_ARCH_CPU`; then
+				echo "cpu mismatch"
+				echo "expected $2"
+				echo "got $FILE_RES"
+				return 1
+			fi
+		;;
+		*", PA-RISC, 2.0 (LP64) version "*)
+			if test "$2" != hppa64; then
 				echo "cpu mismatch"
 				echo "expected $2"
 				echo "got $FILE_RES"
