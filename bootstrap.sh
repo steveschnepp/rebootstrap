@@ -421,43 +421,6 @@ drop_privs mkdir -p "$RESULT"
 
 HOST_ARCH_SUFFIX="-`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE | tr _ -`"
 
-echo "fixing dpkg-shlibdeps for multilib #772184"
-patch -p3 /usr/share/perl5/Dpkg/Shlibs.pm <<'EOF'
-diff -Nru dpkg-1.17.22/scripts/Dpkg/Shlibs.pm dpkg-1.17.22+nmu1/scripts/Dpkg/Shlibs.pm
---- dpkg-1.17.22/scripts/Dpkg/Shlibs.pm
-+++ dpkg-1.17.22+nmu1/scripts/Dpkg/Shlibs.pm
-@@ -36,7 +36,9 @@
-                   gnutriplet_to_multiarch debarch_to_multiarch);
- 
- use constant DEFAULT_LIBRARY_PATH =>
--    qw(/lib /usr/lib /lib32 /usr/lib32 /lib64 /usr/lib64
-+    qw(/lib /usr/lib);
-+use constant DEFAULT_MULTILIB_PATH =>
-+    qw(/lib32 /usr/lib32 /lib64 /usr/lib64
-        /emul/ia32-linux/lib /emul/ia32-linux/usr/lib);
- 
- # Adjust set of directories to consider when we're in a situation of a
-@@ -67,7 +69,7 @@
-             "/$crossprefix/lib64", "/usr/$crossprefix/lib64";
- }
- 
--my @librarypaths = (DEFAULT_LIBRARY_PATH, @crosslibrarypaths);
-+my @librarypaths = (DEFAULT_LIBRARY_PATH);
- 
- # XXX: Deprecated. Update library paths with LD_LIBRARY_PATH
- if ($ENV{LD_LIBRARY_PATH}) {
-@@ -80,6 +82,9 @@
- # Update library paths with ld.so config
- parse_ldso_conf('/etc/ld.so.conf') if -e '/etc/ld.so.conf';
- 
-+push @librarypaths, DEFAULT_MULTILIB_PATH;
-+push @librarypaths, @crosslibrarypaths;
-+
- my %visited;
- sub parse_ldso_conf {
-     my $file = shift;
-EOF
-
 mkdir -p "$REPODIR/conf"
 mkdir "$REPODIR/archive"
 cat > "$REPODIR/conf/distributions" <<EOF
