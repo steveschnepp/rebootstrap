@@ -1622,7 +1622,6 @@ add_automatic dash
 add_automatic db-defaults
 add_automatic debianutils
 add_automatic freetype
-add_automatic gcc-defaults
 add_automatic gdbm
 add_automatic gmp
 add_automatic grep
@@ -1950,7 +1949,6 @@ add_need db-defaults # by apt, perl, python2.7
 add_need debianutils # essential
 add_need diffutils # essential
 add_need freetype # by fontconfig
-add_need gcc-defaults # for build-essential
 add_need gdbm # by perl, python2.7
 add_need gmp # by gnutls28, guile-2.0, nettle
 add_need grep # essential
