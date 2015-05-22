@@ -736,6 +736,26 @@ diff -u gcc-4.9-4.9.2/debian/rules.patch gcc-4.9-4.9.2/debian/rules.patch
 +       os_include_dir="os/uclibc"
 EOF
 }
+patch_gcc_musl_depends() {
+	echo "patching gcc for musl dependencies"
+	drop_privs patch -p1 <<'EOF'
+diff -u gcc-4.9-4.9.2/debian/rules.conf gcc-4.9-4.9.2/debian/rules.conf
+--- gcc-4.9-4.9.2/debian/rules.conf
++++ gcc-4.9-4.9.2/debian/rules.conf
+@@ -240,6 +240,11 @@
+   else
+     LIBC_DEP = libc6
+   endif
++  ifneq (,$(findstring musl-linux-,$(DEB_TARGET_ARCH)))
++    LIBC_DEP = musl
++    libc_ver = 0.9
++    libc_dev_ver = 0.9
++  endif
+ else
+   ifeq ($(DEB_TARGET_ARCH_OS),hurd)
+     LIBC_DEP = libc0.3
+EOF
+}
 patch_gcc_4_8() {
 	echo "patching gcc to honour DEB_CROSS_NO_BIARCH for hppa #745116"
 	drop_privs patch -p1 <<EOF
@@ -840,6 +860,7 @@ diff -u gcc-4.9-4.9.2/debian/patches/cross-biarch.diff gcc-4.9-4.9.2/debian/patc
  +				-B$(build_tooldir)/lib$${libsuffix_}/, \
 EOF
 	patch_gcc_os_include_dir_musl
+	patch_gcc_musl_depends
 	if test "$ENABLE_MULTIARCH_GCC" = yes; then
 		echo "applying patches for with_deps_on_target_arch_pkgs"
 		drop_privs QUILT_PATCHES="/usr/share/cross-gcc/patches/gcc-$GCC_VER" quilt push -a
@@ -847,6 +868,7 @@ EOF
 }
 patch_gcc_5() {
 	patch_gcc_os_include_dir_musl
+	patch_gcc_musl_depends
 	if test "$ENABLE_MULTIARCH_GCC" = yes; then
 		echo "applying patches for with_deps_on_target_arch_pkgs"
 		drop_privs QUILT_PATCHES="/usr/share/cross-gcc/patches/gcc-$GCC_VER" quilt push -a
