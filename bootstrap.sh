@@ -1853,7 +1853,7 @@ patch_readline5() {
 diff -u readline5-5.2+dfsg/debian/rules readline5-5.2+dfsg/debian/rules
 --- readline5-5.2+dfsg/debian/rules
 +++ readline5-5.2+dfsg/debian/rules
-@@ -15,9 +15,13 @@
+@@ -15,6 +15,10 @@
  
  distribution := $(shell lsb_release -is)
  
@@ -1863,20 +1863,7 @@ diff -u readline5-5.2+dfsg/debian/rules readline5-5.2+dfsg/debian/rules
 +
  ifneq (,$(findstring /$(DEB_HOST_ARCH)/,/i386/powerpc/sparc/s390/))
    build64 = yes
--  CC64 = gcc -m64
-+  CC64 = $(CC) -m64
-   gencontrol_flags = -- \
- 	'-Vdevxx:Depends=libc6-dev-$(ARCH64)'
-   ifeq ($(DEB_HOST_ARCH),i386)
-@@ -40,7 +44,7 @@
- 
- ifneq (,$(findstring /$(DEB_HOST_ARCH)/,/amd64/ppc64/))
-   build32 = yes
--  CC32 = gcc -m32
-+  CC32 = $(CC) -m32
-   lib32dir = lib32
-   lib32devdir = usr/lib32
-   gencontrol_flags = -- \
+   CC64 = gcc -m64
 @@ -63,7 +67,6 @@
  else
    CC_LINK_FLAGS = -Wl,
@@ -1885,6 +1872,347 @@ diff -u readline5-5.2+dfsg/debian/rules readline5-5.2+dfsg/debian/rules
  
  SHELL	= bash
  
+EOF
+	echo "patching readline5 to drop unused multilib packages"
+	drop_privs patch -p1 <<'EOF'
+diff -u readline5-5.2+dfsg/debian/control readline5-5.2+dfsg/debian/control
+--- readline5-5.2+dfsg/debian/control
++++ readline5-5.2+dfsg/debian/control
+@@ -19,18 +19,6 @@
+  The GNU history library provides a consistent user interface for
+  recalling lines of previously typed input.
+ 
+-Package: lib64readline5
+-Architecture: i386 powerpc s390 sparc
+-Depends: readline-common, ${shlibs:Depends}, ${misc:Depends}
+-Section: libs
+-Description: GNU readline and history libraries, run-time libraries (64-bit)
+- The GNU readline library aids in the consistency of user interface
+- across discrete programs that need to provide a command line
+- interface.
+- .
+- The GNU history library provides a consistent user interface for
+- recalling lines of previously typed input.
+-
+ Package: libreadline-gplv2-dev
+ Architecture: any
+ Depends: libreadline5 (= ${binary:Version}), libtinfo-dev, ${shlibs:Depends}, ${misc:Depends}, dpkg (>= 1.15.4) | install-info
+@@ -48,20 +36,6 @@
+  .
+  This package contains as well the readline documentation in info format.
+ 
+-Package: lib64readline-gplv2-dev
+-Architecture: i386 powerpc s390 sparc
+-Depends: lib64readline5 (= ${binary:Version}), lib64ncurses5-dev, ${devxx:Depends}, ${shlibs:Depends}, ${misc:Depends}
+-Conflicts: lib64readline-dev, lib64readline5-dev
+-Replaces: libreadline5-dev (<< 4.1-6), lib64readline5-dev
+-Section: libdevel
+-Description: GNU readline and history libraries, development files (64-bit)
+- The GNU readline library aids in the consistency of user interface
+- across discrete programs that need to provide a command line
+- interface.
+- .
+- The GNU history library provides a consistent user interface for
+- recalling lines of previously typed input.
+-
+ Package: libreadline5-dbg
+ Architecture: any
+ Depends: libreadline5 (= ${binary:Version}), ${shlibs:Depends}, ${misc:Depends}
+@@ -73,34 +47,6 @@
+  The GNU readline library aids in the consistency of user interface
+  across discrete programs that need to provide a command line
+  interface.
+- .
+- The GNU history library provides a consistent user interface for
+- recalling lines of previously typed input.
+-
+-Package: lib32readline5
+-Architecture: amd64 ppc64
+-Pre-Depends: ${lib32:Predep}
+-Depends: readline-common, ${shlibs:Depends}, ${misc:Depends}
+-Section: libs
+-Description: GNU readline and history libraries, run-time libraries (32-bit)
+- The GNU readline library aids in the consistency of user interface
+- across discrete programs that need to provide a command line
+- interface.
+- .
+- The GNU history library provides a consistent user interface for
+- recalling lines of previously typed input.
+-
+-Package: lib32readline-gplv2-dev
+-Architecture: amd64 ppc64
+-Pre-Depends: ${lib32:Predep}
+-Depends: lib32readline5 (= ${binary:Version}), lib32tinfo-dev, ${devxx:Depends}, ${shlibs:Depends}, ${misc:Depends}
+-Conflicts: lib32readline-dev, lib32readline5-dev
+-Replaces: lib32readline5-dev
+-Section: libdevel
+-Description: GNU readline and history libraries, development files (32-bit)
+- The GNU readline library aids in the consistency of user interface
+- across discrete programs that need to provide a command line
+- interface.
+  .
+  The GNU history library provides a consistent user interface for
+  recalling lines of previously typed input.
+diff -u readline5-5.2+dfsg/debian/rules readline5-5.2+dfsg/debian/rules
+--- readline5-5.2+dfsg/debian/rules
++++ readline5-5.2+dfsg/debian/rules
+@@ -15,47 +15,5 @@
+ CC = $(DEB_HOST_GNU_TYPE)-cc
+ endif
+ 
+-ifneq (,$(findstring /$(DEB_HOST_ARCH)/,/i386/powerpc/sparc/s390/))
+-  build64 = yes
+-  CC64 = gcc -m64
+-  gencontrol_flags = -- \
+-	'-Vdevxx:Depends=libc6-dev-$(ARCH64)'
+-  ifeq ($(DEB_HOST_ARCH),i386)
+-    ARCH64 = amd64
+-    HOST64 = x86_64-linux-gnu
+-  endif
+-  ifeq ($(DEB_HOST_ARCH),powerpc)
+-    ARCH64 = ppc64
+-    HOST64 = ppc64-linux-gnu
+-  endif
+-  ifeq ($(DEB_HOST_ARCH),sparc)
+-    ARCH64 = sparc64
+-    HOST64 = sparc64-linux-gnu
+-  endif
+-  ifeq ($(DEB_HOST_ARCH),s390)
+-    ARCH64 = s390x
+-    HOST64 = s390x-linux-gnu
+-  endif
+-endif
+-
+-ifneq (,$(findstring /$(DEB_HOST_ARCH)/,/amd64/ppc64/))
+-  build32 = yes
+-  CC32 = gcc -m32
+-  lib32dir = lib32
+-  lib32devdir = usr/lib32
+-  gencontrol_flags = -- \
+-	'-Vdevxx:Depends=libc6-dev-$(ARCH32)'
+-  ifeq ($(DEB_HOST_ARCH),amd64)
+-    ARCH32 = i386
+-    HOST32 = i486-linux-gnu
+-    ifeq ($(distribution),Debian)
+-      gencontrol_flags += '-Vlib32:Predep=libc6-i386 (>= 2.9-18)'
+-    endif
+-  endif
+-  ifeq ($(DEB_HOST_ARCH),ppc64)
+-    ARCH32 = powerpc
+-    HOST32 = powerpc-linux-gnu
+-  endif
+-endif
+ 
+ ifeq ($(DEB_HOST_ARCH_OS),netbsd)
+@@ -63,34 +24,22 @@
+ SHELL	= bash
+ 
+ p_rl	= libreadline$(soversion)
+-p_rl32	= lib32readline$(soversion)
+-p_rl64	= lib64readline$(soversion)
+ p_comm	= readline-common
+ p_rld	= libreadline-gplv2-dev
+-p_rld32	= lib32readline-gplv2-dev
+-p_rld64	= lib64readline-gplv2-dev
+ p_rlg	= $(p_rl)-dbg
+ p_doc	= $(p_rl)-doc
+ p_rlfe	= rlfe
+ 
+ d	= debian/tmp
+-d32	= debian/tmp32
+-d64	= debian/tmp64
+ d_rl	= debian/$(p_rl)
+-d_rl32	= debian/$(p_rl32)
+-d_rl64	= debian/$(p_rl64)
+ d_comm	= debian/$(p_comm)
+ d_rld	= debian/$(p_rld)
+-d_rld32	= debian/$(p_rld32)
+-d_rld64	= debian/$(p_rld64)
+ d_rlg	= debian/$(p_rlg)
+ d_doc	= debian/$(p_doc)
+ d_rlfe	= debian/$(p_rlfe)
+ 
+ srcdir		= $(CURDIR)
+ builddir	= $(CURDIR)/build
+-builddir32	= $(CURDIR)/build32
+-builddir64	= $(CURDIR)/build64
+ 
+ default: build
+ 
+@@ -112,22 +60,6 @@
+ 		--host=$(DEB_HOST_GNU_TYPE) \
+ 		--libdir=/usr/lib/$(DEB_HOST_MULTIARCH)
+ 
+-ifneq ($(build32),)
+-	rm -rf $(builddir32)
+-	mkdir $(builddir32)
+-	cd $(builddir32) && \
+-	  CC="$(CC32)" $(srcdir)/configure \
+-		--host=$(HOST32) --with-curses --prefix=/usr
+-endif
+-
+-ifneq ($(build64),)
+-	rm -rf $(builddir64)
+-	mkdir $(builddir64)
+-	cd $(builddir64) && \
+-	  CC="$(CC64)" $(srcdir)/configure \
+-		--host=$(HOST64) --with-curses --prefix=/usr
+-endif
+-
+ 	touch configure-stamp
+ 
+ #ifeq ($(DEB_HOST_GNU_TYPE),$(DEB_BUILD_GNU_TYPE))
+@@ -145,25 +77,6 @@
+ 	    SHOBJ_CFLAGS="-fPIC -D_REENTRANT" \
+ 	    SHLIB_LIBS="-ltinfo"
+ 
+-ifneq ($(build32),)
+-	$(MAKE) -C $(builddir32) \
+-	    CC="$(CC32)" \
+-	    CFLAGS="-g -O2" \
+-	    SHOBJ_CFLAGS="-fPIC -D_REENTRANT" \
+-	    SHOBJ_LDFLAGS='-shared' \
+-	    SHLIB_LIBS="-ltinfo" \
+-	    SHLIB_XLDFLAGS='$(CC_LINK_FLAGS)-soname,`echo $$@ | sed s/\\..$$$$//`'
+-endif
+-
+-ifneq ($(build64),)
+-	$(MAKE) -C $(builddir64) \
+-	    CC="$(CC64)" \
+-	    CFLAGS="-g -O2" \
+-	    SHOBJ_CFLAGS="-fPIC -D_REENTRANT" \
+-	    SHOBJ_LDFLAGS='-shared' \
+-	    SHLIB_LIBS="-ltinfo" \
+-	    SHLIB_XLDFLAGS='$(CC_LINK_FLAGS)-soname,`echo $$@ | sed s/\\..$$$$//`'
+-endif
+ 	$(MAKE) -C $(builddir)/doc info
+ 
+ 	touch build-stamp
+@@ -191,12 +104,6 @@
+ 	rm -f configure*-stamp build*-stamp install-stamp
+ 	rm -rf autom4te.cache
+ 	rm -rf $(builddir)
+-ifneq ($(build64),)
+-	rm -rf $(builddir64) $(d64)
+-endif
+-ifneq ($(build32),)
+-	rm -rf $(builddir32) $(d32)
+-endif
+ 	rm -f doc/*.dvi
+ 	rm -f debian/shlibs.local
+ 	$(MAKE) -f debian/rules unpatch
+@@ -290,74 +197,6 @@
+ endif
+ endif
+ 
+-ifneq ($(build32),)
+-	rm -rf $(d32)
+-	mkdir -p $(d32)/usr/bin
+-	$(MAKE) -C $(builddir32) install \
+-	    CC="$(CC32)" \
+-	    CFLAGS="-g -O2 -D_REENTRANT" \
+-	    SHOBJ_LDFLAGS='-shared' \
+-	    SHLIB_XLDFLAGS='$(CC_LINK_FLAGS)-soname,`echo $$@ | sed s/\\..$$$$//`' \
+-	    SHLIB_LIBS=-lncurses \
+-	    DESTDIR=$(CURDIR)/$(d32) \
+-	    mandir=/usr/share/man \
+-	    infodir=/usr/share/info
+-
+-	dh_installdirs -p$(p_rl32) \
+-	    $(lib32dir) \
+-	    usr/share/doc
+-	cp -p $(d32)/usr/lib/lib{history,readline}.so.$(libversion) \
+-		$(d_rl32)/$(lib32dir)/
+-	ln -s libhistory.so.$(libversion) \
+-		$(d_rl32)/$(lib32dir)/libhistory.so.$(soversion)
+-	ln -s libreadline.so.$(libversion) \
+-		$(d_rl32)/$(lib32dir)/libreadline.so.$(soversion)
+-
+-	dh_installdirs -p$(p_rld32) \
+-	    $(lib32devdir) \
+-	    usr/share/doc
+-	ln -s /$(lib32dir)/libhistory.so.$(soversion) \
+-		$(d_rld32)/$(lib32devdir)/libhistory.so
+-	ln -s /$(lib32dir)/libreadline.so.$(soversion) \
+-		$(d_rld32)/$(lib32devdir)/libreadline.so
+-	mv $(d32)/usr/lib/lib{history,readline}.a $(d_rld32)/$(lib32devdir)/.
+-endif
+-
+-ifneq ($(build64),)
+-	rm -rf $(d64)
+-	mkdir -p $(d64)/usr/bin
+-	$(MAKE) -C $(builddir64) install \
+-	    CC="$(CC64)" \
+-	    CFLAGS="-g -O2 -D_REENTRANT" \
+-	    SHOBJ_LDFLAGS='-shared' \
+-	    SHLIB_XLDFLAGS='$(CC_LINK_FLAGS)-soname,`echo $$@ | sed s/\\..$$$$//`' \
+-	    SHLIB_LIBS=-lncurses \
+-	    DESTDIR=$(CURDIR)/$(d64) \
+-	    mandir=/usr/share/man \
+-	    infodir=/usr/share/info
+-
+-	dh_installdirs -p$(p_rl64) \
+-	    lib64 \
+-	    usr/share/doc
+-	dh_installdirs -p$(p_rld64) \
+-	    usr/share/doc
+-	cp -p $(d64)/usr/lib/lib{history,readline}.so.$(libversion) \
+-		$(d_rl64)/lib64/
+-	ln -s libhistory.so.$(libversion) \
+-		$(d_rl64)/lib64/libhistory.so.$(soversion)
+-	ln -s libreadline.so.$(libversion) \
+-		$(d_rl64)/lib64/libreadline.so.$(soversion)
+-
+-	dh_installdirs -p$(p_rld64) \
+-	    usr/lib64 \
+-	    usr/share/doc
+-	ln -s /lib64/libhistory.so.$(soversion) \
+-		$(d_rld64)/usr/lib64/libhistory.so
+-	ln -s /lib64/libreadline.so.$(soversion) \
+-		$(d_rld64)/usr/lib64/libreadline.so
+-	mv $(d64)/usr/lib/lib{history,readline}.a $(d_rld64)/usr/lib64/.
+-endif
+-
+ 	touch install-stamp
+ 
+ binary-indep: build install
+@@ -411,36 +250,6 @@
+ 		 -L $(p_rl) -l $(d_rl)/lib
+ endif
+ 
+-ifneq ($(build32),)
+-	-ls -l $(d_rld)/usr/share/doc/$(p_rl)
+-	dh_installdocs -p$(p_rl32) \
+-		USAGE debian/inputrc.arrows
+-	dh_installchangelogs -p$(p_rl32) CHANGES
+-	ln -sf $(p_rl32) $(d_rld32)/usr/share/doc/$(p_rld32)
+-	dh_compress -p$(p_rl32) -p$(p_rld32)
+-	dh_fixperms -p$(p_rl32) -p$(p_rld32)
+-	dh_strip -p$(p_rl32) -p$(p_rld32)
+-	dh_makeshlibs -p$(p_rl32) -V '$(p_rl32) (>= 5.2)'
+-	-dh_shlibdeps -p$(p_rl32) -p$(p_rld32) \
+-		 -L $(p_rl32) -l $(d_rl32)/lib
+-	-ls -l $(d_rld)/usr/share/doc/$(p_rl)
+-endif
+-
+-ifneq ($(build64),)
+-	-ls -l $(d_rld)/usr/share/doc/$(p_rl)
+-	dh_installdocs -p$(p_rl64) \
+-		USAGE debian/inputrc.arrows
+-	dh_installchangelogs -p$(p_rl64) CHANGES
+-	ln -sf $(p_rl64) $(d_rld64)/usr/share/doc/$(p_rld64)
+-	dh_compress -p$(p_rl64) -p$(p_rld64)
+-	dh_fixperms -p$(p_rl64) -p$(p_rld64)
+-	dh_strip -p$(p_rl64) -p$(p_rld64)
+-	dh_makeshlibs -p$(p_rl64) -V '$(p_rl64) (>= 5.2)'
+-	-dh_shlibdeps -p$(p_rl64) -p$(p_rld64) \
+-		 -L $(p_rl64) -l $(d_rl64)/lib
+-	-ls -l $(d_rld)/usr/share/doc/$(p_rl)
+-endif
+-
+ 	dh_installdeb -s
+ 	dh_gencontrol -s $(gencontrol_flags)
+ 	dh_md5sums -s
 EOF
 }
 
@@ -2999,20 +3327,6 @@ automatically_cross_build_packages
 builddep_readline5() {
 	# gcc-multilib dependency unsatisfiable
 	$APT_GET install debhelper dpatch lsb-release "libtinfo-dev:$1" "libncurses5-dev:$1" mawk texinfo autotools-dev
-	case "$ENABLE_MULTILIB:$HOST_ARCH" in
-		yes:amd64|yes:ppc64)
-			test "$1" = "$HOST_ARCH"
-			$APT_GET install "gcc-$GCC_VER-multilib$HOST_ARCH_SUFFIX" "lib32tinfo-dev:$1" "lib32ncursesw5-dev:$1"
-			# the unversioned gcc-multilib$HOST_ARCH_SUFFIX should contain the following link
-			ln -sf "`dpkg-architecture "-a$1" -qDEB_HOST_MULTIARCH`/asm" /usr/include/asm
-		;;
-		yes:i386|yes:powerpc|yes:sparc|yes:s390)
-			test "$1" = "$HOST_ARCH"
-			$APT_GET install "gcc-$GCC_VER-multilib$HOST_ARCH_SUFFIX" "lib64ncurses5-dev:$1"
-			# the unversioned gcc-multilib$HOST_ARCH_SUFFIX should contain the following link
-			ln -sf "`dpkg-architecture "-a$1" -qDEB_HOST_MULTIARCH`/asm" /usr/include/asm
-		;;
-	esac
 }
 cross_build readline5
 mark_built readline5
