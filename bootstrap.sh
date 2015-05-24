@@ -3334,4 +3334,31 @@ mark_built readline5
 
 automatically_cross_build_packages
 
+builddep_db5_3() {
+	# java stuff lacks build profile annotation
+	$APT_GET install debhelper autotools-dev procps
+}
+if test -d "$RESULT/db5.3_1"; then
+	echo "skipping stage1 rebuild of db5.3"
+else
+	builddep_db5_3 "$HOST_ARCH"
+	cross_build_setup db5.3 db5.3_1
+	check_binNMU
+	dpkg-checkbuilddeps -B "-a$HOST_ARCH" || : # tell unmet build depends
+	drop_privs DEB_STAGE=stage1 dpkg-buildpackage "-a$HOST_ARCH" -B -d -uc -us
+	cd ..
+	ls -l
+	pickup_packages *.changes
+	test -d "$RESULT" && mkdir "$RESULT/db5.3_1"
+	test -d "$RESULT" && cp ./*.deb "$RESULT/db5.3_1/"
+	compare_native ./*.deb
+	cd ..
+	drop_privs rm -Rf db5.3_1
+fi
+progress_mark "db5.3 stage1 cross build"
+mark_built db5.3
+# needed by perl, python2.7, needed for db-defaults
+
+automatically_cross_build_packages
+
 assert_built "$need_packages"
