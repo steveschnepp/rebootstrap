@@ -1639,6 +1639,7 @@ add_automatic acl
 add_automatic attr
 add_automatic base-files
 add_automatic build-essential
+add_automatic bzip2
 add_automatic cloog
 add_automatic dash
 add_automatic db-defaults
@@ -2293,6 +2294,7 @@ add_need acl # by coreutils, systemd
 add_need attr # by coreutils, libcap-ng, libcap2
 add_need base-files # essential
 add_need build-essential # build-essential
+add_need bzip2 # by dpkg, perl
 add_need cloog # by gcc-4.9
 add_need dash # essential
 add_need db-defaults # by apt, perl, python2.7
@@ -2747,16 +2749,6 @@ builddep_readline6() {
 cross_build readline6
 mark_built readline6
 # needed by gnupg, guile-2.0, libxml2
-
-automatically_cross_build_packages
-
-builddep_bzip2() {
-	# unused gcc-multilib dependency unsatisfiable
-	$APT_GET install dpkg-dev debhelper dh-exec
-}
-cross_build bzip2
-mark_built bzip2
-# needed by dpkg, perl
 
 automatically_cross_build_packages
 
