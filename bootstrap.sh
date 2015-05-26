@@ -1648,6 +1648,7 @@ add_automatic freetype
 add_automatic gdbm
 add_automatic gmp
 add_automatic grep
+add_automatic groff
 add_automatic gzip
 add_automatic hostname
 add_automatic isl
@@ -2304,6 +2305,7 @@ add_need freetype # by fontconfig
 add_need gdbm # by perl, python2.7
 add_need gmp # by gnutls28, guile-2.0, nettle
 add_need grep # essential
+add_need groff # for man-db
 add_need gzip # essential
 add_need hostname # essential
 test "`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS`" = linux && add_need keyutils # by krb5
@@ -2319,13 +2321,10 @@ add_need libssh2 # by curl
 add_need libtasn1-6 # by gnutls28
 add_need libtextwrap # by cdebconf
 add_need libunistring # by guile-2.0
-add_need libx11 # by dbus, groff
+add_need libx11 # by dbus
 add_need libxau # by libxcb
-add_need libxaw # by groff
 add_need libxdmcp # by libxcb
-add_need libxmu # by groff
 add_need libxrender # by cairo
-add_need libxt # by groff
 add_need make-dfsg # for build-essential
 add_need man-db # for debhelper
 add_need mawk # for base-files (alternatively: gawk)
@@ -3168,17 +3167,6 @@ builddep_libxcb() {
 cross_build libxcb
 mark_built libxcb
 # needed by libx11
-
-automatically_cross_build_packages
-
-builddep_groff() {
-	assert_built "libx11 libxaw libxmu libxt"
-	# netpbm lacks M-A:foreign #700007
-	$APT_GET install bison debhelper dpkg-dev ghostscript netpbm psutils xutils-dev x11proto-core-dev "libx11-dev:$1" "libxmu-dev:$1" "libxt-dev:$1" "libxaw7-dev:$1" texinfo dh-autoreconf
-}
-cross_build groff
-mark_built groff
-# needed for man-db
 
 automatically_cross_build_packages
 
