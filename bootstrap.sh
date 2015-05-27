@@ -1016,10 +1016,17 @@ if test -f "$PKG"; then
 else
 	$APT_GET install bc cpio debhelper kernel-wedge patchutils python quilt python-six
 	cross_build_setup linux
+	linux_ma_skew=no
+	if test "$(dpkg-query -W -f '${Version}' "linux-libc-dev:$(dpkg --print-architecture)")" != "$(dpkg-parsechangelog -SVersion)"; then
+		echo "rebootstrap-warning: working around linux-libc-dev m-a:same skew"
+		linux_ma_skew=yes
+	fi
 	dpkg-checkbuilddeps -B "-a$HOST_ARCH" || : # tell unmet build depends
 	if test -n "$DROP_PRIVS"; then
+		test "$linux_ma_skew" = yes && drop_privs KBUILD_VERBOSE=1 fakeroot make -f debian/rules.gen "binary-libc-dev_$(dpkg --print-architecture)"
 		drop_privs KBUILD_VERBOSE=1 fakeroot make -f debian/rules.gen "binary-libc-dev_$HOST_ARCH"
 	else
+		test "$linux_ma_skew" = yes && KBUILD_VERBOSE=1 make -f debian/rules.gen "binary-libc-dev_$(dpkg --print-architecture)"
 		KBUILD_VERBOSE=1 make -f debian/rules.gen "binary-libc-dev_$HOST_ARCH"
 	fi
 	cd ..
