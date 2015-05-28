@@ -1032,7 +1032,7 @@ else
 	cd ..
 	ls -l
 	if test "$ENABLE_MULTIARCH_GCC" != yes; then
-		drop_privs dpkg-cross -M -a "$HOST_ARCH" -b *.deb
+		drop_privs dpkg-cross -M -a "$HOST_ARCH" -b ./*"_$HOST_ARCH.deb"
 	fi
 	pickup_packages *.deb
 	test -d "$RESULT" && cp -v linux-libc-dev_*.deb "$RESULT"
