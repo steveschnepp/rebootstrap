@@ -389,6 +389,24 @@ if test "$ENABLE_MULTIARCH_GCC" = yes; then
 	else
 		$APT_GET install cross-gcc-dev
 	fi
+	echo fixing gcc-4.9 patches
+	patch /usr/share/cross-gcc/patches/gcc-4.9/0005-setting-all-the-various-paths-options-for-with_deps_.patch <<'EOF'
+--- 0005-setting-all-the-various-paths-options-for-with_deps_.patch
++++ 0005-setting-all-the-various-paths-options-for-with_deps_.patch.new
+@@ -45,9 +45,9 @@
+  symbols-files:
+  ifeq ($(DEB_CROSS),yes)
+ +  ifneq ($(with_deps_on_target_arch_pkgs),yes)
+- 	for f in debian/*.symbols; do \
+- 	  [ -f "$$f" ] || continue; \
+- 	  [ -L "$$f" ] && continue; \
++ 	test -n "$(LS)"
++ 	set -e; \
++ 	for p in $$(dh_listpackages -i | grep '^lib'); do \
+ @@ -1244,6 +1248,7 @@ ifeq ($(DEB_CROSS),yes)
+  	  b=$$(basename $$f .symbols.$(DEB_TARGET_ARCH)); \
+  	  ln -sf $$f debian/$$b$(LS).symbols; \
+EOF
 fi
 
 obtain_source_package() {
