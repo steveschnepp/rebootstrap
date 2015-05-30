@@ -1665,6 +1665,41 @@ add_automatic attr
 add_automatic base-files
 add_automatic build-essential
 add_automatic bzip2
+
+add_automatic check
+patch_check() {
+	echo "fixing check to support cross compilation"
+	drop_privs patch -p1 <<'EOF'
+diff -Nru check-0.9.10/debian/rules check-0.9.10/debian/rules
+--- check-0.9.10/debian/rules
++++ check-0.9.10/debian/rules
+@@ -6,6 +6,7 @@
+ export DESTDIR=$(shell pwd)/debian/check
+ 
+ DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
++DEB_HOST_GNU_TYPE ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
+ 
+ ifneq (,$(filter noopt,$(DEB_BUILD_OPTIONS)))
+ 	CFLAGS_OPT := -O0
+@@ -18,6 +19,7 @@
+ 	dh_testdir
+ 	dh_autotools-dev_updateconfig
+ 	 CFLAGS="$(CFLAGS_OPT)" ./configure --prefix=/usr \
++		--host=$(DEB_HOST_GNU_TYPE) \
+ 		--libdir=\$${prefix}/lib/$(DEB_HOST_MULTIARCH) \
+ 		--infodir=/usr/share/info --enable-plain-docdir
+ 	touch configure-stamp
+@@ -27,6 +29,7 @@
+ 	dh_testdir
+ 	dh_autotools-dev_updateconfig
+ 	CFLAGS="-fPIC $(CFLAGS_OPT)" ./configure --prefix=/usr \
++		--host=$(DEB_HOST_GNU_TYPE) \
+ 		--libdir=\$${prefix}/lib/$(DEB_HOST_MULTIARCH) \
+ 		--infodir=/usr/share/info \
+ 		--enable-plain-docdir
+EOF
+}
+
 add_automatic cloog
 add_automatic dash
 add_automatic db-defaults
