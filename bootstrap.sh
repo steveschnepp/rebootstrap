@@ -775,25 +775,6 @@ diff -u gcc-4.9-4.9.2/debian/rules.conf gcc-4.9-4.9.2/debian/rules.conf
 EOF
 }
 patch_gcc_4_8() {
-	echo "patching gcc to honour DEB_CROSS_NO_BIARCH for hppa #745116"
-	drop_privs patch -p1 <<EOF
-diff -u gcc-4.8-4.8.2/debian/rules.defs gcc-4.8-4.8.2/debian/rules.defs
---- gcc-4.8-4.8.2/debian/rules.defs
-+++ gcc-4.8-4.8.2/debian/rules.defs
-@@ -1138,7 +1138,11 @@
-   # hppa64 build ----------------
-   hppa64_no_snap := no
-   ifeq (\$(DEB_TARGET_ARCH),hppa)
--    with_hppa64 := yes
-+    ifdef DEB_CROSS_NO_BIARCH
-+      with_hppa64 := disabled by DEB_CROSS_NO_BIARCH
-+    else
-+      with_hppa64 := yes
-+    endif
-   endif
-   ifeq (\$(hppa64_no_snap)-\$(trunk_build),yes-yes)
-     with_hppa64 := disabled for snapshot build
-EOF
 	echo "patching gcc-4.8 to build common libraries. not a bug"
 	drop_privs patch -p1 <<EOF
 diff -u gcc-4.8-4.8.2/debian/rules.defs gcc-4.8-4.8.2/debian/rules.defs
