@@ -625,8 +625,26 @@ cross_build_setup() {
 	return 0
 }
 
+# add a binNMU changelog entry
+# . is a debian package
+# $1 is the binNMU number
+# $2 is reason
+add_binNMU_changelog() {
+	cat - debian/changelog <<EOF |
+$(dpkg-parsechangelog -SSource) ($(dpkg-parsechangelog -SVersion)+b$1) sid; urgency=medium, binary-only=yes
+
+  * Binary-only non-maintainer upload for $HOST_ARCH; no source changes.
+  * $2
+
+ -- rebootstrap <invalid@invalid>  $(dpkg-parsechangelog -SDate)
+
+EOF
+		drop_privs tee debian/changelog.new >/dev/null
+	drop_privs mv debian/changelog.new debian/changelog
+}
+
 check_binNMU() {
-	local src pkg srcversion binversion maxversion
+	local pkg srcversion binversion maxversion
 	srcversion=`dpkg-parsechangelog -SVersion`
 	maxversion=$srcversion
 	for pkg in `dh_listpackages`; do
@@ -638,17 +656,8 @@ check_binNMU() {
 	done
 	case "$maxversion" in
 		"$srcversion+b"*)
-			src=`dpkg-parsechangelog -SSource`
-			echo "rebootstrap-warning: binNMU detected for $src $srcversion/$maxversion"
-			drop_privs cat - debian/changelog >debian/changelog.new <<EOF
-$src ($maxversion) unstable; urgency=medium, binary-only=yes
-
-  * Binary-only non-maintainer upload for $HOST_ARCH; no source changes.
-  * Bump to binNMU version of `dpkg --print-architecture`.
-
- -- rebootstrap <invalid@invalid>  `date -R`
-EOF
-			drop_privs mv debian/changelog.new debian/changelog
+			echo "rebootstrap-warning: binNMU detected for $(dpkg-parsechangelog -SSource) $srcversion/$maxversion"
+			add_binNMU_changelog "${maxversion#$srcversion+b}" "Bump to binNMU version of $(dpkg --print-architecture)."
 		;;
 	esac
 }
