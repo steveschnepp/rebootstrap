@@ -1779,6 +1779,10 @@ diff -Nru check-0.9.10/debian/rules check-0.9.10/debian/rules
  		--infodir=/usr/share/info \
  		--enable-plain-docdir
 EOF
+	if test "$HOST_ARCH" = s390x -a "$(dpkg-parsechangelog -SVersion)" = "0.9.10-6.1"; then
+		echo "binNMUing check to avoid glibc conflict"
+		add_binNMU_changelog 1 "avoid glibc conflict"
+	fi
 }
 
 add_automatic cloog
