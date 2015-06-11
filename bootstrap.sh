@@ -389,6 +389,38 @@ if test "$ENABLE_MULTIARCH_GCC" = yes; then
 	else
 		$APT_GET install cross-gcc-dev
 	fi
+	echo "dropping TS from gcc*-base for wdotap"
+	cat >$(echo /usr/share/cross-gcc/patches/gcc-5/*base-dependencies-reverted*) <<'EOF'
+--- a/debian/control.m4
++++ b/debian/control.m4
+@@ -119,12 +119,13 @@
+ ',`dnl gcc-X.Y
+ 
+ dnl default base package dependencies
+-define(`BASEDEP', `gcc`'PV`'TS-base (= ${gcc:Version})')
+-define(`SOFTBASEDEP', `gcc`'PV`'TS-base (>= ${gcc:SoftVersion})')
++define(`BASEPKG', `gcc`'PV`'ifdef(`CROSS_ARCH', ifelse(CROSS_ARCH, `all', `TS'))-base')
++define(`BASEDEP', `BASEPKG (= ${gcc:Version})')
++define(`SOFTBASEDEP', `BASEPKG (>= ${gcc:SoftVersion})')
+ 
+ ifdef(`TARGET',`
+-define(`BASELDEP', `gcc`'PV`'TS-base (>= ${gcc:Version})')
+-define(`SOFTBASELDEP', `gcc`'PV`'TS-base (>= ${gcc:SoftVersion})')
++define(`BASELDEP', `BASEPKG (>= ${gcc:Version})')
++define(`SOFTBASELDEP', `BASEPKG (>= ${gcc:SoftVersion})')
+ ',`dnl
+ define(`BASELDEP', `BASEDEP')
+ define(`SOFTBASELDEP', `SOFTBASEDEP')
+@@ -143,7 +144,7 @@
+ ')
+ 
+ ifenabled(`gccbase',`
+-Package: gcc`'PV`'TS-base
++Package: BASEPKG
+ Architecture: any
+ Multi-Arch: same
+ Section: ifdef(`TARGET',`devel',`libs')
+EOF
 fi
 
 obtain_source_package() {
