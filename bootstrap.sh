@@ -1914,6 +1914,70 @@ add_automatic mpfr4
 add_automatic nettle
 add_automatic nspr
 
+add_automatic nss
+patch_nss() {
+	echo "fixing nss FTBFS on x32 #699217"
+	drop_privs patch -p1 <<'EOF'
+diff -Nru nss-3.17/debian/rules nss-3.17/debian/rules
+--- nss-3.17/debian/rules
++++ nss-3.17/debian/rules
+@@ -25,6 +25,11 @@
+ else
+ USE_64 :=
+ endif
++ifeq (x32,$(shell dpkg-architecture -qDEB_HOST_ARCH))
++USE_X32 := USE_X32=1
++else
++USE_X32 :=
++endif
+ 
+ # $(foreach foo,$(list),$(call cmd,some command $(foo))) expands to
+ #    some command first-elem
+@@ -57,7 +62,8 @@
+ 		NSS_ENABLE_ECC=1 \
+ 		CHECKLOC= \
+ 		$(TOOLCHAIN) \
+-		$(USE_64)
++		$(USE_64) \
++		$(USE_X32)
+ 
+ override_dh_auto_clean:
+ 	-$(MAKE) -C nss \
+@@ -66,7 +72,8 @@
+ 		SOURCE_MD_DIR=$(DISTDIR) \
+ 		DIST=$(DISTDIR) \
+ 		BUILD_OPT=1 \
+-		$(USE_64)
++		$(USE_64) \
++		$(USE_X32)
+ 
+ 	rm -rf $(DISTDIR) $(PREPROCESS_FILES:.in=)
+ 
+EOF
+	echo "patching nss to add OS_TEST as DEB_HOST_GNU_CPU #788452"
+	patch -p1 <<'EOF'
+diff -Nru a/debian/rules b/debian/rules
+--- a/debian/rules
++++ b/debian/rules
+@@ -5,6 +5,7 @@
+ $(call lazy,DEB_BUILD_GNU_TYPE,$$(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE))
+ $(call lazy,DEB_HOST_ARCH,$$(shell dpkg-architecture -qDEB_HOST_ARCH))
+ $(call lazy,DEB_HOST_GNU_TYPE,$$(shell dpkg-architecture -qDEB_HOST_GNU_TYPE))
++$(call lazy,DEB_HOST_GNU_CPU,$$(shell dpkg-architecture -qDEB_HOST_GNU_CPU))
+ $(call lazy,DEB_HOST_MULTIARCH,$$(shell dpkg-architecture -qDEB_HOST_MULTIARCH))
+ $(call lazy,CFLAGS,$$(shell dpkg-buildflags --get CFLAGS))
+ $(call lazy,CPPFLAGS,$$(shell dpkg-buildflags --get CPPFLAGS))
+@@ -45,6 +46,7 @@
+ ifeq ($(origin RANLIB),default)
+ TOOLCHAIN += RANLIB=$(DEB_HOST_GNU_TYPE)-ranlib
+ endif
++TOOLCHAIN += OS_TEST=$(DEB_HOST_GNU_CPU)
+ endif
+ 
+ # $(foreach foo,$(list),$(call cmd,some command $(foo))) expands to
+EOF
+}
+
 add_automatic openssl
 patch_openssl() {
 	echo "fixing cross compilation of openssl for mips* architectures"
@@ -2071,7 +2135,7 @@ add_need mawk # for base-files (alternatively: gawk)
 add_need mpclib3 # by gcc-4.9
 add_need mpfr4 # by gcc-4.9
 add_need nettle # by gnutls28
-add_need nspr # by nss
+add_need nss # by curl
 add_need openssl # by curl
 add_need p11-kit # by gnutls28
 add_need patch # for dpkg-dev
@@ -2079,7 +2143,7 @@ add_need pcre3 # by libselinux
 add_need readline5 # by lvm2
 add_need sed # essential
 add_need slang2 # by cdebconf, newt
-add_need sqlite3 # by nss, python2.7
+add_need sqlite3 # by python2.7
 add_need tar # essential
 add_need tcl8.6 # by newt
 add_need tcltk-defaults # by python2.7
