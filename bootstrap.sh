@@ -1823,7 +1823,17 @@ add_automatic db-defaults
 add_automatic debianutils
 add_automatic freetype
 add_automatic gdbm
+
 add_automatic gmp
+patch_gmp() {
+	if test "$LIBC_NAME" = musl; then
+		echo "patching gmp symbols for musl arch #788411"
+		sed -i -r "s/([= ])(\!)?\<(${HOST_ARCH#musl-linux-})\>/\1\2\3 \2musl-linux-\3/" debian/libgmp10.symbols
+		# musl does not implement GNU obstack
+		sed -i -r 's/(.*_obstack_)/(arch=!musl-linux-any !musleabihf-linux-any)\1/' debian/libgmp10.symbols
+	fi
+}
+
 add_automatic grep
 add_automatic groff
 add_automatic gzip
