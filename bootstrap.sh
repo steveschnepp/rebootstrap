@@ -595,9 +595,8 @@ pickup_packages() {
 			echo "cannot pick up package $f"
 			exit 1
 		fi
-		sources="$sources $source"
+		sources=`set_add "$sources" "$source"`
 	done
-	sources=`echo "$sources" | tr ' ' '\n' | sort -u`
 	# archive old contents and remove them from the repository
 	for source in $sources; do
 		i=1
