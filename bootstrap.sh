@@ -2553,6 +2553,7 @@ if test -d "$RESULT/libselinux1"; then
 else
 	builddep_libselinux "$HOST_ARCH"
 	cross_build_setup libselinux libselinux1
+	check_binNMU
 	dpkg-checkbuilddeps -B "-a$HOST_ARCH" || : # tell unmet build depends
 	drop_privs DEB_STAGE=stage1 dpkg-buildpackage -d -B -uc -us "-a$HOST_ARCH"
 	cd ..
