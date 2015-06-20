@@ -708,6 +708,62 @@ if test "$ENABLE_MULTIARCH_GCC" != yes; then
 	$APT_GET update
 fi
 
+if test "$ENABLE_MULTIARCH_GCC" != yes; then
+	echo "adding sysroot paths to dpkg-shlibdeps"
+	patch /usr/share/perl5/Dpkg/Shlibs.pm <<'EOF'
+From da88b3913c504131afe06e64fb78202c71b2de7a Mon Sep 17 00:00:00 2001
+From: Guillem Jover <guillem@debian.org>
+Date: Fri, 22 May 2015 21:01:04 +0200
+Subject: [PATCH] Revert "Dpkg::Shlibs: Do not add cross-root directories to
+ default search list"
+
+This reverts commit 93da43460d292198c02c5f0a8b0bf4929c0dd915.
+---
+ scripts/Dpkg/Shlibs.pm | 11 ++++++++++-
+ 1 file changed, 10 insertions(+), 1 deletion(-)
+
+diff --git a/scripts/Dpkg/Shlibs.pm b/scripts/Dpkg/Shlibs.pm
+index 184aa69..68e8d89 100644
+--- a/scripts/Dpkg/Shlibs.pm
++++ b/scripts/Dpkg/Shlibs.pm
+@@ -93,22 +93,31 @@ sub setup_library_paths {
+ 
+     # Adjust set of directories to consider when we're in a situation of a
+     # cross-build or a build of a cross-compiler.
+-    my $multiarch;
++    my ($crossprefix, $multiarch);
+ 
+     # Detect cross compiler builds.
+     if ($ENV{DEB_TARGET_GNU_TYPE} and
+         ($ENV{DEB_TARGET_GNU_TYPE} ne $ENV{DEB_BUILD_GNU_TYPE}))
+     {
++        $crossprefix = $ENV{DEB_TARGET_GNU_TYPE};
+         $multiarch = gnutriplet_to_multiarch($ENV{DEB_TARGET_GNU_TYPE});
+     }
+     # Host for normal cross builds.
+     if (get_build_arch() ne get_host_arch()) {
++        $crossprefix = debarch_to_gnutriplet(get_host_arch());
+         $multiarch = debarch_to_multiarch(get_host_arch());
+     }
+     # Define list of directories containing crossbuilt libraries.
+     if ($multiarch) {
+         push @librarypaths, "/lib/$multiarch", "/usr/lib/$multiarch";
+     }
++    # XXX: Add deprecated sysroot and toolchain cross-compilation paths.
++    if ($crossprefix) {
++        push @librarypaths,
++             "/$crossprefix/lib", "/usr/$crossprefix/lib",
++             "/$crossprefix/lib32", "/usr/$crossprefix/lib32",
++             "/$crossprefix/lib64", "/usr/$crossprefix/lib64";
++    }
+ 
+     push @librarypaths, DEFAULT_LIBRARY_PATH;
+ 
+-- 
+2.2.1.209.g41e5f3a
+EOF
+fi
+
 # gcc0
 patch_gcc_os_include_dir_musl() {
 	echo "cherry picking gcc-trunk 219388 for musl"
