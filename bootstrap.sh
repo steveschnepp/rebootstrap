@@ -389,6 +389,33 @@ if test "$ENABLE_MULTIARCH_GCC" = yes; then
 	else
 		$APT_GET install cross-gcc-dev
 	fi
+	echo fixing linkdocs in wdotap gcc-5
+	patch /usr/share/cross-gcc/patches/gcc-5/0005-setting-all-the-various-paths-options-for-with_deps_.patch <<'EOF'
+@@ -251,19 +251,21 @@
+    endif
+  else
+    usr_lib = $(PFL)/$(libdir)
+-@@ -1822,9 +1843,15 @@ ifneq ($(DEB_CROSS),yes)
++@@ -1822,9 +1843,16 @@
+    p_lgcc = libgcc$(GCC_SONAME)
+  else
+    # only triggered if DEB_CROSS set
+ -  p_base = gcc$(pkg_ver)$(cross_bin_arch)-base
+ +  ifneq ($(with_deps_on_target_arch_pkgs),yes)
+ +    p_base = gcc$(pkg_ver)$(cross_bin_arch)-base
+++    p_lbase = gcc$(pkg_ver)-cross-base
+ +    p_xbase = gcc$(pkg_ver)$(cross_bin_arch)-base
+ +  else
+ +    p_base = gcc$(pkg_ver)-base
+++    p_lbase = gcc$(pkg_ver)-base
+ +    p_xbase = $(p_cpp)
+ +  endif
+-   p_lbase = gcc$(pkg_ver)-cross-base
++-  p_lbase = gcc$(pkg_ver)-cross-base
+ -  p_xbase = gcc$(pkg_ver)$(cross_bin_arch)-base
+ +
+    p_cpp  = cpp$(pkg_ver)$(cross_bin_arch)
+EOF
 fi
 
 obtain_source_package() {
