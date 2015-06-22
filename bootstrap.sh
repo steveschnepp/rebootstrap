@@ -2030,28 +2030,6 @@ diff -Nru nss-3.17/debian/rules nss-3.17/debian/rules
  	rm -rf $(DISTDIR) $(PREPROCESS_FILES:.in=)
  
 EOF
-	echo "patching nss to add OS_TEST as DEB_HOST_GNU_CPU #788452"
-	patch -p1 <<'EOF'
-diff -Nru a/debian/rules b/debian/rules
---- a/debian/rules
-+++ b/debian/rules
-@@ -5,6 +5,7 @@
- $(call lazy,DEB_BUILD_GNU_TYPE,$$(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE))
- $(call lazy,DEB_HOST_ARCH,$$(shell dpkg-architecture -qDEB_HOST_ARCH))
- $(call lazy,DEB_HOST_GNU_TYPE,$$(shell dpkg-architecture -qDEB_HOST_GNU_TYPE))
-+$(call lazy,DEB_HOST_GNU_CPU,$$(shell dpkg-architecture -qDEB_HOST_GNU_CPU))
- $(call lazy,DEB_HOST_MULTIARCH,$$(shell dpkg-architecture -qDEB_HOST_MULTIARCH))
- $(call lazy,CFLAGS,$$(shell dpkg-buildflags --get CFLAGS))
- $(call lazy,CPPFLAGS,$$(shell dpkg-buildflags --get CPPFLAGS))
-@@ -45,6 +46,7 @@
- ifeq ($(origin RANLIB),default)
- TOOLCHAIN += RANLIB=$(DEB_HOST_GNU_TYPE)-ranlib
- endif
-+TOOLCHAIN += OS_TEST=$(DEB_HOST_GNU_CPU)
- endif
- 
- # $(foreach foo,$(list),$(call cmd,some command $(foo))) expands to
-EOF
 }
 
 add_automatic openssl
