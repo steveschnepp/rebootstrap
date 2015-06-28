@@ -1859,7 +1859,13 @@ patch_gmp() {
 
 add_automatic grep
 add_automatic groff
+
 add_automatic gzip
+buildenv_gzip() {
+	# this avoids replacing fseeko with a variant that is broken for musl
+	test "$LIBC_NAME" = musl && export gl_cv_func_fflush_stdin=yes && echo gl_cv_func_fflush_stdin exported
+}
+
 add_automatic hostname
 
 add_automatic icu
