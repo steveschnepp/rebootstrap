@@ -1862,8 +1862,11 @@ add_automatic groff
 
 add_automatic gzip
 buildenv_gzip() {
-	# this avoids replacing fseeko with a variant that is broken for musl
-	test "$LIBC_NAME" = musl && export gl_cv_func_fflush_stdin=yes && echo gl_cv_func_fflush_stdin exported
+	if test "$LIBC_NAME" = musl; then
+		# this avoids replacing fseeko with a variant that is broken
+		echo gl_cv_func_fflush_stdin exported
+		export gl_cv_func_fflush_stdin=yes
+	fi
 }
 
 add_automatic hostname
