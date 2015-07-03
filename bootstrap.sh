@@ -3207,4 +3207,31 @@ mark_built db5.3
 
 automatically_cross_build_packages
 
+builddep_libidn() {
+	# gcj-jdk dependency lacks build profile annotation
+	$APT_GET install debhelper
+}
+if test -d "$RESULT/libidn_1"; then
+	echo "skipping rebuild of libidn stage1"
+else
+	builddep_libidn "$HOST_ARCH"
+	cross_build_setup libidn libidn_1
+	check_binNMU
+	dpkg-checkbuilddeps -B "-a$HOST_ARCH" || : # tell unmet build depends
+	drop_privs dpkg-buildpackage "-a$HOST_ARCH" -B -d -uc -us -Pstage1
+	cd ..
+	ls -l
+	pickup_packages *.changes
+	test -d "$RESULT" && mkdir "$RESULT/libidn_1"
+	test -d "$RESULT" && cp ./*.deb "$RESULT/libidn_1/"
+	compare_native ./*.deb
+	cd ..
+	drop_privs rm -Rf libidn_1
+fi
+progress_mark "libidn stage1 cross build"
+mark_built libidn
+# needed by gnutls28
+
+automatically_cross_build_packages
+
 assert_built "$need_packages"
