@@ -1870,6 +1870,74 @@ buildenv_gzip() {
 }
 
 add_automatic hostname
+patch_hostname() {
+	echo "patching hostname for musl #787780"
+	patch -p1 <<'EOF'
+diff -Nru hostname-3.15/Makefile hostname-3.15+nmu1/Makefile
+--- hostname-3.15/Makefile
++++ hostname-3.15+nmu1/Makefile
+@@ -1,4 +1,4 @@
+-CFLAGS+=-O2 -Wall
++CFLAGS+=-O2 -Wall -D_GNU_SOURCE
+ 
+ # uncomment the following line if you want to install to a different base dir.
+ #BASEDIR=/mnt/test
+@@ -9,7 +9,7 @@
+ OBJS=hostname.o
+ 
+ hostname: $(OBJS)
+-	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LDFLAGS) -lnsl
++	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LDFLAGS)
+ 	ln -fs hostname dnsdomainname
+ 	ln -fs hostname domainname
+ 	ln -fs hostname ypdomainname
+diff -Nru hostname-3.15/hostname.c hostname-3.15+nmu1/hostname.c
+--- hostname-3.15/hostname.c
++++ hostname-3.15+nmu1/hostname.c
+@@ -37,13 +37,11 @@
+ #include <stdio.h>
+ #include <unistd.h>
+ #include <getopt.h>
+-#define __USE_GNU 1
+ #include <string.h>
+ #include <netdb.h>
+ #include <errno.h>
+ #include <ctype.h>
+ #include <err.h>
+-#include <rpcsvc/ypclnt.h>
+ 
+ #define VERSION "3.15"
+ 
+@@ -52,20 +50,19 @@
+ char *progname;
+ 
+ /*
+- * Return the name of the nis default domain. This is just a wrapper for
+- * yp_get_default_domain.  If something goes wrong, program exits.
++ * Return the name of the nis default domain. Same as localdomain below,
++ * but reports failure for unset domain.
+  */
+ char *
+ localnisdomain()
+ {
+-	char *buf = 0;
++	/* The historical NIS limit is 1024, the limit on Linux is 64.  */
++	static char buf[1025];
+ 	int myerror = 0;
+ 
+-	myerror = yp_get_default_domain(&buf);
+-
+-	/* yp_get_default_domain failed, abort. */
+-	if (myerror) {
+-		printf("%s: %s\n", progname, yperr_string(myerror));
++	myerror = getdomainname(buf, sizeof buf);
++	if (myerror || strcmp(buf, "(none)") == 0) {
++		printf("%s: Local domain name not set\n", progname);
+ 		exit (1);
+ 	}
+ 
+EOF
+}
 
 add_automatic icu
 patch_icu() {
