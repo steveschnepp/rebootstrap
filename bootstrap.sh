@@ -404,7 +404,7 @@ if test -z "$HOST_ARCH" || ! dpkg-architecture "-a$HOST_ARCH"; then
 fi
 export PKG_CONFIG_LIBDIR="/usr/lib/`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_MULTIARCH`/pkgconfig:/usr/lib/pkgconfig:/usr/share/pkgconfig"
 for f in /etc/apt/sources.list /etc/apt/sources.list.d/*.list; do
-	test -f "$f" && sed -i "s/^deb /deb [ arch-=$HOST_ARCH ] /" $f
+	test -f "$f" && sed -i "s/^deb \(\[.*\] \)*/deb [ arch-=$HOST_ARCH ] /" $f
 done
 grep -q '^deb-src ' /etc/apt/sources.list || echo "deb-src $MIRROR sid main" >> /etc/apt/sources.list
 
@@ -422,7 +422,7 @@ drop_privs mkdir -p "$RESULT"
 HOST_ARCH_SUFFIX="-`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE | tr _ -`"
 
 mkdir -p "$REPODIR/conf"
-mkdir "$REPODIR/archive"
+mkdir -p "$REPODIR/archive"
 cat > "$REPODIR/conf/distributions" <<EOF
 Codename: rebootstrap
 Label: rebootstrap
