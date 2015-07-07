@@ -2734,8 +2734,8 @@ automatically_cross_build_packages
 
 builddep_util_linux() {
 	assert_built "libselinux ncurses slang2 zlib"
-	# libsystemd-dev lacks profile annotation
-	$APT_GET install dh-systemd dpkg-dev gettext "libncurses5-dev:$1" "libselinux1-dev:$1" "libslang2-dev:$1" libtool lsb-release pkg-config po-debconf "zlib1g-dev:$1"
+	# libsystemd-dev lacks profile annotation #757147
+	$APT_GET install autoconf automake autopoint debhelper dh-autoreconf dh-exec dh-systemd dpkg-dev gettext "libncurses5-dev:$1" "libselinux1-dev:$1" "libslang2-dev:$1" libtool lsb-release pkg-config po-debconf "zlib1g-dev:$1"
 }
 patch_util_linux() {
 	echo "applying ah's stage1 patch for util-linux #757147"
