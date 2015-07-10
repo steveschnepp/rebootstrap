@@ -2169,6 +2169,7 @@ buildenv_tk8_6() {
 
 add_automatic ustr
 add_automatic xft
+add_automatic xz-utils
 
 $APT_GET install dose-builddebcheck dctrl-tools
 
@@ -2278,6 +2279,7 @@ add_need tcl8.6 # by newt
 add_need tcltk-defaults # by python2.7
 add_need tk8.6 # by blt
 add_need ustr # by libsemanage
+add_need xz-utils # by dpkg, libxml2
 
 automatically_cross_build_packages() {
 	local need_packages_comma_sep dosetmp buildable new_needed line pkg missing source
@@ -2682,16 +2684,6 @@ builddep_readline6() {
 cross_build readline6
 mark_built readline6
 # needed by gnupg, guile-2.0, libxml2
-
-automatically_cross_build_packages
-
-builddep_xz_utils() {
-	# autopoint dependency unsatisfiable
-	$APT_GET install debhelper perl dpkg-dev autoconf automake libtool gettext autopoint
-}
-cross_build xz-utils
-mark_built xz-utils
-# needed by dpkg, libxml2
 
 automatically_cross_build_packages
 
