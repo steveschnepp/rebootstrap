@@ -467,9 +467,9 @@ if test "$ENABLE_DEBBINDIFF" = yes; then
 	fi
 fi
 if test "$ENABLE_DEBBINDIFF" = yes; then
-	$APT_GET install debbindiff binutils-multiarch vim-common
 	compare_native() {
 		local pkg pkgname tmpdir downloadname errcode
+		$APT_GET install debbindiff binutils-multiarch vim-common
 		for pkg in "$@"; do
 			if test "`dpkg-deb -f "$pkg" Architecture`" != "$HOST_ARCH"; then
 				echo "not comparing $pkg: wrong architecture"
