@@ -640,8 +640,26 @@ progress_mark() {
 	PROGRESS_MARK=$(($PROGRESS_MARK + 1 ))
 }
 
+# prints the set (as in set_create) of installed packages
+record_installed_packages() {
+	dpkg --get-selections | sed 's/\s\+install$//;t;d' | xargs
+}
+
+# Takes the set (as in set_create) of packages and apt-get removes any
+# currently installed packages outside the given set.
+remove_extra_packages() {
+	local origpackages currentpackates extrapackages
+	origpackages="$1"
+	currentpackages=$(record_installed_packages)
+	extrapackages=$(set_difference "$currentpackages" "$origpackages")
+	echo "original packages: $origpackages"
+	echo "current packages:  $currentpackages"
+	echo "extra packages:    $extrapackages"
+	apt_get_remove $extrapackages
+}
+
 cross_build() {
-	local pkg profiles ignorebd hook
+	local pkg profiles ignorebd hook installedpackages
 	pkg="$1"
 	profiles="$DEFAULT_PROFILES ${2:-}"
 	if test "$ENABLE_MULTILIB" = "no"; then
@@ -652,6 +670,7 @@ cross_build() {
 		echo "skipping rebuild of $pkg with profiles $profiles"
 	else
 		echo "building $pkg with profiles $profiles"
+		installedpackages=$(record_installed_packages)
 		if hook=`get_hook builddep "$pkg"`; then
 			echo "installing Build-Depends for $pkg using custom function"
 			"$hook" "$HOST_ARCH" "$profiles"
@@ -676,6 +695,7 @@ cross_build() {
 			drop_privs_exec dpkg-buildpackage "-a$HOST_ARCH" -B "-P$profiles" $ignorebd -uc -us
 		)
 		cd ..
+		remove_extra_packages "$installedpackages"
 		ls -l
 		pickup_packages *.changes
 		test -d "$RESULT" && mkdir "$RESULT/$pkg"
