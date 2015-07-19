@@ -3332,4 +3332,18 @@ mark_built libxml2
 
 automatically_cross_build_packages
 
+builddep_autogen() {
+	assert_built "guile-2.0 libxml2"
+	$APT_GET build-dep "-a$1" --arch-only autogen
+	$APT_GET install autogen # needs Build-Depends: autogen <cross>
+}
+buildenv_autogen() {
+	export libopts_cv_with_libregex=yes
+}
+cross_build autogen
+mark_built autogen
+# needed by gnutls28, gcc-4.9
+
+automatically_cross_build_packages
+
 assert_built "$need_packages"
