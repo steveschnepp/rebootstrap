@@ -2004,6 +2004,7 @@ buildenv_libgcrypt20() {
 add_automatic libgpg-error
 add_automatic libice
 add_automatic libonig
+add_automatic libpipeline
 add_automatic libpng
 add_automatic libpthread-stubs
 add_automatic libsepol
@@ -2996,16 +2997,6 @@ EOF
 cross_build guile-2.0
 mark_built guile-2.0
 # needed by gnutls28, make-dfsg, autogen
-
-automatically_cross_build_packages
-
-builddep_libpipeline() {
-	# check lacks nocheck build profile annotation
-	$APT_GET install dpkg-dev debhelper pkg-config dh-autoreconf automake
-}
-cross_build libpipeline
-mark_built libpipeline
-# man-db
 
 automatically_cross_build_packages
 
