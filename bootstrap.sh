@@ -3337,4 +3337,83 @@ mark_built autogen
 
 automatically_cross_build_packages
 
+builddep_cracklib2() {
+	# python-all-dev lacks build profile annotation
+	$APT_GET install autoconf automake autotools-dev chrpath debhelper docbook-utils docbook-xml dpkg-dev libtool python dh-python
+	# additional B-D for cross
+	$APT_GET install cracklib-runtime
+}
+patch_cracklib2() {
+	echo "patching cracklib2 to use build arch cracklib-packer #792860"
+	drop_privs patch -p1 <<'EOF'
+diff -Nru cracklib2-2.9.2/debian/control cracklib2-2.9.2/debian/control
+--- cracklib2-2.9.2/debian/control
++++ cracklib2-2.9.2/debian/control
+@@ -8,6 +8,7 @@
+                automake (>= 1.10),
+                autotools-dev,
+                chrpath,
++               cracklib-runtime:native <cross>,
+                debhelper (>= 9),
+                docbook-utils,
+                docbook-xml,
+diff -Nru cracklib2-2.9.2/debian/rules cracklib2-2.9.2/debian/rules
+--- cracklib2-2.9.2/debian/rules
++++ cracklib2-2.9.2/debian/rules
+@@ -17,6 +17,12 @@
+ NOPYTHON_OPTIONS = -Npython-cracklib -Npython3-cracklib
+ endif
+ 
++ifeq ($(DEB_HOST_GNU_TYPE),$(DEB_BUILD_GNU_TYPE))
++CRACKLIB_PACKER=$(CURDIR)/debian/buildtmp/base/util/cracklib-packer
++else
++CRACKLIB_PACKER=/usr/sbin/cracklib-packer
++endif
++
+ override_dh_auto_configure:
+ 	aclocal && libtoolize && automake --add-missing && autoreconf
+ 	mkdir -p $(CURDIR)/debian/buildtmp/base
+@@ -57,7 +63,7 @@
+ override_dh_auto_test:
+ 	mkdir $(CURDIR)/debian/tmp
+ ifneq ($(DEB_STAGE),stage1)
+-	$(CURDIR)/debian/buildtmp/base/util/cracklib-packer $(CURDIR)/debian/tmp/cracklib_dict < \
++	$(CRACKLIB_PACKER) $(CURDIR)/debian/tmp/cracklib_dict < \
+ 	 $(CURDIR)/dicts/cracklib-small
+ 	for i in $(PYVERS) $(PY3VERS); do \
+ 		cd $(CURDIR)/debian/buildtmp/python$$i/python/$(call py_builddir_sh,$$i); \
+@@ -91,7 +97,7 @@
+ 	      $(CURDIR)/debian/libcrack2-udeb/usr/lib/$(DEB_HOST_MULTIARCH)
+ 	cp -r $(CURDIR)/debian/libcrack2/usr/share/locale/* \
+ 	      $(CURDIR)/debian/libcrack2-udeb/usr/share/locale
+-	$(CURDIR)/debian/buildtmp/base/util/cracklib-packer $(CURDIR)/debian/libcrack2-udeb/var/cache/cracklib/cracklib_dict < \
++	$(CRACKLIB_PACKER) $(CURDIR)/debian/libcrack2-udeb/var/cache/cracklib/cracklib_dict < \
+ 	    $(CURDIR)/dicts/cracklib-small
+ 	# move files to libcrack2-dev
+ 	mkdir -p $(CURDIR)/debian/libcrack2-dev/usr/lib/$(DEB_HOST_MULTIARCH)
+EOF
+}
+if test -d "$RESULT/cracklib2_1"; then
+	echo "skipping stage1 rebuild of cracklib2"
+else
+	builddep_cracklib2 "$HOST_ARCH"
+	cross_build_setup cracklib2 cracklib2_1
+	check_binNMU
+	dpkg-checkbuilddeps -B "-a$HOST_ARCH" || : # tell unmet build depends
+	drop_privs DEB_STAGE=stage1 dpkg-buildpackage "-a$HOST_ARCH" -B -d -uc -us
+	cd ..
+	ls -l
+	pickup_packages *.changes
+	test -d "$RESULT" && mkdir "$RESULT/cracklib2_1"
+	test -d "$RESULT" && cp ./*.deb "$RESULT/cracklib2_1/"
+	compare_native ./*.deb
+	cd ..
+	drop_privs rm -Rf cracklib2_1
+fi
+progress_mark "cracklib2 stage1 cross build"
+mark_built cracklib2
+# needed by pam
+
+automatically_cross_build_packages
+
 assert_built "$need_packages"
