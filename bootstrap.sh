@@ -1807,6 +1807,7 @@ EOF
 }
 
 add_automatic base-files
+add_automatic bash
 add_automatic build-essential
 add_automatic bzip2
 
@@ -2228,6 +2229,7 @@ mark_built() {
 add_need acl # by coreutils, systemd
 add_need attr # by coreutils, libcap-ng, libcap2
 add_need base-files # essential
+add_need bash # essential
 add_need build-essential # build-essential
 add_need bzip2 # by dpkg, perl
 add_need cloog # by gcc-4.9
@@ -2896,17 +2898,6 @@ fi
 progress_mark "file stage1 cross build"
 mark_built file
 # needed by gcc-4.9, needed for debhelper
-
-automatically_cross_build_packages
-
-builddep_bash() {
-	assert_built "ncurses"
-	# time dependency unsatisfiable #751776
-	$APT_GET install autoconf autotools-dev bison "libncurses5-dev:$HOST_ARCH" texinfo texi2html debhelper locales gettext sharutils time xz-utils dpkg-dev
-}
-cross_build bash
-mark_built bash
-# essential
 
 automatically_cross_build_packages
 
