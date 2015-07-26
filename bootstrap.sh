@@ -1851,6 +1851,7 @@ EOF
 
 add_automatic cloog
 add_automatic dash
+add_automatic datefudge
 add_automatic db-defaults
 add_automatic debianutils
 add_automatic freetype
@@ -2234,6 +2235,7 @@ add_need build-essential # build-essential
 add_need bzip2 # by dpkg, perl
 add_need cloog # by gcc-4.9
 add_need dash # essential
+add_need datefudge # by gnutls28
 add_need db-defaults # by apt, perl, python2.7
 add_need debianutils # essential
 add_need diffutils # essential
