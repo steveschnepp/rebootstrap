@@ -1812,7 +1812,7 @@ add_automatic bzip2
 
 add_automatic check
 patch_check() {
-	echo "fixing check to support cross compilation"
+	echo "fixing check to support cross compilation #788449"
 	drop_privs patch -p1 <<'EOF'
 diff -Nru check-0.9.10/debian/rules check-0.9.10/debian/rules
 --- check-0.9.10/debian/rules
@@ -2104,7 +2104,7 @@ EOF
 
 add_automatic openssl
 patch_openssl() {
-	echo "fixing cross compilation of openssl for mips* architectures"
+	echo "fixing cross compilation of openssl for mips* architectures #782492"
 	drop_privs patch -p1 <<'EOF'
 diff -Nru openssl-1.0.1k/debian/patches/mips-cross.patch openssl-1.0.1k/debian/patches/mips-cross.patch
 --- openssl-1.0.1k/debian/patches/mips-cross.patch
@@ -2746,7 +2746,7 @@ automatically_cross_build_packages
 
 builddep_file() {
 	assert_built "zlib"
-	# python-all lacks build profile annotation
+	# python-all lacks build profile annotation #709623
 	$APT_GET install debhelper dh-autoreconf "zlib1g-dev:$HOST_ARCH"
 }
 if test -d "$RESULT/file_1"; then
@@ -2773,7 +2773,7 @@ automatically_cross_build_packages
 
 builddep_bsdmainutils() {
 	assert_built "ncurses"
-	# python-hdate dependency unsatisfiable
+	# python-hdate dependency unsatisfiable #792867
 	$APT_GET install debhelper "libncurses5-dev:$HOST_ARCH" quilt python python-hdate
 }
 cross_build bsdmainutils
@@ -2941,6 +2941,7 @@ automatically_cross_build_packages
 builddep_libxcb() {
 	assert_built "libxau libxdmcp libpthread-stubs"
 	# check dependency lacks nocheck profile annotation
+	# python dependency lacks :native annotation #788861
 	$APT_GET install "libxau-dev:$1" "libxdmcp-dev:$1" xcb-proto "libpthread-stubs0-dev:$1" debhelper pkg-config xsltproc  python-xcbgen libtool automake python dctrl-tools
 }
 cross_build libxcb
