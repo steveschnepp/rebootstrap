@@ -1950,7 +1950,10 @@ diff -Nru hostname-3.15/hostname.c hostname-3.15+nmu1/hostname.c
 EOF
 }
 
-add_automatic icu
+builddep_icu() {
+	# g++ dependency needs cross translation
+	$APT_GET install cdbs debhelper dpkg-dev autotools-dev
+}
 patch_icu() {
 	echo "patching icu for cross compilation #784668"
 	drop_privs patch -p1 <<'EOF'
@@ -1989,6 +1992,30 @@ diff -Nru icu-52.1/debian/rules icu-52.1/debian/rules
  
  # The libicudata library contains no symbols, so its debug library is
  # useless and triggers lintian warnings.  Just remove it.
+EOF
+	echo "patching icu to drop gcc-5 dependencies without cross translation"
+	drop_privs patch -p1 <<'EOF'
+diff -Nru icu-55.1/debian/control icu-55.1/debian/control
+--- icu-55.1/debian/control
++++ icu-55.1/debian/control
+@@ -3,7 +3,7 @@
+ Priority: optional
+ Maintainer: Laszlo Boszormenyi (GCS) <gcs@debian.org>
+ Standards-Version: 3.9.6
+-Build-Depends: cdbs (>= 0.4.106~), debhelper (>> 9~), dpkg-dev (>= 1.16.1~), autotools-dev, g++ (>= 4:5.2)
++Build-Depends: cdbs (>= 0.4.106~), debhelper (>> 9~), dpkg-dev (>= 1.16.1~), autotools-dev
+ Build-Depends-Indep: doxygen (>= 1.7.1)
+ Homepage: http://www.icu-project.org
+ 
+@@ -34,7 +34,7 @@
+ Architecture: any
+ Multi-Arch: same
+ Pre-Depends: ${misc:Pre-Depends}
+-Depends: ${misc:Depends}, ${shlibs:Depends}, libicu52 (= ${binary:Version}), icu-devtools (>= ${binary:Version}), libc6-dev | libc-dev, libstdc++-5-dev (>= 5.2.1-10), g++ (>= 4:5-0)
++Depends: ${misc:Depends}, ${shlibs:Depends}, libicu52 (= ${binary:Version}), icu-devtools (>= ${binary:Version}), libc6-dev | libc-dev, libstdc++-5-dev (>= 5.2.1-10)
+ Suggests: icu-doc
+ Description: Development files for International Components for Unicode
+  ICU is a C++ and C library that provides robust and full-featured
 EOF
 }
 
@@ -2247,7 +2274,6 @@ add_need grep # essential
 add_need groff # for man-db
 add_need gzip # essential
 add_need hostname # essential
-add_need icu # by libxml2
 test "`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS`" = linux && add_need keyutils # by krb5
 add_need libatomic-ops # by gcc-4.9
 add_need libdebian-installer # by cdebconf
@@ -3137,6 +3163,12 @@ fi
 progress_mark "libidn stage1 cross build"
 mark_built libidn
 # needed by gnutls28
+
+automatically_cross_build_packages
+
+cross_build icu
+mark_built icu
+# needed by libxml2
 
 automatically_cross_build_packages
 
