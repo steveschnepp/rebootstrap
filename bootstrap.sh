@@ -1985,38 +1985,16 @@ diff -Nru icu-52.1/debian/rules icu-52.1/debian/rules
  include /usr/share/cdbs/1/rules/debhelper.mk
  include /usr/share/cdbs/1/class/autotools.mk
 @@ -44,6 +61,7 @@
+
  clean::
  	$(RM) *.cdbs-config_list
- 	$(RM) -f source/config.log
 +	$(RM) -R build
  
  # The libicudata library contains no symbols, so its debug library is
  # useless and triggers lintian warnings.  Just remove it.
 EOF
 	echo "patching icu to drop gcc-5 dependencies without cross translation"
-	drop_privs patch -p1 <<'EOF'
-diff -Nru icu-55.1/debian/control icu-55.1/debian/control
---- icu-55.1/debian/control
-+++ icu-55.1/debian/control
-@@ -3,7 +3,7 @@
- Priority: optional
- Maintainer: Laszlo Boszormenyi (GCS) <gcs@debian.org>
- Standards-Version: 3.9.6
--Build-Depends: cdbs (>= 0.4.106~), debhelper (>> 9~), dpkg-dev (>= 1.16.1~), autotools-dev, g++ (>= 4:5.2)
-+Build-Depends: cdbs (>= 0.4.106~), debhelper (>> 9~), dpkg-dev (>= 1.16.1~), autotools-dev
- Build-Depends-Indep: doxygen (>= 1.7.1)
- Homepage: http://www.icu-project.org
- 
-@@ -34,7 +34,7 @@
- Architecture: any
- Multi-Arch: same
- Pre-Depends: ${misc:Pre-Depends}
--Depends: ${misc:Depends}, ${shlibs:Depends}, libicu52 (= ${binary:Version}), icu-devtools (>= ${binary:Version}), libc6-dev | libc-dev, libstdc++-5-dev (>= 5.2.1-10), g++ (>= 4:5-0)
-+Depends: ${misc:Depends}, ${shlibs:Depends}, libicu52 (= ${binary:Version}), icu-devtools (>= ${binary:Version}), libc6-dev | libc-dev, libstdc++-5-dev (>= 5.2.1-10)
- Suggests: icu-doc
- Description: Development files for International Components for Unicode
-  ICU is a C++ and C library that provides robust and full-featured
-EOF
+	sed -i -e '/^[^:]*Depends:/s/\(,\s*g++[^,]*5[^,]*\)\+\(,\|$\)/\2/g' debian/control
 }
 
 add_automatic isl
