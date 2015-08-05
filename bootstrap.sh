@@ -1809,7 +1809,12 @@ EOF
 
 add_automatic base-files
 add_automatic bash
-add_automatic build-essential
+
+builddep_build_essential() {
+	# g++ dependency needs cross translation
+	$APT_GET install debhelper python3
+}
+
 add_automatic bzip2
 
 add_automatic check
@@ -2237,7 +2242,6 @@ add_need acl # by coreutils, systemd
 add_need attr # by coreutils, libcap-ng, libcap2
 add_need base-files # essential
 add_need bash # essential
-add_need build-essential # build-essential
 add_need bzip2 # by dpkg, perl
 add_need cloog # by gcc-4.9
 add_need dash # essential
@@ -3287,6 +3291,12 @@ fi
 progress_mark "cracklib2 stage1 cross build"
 mark_built cracklib2
 # needed by pam
+
+automatically_cross_build_packages
+
+cross_build build-essential
+mark_built build-essential
+# build-essential
 
 automatically_cross_build_packages
 
