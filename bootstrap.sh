@@ -1873,6 +1873,7 @@ patch_gmp() {
 	fi
 }
 
+add_automatic gnutls28
 add_automatic grep
 add_automatic groff
 
@@ -2245,13 +2246,13 @@ add_need bash # essential
 add_need bzip2 # by dpkg, perl
 add_need cloog # by gcc-4.9
 add_need dash # essential
-add_need datefudge # by gnutls28
 add_need db-defaults # by apt, perl, python2.7
 add_need debianutils # essential
 add_need diffutils # essential
 add_need freetype # by fontconfig
 add_need gdbm # by perl, python2.7
-add_need gmp # by gnutls28, guile-2.0, nettle
+add_need gmp # by guile-2.0
+add_need gnutls28 # by curl
 add_need grep # essential
 add_need groff # for man-db
 add_need gzip # essential
@@ -2266,7 +2267,6 @@ add_need libpng # by slang2
 add_need libpthread-stubs # by libxcb
 test "`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS`" = linux && add_need libsepol # by libselinux
 add_need libssh2 # by curl
-add_need libtasn1-6 # by gnutls28
 add_need libtextwrap # by cdebconf
 add_need libunistring # by guile-2.0
 add_need libx11 # by dbus
@@ -2278,10 +2278,8 @@ add_need man-db # for debhelper
 add_need mawk # for base-files (alternatively: gawk)
 add_need mpclib3 # by gcc-4.9
 add_need mpfr4 # by gcc-4.9
-add_need nettle # by gnutls28
 add_need nss # by curl
 add_need openssl # by curl
-add_need p11-kit # by gnutls28
 add_need patch # for dpkg-dev
 add_need pcre3 # by libselinux
 add_need readline5 # by lvm2
