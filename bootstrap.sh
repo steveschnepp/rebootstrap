@@ -1961,44 +1961,6 @@ builddep_icu() {
 	$APT_GET install cdbs debhelper dpkg-dev autotools-dev
 }
 patch_icu() {
-	echo "patching icu for cross compilation #784668"
-	drop_privs patch -p1 <<'EOF'
-diff -Nru icu-52.1/debian/rules icu-52.1/debian/rules
---- icu-52.1/debian/rules
-+++ icu-52.1/debian/rules
-@@ -26,6 +26,23 @@
- CXXFLAGS := $(filter-out -O%,$(CXXFLAGS)) -O0
- endif
- 
-+DEB_BUILDDIR = build
-+DEB_MAKE_FLAVORS = hostarch
-+ifneq ($(DEB_HOST_ARCH),$(DEB_BUILD_ARCH))
-+DEB_MAKE_FLAVORS += buildarch
-+DEB_CONFIGURE_FLAGS_buildarch = --host=$(DEB_BUILD_GNU_TYPE)
-+DEB_CONFIGURE_FLAGS_hostarch = --with-cross-build=$(CURDIR)/build/buildarch
-+debian/stamp-autotools/buildarch: DEB_CONFIGURE_CROSSBUILD_ARGS=
-+# do not force a cross compiler for the native build
-+debian/stamp-makefile-build/buildarch: DEB_MAKE_ENVVARS=
-+# do not install the buildarch flavor
-+debian/stamp-makefile-install/buildarch: DEB_MAKE_INSTALL_TARGET=
-+debian/stamp-autotools/hostarch: debian/stamp-makefile-build/buildarch
-+	mkdir -p build/hostarch
-+	$(DEB_CONFIGURE_INVOKE) $(cdbs_configure_flags) $(DEB_CONFIGURE_EXTRA_FLAGS) $(DEB_CONFIGURE_USER_FLAGS)
-+	touch $@
-+endif
-+
- # Include cdbs rules files.
- include /usr/share/cdbs/1/rules/debhelper.mk
- include /usr/share/cdbs/1/class/autotools.mk
-@@ -44,6 +61,7 @@
-
- clean::
- 	$(RM) *.cdbs-config_list
-+	$(RM) -R build
- 
- # The libicudata library contains no symbols, so its debug library is
- # useless and triggers lintian warnings.  Just remove it.
-EOF
 	echo "patching icu to drop gcc-5 dependencies without cross translation"
 	sed -i -e '/^[^:]*Depends:/s/\(,\s*g++[^,]*5[^,]*\)\+\(,\|$\)/\2/g' debian/control
 }
