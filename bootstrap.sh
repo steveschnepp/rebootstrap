@@ -679,7 +679,7 @@ cross_build() {
 		check_binNMU
 		ignorebd=
 		if get_hook builddep "$pkg" >/dev/null; then
-			if dpkg-checkbuilddeps -a$HOST_ARCH -P "$profiles"; then
+			if dpkg-checkbuilddeps -B "-a$HOST_ARCH" -P "$profiles"; then
 				echo "rebootstrap-warning: Build-Depends for $pkg satisfied even though a custom builddep_  function is in use"
 			fi
 			ignorebd=-d
