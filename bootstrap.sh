@@ -2258,12 +2258,17 @@ add_need ustr # by libsemanage
 add_need xz-utils # by dpkg, libxml2
 
 automatically_cross_build_packages() {
-	local need_packages_comma_sep dosetmp buildable new_needed line pkg missing source
+	local need_packages_comma_sep dosetmp profiles buildable new_needed line pkg missing source
 	while test -n "$need_packages"; do
 		echo "checking packages with dose-builddebcheck: $need_packages"
 		need_packages_comma_sep=`echo $need_packages | sed 's/ /,/g'`
 		dosetmp=`mktemp -t doseoutput.XXXXXXXXXX`
-		call_dose_builddebcheck --successes --failures --explain --latest --DropBuildIndep "--checkonly=$need_packages_comma_sep" >"$dosetmp"
+		profiles="$DEFAULT_PROFILES"
+		if test "$ENABLE_MULTILIB" = no; then
+			profiles=$(set_add "$profiles" nobiarch)
+		fi
+		profiles=$(echo "$profiles" | tr ' ' ,)
+		call_dose_builddebcheck --successes --failures --explain --latest --DropBuildIndep "--profiles=$profiles" "--checkonly=$need_packages_comma_sep" >"$dosetmp"
 		buildable=
 		new_needed=
 		while IFS= read -r line; do
