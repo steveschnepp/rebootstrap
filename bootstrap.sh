@@ -1860,6 +1860,7 @@ add_automatic dash
 add_automatic datefudge
 add_automatic db-defaults
 add_automatic debianutils
+add_automatic dpkg
 add_automatic freetype
 add_automatic gdbm
 
@@ -2212,6 +2213,7 @@ add_need dash # essential
 add_need db-defaults # by apt, perl, python2.7
 add_need debianutils # essential
 add_need diffutils # essential
+add_need dpkg # essential
 add_need freetype # by fontconfig
 add_need gdbm # by perl, python2.7
 add_need gmp # by guile-2.0
@@ -2766,17 +2768,6 @@ builddep_libffi() {
 cross_build libffi
 mark_built libffi
 # needed by guile-2.0, p11-kit
-
-automatically_cross_build_packages
-
-builddep_dpkg() {
-	assert_built "bzip2 libselinux ncurses xz-utils zlib"
-	# libtimedate-perl dependency unsatisfiable
-	$APT_GET install debhelper pkg-config flex gettext po4a "zlib1g-dev:$1" "libbz2-dev:$1" "liblzma-dev:$1" "libselinux1-dev:$1" "libncursesw5-dev:$1" libtimedate-perl libio-string-perl
-}
-cross_build dpkg
-mark_built dpkg
-# essential
 
 automatically_cross_build_packages
 
