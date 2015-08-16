@@ -3275,4 +3275,33 @@ mark_built build-essential
 
 automatically_cross_build_packages
 
+builddep_pam() {
+	assert_built "cracklib2 db-defaults db5.3 flex libselinux"
+	$APT_GET install "libcrack2-dev:$1" bzip2 debhelper quilt flex "libdb-dev:$1" "libselinux1-dev:$1" po-debconf dh-autoreconf autopoint pkg-config
+	# flex wrongly declares M-A:foreign #761449
+	$APT_GET install flex "libfl-dev:$1"
+}
+if test -d "$RESULT/pam_1"; then
+	echo "skipping stage1 rebuild of pam"
+else
+	builddep_pam "$HOST_ARCH"
+	cross_build_setup pam pam_1
+	check_binNMU
+	dpkg-checkbuilddeps -B "-a$HOST_ARCH" || : # tell unmet build depends
+	drop_privs DEB_BUILD_PROFILE=stage1 dpkg-buildpackage "-a$HOST_ARCH" -B -d -uc -us
+	cd ..
+	ls -l
+	pickup_packages *.changes
+	test -d "$RESULT" && mkdir "$RESULT/pam_1"
+	test -d "$RESULT" && cp ./*.deb "$RESULT/pam_1/"
+	compare_native ./*.deb
+	cd ..
+	drop_privs rm -Rf pam_1
+fi
+progress_mark "pam stage1 cross build"
+mark_built pam
+# needed by shadow
+
+automatically_cross_build_packages
+
 assert_built "$need_packages"
