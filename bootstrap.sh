@@ -828,26 +828,6 @@ diff -u gcc-4.9-4.9.2/debian/rules.conf gcc-4.9-4.9.2/debian/rules.conf
      LIBC_DEP = libc0.3
 EOF
 }
-patch_gcc_4_8() {
-	echo "patching gcc-4.8 to build common libraries. not a bug"
-	drop_privs patch -p1 <<EOF
-diff -u gcc-4.8-4.8.2/debian/rules.defs gcc-4.8-4.8.2/debian/rules.defs
---- gcc-4.8-4.8.2/debian/rules.defs
-+++ gcc-4.8-4.8.2/debian/rules.defs
-@@ -343,11 +343,6 @@
- # XXX: should with_common_libs be "yes" only if this is the default compiler
- # version on the targeted arch?
- 
--ifeq (,\$(filter \$(distrelease),lenny etch squeeze wheezy dapper hardy jaunty karmic lucid maverick oneiric precise quantal raring saucy trusty))
--  with_common_pkgs :=
--  with_common_libs :=
--endif
--
- # is this a multiarch-enabled build?
- ifeq (,\$(filter \$(distrelease),lenny etch squeeze dapper hardy jaunty karmic lucid maverick))
-   with_multiarch_lib := yes
-EOF
-}
 patch_gcc_4_9() {
 	echo "patching gcc-4.9 to build common libraries. not a bug"
 	drop_privs patch -p1 <<'EOF'
