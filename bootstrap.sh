@@ -154,8 +154,19 @@ check_arch() {
 		;;
 	esac
 	case "$FILE_RES" in
-		*" version 1 (SYSV),"*|*", version 1 (GNU/Linux), "*)
-			if test linux != `dpkg-architecture -a$2 -qDEB_HOST_ARCH_OS`; then
+		*" version 1 (SYSV),"*)
+			case "$(dpkg-architecture "-a$2" -qDEB_HOST_ARCH_OS)" in
+				linux|hurd) ;;
+				*)
+					echo "os mismatch"
+					echo "expected $2"
+					echo "got $FILE_RES"
+					return 1
+				;;
+			esac
+		;;
+		*", version 1 (GNU/Linux), "*)
+			if test linux != "$(dpkg-architecture "-a$2" -qDEB_HOST_ARCH_OS)"; then
 				echo "os mismatch"
 				echo "expected $2"
 				echo "got $FILE_RES"
