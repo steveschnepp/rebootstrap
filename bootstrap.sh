@@ -1061,7 +1061,7 @@ else
 	$APT_GET install bc cpio debhelper kernel-wedge patchutils python quilt python-six
 	cross_build_setup linux
 	linux_ma_skew=no
-	if test "$(dpkg-query -W -f '${Version}' "linux-libc-dev:$(dpkg --print-architecture)")" != "$(dpkg-parsechangelog -SVersion)"; then
+	if test "$(dpkg-architecture -qDEB_HOST_ARCH_OS)" = linux && test "$(dpkg-query -W -f '${Version}' "linux-libc-dev:$(dpkg --print-architecture)")" != "$(dpkg-parsechangelog -SVersion)"; then
 		echo "rebootstrap-warning: working around linux-libc-dev m-a:same skew"
 		linux_ma_skew=yes
 	fi
