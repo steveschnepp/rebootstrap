@@ -2089,10 +2089,25 @@ if test -d "$RESULT/${LIBC_NAME}1"; then
 else
 	if test "$LIBC_NAME" = musl; then
 		$APT_GET build-dep "-a$HOST_ARCH" --arch-only musl
-	elif test "$ENABLE_MULTIARCH_GCC" = yes; then
-		$APT_GET install gettext file quilt autoconf gawk debhelper rdfind symlinks libaudit-dev libcap-dev libselinux-dev binutils bison netbase "linux-libc-dev:$HOST_ARCH" "gcc-$GCC_VER$HOST_ARCH_SUFFIX"
 	else
-		$APT_GET install gettext file quilt autoconf gawk debhelper rdfind symlinks libaudit-dev libcap-dev libselinux-dev binutils bison netbase "linux-libc-dev-$HOST_ARCH-cross" "gcc-$GCC_VER$HOST_ARCH_SUFFIX"
+		$APT_GET install gettext file quilt autoconf gawk debhelper rdfind symlinks binutils bison netbase "gcc-$GCC_VER$HOST_ARCH_SUFFIX"
+		case "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" in
+			linux)
+				$APT_GET install libaudit-dev libcap-dev libselinux-dev
+				if test "$ENABLE_MULTIARCH_GCC" = yes; then
+					$APT_GET install "linux-libc-dev:$HOST_ARCH"
+				else
+					$APT_GET install "linux-libc-dev-$HOST_ARCH-cross"
+				fi
+			;;
+			hurd)
+				$APT_GET install "gnumach-dev:$HOST_ARCH" "hurd-dev:$HOST_ARCH"
+			;;
+			*)
+				echo "rebootstrap-error: unsupported kernel"
+				exit 1
+			;;
+		esac
 	fi
 	cross_build_setup "$LIBC_NAME" "${LIBC_NAME}1"
 	if test "$ENABLE_MULTILIB" = yes; then
