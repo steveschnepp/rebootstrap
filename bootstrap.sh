@@ -1729,6 +1729,113 @@ fi
 progress_mark "hurd stage1 cross build"
 fi
 
+# mig
+patch_mig() {
+	echo "patching mig to support cross compiler build"
+	drop_privs patch -p1 <<'EOF'
+diff -Nru mig-1.5/debian/control mig-1.5/debian/control
+--- mig-1.5/debian/control
++++ mig-1.5/debian/control
+@@ -6,7 +6,7 @@
+ Homepage: http://www.gnu.org/software/hurd/microkernel/mach/mig/gnu_mig.html
+ Vcs-Browser: http://anonscm.debian.org/gitweb/?p=pkg-hurd/mig.git
+ Vcs-Git: git://anonscm.debian.org/pkg-hurd/mig.git
+-Build-Depends: dpkg-dev (>= 1.15.7), debhelper (>= 9), gnumach-dev, flex, bison,
++Build-Depends: dpkg-dev (>= 1.17.14), debhelper (>= 9), gnumach-dev, flex, bison,
+  dh-autoreconf
+ Standards-Version: 3.9.3
+ 
+diff -Nru mig-1.5/debian/control.in mig-1.5/debian/control.in
+--- mig-1.5/debian/control.in
++++ mig-1.5/debian/control.in
+@@ -0,0 +1,19 @@
++Source: mig
++Section: devel
++Priority: standard
++Maintainer: GNU Hurd Maintainers <debian-hurd@lists.debian.org>
++Uploaders: Samuel Thibault <sthibault@debian.org>
++Homepage: http://www.gnu.org/software/hurd/microkernel/mach/mig/gnu_mig.html
++Vcs-Browser: http://anonscm.debian.org/gitweb/?p=pkg-hurd/mig.git
++Vcs-Git: git://anonscm.debian.org/pkg-hurd/mig.git
++Build-Depends: dpkg-dev (>= 1.17.14), debhelper (>= 9), gnumach-dev, flex, bison,
++ dh-autoreconf
++Standards-Version: 3.9.3
++
++Package: mig@cross@
++Architecture: @arch@
++Multi-Arch: foreign
++Depends: ${misc:Depends}, ${shlibs:Depends}
++Description: GNU Mach Interface Generator
++ This is the GNU distribution of the MIG, which is needed to compile
++ the GNU C library, the GNU Hurd and GNU Mach.
+diff -Nru mig-1.5/debian/rules mig-1.5/debian/rules
+--- mig-1.5/debian/rules
++++ mig-1.5/debian/rules
+@@ -7,14 +7,44 @@
+ 
+ export DEB_CFLAGS_MAINT_PREPEND := -Wall -pipe
+ 
++DEB_HOST_ARCH := $(shell dpkg-architecture -qDEB_HOST_ARCH)
++
++DEB_BUILD_GNU_TYPE := $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
++DEB_HOST_GNU_TYPE := $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
++DEB_TARGET_GNU_TYPE := $(shell dpkg-architecture -qDEB_TARGET_GNU_TYPE)
++
+ %:
+ 	dh $@ -Bbuild --with autoreconf
+ 
+ override_dh_auto_configure:
+ 	dh_auto_configure -Bbuild -- \
+-	  --libexecdir=/usr/lib/mig/
++	  --libexecdir=/usr/lib/mig/ \
++	  --build=$(DEB_BUILD_GNU_TYPE) \
++	  --host=$(DEB_HOST_GNU_TYPE) \
++	  --target=$(DEB_TARGET_GNU_TYPE)
++
++ifeq ($(DEB_HOST_GNU_TYPE),$(DEB_TARGET_GNU_TYPE))
++ARCH=any-i386
++else
++CROSS=-$(DEB_TARGET_GNU_TYPE)
++ARCH=$(DEB_HOST_ARCH)
++export TARGET_CPPFLAGS = -I/usr/include -I/usr/include/$(DEB_TARGET_GNU_TYPE)
++endif
++debian/control: debian/control.stamp
++debian/control.stamp: debian/control.in
++	sed -e 's/@cross@/$(CROSS)/' \
++	    -e 's/@arch@/$(ARCH)/' \
++	    < $< > debian/control
++ifneq ($(DEB_HOST_GNU_TYPE),$(DEB_TARGET_GNU_TYPE))
++	sed -i -e '/^Multi-Arch: /d' debian/control
++endif
++	touch $@
++
++build-arch: debian/control.stamp
++build-indep:
++build: build-indep build-arch
+ 
+ override_dh_auto_clean:
+ 	dh_auto_clean
+-	rm -rf build-aux
++	rm -rf build-aux debian/control.stamp
+ 
+EOF
+}
+if test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = hurd; then
+if test -d "$RESULT/mig_1"; then
+	echo "skipping rebuild of mig cross"
+else
+	$APT_GET build-dep "-a$HOST_ARCH" --arch-only mig # this is correct by luck
+	cross_build_setup mig mig_1
+	drop_privs dpkg-buildpackage -d -B "--target-arch=$HOST_ARCH" -uc -us
+	cd ..
+	pickup_packages ./*.changes
+	test -d "$RESULT" && mkdir "$RESULT/mig_1" && cp -v ./*.deb "$RESULT/mig_1"
+	cd ..
+	drop_privs rm -Rf mig_1
+fi
+progress_mark "cross mig build"
+fi
+
 # libc
 patch_glibc() {
 	echo "patching eglibc to include a libc6.so and place crt*.o in correct directory"
@@ -2101,7 +2208,7 @@ else
 				fi
 			;;
 			hurd)
-				$APT_GET install "gnumach-dev:$HOST_ARCH" "hurd-dev:$HOST_ARCH"
+				$APT_GET install "gnumach-dev:$HOST_ARCH" "hurd-dev:$HOST_ARCH" "mig$HOST_ARCH_SUFFIX"
 			;;
 			*)
 				echo "rebootstrap-error: unsupported kernel"
