@@ -2760,44 +2760,22 @@ add_automatic nspr
 
 add_automatic nss
 patch_nss() {
-	echo "fixing nss FTBFS on x32 #699217"
-	drop_privs patch -p1 <<'EOF'
+	if test "$HOST_ARCH" = x32; then
+		echo "fixing nss FTBFS on x32 #699217"
+		drop_privs patch -p1 <<'EOF'
 diff -Nru nss-3.17/debian/rules nss-3.17/debian/rules
 --- nss-3.17/debian/rules
 +++ nss-3.17/debian/rules
-@@ -25,6 +25,11 @@
- else
- USE_64 :=
- endif
-+ifeq (x32,$(shell dpkg-architecture -qDEB_HOST_ARCH))
-+USE_X32 := USE_X32=1
-+else
-+USE_X32 :=
-+endif
- 
- # $(foreach foo,$(list),$(call cmd,some command $(foo))) expands to
- #    some command first-elem
-@@ -57,7 +62,8 @@
- 		NSS_ENABLE_ECC=1 \
- 		CHECKLOC= \
- 		$(TOOLCHAIN) \
--		$(USE_64)
-+		$(USE_64) \
-+		$(USE_X32)
- 
- override_dh_auto_clean:
- 	-$(MAKE) -C nss \
-@@ -66,7 +72,8 @@
- 		SOURCE_MD_DIR=$(DISTDIR) \
- 		DIST=$(DISTDIR) \
- 		BUILD_OPT=1 \
--		$(USE_64)
-+		$(USE_64) \
-+		$(USE_X32)
- 
- 	rm -rf $(DISTDIR) $(PREPROCESS_FILES:.in=)
- 
+@@ -63,6 +63,7 @@
+ 	DIST=$(DISTDIR) \
+ 	OBJDIR_NAME=OBJS \
+ 	$(and $(filter 64,$(shell dpkg-architecture -qDEB_HOST_ARCH_BITS)),USE_64=1) \
++	$(and $(filter x32,$(DEB_HOST_ARCH)),USE_X32=1) \
+ 	$(NULL)
+
+ NSS_TOOLS := \
 EOF
+	fi
 }
 
 add_automatic openssl
