@@ -2228,6 +2228,9 @@ else
 	ls -l
 	apt_get_remove libc6-dev-i386
 	if test "$ENABLE_MULTIARCH_GCC" = yes; then
+		if test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = linux; then
+			$APT_GET install "linux-libc-dev:$HOST_ARCH"
+		fi
 		pickup_packages *.changes
 		if test "$LIBC_NAME" = musl; then
 			dpkg -i musl*.deb
@@ -2235,6 +2238,9 @@ else
 			dpkg -i libc*.deb
 		fi
 	else
+		if test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = linux; then
+			$APT_GET install "linux-libc-dev-$HOST_ARCH-cross"
+		fi
 		for pkg in *.deb; do
 			drop_privs dpkg-cross -M -a "$HOST_ARCH" -X tzdata -X libc-bin -X libc-dev-bin -b "$pkg"
 		done
