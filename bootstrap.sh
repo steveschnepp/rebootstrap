@@ -1365,6 +1365,9 @@ if test -d "$RESULT/gcc1"; then
 	dpkg -i $RESULT/gcc1/*.deb
 else
 	$APT_GET install debhelper gawk patchutils bison flex lsb-release quilt libtool autoconf2.64 zlib1g-dev libcloog-isl-dev libmpc-dev libmpfr-dev libgmp-dev autogen systemtap-sdt-dev binutils-multiarch "binutils$HOST_ARCH_SUFFIX"
+	if test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = linux; then
+		$APT_GET install "linux-libc-dev:$HOST_ARCH"
+	fi
 	if test "$HOST_ARCH" = hppa; then
 		$APT_GET install binutils-hppa64-linux-gnu
 	fi
