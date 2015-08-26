@@ -2661,6 +2661,7 @@ patch_icu() {
 add_automatic isl
 add_automatic keyutils
 add_automatic libatomic-ops
+add_automatic libcap2
 
 builddep_libdebian_installer() {
 	# check dependency lacks <!nocheck> #787044
@@ -2964,6 +2965,7 @@ add_need gzip # essential
 add_need hostname # essential
 test "`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS`" = linux && add_need keyutils # by krb5
 add_need libatomic-ops # by gcc-4.9
+add_need libcap2 # by systemd
 add_need libelf # by systemtap, glib2.0
 add_need libgc # by guile-2.0
 add_need libgcrypt20 # by libprelude, cryptsetup
