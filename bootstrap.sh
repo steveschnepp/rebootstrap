@@ -913,6 +913,28 @@ EOF
 patch_gcc_5() {
 	patch_gcc_os_include_dir_musl
 	patch_gcc_musl_depends
+	if test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = kfreebsd; then
+		echo "patching gcc-5 for kfreebsd-i386 unwind to inhibit libc for stage1 #796901"
+		cat >>debian/patches/kfreebsd-unwind.diff <<'EOF'
+--- a/src/libgcc/config/i386/freebsd-unwind.h
++++ a/src/libgcc/config/i386/freebsd-unwind.h
+@@ -26,6 +26,8 @@
+ /* Do code reading to identify a signal frame, and set the frame
+    state data appropriately.  See unwind-dw2.c for the structs. */
+
++#ifndef inhibit_libc
++
+ #include <sys/types.h>
+ #include <signal.h>
+ #include <sys/ucontext.h>
+@@ -171,3 +171,5 @@
+   return _URC_NO_REASON;
+ }
+ #endif /* ifdef __x86_64__  */
++
++#endif /* ifndef inhibit_libc */
+EOF
+	fi
 	if test "$ENABLE_MULTIARCH_GCC" = yes; then
 		echo "applying patches for with_deps_on_target_arch_pkgs"
 		drop_privs QUILT_PATCHES="/usr/share/cross-gcc/patches/gcc-$GCC_VER" quilt push -a
