@@ -3033,7 +3033,7 @@ automatically_cross_build_packages() {
 			profiles=$(set_add "$profiles" nobiarch)
 		fi
 		profiles=$(echo "$profiles" | tr ' ' ,)
-		call_dose_builddebcheck --successes --failures --explain --latest --DropBuildIndep "--profiles=$profiles" "--checkonly=$need_packages_comma_sep" >"$dosetmp"
+		call_dose_builddebcheck --successes --failures --explain --latest --deb-drop-b-d-indep "--dose-profiles=$profiles" "--checkonly=$need_packages_comma_sep" >"$dosetmp"
 		buildable=
 		new_needed=
 		while IFS= read -r line; do
@@ -3046,9 +3046,9 @@ automatically_cross_build_packages() {
 				;;
 				"      unsat-dependency: "*)
 					missing=${line#*: }
-					missing=${missing#*:} # skip architecture
 					missing=${missing%% | *} # drop alternatives
 					missing=${missing% (* *)} # drop version constraint
+					missing=${missing%:$HOST_ARCH} # skip architecture
 					if is_arch_all "$missing"; then
 						echo "rebootstrap-warning: $pkg misses dependency $missing which is arch:all"
 					else
@@ -3097,7 +3097,7 @@ assert_built() {
 	echo "rebootstrap-error: missing asserted packages: $missing_pkgs"
 	missing_pkgs=`set_union "$missing_pkgs" "$need_packages"`
 	missing_pkgs_comma_sep=`echo $missing_pkgs | sed 's/ /,/g'`
-	call_dose_builddebcheck --failures --explain --latest --DropBuildIndep "--checkonly=$missing_pkgs_comma_sep"
+	call_dose_builddebcheck --failures --explain --latest --deb-drop-b-d-indep "--checkonly=$missing_pkgs_comma_sep"
 	return 1
 }
 
