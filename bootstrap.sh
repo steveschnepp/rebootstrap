@@ -3033,7 +3033,7 @@ automatically_cross_build_packages() {
 			profiles=$(set_add "$profiles" nobiarch)
 		fi
 		profiles=$(echo "$profiles" | tr ' ' ,)
-		call_dose_builddebcheck --successes --failures --explain --latest --deb-drop-b-d-indep "--dose-profiles=$profiles" "--checkonly=$need_packages_comma_sep" >"$dosetmp"
+		call_dose_builddebcheck --successes --failures --explain --latest --deb-drop-b-d-indep "--deb-profiles=$profiles" "--checkonly=$need_packages_comma_sep" >"$dosetmp"
 		buildable=
 		new_needed=
 		while IFS= read -r line; do
