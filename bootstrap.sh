@@ -3713,4 +3713,114 @@ mark_built libdebian-installer
 
 automatically_cross_build_packages
 
+builddep_cyrus_sasl2() {
+	assert_built "db-defaults db5.3 openssl pam"
+	# many packages droppable in stage1
+	$APT_GET install debhelper quilt automake autotools-dev "libdb-dev:$1" "libpam0g-dev:$1" "libssl-dev:$1" chrpath groff-base po-debconf docbook-to-man dh-autoreconf
+}
+patch_cyrus_sasl2() {
+	echo "fixing cyrus-sasl2 compilation of build tools #792851"
+	drop_privs patch -p1 <<'EOF'
+diff -Nru cyrus-sasl2-2.1.26.dfsg1/debian/patches/cross.patch cyrus-sasl2-2.1.26.dfsg1/debian/patches/cross.patch
+--- cyrus-sasl2-2.1.26.dfsg1/debian/patches/cross.patch
++++ cyrus-sasl2-2.1.26.dfsg1/debian/patches/cross.patch
+@@ -0,0 +1,37 @@
++Description: fix cross compialtion
++Author: Helmut Grohne <helmut@subdivi.de>
++
++ * makemd5 needs to be built with the build arch compiler, because it is run
++   during build and not installed.
++ * Remove SASL_DB_LIB as it expands to -ldb and make fails to find a build arch
++   -ldb.
++
++Index: cyrus-sasl2-2.1.26.dfsg1/include/Makefile.am
++===================================================================
++--- cyrus-sasl2-2.1.26.dfsg1.orig/include/Makefile.am
+++++ cyrus-sasl2-2.1.26.dfsg1/include/Makefile.am
++@@ -51,6 +51,11 @@
++ 
++ makemd5_SOURCES = makemd5.c
++ 
+++$(makemd5_OBJECTS): CC=cc
+++$(makemd5_OBJECTS): CFLAGS=$(CFLAGS_FOR_BUILD)
+++$(makemd5_OBJECTS): CPPFLAGS=$(CPPFLAGS_FOR_BUILD)
+++makemd5_LINK = cc -o $@
+++
++ md5global.h: makemd5
++ 	-rm -f md5global.h
++ 	./makemd5 md5global.h
++Index: cyrus-sasl2-2.1.26.dfsg1/sasldb/Makefile.am
++===================================================================
++--- cyrus-sasl2-2.1.26.dfsg1.orig/sasldb/Makefile.am
+++++ cyrus-sasl2-2.1.26.dfsg1/sasldb/Makefile.am
++@@ -55,7 +55,7 @@
++ 
++ libsasldb_la_SOURCES = allockey.c sasldb.h
++ EXTRA_libsasldb_la_SOURCES = $(extra_common_sources)
++-libsasldb_la_DEPENDENCIES = $(SASL_DB_BACKEND) $(SASL_DB_LIB)
+++libsasldb_la_DEPENDENCIES = $(SASL_DB_BACKEND)
++ libsasldb_la_LIBADD = $(SASL_DB_BACKEND) $(SASL_DB_LIB)
++ 
++ # Prevent make dist stupidity
+diff -Nru cyrus-sasl2-2.1.26.dfsg1/debian/patches/series cyrus-sasl2-2.1.26.dfsg1/debian/patches/series
+--- cyrus-sasl2-2.1.26.dfsg1/debian/patches/series
++++ cyrus-sasl2-2.1.26.dfsg1/debian/patches/series
+@@ -31,3 +31,4 @@
+ properly-create-libsasl2.pc.patch
+ bug715040.patch
+ early-hangup.patch
++cross.patch
+diff -Nru cyrus-sasl2-2.1.26.dfsg1/debian/rules cyrus-sasl2-2.1.26.dfsg1/debian/rules
+--- cyrus-sasl2-2.1.26.dfsg1/debian/rules
++++ cyrus-sasl2-2.1.26.dfsg1/debian/rules
+@@ -25,6 +25,10 @@
+ include /usr/share/dpkg/buildflags.mk
+ 
+ DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
++DEB_HOST_GNU_TYPE ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
++ifeq ($(origin CC),default)
++export CC=$(DEB_HOST_GNU_TYPE)-cc
++endif
+ 
+ # Save Berkeley DB used for building the package
+ BDB_VERSION ?= $(shell LC_ALL=C dpkg-query -l 'libdb[45].[0-9]-dev' | grep ^ii | sed -e 's|.*\s\libdb\([45]\.[0-9]\)-dev\s.*|\1|')
+diff -Nru cyrus-sasl2-2.1.26.dfsg1/debian/sample/Makefile cyrus-sasl2-2.1.26.dfsg1/debian/sample/Makefile
+--- cyrus-sasl2-2.1.26.dfsg1/debian/sample/Makefile
++++ cyrus-sasl2-2.1.26.dfsg1/debian/sample/Makefile
+@@ -7,7 +7,7 @@
+ all: sample-server sample-client
+ 
+ sample-server: sample-server.c
+-	gcc -g -o sample-server sample-server.c -I. -I$(T) -I$(INCDIR1) -I$(INCDIR2) -L$(LIBDIR) -lsasl2
++	$(CC) -g -o sample-server sample-server.c -I. -I$(T) -I$(INCDIR1) -I$(INCDIR2) -L$(LIBDIR) -lsasl2
+ 
+ sample-client: sample-client.c
+-	gcc -g -o sample-client sample-client.c -I. -I$(T) -I$(INCDIR1) -I$(INCDIR2) -L$(LIBDIR) -lsasl2
++	$(CC) -g -o sample-client sample-client.c -I. -I$(T) -I$(INCDIR1) -I$(INCDIR2) -L$(LIBDIR) -lsasl2
+EOF
+	drop_privs quilt push -a
+}
+if test -d "$RESULT/cyrus-sasl2_1"; then
+	echo "skipping stage1 rebuild of cyrus-sasl2"
+else
+	builddep_cyrus_sasl2 "$HOST_ARCH"
+	cross_build_setup cyrus-sasl2 cyrus-sasl2_1
+	check_binNMU
+	dpkg-checkbuilddeps -B "-a$HOST_ARCH" || : # tell unmet build depends
+	drop_privs DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS no-sql no-ldap no-gssapi" dpkg-buildpackage "-a$HOST_ARCH" -B -d -uc -us
+	cd ..
+	ls -l
+	pickup_packages *.changes
+	test -d "$RESULT" && mkdir "$RESULT/cyrus-sasl2_1"
+	test -d "$RESULT" && cp ./*.deb "$RESULT/cyrus-sasl2_1/"
+	compare_native ./*.deb
+	cd ..
+	drop_privs rm -Rf cyrus-sasl2_1
+fi
+progress_mark "cyrus-sasl2 stage1 cross build"
+mark_built cyrus-sasl2
+# needed by openldap
+
+automatically_cross_build_packages
+
 assert_built "$need_packages"
