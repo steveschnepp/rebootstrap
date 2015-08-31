@@ -1870,6 +1870,531 @@ diff -Nru glibc-2.19/debian/rules.d/control.mk glibc-2.19/debian/rules.d/control
 EOF
 		drop_privs ./debian/rules debian/control
 	fi
+	if test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = hurd; then
+		echo "fixing glibc stage1 for the hurd"
+		drop_privs quilt pop -a
+		cd debian
+		drop_privs patch -p0 <<'EOF'
+Index: patches/hurd-i386/libpthread_build.diff
+===================================================================
+--- patches/hurd-i386/libpthread_build.diff
++++ patches/hurd-i386/libpthread_build.diff
+@@ -3,3 +3,11 @@
+ @@ -0,0 +1,2 @@
+ +libc_add_on_canonical=libpthread
+ +libc_add_on_subdirs=.
++--- a/sysdeps/mach/hurd/Implies.orig
+++++ b/sysdeps/mach/hurd/Implies
++@@ -3,3 +3,5 @@
++ gnu
++ # The Hurd provides a rough superset of the functionality of 4.4 BSD.
++ unix/bsd
+++# libpthread provides generic bits
+++../libpthread/sysdeps/generic
+Index: patches/hurd-i386/libpthread_clean.diff
+===================================================================
+--- patches/hurd-i386/libpthread_clean.diff
++++ patches/hurd-i386/libpthread_clean.diff
+@@ -474,3 +474,381 @@
+ -#endif
+ -
+ -#endif /* set-hooks.h */
++--- a/libpthread/sysdeps/generic/killpg.c
+++++ /dev/null
++@@ -1,27 +0,0 @@
++-/* killpg.c - Generic killpg implementation.
++-   Copyright (C) 2008 Free Software Foundation, Inc.
++-   Written by Neal H. Walfield <neal@gnu.org>.
++-
++-   This file is part of the GNU Hurd.
++-
++-   The GNU Hurd is free software; you can redistribute it and/or
++-   modify it under the terms of the GNU Lesser General Public License
++-   as published by the Free Software Foundation; either version 3 of
++-   the License, or (at your option) any later version.
++-
++-   The GNU Hurd is distributed in the hope that it will be useful, but
++-   WITHOUT ANY WARRANTY; without even the implied warranty of
++-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++-   Lesser General Public License for more details.
++-
++-   You should have received a copy of the GNU Lesser General Public
++-   License along with this program.  If not, see
++-   <http://www.gnu.org/licenses/>.  */
++-
++-#include "sig-internal.h"
++-
++-int
++-killpg (pid_t pid, int sig)
++-{
++-  return kill (-pid, sig);
++-}
++--- a/libpthread/sysdeps/generic/sigaddset.c
+++++ /dev/null
++@@ -1,35 +0,0 @@
++-/* sigaddset.c - Generic sigaddset implementation.
++-   Copyright (C) 2008 Free Software Foundation, Inc.
++-   Written by Neal H. Walfield <neal@gnu.org>.
++-
++-   This file is part of the GNU Hurd.
++-
++-   The GNU Hurd is free software; you can redistribute it and/or
++-   modify it under the terms of the GNU Lesser General Public License
++-   as published by the Free Software Foundation; either version 3 of
++-   the License, or (at your option) any later version.
++-
++-   The GNU Hurd is distributed in the hope that it will be useful, but
++-   WITHOUT ANY WARRANTY; without even the implied warranty of
++-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++-   Lesser General Public License for more details.
++-
++-   You should have received a copy of the GNU Lesser General Public
++-   License along with this program.  If not, see
++-   <http://www.gnu.org/licenses/>.  */
++-
++-#include "sig-internal.h"
++-
++-int
++-sigaddset (sigset_t *sigset, int signo)
++-{
++-  if (signo <= 0 || signo >= NSIG)
++-    {
++-      errno = EINVAL;
++-      return -1;
++-    }
++-
++-  *sigset |= sigmask (signo);
++-  return 0;
++-}
++-
++--- a/libpthread/sysdeps/generic/sigdelset.c
+++++ /dev/null
++@@ -1,35 +0,0 @@
++-/* sigdelset.c - Generic sigdelset implementation.
++-   Copyright (C) 2008 Free Software Foundation, Inc.
++-   Written by Neal H. Walfield <neal@gnu.org>.
++-
++-   This file is part of the GNU Hurd.
++-
++-   The GNU Hurd is free software; you can redistribute it and/or
++-   modify it under the terms of the GNU Lesser General Public License
++-   as published by the Free Software Foundation; either version 3 of
++-   the License, or (at your option) any later version.
++-
++-   The GNU Hurd is distributed in the hope that it will be useful, but
++-   WITHOUT ANY WARRANTY; without even the implied warranty of
++-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++-   Lesser General Public License for more details.
++-
++-   You should have received a copy of the GNU Lesser General Public
++-   License along with this program.  If not, see
++-   <http://www.gnu.org/licenses/>.  */
++-
++-#include "sig-internal.h"
++-
++-int
++-sigdelset (sigset_t *sigset, int signo)
++-{
++-  if (signo <= 0 || signo >= NSIG)
++-    {
++-      errno = EINVAL;
++-      return -1;
++-    }
++-
++-  *sigset &= ~sigmask (signo);
++-  return 0;
++-}
++-
++--- a/libpthread/sysdeps/generic/sigemptyset.c
+++++ /dev/null
++@@ -1,29 +0,0 @@
++-/* sigemptyset.c - Generic sigemptyset implementation.
++-   Copyright (C) 2008 Free Software Foundation, Inc.
++-   Written by Neal H. Walfield <neal@gnu.org>.
++-
++-   This file is part of the GNU Hurd.
++-
++-   The GNU Hurd is free software; you can redistribute it and/or
++-   modify it under the terms of the GNU Lesser General Public License
++-   as published by the Free Software Foundation; either version 3 of
++-   the License, or (at your option) any later version.
++-
++-   The GNU Hurd is distributed in the hope that it will be useful, but
++-   WITHOUT ANY WARRANTY; without even the implied warranty of
++-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++-   Lesser General Public License for more details.
++-
++-   You should have received a copy of the GNU Lesser General Public
++-   License along with this program.  If not, see
++-   <http://www.gnu.org/licenses/>.  */
++-
++-#include <signal.h>
++-
++-int
++-sigemptyset (sigset_t *sigset)
++-{
++-  *sigset = 0;
++-  return 0;
++-}
++-
++--- a/libpthread/sysdeps/generic/sigfillset.c
+++++ /dev/null
++@@ -1,29 +0,0 @@
++-/* sigfillset.c - Generic sigfillset implementation.
++-   Copyright (C) 2008 Free Software Foundation, Inc.
++-   Written by Neal H. Walfield <neal@gnu.org>.
++-
++-   This file is part of the GNU Hurd.
++-
++-   The GNU Hurd is free software; you can redistribute it and/or
++-   modify it under the terms of the GNU Lesser General Public License
++-   as published by the Free Software Foundation; either version 3 of
++-   the License, or (at your option) any later version.
++-
++-   The GNU Hurd is distributed in the hope that it will be useful, but
++-   WITHOUT ANY WARRANTY; without even the implied warranty of
++-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++-   Lesser General Public License for more details.
++-
++-   You should have received a copy of the GNU Lesser General Public
++-   License along with this program.  If not, see
++-   <http://www.gnu.org/licenses/>.  */
++-
++-#include <signal.h>
++-
++-int
++-sigfillset (sigset_t *sigset)
++-{
++-  *sigset = (1ULL << (NSIG - 1)) - 1;
++-  return 0;
++-}
++-
++--- a/libpthread/sysdeps/generic/siginterrupt.c
+++++ /dev/null
++@@ -1,36 +0,0 @@
++-/* siginterrupt.c - Generic siginterrupt implementation.
++-   Copyright (C) 2008 Free Software Foundation, Inc.
++-   Written by Neal H. Walfield <neal@gnu.org>.
++-
++-   This file is part of the GNU Hurd.
++-
++-   The GNU Hurd is free software; you can redistribute it and/or
++-   modify it under the terms of the GNU Lesser General Public License
++-   as published by the Free Software Foundation; either version 3 of
++-   the License, or (at your option) any later version.
++-
++-   The GNU Hurd is distributed in the hope that it will be useful, but
++-   WITHOUT ANY WARRANTY; without even the implied warranty of
++-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++-   Lesser General Public License for more details.
++-
++-   You should have received a copy of the GNU Lesser General Public
++-   License along with this program.  If not, see
++-   <http://www.gnu.org/licenses/>.  */
++-
++-#include "sig-internal.h"
++-
++-int
++-siginterrupt (int sig, int flag)
++-{
++-  int ret;
++-  struct sigaction act;
++-
++-  sigaction (sig, NULL, &act);
++-  if (flag)
++-    act.sa_flags &= ~SA_RESTART;
++-  else
++-    act.sa_flags |= SA_RESTART;
++-  ret = sigaction(sig, &act, NULL);
++-  return ret;
++-}
++--- a/libpthread/sysdeps/generic/sigismember.c
+++++ /dev/null
++@@ -1,36 +0,0 @@
++-/* sigismember.c - Generic sigismember implementation.
++-   Copyright (C) 2008 Free Software Foundation, Inc.
++-   Written by Neal H. Walfield <neal@gnu.org>.
++-
++-   This file is part of the GNU Hurd.
++-
++-   The GNU Hurd is free software; you can redistribute it and/or
++-   modify it under the terms of the GNU Lesser General Public License
++-   as published by the Free Software Foundation; either version 3 of
++-   the License, or (at your option) any later version.
++-
++-   The GNU Hurd is distributed in the hope that it will be useful, but
++-   WITHOUT ANY WARRANTY; without even the implied warranty of
++-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++-   Lesser General Public License for more details.
++-
++-   You should have received a copy of the GNU Lesser General Public
++-   License along with this program.  If not, see
++-   <http://www.gnu.org/licenses/>.  */
++-
++-#include "sig-internal.h"
++-
++-int
++-sigismember (const sigset_t *sigset, int signo)
++-{
++-  if (signo <= 0 || signo >= NSIG)
++-    {
++-      errno = EINVAL;
++-      return -1;
++-    }
++-
++-  if (*sigset & sigmask (signo))
++-    return 1;
++-  else
++-    return 0;
++-}
++--- a/libpthread/sysdeps/generic/signal.c
+++++ /dev/null
++@@ -1,44 +0,0 @@
++-/* signal.c - Generic signal implementation.
++-   Copyright (C) 2008 Free Software Foundation, Inc.
++-   Written by Neal H. Walfield <neal@gnu.org>.
++-
++-   This file is part of the GNU Hurd.
++-
++-   The GNU Hurd is free software; you can redistribute it and/or
++-   modify it under the terms of the GNU Lesser General Public License
++-   as published by the Free Software Foundation; either version 3 of
++-   the License, or (at your option) any later version.
++-
++-   The GNU Hurd is distributed in the hope that it will be useful, but
++-   WITHOUT ANY WARRANTY; without even the implied warranty of
++-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++-   Lesser General Public License for more details.
++-
++-   You should have received a copy of the GNU Lesser General Public
++-   License along with this program.  If not, see
++-   <http://www.gnu.org/licenses/>.  */
++-
++-#include "sig-internal.h"
++-
++-void (*signal (int sig, void (*handler)(int)))(int)
++-{
++-  struct sigaction sa;
++-
++-  sa.sa_handler = handler;
++-  sa.sa_flags = SA_RESTART;
++-
++-  if (sigemptyset (&sa.sa_mask) < 0
++-      || sigaddset (&sa.sa_mask, sig) < 0)
++-    return SIG_ERR;
++-
++-  struct sigaction osa;
++-  if (sigaction (sig, &sa, &osa) < 0)
++-    return SIG_ERR;
++-
++-  return osa.sa_handler;
++-}
++-
++-void (*bsd_signal (int sig, void (*func)(int)))(int)
++-{
++-  return signal (sig, func);
++-}
++--- a/libpthread/sysdeps/generic/sigwait.c
+++++ /dev/null
++@@ -1,34 +0,0 @@
++-/* sigwait.c - Generic sigwait implementation.
++-   Copyright (C) 2008 Free Software Foundation, Inc.
++-   Written by Neal H. Walfield <neal@gnu.org>.
++-
++-   This file is part of the GNU Hurd.
++-
++-   The GNU Hurd is free software; you can redistribute it and/or
++-   modify it under the terms of the GNU Lesser General Public License
++-   as published by the Free Software Foundation; either version 3 of
++-   the License, or (at your option) any later version.
++-
++-   The GNU Hurd is distributed in the hope that it will be useful, but
++-   WITHOUT ANY WARRANTY; without even the implied warranty of
++-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++-   Lesser General Public License for more details.
++-
++-   You should have received a copy of the GNU Lesser General Public
++-   License along with this program.  If not, see
++-   <http://www.gnu.org/licenses/>.  */
++-
++-#include "sig-internal.h"
++-
++-int
++-sigwait (const sigset_t *restrict set, int *restrict signo)
++-{
++-  siginfo_t info;
++-
++-  if (sigwaitinfo (set, &info) < 0)
++-    return -1;
++-
++-  *signo = info.si_signo;
++-  return 0;
++-}
++-
++--- a/libpthread/sysdeps/generic/raise.c.orig
+++++ b/libpthread/sysdeps/generic/raise.c
++@@ -18,7 +18,7 @@
++    License along with this program.  If not, see
++    <http://www.gnu.org/licenses/>.  */
++ 
++-#include "sig-internal.h"
+++#include <pthread.h>
++ 
++ int
++ raise (int signo)
++@@ -27,9 +27,7 @@
++      "the effect of the raise() function shall be equivalent to
++      calling: pthread_kill(pthread_self(), sig);"  */
++ 
++-debug (0, "");
++   int err = pthread_kill (pthread_self (), signo);
++-debug (0, "");
++   if (err)
++     {
++       errno = err;
++diff --git a/sysdeps/generic/raise.c b/sysdeps/generic/raise.c
++index 7514d3b..3c21233 100644
++--- a/libpthread/sysdeps/generic/raise.c
+++++ b/libpthread/sysdeps/generic/raise.c
++@@ -20,6 +20,7 @@
++ 
++ #include <pthread.h>
++ 
+++#pragma weak pthread_kill
++ int
++ raise (int signo)
++ {
++@@ -27,7 +28,11 @@ raise (int signo)
++      "the effect of the raise() function shall be equivalent to
++      calling: pthread_kill(pthread_self(), sig);"  */
++ 
++-  int err = pthread_kill (pthread_self (), signo);
+++  int err;
+++  if (pthread_kill)
+++    err = pthread_kill (pthread_self (), signo);
+++  else
+++    err = __kill (__getpid (), signo);
++   if (err)
++     {
++       errno = err;
+Index: sysdeps/hurd.mk
+===================================================================
+--- sysdeps/hurd.mk
++++ sysdeps/hurd.mk
+@@ -9,6 +9,33 @@
+ libc_add-ons = libpthread $(add-ons)
+ libc_extra_config_options := $(extra_config_options)
+ 
++ifndef HURD_SOURCE
++  HURD_HEADERS := /usr/include
++else
++  HURD_HEADERS := $(HURD_SOURCE)/include
++endif
++
++# Minimum Kernel supported
++with_headers = --with-headers=$(shell pwd)/debian/include
++
++KERNEL_HEADER_DIR = $(stamp)mkincludedir
++$(stamp)mkincludedir:
++	rm -rf debian/include
++	mkdir debian/include
++
++	# System headers
++	for path in hurd mach device cthreads.h; do \
++	    ln -s $(HURD_HEADERS)/$$path debian/include ; \
++	done
++
++	# To make configure happy if libc0.3-dev is not installed.
++	touch debian/include/assert.h
++
++	touch $@
++
++# Also to make configure happy.
++export CPPFLAGS = -isystem $(shell pwd)/debian/include
++
+ # Glibc should really do this for us.
+ define libc_extra_install
+ mkdir -p debian/tmp-$(curpass)/lib
+EOF
+		drop_privs patch -p0 <<'EOF'
+Index: patches/hurd-i386/bootstrap
+===================================================================
+--- patches/hurd-i386/bootstrap
++++ patches/hurd-i386/bootstrap
+@@ -0,0 +1,42 @@
++diff --git a/sysdeps/mach/Makefile b/sysdeps/mach/Makefile
++index b47cdc6..3323e81 100644
++--- a/sysdeps/mach/Makefile
+++++ b/sysdeps/mach/Makefile
++@@ -35,7 +35,7 @@ endif
++ # because it's different in Darwin and the conditional crap is
++ # too much trouble.  This should suffice for getting the mach/Makefile
++ # rules invoked when they need to be.
++-mach-before-compile := $(mach-objpfx)mach-shortcuts.h \
+++mach-before-compile := $(mach-objpfx)mach-shortcuts.h $(mach-objpfx)mach/mach_interface.h \
++ 		       $(patsubst %,$(mach-objpfx)mach/mach_%.h,\
++ 				  port host)
++ 
++@@ -43,7 +43,7 @@ ifneq (mach,$(subdir))
++ # This patsubst generates patterns like `m%h-shortcuts.h', which are damn
++ # likely to match just the corresponding particular file we want.
++ $(patsubst mach%,m\%h%,$(mach-before-compile)): # Run only if doesn't exist.
++-	$(MAKE) -C $(..)mach mach-before-compile no_deps=t generating=t
+++	$(MAKE) -C $(..)mach subdir=mach mach-before-compile no_deps=t generating=t
++ 
++ before-compile += $(mach-before-compile)
++ endif
++diff --git a/sysdeps/mach/hurd/Makefile b/sysdeps/mach/hurd/Makefile
++index b528815..244ac4b 100644
++--- a/sysdeps/mach/hurd/Makefile
+++++ b/sysdeps/mach/hurd/Makefile
++@@ -48,13 +48,13 @@ hurd-objpfx = $(common-objpfx)hurd/
++ before-compile += $(patsubst %,$(hurd-objpfx)hurd/%.h,auth io fs process)
++ $(patsubst %,$(hurd-objpfx)hurd/%.%,auth io fs process): \
++   $(common-objpfx)mach/mach-shortcuts.h
++-	$(MAKE) -C $(..)hurd before-compile no_deps=t
+++	$(MAKE) -C $(..)hurd subdir=hurd before-compile no_deps=t
++ endif
++ 
++ # Hurd profil.c includes this file, so give a rule to make it.
++ ifeq ($(subdir),gmon)
++ $(common-objpfx)hurd/../mach/RPC_task_get_sampled_pcs.c:
++-	$(MAKE) -C $(..)mach before-compile no_deps=t
+++	$(MAKE) -C $(..)mach subdir=mach before-compile no_deps=t
++ endif
++ 
++ 
+Index: patches/series.hurd-i386
+===================================================================
+--- patches/series.hurd-i386
++++ patches/series.hurd-i386
+@@ -12,3 +12,4 @@
+ hurd-i386/local-disable-tst-xmmymm.diff
+ hurd-i386/submitted-handle-eprototype.diff
+ hurd-i386/local-no-bootstrap-fs-access.diff
++hurd-i386/bootstrap
+EOF
+		drop_privs patch -p0 <<'EOF'
+Index: sysdeps/hurd-i386.mk
+===================================================================
+--- sysdeps/hurd-i386.mk
++++ sysdeps/hurd-i386.mk
+@@ -18,9 +18,11 @@
+ xen_slibdir = /lib/$(DEB_HOST_MULTIARCH)/i686/nosegneg
+ xen_extra_config_options = $(extra_config_options)
+ 
++ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
+ define libc0.3-dev_extra_pkg_install
+ mkdir -p debian/libc0.3-dev/$(libdir)/xen
+ cp -af debian/tmp-xen/$(libdir)/*.a \
+ 	debian/libc0.3-dev/$(libdir)/xen
+ endef
++endif
+ 
+EOF
+		cd ..
+		drop_privs quilt push -a
+	fi
 }
 if test -d "$RESULT/${LIBC_NAME}1"; then
 	echo "skipping rebuild of $LIBC_NAME stage1"
