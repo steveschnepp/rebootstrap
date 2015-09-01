@@ -1127,6 +1127,43 @@ fi
 progress_mark "gnumach stage1 cross build"
 fi
 
+patch_kfreebsd_kernel_headers() {
+	echo "patching kfreebsd-kernel-headers to implement nocheck #796903"
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/control
++++ b/debian/control
+@@ -11,7 +11,7 @@
+  debhelper (>= 7),
+  quilt,
+  kfreebsd-source-10.1 (>> 10.1~svn273304~),
+- libc0.1-dev (>= 2.18-2~),
++ libc0.1-dev (>= 2.18-2~) <!nocheck>,
+ Vcs-Browser: http://anonscm.debian.org/viewvc/glibc-bsd/trunk/kfreebsd-kernel-headers/
+ Vcs-Svn: svn://anonscm.debian.org/glibc-bsd/trunk/kfreebsd-kernel-headers/
+ Standards-Version: 3.9.4
+--- a/debian/rules
++++ b/debian/rules
+@@ -128,8 +128,10 @@
+ 		&& find . -type f -name "*.h" -exec cp --parents {} $(HEADERS_PACKAGE)/usr/include/x86 \;
+ endif
+
++ifeq ($(filter nocheck,$(DEB_BUILD_OPTIONS)),)
+ 	# headers must be tested after they're installed
+	$(MAKE) -C test
++endif
+
+ install: install-indep install-arch
+
+EOF
+}
+builddep_kfreebsd_kernel_headers() {
+	# libc0.1-dev needs <!nocheck> profile
+	$APT_GET install debhelper quilt kfreebsd-source-10.1
+}
+if test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = kfreebsd; then
+cross_build kfreebsd-kernel-headers
+fi
+
 # gcc
 if test -d "$RESULT/gcc1"; then
 	echo "skipping rebuild of gcc stage1"
@@ -2416,6 +2453,9 @@ else
 			;;
 			hurd)
 				$APT_GET install "gnumach-dev:$HOST_ARCH" "hurd-dev:$HOST_ARCH" "mig$HOST_ARCH_SUFFIX"
+			;;
+			kfreebsd)
+				$APT_GET install "kfreebsd-kernel-headers:$HOST_ARCH"
 			;;
 			*)
 				echo "rebootstrap-error: unsupported kernel"
