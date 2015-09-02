@@ -2444,7 +2444,6 @@ else
 		$APT_GET install gettext file quilt autoconf gawk debhelper rdfind symlinks binutils bison netbase "gcc-$GCC_VER$HOST_ARCH_SUFFIX"
 		case "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" in
 			linux)
-				$APT_GET install libaudit-dev libcap-dev libselinux-dev
 				if test "$ENABLE_MULTIARCH_GCC" = yes; then
 					$APT_GET install "linux-libc-dev:$HOST_ARCH"
 				else
