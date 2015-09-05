@@ -1802,7 +1802,7 @@ diff -Nru glibc-2.19/debian/control.in/s390 glibc-2.19/debian/control.in/s390
  Conflicts: libc6-dev (<< 2.13-14)
  Replaces: libc6-dev (<< 2.13-11)
 -Depends: libc6-s390 (= ${binary:Version}), libc6-dev (= ${binary:Version}), ${misc:Depends}
-+Depends: libc6-s390 (= ${binary:Version}) <stage1>, libc6-dev (= ${binary:Version}), ${misc:Depends}
++Depends: libc6-s390 (= ${binary:Version}) <!stage1>, libc6-dev (= ${binary:Version}), ${misc:Depends}
  Recommends: gcc-multilib
  Description: GNU C Library: 32bit Development Libraries for IBM zSeries
   Contains the symlinks and object files needed to compile and link programs
@@ -1814,7 +1814,7 @@ diff -Nru glibc-2.19/debian/control.in/sparc glibc-2.19/debian/control.in/sparc
  Conflicts: libc6-dev (<< 2.13-14)
  Replaces: libc6-dev (<< 2.13-11)
 -Depends: libc6-sparc (= ${binary:Version}), libc6-dev (= ${binary:Version}), ${misc:Depends}
-+Depends: libc6-sparc (= ${binary:Version}) <stage1>, libc6-dev (= ${binary:Version}), ${misc:Depends}
++Depends: libc6-sparc (= ${binary:Version}) <!stage1>, libc6-dev (= ${binary:Version}), ${misc:Depends}
  Recommends: gcc-multilib
  Description: GNU C Library: 32bit Development Libraries for SPARC
   Contains the symlinks and object files needed to compile and link programs
