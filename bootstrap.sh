@@ -2975,6 +2975,7 @@ add_automatic libonig
 add_automatic libpipeline
 add_automatic libpng
 add_automatic libpthread-stubs
+add_automatic libseccomp
 add_automatic libsepol
 add_automatic libsm
 add_automatic libssh2
@@ -3199,6 +3200,9 @@ add_need libgc # by guile-2.0
 add_need libgcrypt20 # by libprelude, cryptsetup
 add_need libpng # by slang2
 add_need libpthread-stubs # by libxcb
+if apt-cache showsrc libseccomp | sed 's/^Architecture:\(.*\)/\1 /;t;d' | grep -q " $HOST_ARCH "; then
+	add_need libseccomp # by systemd
+fi
 test "`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS`" = linux && add_need libsepol # by libselinux
 add_need libssh2 # by curl
 add_need libtextwrap # by cdebconf
