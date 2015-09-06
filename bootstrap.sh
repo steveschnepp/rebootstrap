@@ -3757,44 +3757,8 @@ automatically_cross_build_packages
 
 builddep_guile_2_0() {
 	assert_built "gmp libffi libgc libtool libunistring ncurses readline6"
-	if test "$1" = armel -o "$1" = armhf; then
-		# force $GCC_VER instead of gcc-4.8
-		$APT_GET install libtool debhelper autoconf automake dh-autoreconf "libncurses5-dev:$1" "libreadline6-dev:$1" "libltdl-dev:$1" "libgmp-dev:$1" texinfo flex "libunistring-dev:$1" "libgc-dev:$1" "libffi-dev:$1" pkg-config
-	else
-		$APT_GET build-dep --arch-only "-a$1" guile-2.0
-	fi
+	$APT_GET build-dep --arch-only "-a$1" guile-2.0
 	$APT_GET install guile-2.0 # needs Build-Depends: guile-2.0 <cross>
-}
-patch_guile_2_0() {
-	echo "reverting gcc-4.8 CC override for arm"
-	drop_privs patch -p1 <<'EOF'
-diff -Nru guile-2.0-2.0.11+1/debian/rules guile-2.0-2.0.11+1/debian/rules
---- guile-2.0-2.0.11+1/debian/rules
-+++ guile-2.0-2.0.11+1/debian/rules
-@@ -85,11 +85,6 @@
- 	INSTALL_PROGRAM += -s
- endif
- 
--# When this is eventually removed, remove the guile-snarf sed below.
--ifeq (arm,$(DEB_HOST_ARCH_CPU))
--	export CC := gcc-4.8
--endif
--
- define checkdir
-   dh_testdir debian/guile.postinst
- endef
-@@ -203,10 +198,6 @@
- 	sed -i'' '0,\|/usr/bin/guile|s||$(deb_guile_bin_path)|' \
- 	  debian/$(deb_pkg_basename)-dev/usr/bin/guile-config
- 
--        # Until the arm build-dependency and CC override (above) is fixed.
--	sed -i'' 's|gcc-4\.8|gcc|g' \
--	  debian/$(deb_pkg_basename)-dev/usr/bin/guile-snarf
--
- 	sed -i'' '0,\|\$${exec_prefix}/bin/guile|s||$(deb_guile_bin_path)|' \
- 	  debian/$(deb_pkg_basename)-dev/usr/bin/guild
- 
-EOF
 }
 cross_build guile-2.0
 mark_built guile-2.0
