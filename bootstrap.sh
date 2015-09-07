@@ -2414,6 +2414,44 @@ Index: sysdeps/hurd-i386.mk
 +endif
  
 EOF
+		drop_privs patch -p1 <<'EOF'
+--- debian/rules
++++ debian/rules
+@@ -101,6 +101,7 @@
+ 
+ BASE_CC = gcc
+ BASE_CXX = g++
++BASE_MIG = mig
+ DEB_GCC_VERSION ?= -4.8
+ 
+ RUN_TESTSUITE = yes
+@@ -109,6 +110,7 @@
+ # change the GNU triplet as it doesn't match the compiler name.
+ CC     = $(DEB_HOST_GNU_TYPE)-$(BASE_CC)$(DEB_GCC_VERSION)
+ CXX    = $(DEB_HOST_GNU_TYPE)-$(BASE_CXX)$(DEB_GCC_VERSION)
++MIG    = $(DEB_HOST_GNU_TYPE)-$(BASE_MIG)
+ BUILD_CC = $(DEB_BUILD_GNU_TYPE)-$(BASE_CC)
+ BUILD_CXX = $(DEB_BUILD_GNU_TYPE)-$(BASE_CXX)
+ 
+--- debian/rules.d/build.mk
++++ debian/rules.d/build.mk
+@@ -32,6 +32,7 @@
+ 	rm -f $(DEB_BUILDDIR)/configparms
+ 	echo "CC = $(call xx,CC)"                 >> $(DEB_BUILDDIR)/configparms
+ 	echo "CXX = $(call xx,CXX)"               >> $(DEB_BUILDDIR)/configparms
++	echo "MIG = $(call xx,MIG)"               >> $(DEB_BUILDDIR)/configparms
+ 	echo "BUILD_CC = $(BUILD_CC)"             >> $(DEB_BUILDDIR)/configparms
+ 	echo "BUILD_CXX = $(BUILD_CXX)"           >> $(DEB_BUILDDIR)/configparms
+ 	echo "CFLAGS = $(HOST_CFLAGS)"            >> $(DEB_BUILDDIR)/configparms
+@@ -78,6 +79,7 @@
+ 		cd $(DEB_BUILDDIR) && \
+ 		CC="$(call xx,CC)" \
+ 		CXX="$(call xx,CXX)" \
++		MIG="$(call xx,MIG)" \
+ 		AUTOCONF=false \
+ 		MAKEINFO=: \
+ 		$(CURDIR)/configure \
+EOF
 		cd ..
 		drop_privs quilt push -a
 	fi
