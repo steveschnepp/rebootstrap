@@ -397,6 +397,16 @@ obtain_source_package() {
 	drop_privs apt-get source "$1"
 }
 
+if test "$HOST_ARCH" = kfreebsd-armhf; then
+	# add kfreebsd-armhf to dpkg #796283
+	cat >>/usr/share/dpkg/ostable <<EOF
+gnueabihf-kfreebsd	kfreebsd-gnueabihf	kfreebsd[^-]*-gnueabihf
+EOF
+	cat >>/usr/share/dpkg/triplettable <<EOF
+gnueabihf-kfreebsd-arm	kfreebsd-armhf
+EOF
+fi
+
 if test -z "$HOST_ARCH" || ! dpkg-architecture "-a$HOST_ARCH"; then
 	echo "architecture $HOST_ARCH unknown to dpkg"
 	exit 1
