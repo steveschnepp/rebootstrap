@@ -3031,7 +3031,6 @@ EOF
 }
 
 add_automatic libelf
-add_automatic libffi
 add_automatic libgc
 
 add_automatic libgcrypt20
@@ -3266,7 +3265,6 @@ test "`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS`" = linux && add_need
 add_need libatomic-ops # by gcc-4.9
 add_need libcap2 # by systemd
 add_need libelf # by systemtap, glib2.0
-add_need libffi # by guile-2.0
 add_need libgc # by guile-2.0
 add_need libgcrypt20 # by libprelude, cryptsetup
 add_need libpng # by slang2
@@ -3802,6 +3800,16 @@ builddep_bsdmainutils() {
 cross_build bsdmainutils
 mark_built bsdmainutils
 # needed for man-db
+
+automatically_cross_build_packages
+
+builddep_libffi() {
+	# g++-multilib dependency unsatisfiable
+	$APT_GET install debhelper dejagnu lsb-release texinfo dpkg-dev
+}
+cross_build libffi
+mark_built libffi
+# needed by guile-2.0, p11-kit
 
 automatically_cross_build_packages
 
