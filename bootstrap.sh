@@ -165,7 +165,7 @@ check_arch() {
 				;;
 			esac
 		;;
-		*", version 1 (GNU/Linux), "*)
+		*" version 1 (GNU/Linux), "*)
 			if test linux != "$(dpkg-architecture "-a$2" -qDEB_HOST_ARCH_OS)"; then
 				echo "os mismatch"
 				echo "expected $2"
@@ -323,8 +323,8 @@ check_arch() {
 				return 1
 			fi
 		;;
-		*", PA-RISC, version "*)
-			if test hppa != `dpkg-architecture -a$2 -qDEB_HOST_ARCH_CPU`; then
+		*", PA-RISC, version "* | *", PA-RISC, *unknown arch 0xf* version "*)
+			if test hppa != "$(dpkg-architecture "-a$2" -qDEB_HOST_ARCH_CPU)"; then
 				echo "cpu mismatch"
 				echo "expected $2"
 				echo "got $FILE_RES"
