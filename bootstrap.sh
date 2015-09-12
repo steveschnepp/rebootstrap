@@ -666,12 +666,13 @@ record_installed_packages() {
 # Takes the set (as in set_create) of packages and apt-get removes any
 # currently installed packages outside the given set.
 remove_extra_packages() {
-	local origpackages currentpackates extrapackages
+	local origpackages currentpackates removedpackages extrapackages
 	origpackages="$1"
 	currentpackages=$(record_installed_packages)
+	removedpackages=$(set_difference "$origpackages" "$currentpackages")
 	extrapackages=$(set_difference "$currentpackages" "$origpackages")
 	echo "original packages: $origpackages"
-	echo "current packages:  $currentpackages"
+	echo "removed packages:  $removedpackages"
 	echo "extra packages:    $extrapackages"
 	apt_get_remove $extrapackages
 }
