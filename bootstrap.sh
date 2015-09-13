@@ -239,8 +239,8 @@ check_arch() {
 				return 1
 			fi
 		;;
-		*", MIPS, MIPS-II version "*|*", MIPS, MIPS-I version "*)
-			case `dpkg-architecture -a$2 -qDEB_HOST_ARCH_CPU` in
+		*", MIPS, MIPS-II version "* | *", MIPS, MIPS-I version "* | *", MIPS, MIPS32 rel2 version "*)
+			case "$(dpkg-architecture "-a$2" -qDEB_HOST_ARCH_CPU)" in
 				mips|mipsel) ;;
 				*)
 					echo "cpu mismatch"
@@ -250,13 +250,16 @@ check_arch() {
 				;;
 			esac
 		;;
-		*", MIPS, MIPS-III version "*|*", MIPS, MIPS64 version "*)
-			if test mips64el != "`dpkg-architecture "-a$2" -qDEB_HOST_ARCH_CPU`"; then
-				echo "cpu mismatch"
-				echo "expected $2"
-				echo "got $FILE_RES"
-				return 1
-			fi
+		*", MIPS, MIPS-III version "* | *", MIPS, MIPS64 version "* | *", MIPS, MIPS64 rel2 version "*)
+			case "$(dpkg-architecture "-a$2" -qDEB_HOST_ARCH_CPU)" in
+				mips64|mips64el) ;;
+				*)
+					echo "cpu mismatch"
+					echo "expected $2"
+					echo "got $FILE_RES"
+					return 1
+				;;
+			esac
 		;;
 		*", OpenRISC"*)
 			if test or1k != `dpkg-architecture -a$2 -qDEB_HOST_ARCH_CPU`; then
