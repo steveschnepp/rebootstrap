@@ -1559,9 +1559,9 @@ diff -Nru eglibc-2.18/debian/rules.d/build.mk eglibc-2.18/debian/rules.d/build.m
  	    install-bootstrap-headers=yes install-headers )
  
 -	install -d \$(CURDIR)/debian/tmp-\$(curpass)/lib
--	install -m 644 \$(DEB_BUILDDIR)/csu/crt[1in].o \$(CURDIR)/debian/tmp-\$(curpass)/lib
+-	install -m 644 \$(DEB_BUILDDIR)/csu/crt[01in].o \$(CURDIR)/debian/tmp-\$(curpass)/lib
 +	install -d \$(CURDIR)/debian/tmp-\$(curpass)/\$(call xx,libdir)
-+	install -m 644 \$(DEB_BUILDDIR)/csu/crt[1in].o \\
++	install -m 644 \$(DEB_BUILDDIR)/csu/crt[01in].o \\
 +		\$(CURDIR)/debian/tmp-\$(curpass)/\$(call xx,libdir)
 -	\${CC} -nostdlib -nostartfiles -shared -x c /dev/null \\
 +	\$(call xx,CC) -nostdlib -nostartfiles -shared -x c /dev/null \\
