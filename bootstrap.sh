@@ -3891,4 +3891,27 @@ mark_built cyrus-sasl2
 
 automatically_cross_build_packages
 
+if test -d "$RESULT/openldap_1"; then
+	echo "skipping stage1 rebuild of openldap"
+else
+	$APT_GET build-dep "-a$HOST_ARCH" --arch-only -P stage1 openldap
+	cross_build_setup openldap openldap_1
+	check_binNMU
+	dpkg-checkbuilddeps -B "-a$HOST_ARCH" -Pstage1 || : # tell unmet build depends
+	drop_privs ol_cv_pthread_select_yields=yes dpkg-buildpackage "-a$HOST_ARCH" -B -d -uc -us -Pstage1
+	cd ..
+	ls -l
+	pickup_packages *.changes
+	test -d "$RESULT" && mkdir "$RESULT/openldap_1"
+	test -d "$RESULT" && cp ./*.deb "$RESULT/openldap_1/"
+	compare_native ./*.deb
+	cd ..
+	drop_privs rm -Rf openldap_1
+fi
+progress_mark "openldap stage1 cross build"
+mark_built openldap
+# needed by curl
+
+automatically_cross_build_packages
+
 assert_built "$need_packages"
