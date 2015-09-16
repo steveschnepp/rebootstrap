@@ -3898,7 +3898,7 @@ else
 	cross_build_setup openldap openldap_1
 	check_binNMU
 	dpkg-checkbuilddeps -B "-a$HOST_ARCH" -Pstage1 || : # tell unmet build depends
-	drop_privs ol_cv_pthread_select_yields=yes dpkg-buildpackage "-a$HOST_ARCH" -B -d -uc -us -Pstage1
+	drop_privs ol_cv_pthread_select_yields=yes ac_cv_func_memcmp_working=yes dpkg-buildpackage "-a$HOST_ARCH" -B -d -uc -us -Pstage1
 	cd ..
 	ls -l
 	pickup_packages *.changes
