@@ -964,11 +964,27 @@ echo "host gcc version and build gcc version match. good for multiarch"
 fi
 
 # binutils
+patch_binutils() {
+	echo "patching binutils to allow building cross binutils again"
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/rules
++++ b/debian/rules
+@@ -432,6 +432,7 @@
+ ifneq (,$(TARGET))
+ 	sed "s/@dpkg_dev@/$(DPKG_DEV)/;/^$$/ q" < debian/control.in > debian/control
+ 	sed -e "s/@target@/$$(echo -n $(TARGET) | sed s/_/-/g)/" \
++		-e "s/@host_archs@/any/" \
+ 		< debian/control.cross.in >> debian/control
+ else
+ 	sed -e 's/@dpkg_dev@/$(DPKG_DEV)/' \
+EOF
+}
 if test -f "`echo $RESULT/binutils${HOST_ARCH_SUFFIX}_*.deb`"; then
 	echo "skipping rebuild of binutils-target"
 else
-	$APT_GET install autoconf bison flex gettext texinfo dejagnu quilt python3 file lsb-release zlib1g-dev
+	$APT_GET install autoconf bison flex gettext texinfo dejagnu quilt chrpath python3 file xz-utils lsb-release zlib1g-dev
 	cross_build_setup binutils
+	drop_privs TARGET=$HOST_ARCH dpkg-buildpackage --target=stamps/control
 	drop_privs WITH_SYSROOT=/ TARGET=$HOST_ARCH dpkg-buildpackage -B -uc -us
 	cd ..
 	ls -l
@@ -986,7 +1002,9 @@ fi
 progress_mark "cross binutils"
 
 if test "$HOST_ARCH" = hppa && ! test -f "`echo $RESULT/binutils-hppa64-linux-gnu_*.deb`"; then
+	$APT_GET install autoconf bison flex gettext texinfo dejagnu quilt chrpath python3 file xz-utils lsb-release zlib1g-dev
 	cross_build_setup binutils binutils-hppa64
+	drop_privs TARGET=hppa64-linux-gnu dpkg-buildpackage --target=stamps/control
 	drop_privs WITH_SYSROOT=/ TARGET=hppa64-linux-gnu dpkg-buildpackage -B -uc -us
 	cd ..
 	ls -l
