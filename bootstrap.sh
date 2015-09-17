@@ -2530,6 +2530,51 @@ EOF
 }
 
 add_automatic libelf
+builddep_libelf() {
+	$APT_GET build-dep "-a$1" --arch-only libelf
+	$APT_GET install autotools-dev
+}
+patch_libelf() {
+	echo "patching libelf to update config.guess to fix the musl build #799005"
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/control
++++ b/debian/control
+@@ -2,7 +2,7 @@
+ Section: devel
+ Priority: optional
+ Maintainer: Alex Pennace <alex@pennace.org>
+-Build-Depends: gettext, debhelper (>= 5), dpkg-dev (>= 1.16)
++Build-Depends: gettext, debhelper (>= 5), dpkg-dev (>= 1.16), autotools-dev
+ Standards-Version: 3.6.2.2
+
+ Package: libelfg0
+--- a/debian/rules
++++ b/debian/rules
+@@ -18,6 +18,7 @@
+ build: build-stamp
+ build-stamp: 
+ 	dh_testdir
++	dh_autotools-dev_updateconfig
+ 	mv po/de.gmo po/de.gmo.orig
+ 	cp po/de.gmo.orig po/de.gmo
+ 	# --enable-compat per bug 477025
+@@ -39,6 +39,7 @@
+ 	-make distclean
+ # distclean misses w32/Makefile; kludge around it.
+ 	-rm -f w32/Makefile
++	dh_autotools-dev_restoreconfig
+ 	dh_clean build-stamp debian/libelfg0-dev.links
+
+ debian/%.links: debian/%.links.in
+EOF
+}
+buildenv_libelf() {
+	# gettext.m4 is broken. same as #786885
+	if test "$LIBC_NAME" = musl; then
+		export mr_cv_gnu_gettext=yes && echo mr_cv_gnu_gettext exported
+	fi
+}
+
 add_automatic libgc
 
 add_automatic libgcrypt20
