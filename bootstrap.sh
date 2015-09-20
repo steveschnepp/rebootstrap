@@ -1904,9 +1904,8 @@ EOF
 	fi
 	if test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = hurd; then
 		drop_privs quilt pop -a
-		cd debian
-		echo "cherry picking glibc svn r6573"
-		drop_privs patch -p3 <<'EOF'
+		echo "cherry picking glibc svn r6573 and r6580"
+		drop_privs patch -p2 <<'EOF'
 --- glibc-package/trunk/debian/patches/hurd-i386/cvs-bootstrap.diff
 +++ glibc-package/trunk/debian/patches/hurd-i386/cvs-bootstrap.diff
 @@ -50,7 +50,7 @@
@@ -1914,12 +1913,11 @@ EOF
  -  $(common-objpfx)mach/mach-shortcuts.h
  -	$(MAKE) -C $(..)hurd before-compile no_deps=t
 -+$(patsubst %,$(hurd-objpfx)hurd/%.%,auth io fs process): hurd-before-compile \
-++$(patsubst %,$(hurd-objpfx)hurd/%.%,auth io fs process): hurd-before-compile
+++$(patsubst %,$(hurd-objpfx)hurd/%.h,auth io fs process): hurd-before-compile
  +.PHONY: hurd-before-compile
  +hurd-before-compile: $(common-objpfx)mach/mach-shortcuts.h
  +	$(MAKE) -C $(..)hurd subdir=hurd before-compile no_deps=t
 EOF
-		cd ..
 		drop_privs quilt push -a
 	fi
 }
