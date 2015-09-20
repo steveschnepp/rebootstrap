@@ -2327,6 +2327,7 @@ add_automatic datefudge
 add_automatic db-defaults
 add_automatic debianutils
 add_automatic dpkg
+add_automatic findutils
 add_automatic freetype
 add_automatic gdbm
 
@@ -2797,6 +2798,7 @@ add_need db-defaults # by apt, perl, python2.7
 add_need debianutils # essential
 add_need diffutils # essential
 add_need dpkg # essential
+add_need findutils # essential
 add_need freetype # by fontconfig
 add_need gdbm # by perl, python2.7
 add_need gmp # by guile-2.0
@@ -3355,17 +3357,6 @@ builddep_libffi() {
 cross_build libffi
 mark_built libffi
 # needed by guile-2.0, p11-kit
-
-automatically_cross_build_packages
-
-builddep_findutils() {
-	assert_built "libselinux"
-	# dejagnu dependency unsatisfiable
-	$APT_GET install texinfo debhelper autotools-dev "libselinux1-dev:$1" bison
-}
-cross_build findutils
-mark_built findutils
-# essential
 
 automatically_cross_build_packages
 
