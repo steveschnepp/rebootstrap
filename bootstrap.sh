@@ -927,6 +927,23 @@ EOF
 patch_gcc_5() {
 	patch_gcc_os_include_dir_musl
 	patch_gcc_musl_depends
+	echo "patching gcc-5 to use all of /usr/include/<triplet>"
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/rules2
++++ b/debian/rules2
+@@ -1122,10 +1122,7 @@
+ 		../src/configure $(subst ___, ,$(CONFARGS))
+
+ 	: # multilib builds without b-d on gcc-multilib (used in FLAGS_FOR_TARGET)
+-	if [ -d /usr/include/$(DEB_TARGET_MULTIARCH)/asm ]; then \
+-	  mkdir -p $(builddir)/sys-include; \
+-	  ln -sf /usr/include/$(DEB_TARGET_MULTIARCH)/asm $(builddir)/sys-include/asm; \
+-	fi
++	ln -sf /usr/include/$(DEB_TARGET_MULTIARCH) $(builddir)/sys-include
+
+ 	touch $(configure_stamp)
+
+EOF
 	if test "$ENABLE_MULTIARCH_GCC" = yes; then
 		echo "applying patches for with_deps_on_target_arch_pkgs"
 		drop_privs QUILT_PATCHES="/usr/share/cross-gcc/patches/gcc-$GCC_VER" quilt push -a
