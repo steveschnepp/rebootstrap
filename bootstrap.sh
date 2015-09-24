@@ -372,7 +372,7 @@ apt_get_remove() {
 
 apt-get update
 $APT_GET install pinentry-curses # avoid installing pinentry-gtk (via reprepro)
-$APT_GET install build-essential debhelper reprepro
+$APT_GET install build-essential debhelper reprepro quilt
 
 if test -z "$DROP_PRIVS"; then
 	drop_privs_exec() {
@@ -393,7 +393,7 @@ drop_privs() {
 }
 
 if test "$ENABLE_MULTIARCH_GCC" = yes; then
-	$APT_GET install quilt cross-gcc-dev
+	$APT_GET install cross-gcc-dev
 fi
 
 obtain_source_package() {
