@@ -3410,13 +3410,33 @@ builddep_glib2_0() {
 	assert_built "libelf libffi libselinux pcre3 zlib" # also linux-libc-dev
 	# python-dbus dependency unsatisifable
 	$APT_GET install debhelper cdbs dh-autoreconf pkg-config gettext autotools-dev gnome-pkg-tools dpkg-dev "libelfg0-dev:$1" "libpcre3-dev:$1" desktop-file-utils gtk-doc-tools "libselinux1-dev:$1" "linux-libc-dev:$1" "zlib1g-dev:$1" dbus dbus-x11 shared-mime-info xterm python python-dbus python-gi libxml2-utils "libffi-dev:$1"
-	$APT_GET install libglib2.0-dev # missing B-D on libglib2.0-dev:any <profile.cross>
 }
 buildenv_glib2_0() {
 	export glib_cv_stack_grows=no
 	export glib_cv_uscore=no
 	export ac_cv_func_posix_getgrgid_r=yes
 	export ac_cv_func_posix_getpwuid_r=yes
+}
+patch_glib2_0() {
+	echo "patching glib2.0 to fix cross compilation"
+	drop_privs patch -p1 <<'EOF'
+--- a/gio/tests/Makefile.am
++++ b/gio/tests/Makefile.am
+@@ -71,9 +71,12 @@
+ 	$(NULL)
+
+ test_data = \
+-	test.gresource				\
+ 	$(NULL)
+
++if !CROSS_COMPILING
++test_data += test.gresource
++endif
++
+ uninstalled_test_extra_programs = \
+ 	gio-du					\
+ 
+EOF
 }
 cross_build glib2.0
 mark_built glib2.0
