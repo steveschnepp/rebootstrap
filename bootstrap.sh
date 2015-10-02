@@ -1919,6 +1919,20 @@ diff -Nru glibc-2.19/debian/rules.d/control.mk glibc-2.19/debian/rules.d/control
 EOF
 		drop_privs ./debian/rules debian/control
 	fi
+	echo "patching glibc to drop dev package conflict"
+	drop_privs patch -p1 <<'EOF'
+diff -Nru glibc-2.19/debian/control.in/libc glibc-2.19/debian/control.in/libc
+--- glibc-2.19/debian/control.in/libc
++++ glibc-2.19/debian/control.in/libc
+@@ -37,7 +37,6 @@
+ Suggests: glibc-doc, manpages-dev
+ Provides: libc-dev, libc6-dev [alpha hurd-i386 kfreebsd-i386 kfreebsd-amd64]
+ Breaks: binutils (<< 2.20.1-1), binutils-gold (<< 2.20.1-11), cmake (<< 2.8.4+dfsg.1-5), gcc-4.4 (<< 4.4.6-4), gcc-4.5 (<< 4.5.3-2), gcc-4.6 (<< 4.6.0-12), make (<< 3.81-8.1), pkg-config (<< 0.26-1), libjna-java (<< 3.2.7-4), liblouis-dev (<< 2.3.0-2), liblouisxml-dev (<< 2.4.0-2), libhwloc-dev (<< 1.2-3), check (<< 0.9.10-6.1+b1) [s390x]
+-Conflicts: @libc-dev-conflict@
+ Description: GNU C Library: Development Libraries and Header Files
+  Contains the symlinks, headers, and object files needed to compile
+  and link programs which use the standard C library.
+EOF
 	if test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = hurd; then
 		drop_privs quilt pop -a
 		echo "cherry picking glibc svn r6573 and r6580"
