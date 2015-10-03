@@ -3913,14 +3913,6 @@ diff -Nru cyrus-sasl2-2.1.26.dfsg1/debian/patches/cross.patch cyrus-sasl2-2.1.26
 + libsasldb_la_LIBADD = $(SASL_DB_BACKEND) $(SASL_DB_LIB)
 + 
 + # Prevent make dist stupidity
-diff -Nru cyrus-sasl2-2.1.26.dfsg1/debian/patches/series cyrus-sasl2-2.1.26.dfsg1/debian/patches/series
---- cyrus-sasl2-2.1.26.dfsg1/debian/patches/series
-+++ cyrus-sasl2-2.1.26.dfsg1/debian/patches/series
-@@ -31,3 +31,4 @@
- properly-create-libsasl2.pc.patch
- bug715040.patch
- early-hangup.patch
-+cross.patch
 diff -Nru cyrus-sasl2-2.1.26.dfsg1/debian/rules cyrus-sasl2-2.1.26.dfsg1/debian/rules
 --- cyrus-sasl2-2.1.26.dfsg1/debian/rules
 +++ cyrus-sasl2-2.1.26.dfsg1/debian/rules
@@ -3930,7 +3922,7 @@ diff -Nru cyrus-sasl2-2.1.26.dfsg1/debian/rules cyrus-sasl2-2.1.26.dfsg1/debian/
  DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
 +DEB_HOST_GNU_TYPE ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
 +ifeq ($(origin CC),default)
-+export CC=$(DEB_HOST_GNU_TYPE)-cc
++export CC=$(DEB_HOST_GNU_TYPE)-gcc
 +endif
  
  # Save Berkeley DB used for building the package
@@ -3949,6 +3941,7 @@ diff -Nru cyrus-sasl2-2.1.26.dfsg1/debian/sample/Makefile cyrus-sasl2-2.1.26.dfs
 -	gcc -g -o sample-client sample-client.c -I. -I$(T) -I$(INCDIR1) -I$(INCDIR2) -L$(LIBDIR) -lsasl2
 +	$(CC) -g -o sample-client sample-client.c -I. -I$(T) -I$(INCDIR1) -I$(INCDIR2) -L$(LIBDIR) -lsasl2
 EOF
+	echo cross.patch | drop_privs tee -a debian/patches/series >/dev/null
 	drop_privs quilt push -a
 }
 if test -d "$RESULT/cyrus-sasl2_1"; then
