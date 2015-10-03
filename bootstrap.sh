@@ -2565,7 +2565,26 @@ buildenv_libelf() {
 }
 
 add_automatic libev
+
 add_automatic libgc
+patch_libgc() {
+	echo "patching libgc to support DEB_BUILD_OPTIONS=nocheck"
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/rules
++++ b/debian/rules
+@@ -26,8 +26,10 @@
+ 		--build=$(DEB_BUILD_GNU_TYPE) \
+ 		--libdir=\$${prefix}/lib/$(DEB_HOST_MULTIARCH)
+
++ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
+ override_dh_auto_test:
+ 	$(MAKE) check
++endif
+
+ override_dh_install:
+ 	install -D doc/gc.man debian/tmp/usr/share/man/man3/gc_malloc.3
+EOF
+}
 
 add_automatic libgcrypt20
 buildenv_libgcrypt20() {
