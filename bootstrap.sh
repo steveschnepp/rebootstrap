@@ -3687,4 +3687,28 @@ mark_built openldap
 
 automatically_cross_build_packages
 
+if test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = linux; then
+if test -d "$RESULT/systemd_1"; then
+	echo "skipping stage1 rebuild of systemd"
+else
+	$APT_GET build-dep "-a$HOST_ARCH" --arch-only -P nocheck,noudeb,stage1 systemd
+	cross_build_setup systemd systemd_1
+	check_binNMU
+	drop_privs dpkg-buildpackage "-a$HOST_ARCH" -B -uc -us -Pnocheck,noudeb,stage1
+	cd ..
+	ls -l
+	pickup_packages *.changes
+	test -d "$RESULT" && mkdir "$RESULT/systemd_1"
+	test -d "$RESULT" && cp ./*.deb "$RESULT/systemd_1/"
+	compare_native ./*.deb
+	cd ..
+	drop_privs rm -Rf systemd_1
+fi
+progress_mark "systemd stage1 cross build"
+mark_built systemd
+fi
+# needed by util-linux
+
+automatically_cross_build_packages
+
 assert_built "$need_packages"
