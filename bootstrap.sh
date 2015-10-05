@@ -982,6 +982,45 @@ fi
 
 # binutils
 patch_binutils() {
+	if test "$HOST_ARCH" = "kfreebsd-armhf"; then
+		echo "patching binutils for kfreebsd-armhf"
+		drop_privs patch -p1 <<'EOF'
+--- a/bfd/config.bfd
++++ b/bfd/config.bfd
+@@ -337,7 +337,7 @@
+     targ_selvecs=arm_elf32_be_vec
+     ;;
+   arm-*-elf | arm*-*-freebsd* | arm*-*-linux-* | arm*-*-conix* | \
+-  arm*-*-uclinux* | arm-*-kfreebsd*-gnu | \
++  arm*-*-uclinux* | arm-*-kfreebsd*-gnu* | \
+   arm*-*-eabi* )
+     targ_defvec=arm_elf32_le_vec
+     targ_selvecs=arm_elf32_be_vec
+--- a/gas/configure.tgt
++++ b/gas/configure.tgt
+@@ -140,7 +140,8 @@
+   arm-*-conix*)				fmt=elf ;;
+   arm-*-freebsd[89].* | armeb-*-freebsd[89].*)
+ 					fmt=elf  em=freebsd ;;
+-  arm-*-freebsd* | armeb-*-freebsd*)	fmt=elf  em=armfbsdeabi ;;
++  arm-*-freebsd* | armeb-*-freebsd* | arm-*-kfreebsd-gnueabi*)
++                                       fmt=elf  em=armfbsdeabi ;;
+   arm*-*-freebsd*)			fmt=elf  em=armfbsdvfp ;;
+   arm-*-linux*aout*)			fmt=aout em=linux ;;
+   arm-*-linux-*eabi*)			fmt=elf  em=armlinuxeabi ;;
+--- a/ld/configure.tgt
++++ b/ld/configure.tgt
+@@ -83,7 +83,7 @@
+ arm-*-coff)		targ_emul=armcoff ;;
+ arm*b-*-freebsd*)	targ_emul=armelfb_fbsd
+ 			targ_extra_emuls="armelf_fbsd armelf" ;;
+-arm*-*-freebsd* | arm-*-kfreebsd*-gnu)
++arm*-*-freebsd* | arm-*-kfreebsd*-gnu*)
+ 	       		targ_emul=armelf_fbsd
+ 			targ_extra_emuls="armelfb_fbsd armelf" ;;
+ armeb-*-netbsdelf*)	targ_emul=armelfb_nbsd;
+EOF
+	fi
 	echo "patching binutils to allow building cross binutils again"
 	drop_privs patch -p1 <<'EOF'
 --- a/debian/rules
