@@ -3714,7 +3714,7 @@ else
 	$APT_GET build-dep "-a$HOST_ARCH" --arch-only -P nocheck,noudeb,stage1 systemd
 	cross_build_setup systemd systemd_1
 	check_binNMU
-	drop_privs dpkg-buildpackage "-a$HOST_ARCH" -B -uc -us -Pnocheck,noudeb,stage1
+	drop_privs ac_cv_func_malloc_0_nonnull=yes dpkg-buildpackage "-a$HOST_ARCH" -B -uc -us -Pnocheck,noudeb,stage1
 	cd ..
 	ls -l
 	pickup_packages *.changes
