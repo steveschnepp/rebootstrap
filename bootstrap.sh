@@ -1669,24 +1669,6 @@ diff -Nru glibc-2.19/debian/control.in/libc glibc-2.19/debian/control.in/libc
   Contains the symlinks, headers, and object files needed to compile
   and link programs which use the standard C library.
 EOF
-	if test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = hurd; then
-		drop_privs quilt pop -a
-		echo "cherry picking glibc svn r6573 and r6580"
-		drop_privs patch -p2 <<'EOF'
---- glibc-package/trunk/debian/patches/hurd-i386/cvs-bootstrap.diff
-+++ glibc-package/trunk/debian/patches/hurd-i386/cvs-bootstrap.diff
-@@ -50,7 +50,7 @@
- -$(patsubst %,$(hurd-objpfx)hurd/%.%,auth io fs process): \
- -  $(common-objpfx)mach/mach-shortcuts.h
- -	$(MAKE) -C $(..)hurd before-compile no_deps=t
--+$(patsubst %,$(hurd-objpfx)hurd/%.%,auth io fs process): hurd-before-compile \
-++$(patsubst %,$(hurd-objpfx)hurd/%.h,auth io fs process): hurd-before-compile
- +.PHONY: hurd-before-compile
- +hurd-before-compile: $(common-objpfx)mach/mach-shortcuts.h
- +	$(MAKE) -C $(..)hurd subdir=hurd before-compile no_deps=t
-EOF
-		drop_privs quilt push -a
-	fi
 }
 if test -d "$RESULT/${LIBC_NAME}1"; then
 	echo "skipping rebuild of $LIBC_NAME stage1"
