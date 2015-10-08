@@ -471,6 +471,20 @@ Pin-Priority: 1002
 EOF
 apt-get update
 
+# removing libc*-dev conflict with each other
+LIBC_DEV_PKG=$(apt-cache showpkg libc-dev | sed '1,/^Reverse Provides:/d;s/ .*//;q')
+if test "$(apt-cache show "$LIBC_DEV_PKG" | sed -n 's/^Source: //;T;p;q')" = glibc; then
+	cd /tmp/buildd
+	apt-get download "$LIBC_DEV_PKG"
+	dpkg-deb -R "./$LIBC_DEV_PKG"_*.deb x
+	sed -i -e '/^Conflicts: /d' x/DEBIAN/control
+	dpkg-deb -b x "./$LIBC_DEV_PKG"_*.deb
+	reprepro includedeb rebootstrap-native "./$LIBC_DEV_PKG"_*.deb
+	dpkg -i "./$LIBC_DEV_PKG"_*.deb
+	apt-get update
+	rm -R "./$LIBC_DEV_PKG"_*.deb x
+fi
+
 chdist_native() {
 	local command
 	command="$1"
