@@ -156,7 +156,7 @@ check_arch() {
 	case "$FILE_RES" in
 		*" version 1 (SYSV),"*)
 			case "$(dpkg-architecture "-a$2" -qDEB_HOST_ARCH_OS)" in
-				linux|hurd) ;;
+				linux|hurd|kfreebsd) ;;
 				*)
 					echo "os mismatch"
 					echo "expected $2"
