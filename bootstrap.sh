@@ -2317,6 +2317,7 @@ add_automatic libssh2
 add_automatic libtasn1-6
 add_automatic libtextwrap
 add_automatic libunistring
+add_automatic libverto
 
 add_automatic libx11
 buildenv_libx11() {
@@ -2533,7 +2534,6 @@ test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = linux && add_nee
 add_need libatomic-ops # by gcc-4.9
 add_need libcap2 # by systemd
 add_need libelf # by systemtap, glib2.0
-add_need libev # by libverto
 add_need libgc # by guile-2.0
 add_need libgcrypt20 # by libprelude, cryptsetup
 add_need libpng # by slang2
@@ -2545,6 +2545,7 @@ test "`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS`" = linux && add_need
 add_need libssh2 # by curl
 add_need libtextwrap # by cdebconf
 add_need libunistring # by guile-2.0
+add_need libverto # by krb5
 add_need libx11 # by dbus
 add_need libxau # by libxcb
 add_need libxdmcp # by libxcb
