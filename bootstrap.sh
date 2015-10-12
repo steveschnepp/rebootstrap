@@ -14,7 +14,7 @@ GCC_VER=
 ENABLE_MULTILIB=no
 ENABLE_MULTIARCH_GCC=yes
 REPODIR=/tmp/repo
-APT_GET="apt-get --no-install-recommends -y -o Debug::pkgProblemResolver=true -o Debug::pkgDepCache::Marker=1 -o Debug::pkgDepCache::AutoInstall=1"
+APT_GET="apt-get --no-install-recommends -y -o Debug::pkgProblemResolver=true -o Debug::pkgDepCache::Marker=1 -o Debug::pkgDepCache::AutoInstall=1 -o Acquire::Languages=none"
 DEFAULT_PROFILES="cross nocheck"
 LIBC_NAME=glibc
 DROP_PRIVS=buildd
@@ -370,7 +370,7 @@ apt_get_remove() {
 	fi
 }
 
-apt-get update
+$APT_GET update
 $APT_GET install pinentry-curses # avoid installing pinentry-gtk (via reprepro)
 $APT_GET install build-essential debhelper reprepro quilt
 
@@ -421,7 +421,7 @@ done
 grep -q '^deb-src ' /etc/apt/sources.list || echo "deb-src $MIRROR sid main" >> /etc/apt/sources.list
 
 dpkg --add-architecture $HOST_ARCH
-apt-get update
+$APT_GET update
 
 if test -z "$GCC_VER"; then
 	GCC_VER=`apt-cache depends gcc | sed 's/^ *Depends: gcc-\([0-9.]*\)$/\1/;t;d'`
@@ -469,7 +469,7 @@ Package: *
 Pin: release l=rebootstrap
 Pin-Priority: 1002
 EOF
-apt-get update
+$APT_GET update
 
 # removing libc*-dev conflict with each other
 LIBC_DEV_PKG=$(apt-cache showpkg libc-dev | sed '1,/^Reverse Provides:/d;s/ .*//;q')
@@ -481,7 +481,7 @@ if test "$(apt-cache show "$LIBC_DEV_PKG" | sed -n 's/^Source: //;T;p;q')" = gli
 	dpkg-deb -b x "./$LIBC_DEV_PKG"_*.deb
 	reprepro includedeb rebootstrap-native "./$LIBC_DEV_PKG"_*.deb
 	dpkg -i "./$LIBC_DEV_PKG"_*.deb
-	apt-get update
+	$APT_GET update
 	rm -R "./$LIBC_DEV_PKG"_*.deb x
 fi
 
@@ -569,7 +569,7 @@ pickup_additional_packages() {
 			exit 1
 		fi
 	done
-	apt-get update
+	$APT_GET update
 }
 
 pickup_packages() {
