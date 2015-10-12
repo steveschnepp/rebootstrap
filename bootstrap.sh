@@ -1811,7 +1811,7 @@ if test -d "$RESULT/${LIBC_NAME}2"; then
 	echo "skipping rebuild of $LIBC_NAME stage2"
 	dpkg -i "$RESULT/${LIBC_NAME}2/"*.deb
 else
-	$APT_GET install gettext file quilt autoconf gawk debhelper rdfind symlinks libaudit-dev libcap-dev libselinux-dev binutils bison netbase linux-libc-dev:$HOST_ARCH
+	$APT_GET install gettext file quilt autoconf gawk debhelper rdfind symlinks binutils bison netbase "linux-libc-dev:$HOST_ARCH" "gcc-$GCC_VER$HOST_ARCH_SUFFIX"
 	cross_build_setup "$LIBC_NAME" "${LIBC_NAME}2"
 	if test "$ENABLE_MULTILIB" = yes; then
 		dpkg-checkbuilddeps -B "-a$HOST_ARCH" -Pstage2 || : # tell unmet build depends
