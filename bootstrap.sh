@@ -599,7 +599,7 @@ pickup_packages() {
 		done
 		i="$REPODIR/archive/${source}_$i"
 		mkdir "$i"
-		for f in `reprepro --list-format '${Filename}\n'  listfilter rebootstrap "Source (= $source)"`; do
+		for f in $(reprepro --list-format '${Filename}\n' listfilter rebootstrap "\$Source (== $source)"); do
 			cp -v "$REPODIR/$f" "$i"
 		done
 		find "$i" -type d -empty -delete
