@@ -1683,6 +1683,28 @@ diff -Nru glibc-2.19/debian/control.in/libc glibc-2.19/debian/control.in/libc
   Contains the symlinks, headers, and object files needed to compile
   and link programs which use the standard C library.
 EOF
+	echo "patching glibc to move all headers to multiarch locations #798955"
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/rules.d/build.mk
++++ b/debian/rules.d/build.mk
+@@ -218,13 +218,9 @@
+ 	    echo "/lib/$(DEB_HOST_GNU_TYPE)" >> $$conffile; \
+ 	    echo "/usr/lib/$(DEB_HOST_GNU_TYPE)" >> $$conffile; \
+ 	  fi; \
+-	  mkdir -p debian/tmp-$(curpass)/usr/include/$(DEB_HOST_MULTIARCH); \
+-	  mv debian/tmp-$(curpass)/usr/include/bits debian/tmp-$(curpass)/usr/include/$(DEB_HOST_MULTIARCH); \
+-	  mv debian/tmp-$(curpass)/usr/include/gnu debian/tmp-$(curpass)/usr/include/$(DEB_HOST_MULTIARCH); \
+-	  mv debian/tmp-$(curpass)/usr/include/sys debian/tmp-$(curpass)/usr/include/$(DEB_HOST_MULTIARCH); \
+-	  mv debian/tmp-$(curpass)/usr/include/fpu_control.h debian/tmp-$(curpass)/usr/include/$(DEB_HOST_MULTIARCH); \
+-	  mv debian/tmp-$(curpass)/usr/include/a.out.h debian/tmp-$(curpass)/usr/include/$(DEB_HOST_MULTIARCH); \
+-	  mv debian/tmp-$(curpass)/usr/include/ieee754.h debian/tmp-$(curpass)/usr/include/$(DEB_HOST_MULTIARCH); \
++	  mkdir -p debian/tmp-$(curpass)/usr/include.tmp; \
++	  mv debian/tmp-$(curpass)/usr/include debian/tmp-$(curpass)/usr/include.tmp/$(DEB_HOST_MULTIARCH); \
++	  mv debian/tmp-$(curpass)/usr/include.tmp debian/tmp-$(curpass)/usr/include; \
+ 	fi
+ 
+ 	# For our biarch libc, add an ld.so.conf.d configuration; this
+EOF
 }
 if test -d "$RESULT/${LIBC_NAME}1"; then
 	echo "skipping rebuild of $LIBC_NAME stage1"
