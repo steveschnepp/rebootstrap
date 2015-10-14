@@ -3750,4 +3750,15 @@ fi
 
 automatically_cross_build_packages
 
+builddep_e2fsprogs() {
+	assert_built "util-linux"
+	# dietlibc-dev lacks build profile annotation
+	$APT_GET install gettext texinfo pkg-config debhelper "libblkid-dev:$1" "uuid-dev:$1" m4
+}
+cross_build e2fsprogs
+mark_built e2fsprogs
+# essential
+
+automatically_cross_build_packages
+
 assert_built "$need_packages"
