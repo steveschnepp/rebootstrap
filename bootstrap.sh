@@ -1826,6 +1826,24 @@ else
 fi
 progress_mark "cross gcc stage2 build"
 
+if test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = hurd; then
+if test -d "$RESULT/hurd_2"; then
+	echo "skipping rebuild of hurd stage2"
+else
+	$APT_GET install texinfo debhelper dh-exec autoconf dh-autoreconf gawk flex bison autotools-dev "libc-dev:$HOST_ARCH"
+	cross_build_setup hurd hurd_2
+	dpkg-checkbuilddeps -B "-a$HOST_ARCH" -Pstage2
+	drop_privs dpkg-buildpackage -B "-a$HOST_ARCH" -Pstage2 -uc -us
+	cd ..
+	ls -l
+	pickup_packages *.changes
+	test -d "$RESULT" && mkdir "$RESULT/hurd_2" && cp -v ./*.deb "$RESULT/hurd_2"
+	cd ..
+	drop_privs rm -Rf hurd_2
+fi
+progress_mark "hurd stage2 cross build"
+fi
+
 # several undeclared file conflicts such as #745552 or #784015
 apt_get_remove $(dpkg-query -W "libc[0-9]*:$(dpkg --print-architecture)" | sed "s/\\s.*//;/:$(dpkg --print-architecture)/d")
 
