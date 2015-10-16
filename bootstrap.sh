@@ -2064,7 +2064,102 @@ builddep_build_essential() {
 }
 
 add_automatic bzip2
+
 add_automatic cloog
+builddep_cloog() {
+	$APT_GET install debhelper dh-autoreconf "libisl-dev:$1" "libgmp-dev:$1" texinfo help2man
+}
+patch_cloog() {
+	echo "patching cloog to fix build on ppc64el #801337"
+	drop_privs patch -p1 <<'EOF'
+diff -Nru cloog-0.18.3/debian/control cloog-0.18.3/debian/control
+--- cloog-0.18.3/debian/control
++++ cloog-0.18.3/debian/control
+@@ -2,7 +2,7 @@
+ Priority: optional
+ Maintainer: Debian GCC Maintainers <debian-gcc@lists.debian.org>
+ Uploaders: Matthias Klose <doko@debian.org>, Michael Tautschnig <mt@debian.org>
+-Build-Depends: debhelper (>= 5), autotools-dev,
++Build-Depends: debhelper (>= 5), dh-autoreconf,
+   libisl-dev (>= 0.14), libgmp-dev,
+   texinfo, help2man
+ # Build-Depends-Indep: libpod-latex-perl | perl (<< 5.17.0) # not needed, no docs built
+diff -Nru cloog-0.18.3/debian/patches/series cloog-0.18.3/debian/patches/series
+--- cloog-0.18.3/debian/patches/series
++++ cloog-0.18.3/debian/patches/series
+@@ -0,0 +1 @@
++use_autoreconf.patch
+diff -Nru cloog-0.18.3/debian/patches/use_autoreconf.patch cloog-0.18.3/debian/patches/use_autoreconf.patch
+--- cloog-0.18.3/debian/patches/use_autoreconf.patch
++++ cloog-0.18.3/debian/patches/use_autoreconf.patch
+@@ -0,0 +1,42 @@
++Description: Use autoreconf to build
++ This package failed to run autoreconf because configure.ac includes isl subdir
++ to its configuration even if it is not used.
++ Solution is to include the Makefile.am that would be downloaded if built from
++ scratch. The file is short.
++Author: Fernando Furusato <ferseiti@br.ibm.com>
++
++--- /dev/null
+++++ cloog-0.18.3/isl/interface/Makefile.am
++@@ -0,0 +1,32 @@
+++AUTOMAKE_OPTIONS = nostdinc
+++
+++noinst_PROGRAMS = extract_interface
+++
+++AM_CXXFLAGS = $(CLANG_CXXFLAGS)
+++AM_LDFLAGS = $(CLANG_LDFLAGS)
+++
+++includes = -I$(top_builddir) -I$(top_srcdir) \
+++	-I$(top_builddir)/include -I$(top_srcdir)/include
+++
+++extract_interface_CPPFLAGS = $(includes)
+++extract_interface_SOURCES = \
+++	python.h \
+++	python.cc \
+++	extract_interface.h \
+++	extract_interface.cc
+++extract_interface_LDADD = \
+++	-lclangFrontend -lclangSerialization -lclangParse -lclangSema \
+++	$(LIB_CLANG_EDIT) \
+++	-lclangAnalysis -lclangAST -lclangLex -lclangBasic -lclangDriver \
+++	$(CLANG_LIBS) $(CLANG_LDFLAGS)
+++
+++test: extract_interface
+++	./extract_interface$(EXEEXT) $(includes) $(srcdir)/all.h
+++
+++isl.py: extract_interface isl.py.top
+++	(cat $(srcdir)/isl.py.top; \
+++		./extract_interface$(EXEEXT) $(includes) $(srcdir)/all.h) \
+++			> isl.py
+++
+++dist-hook: isl.py
+++	cp isl.py $(distdir)/
+diff -Nru cloog-0.18.3/debian/rules cloog-0.18.3/debian/rules
+--- cloog-0.18.3/debian/rules
++++ cloog-0.18.3/debian/rules
+@@ -19,7 +19,7 @@
+ configure: configure-stamp
+ configure-stamp:
+ 	dh_testdir
+-	dh_autotools-dev_updateconfig
++	dh_autoreconf
+ 	chmod +x configure
+ 	./configure $(CROSS) \
+ 		--prefix=/usr \
+@@ -49,7 +49,7 @@
+ 	rm -f doc/*.info
+ 	rm -f cloog-isl-uninstalled.sh *.pc *.pc.in doc/gitversion.texi version.h
+ 	rm -f config.log config.status
+-	dh_autotools-dev_restoreconfig
++	dh_autoreconf_clean
+ 	dh_clean 
+ 
+ install: build
+EOF
+	drop_privs quilt push -a
+}
+
 add_automatic dash
 patch_dash() {
 	echo "patching dash to invoke the host arch prefixed strip #665965"
