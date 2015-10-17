@@ -958,6 +958,342 @@ patch_gcc_5() {
  	touch $(configure_stamp)
 
 EOF
+	echo "patching gcc-5 to support building without binutils-multiarch"
+	drop_privs patch -p1 <<'EOF'
+diff -u gcc-5-5.2.1/debian/rules.d/binary-ada.mk gcc-5-5.2.1/debian/rules.d/binary-ada.mk
+--- gcc-5-5.2.1/debian/rules.d/binary-ada.mk
++++ gcc-5-5.2.1/debian/rules.d/binary-ada.mk
+@@ -126,7 +126,7 @@
+ 		$(d_lgnat)/usr/share/lintian/overrides/$(p_lgnat)
+ endif
+ 
+-	dh_strip -p$(p_lgnat) --dbg-package=$(p_lgnat_dbg)
++	$(cross_strip) dh_strip -p$(p_lgnat) --dbg-package=$(p_lgnat_dbg)
+ 	dh_compress -p$(p_lgnat)
+ 	dh_fixperms -p$(p_lgnat)
+ 	$(cross_shlibdeps) dh_shlibdeps -p$(p_lgnat) \
+@@ -174,7 +174,7 @@
+ 	   $(usr_lib)/libgnatvsn.so.$(GNAT_VERSION) \
+ 	   $(usr_lib)/libgnatvsn.so
+ 	debian/dh_doclink -p$(p_lgnatvsn_dev) $(p_glbase)
+-	dh_strip -p$(p_lgnatvsn_dev) -X.a --keep-debug
++	$(cross_strip) dh_strip -p$(p_lgnatvsn_dev) -X.a --keep-debug
+ 	dh_fixperms -p$(p_lgnatvsn_dev)
+ 	$(cross_gencontrol) dh_gencontrol -p$(p_lgnatvsn_dev) \
+ 		-- -v$(DEB_VERSION) $(common_substvars)
+@@ -190,7 +190,7 @@
+ endif
+ 	$(dh_compat2) dh_movefiles -p$(p_lgnatvsn) $(usr_lib)/libgnatvsn.so.$(GNAT_VERSION)
+ 	debian/dh_doclink -p$(p_lgnatvsn) $(p_glbase)
+-	dh_strip -p$(p_lgnatvsn) --dbg-package=$(p_lgnatvsn_dbg)
++	$(cross_strip) dh_strip -p$(p_lgnatvsn) --dbg-package=$(p_lgnatvsn_dbg)
+ 	$(cross_makeshlibs) dh_makeshlibs -p$(p_lgnatvsn) \
+ 		-V '$(p_lgnatvsn) (>= $(DEB_VERSION))'
+ 	$(call cross_mangle_shlibs,$(p_lgnatvsn))
+@@ -239,7 +239,7 @@
+ 	dh_link -p$(p_lgnatprj_dev) \
+ 	   $(usr_lib)/libgnatprj.so.$(GNAT_VERSION) \
+ 	   $(usr_lib)/libgnatprj.so
+-	dh_strip -p$(p_lgnatprj_dev) -X.a --keep-debug
++	$(cross_strip) dh_strip -p$(p_lgnatprj_dev) -X.a --keep-debug
+ 	debian/dh_doclink -p$(p_lgnatprj_dev) $(p_glbase)
+ 	dh_fixperms -p$(p_lgnatprj_dev)
+ 	$(cross_gencontrol) dh_gencontrol -p$(p_lgnatprj_dev) \
+@@ -256,7 +256,7 @@
+ endif
+ 	$(dh_compat2) dh_movefiles -p$(p_lgnatprj) $(usr_lib)/libgnatprj.so.$(GNAT_VERSION)
+ 	debian/dh_doclink -p$(p_lgnatprj) $(p_glbase)
+-	dh_strip -p$(p_lgnatprj) --dbg-package=$(p_lgnatprj_dbg)
++	$(cross_strip) dh_strip -p$(p_lgnatprj) --dbg-package=$(p_lgnatprj_dbg)
+ 	dh_fixperms -p$(p_lgnatprj)
+ 	$(cross_makeshlibs) dh_makeshlibs -p$(p_lgnatprj) \
+ 		-V '$(p_lgnatprj) (>= $(DEB_VERSION))'
+@@ -398,7 +398,7 @@
+ 
+ 	debian/dh_rmemptydirs -p$(p_gnat)
+ 
+-	dh_strip -p$(p_gnat)
++	$(cross_strip) dh_strip -p$(p_gnat)
+ 	dh_compress -p$(p_gnat)
+ 	dh_fixperms -p$(p_gnat)
+ 	find $(d_gnat) -name '*.ali' | xargs chmod 444
+@@ -412,7 +412,7 @@
+ 	dh_builddeb -p$(p_gnat)
+ 
+ ifeq ($(with_gnatsjlj),yes)
+-	dh_strip -p$(p_gnatsjlj)
++	$(cross_strip) dh_strip -p$(p_gnatsjlj)
+ 	dh_compress -p$(p_gnatsjlj)
+ 	dh_fixperms -p$(p_gnatsjlj)
+ 	find $(d_gnatsjlj) -name '*.ali' | xargs chmod 444
+diff -u gcc-5-5.2.1/debian/rules.d/binary-fortran.mk gcc-5-5.2.1/debian/rules.d/binary-fortran.mk
+--- gcc-5-5.2.1/debian/rules.d/binary-fortran.mk
++++ gcc-5-5.2.1/debian/rules.d/binary-fortran.mk
+@@ -97,7 +97,7 @@
+ 		cp debian/$(p_l).overrides debian/$(p_l)/usr/share/lintian/overrides/$(p_l); \
+ 	fi
+ 
+-	dh_strip -p$(p_l) --dbg-package=$(p_d)
++	$(cross_strip) dh_strip -p$(p_l) --dbg-package=$(p_d)
+ 	dh_compress -p$(p_l) -p$(p_d)
+ 	dh_fixperms -p$(p_l) -p$(p_d)
+ 	$(cross_makeshlibs) dh_makeshlibs -p$(p_l)
+@@ -137,7 +137,7 @@
+ 	debian/dh_doclink -p$(p_l) $(p_lbase)
+ 	debian/dh_rmemptydirs -p$(p_l)
+ 
+-	dh_strip -p$(p_l)
++	$(cross_strip) dh_strip -p$(p_l)
+ 	dh_compress -p$(p_l)
+ 	dh_fixperms -p$(p_l)
+ 	$(cross_shlibdeps) dh_shlibdeps -p$(p_l)
+diff -u gcc-5-5.2.1/debian/rules.d/binary-libasan.mk gcc-5-5.2.1/debian/rules.d/binary-libasan.mk
+--- gcc-5-5.2.1/debian/rules.d/binary-libasan.mk
++++ gcc-5-5.2.1/debian/rules.d/binary-libasan.mk
+@@ -35,7 +35,7 @@
+ 		cp debian/$(p_l).overrides debian/$(p_l)/usr/share/lintian/overrides/$(p_l); \
+ 	fi
+ 
+-	dh_strip -p$(p_l) --dbg-package=$(p_d)
++	$(cross_strip) dh_strip -p$(p_l) --dbg-package=$(p_d)
+ 	dh_compress -p$(p_l) -p$(p_d)
+ 	dh_fixperms -p$(p_l) -p$(p_d)
+ 	$(cross_makeshlibs) dh_makeshlibs -p$(p_l)
+diff -u gcc-5-5.2.1/debian/rules.d/binary-libatomic.mk gcc-5-5.2.1/debian/rules.d/binary-libatomic.mk
+--- gcc-5-5.2.1/debian/rules.d/binary-libatomic.mk
++++ gcc-5-5.2.1/debian/rules.d/binary-libatomic.mk
+@@ -30,7 +30,7 @@
+ 	debian/dh_doclink -p$(p_l) $(p_lbase)
+ 	debian/dh_doclink -p$(p_d) $(p_lbase)
+ 
+-	dh_strip -p$(p_l) --dbg-package=$(p_d)
++	$(cross_strip) dh_strip -p$(p_l) --dbg-package=$(p_d)
+ 	dh_compress -p$(p_l) -p$(p_d)
+ 	dh_fixperms -p$(p_l) -p$(p_d)
+ 	$(cross_makeshlibs) dh_makeshlibs -p$(p_l)
+diff -u gcc-5-5.2.1/debian/rules.d/binary-libcilkrts.mk gcc-5-5.2.1/debian/rules.d/binary-libcilkrts.mk
+--- gcc-5-5.2.1/debian/rules.d/binary-libcilkrts.mk
++++ gcc-5-5.2.1/debian/rules.d/binary-libcilkrts.mk
+@@ -35,7 +35,7 @@
+ 		cp debian/$(p_l).overrides debian/$(p_l)/usr/share/lintian/overrides/$(p_l); \
+ 	fi
+ 
+-	dh_strip -p$(p_l) --dbg-package=$(p_d)
++	$(cross_strip) dh_strip -p$(p_l) --dbg-package=$(p_d)
+ 	dh_compress -p$(p_l) -p$(p_d)
+ 	dh_fixperms -p$(p_l) -p$(p_d)
+ 	$(cross_makeshlibs) dh_makeshlibs -p$(p_l)
+diff -u gcc-5-5.2.1/debian/rules.d/binary-libgcc.mk gcc-5-5.2.1/debian/rules.d/binary-libgcc.mk
+--- gcc-5-5.2.1/debian/rules.d/binary-libgcc.mk
++++ gcc-5-5.2.1/debian/rules.d/binary-libgcc.mk
+@@ -161,7 +161,7 @@
+ 	debian/dh_doclink -p$(2) $(p_lbase)
+ 	debian/dh_rmemptydirs -p$(2)
+ 
+-	dh_strip -p$(2)
++	$(cross_strip) dh_strip -p$(2)
+ 	dh_compress -p$(2)
+ 	$(cross_shlibdeps) dh_shlibdeps -p$(2)
+ 	$(call cross_mangle_substvars,$(2))
+@@ -295,7 +295,7 @@
+ 	debian/dh_doclink -p$(p_d) $(if $(3),$(3),$(p_lbase))
+ 	debian/dh_rmemptydirs -p$(p_l)
+ 	debian/dh_rmemptydirs -p$(p_d)
+-	dh_strip -p$(p_l) --dbg-package=$(p_d)
++	$(cross_strip) dh_strip -p$(p_l) --dbg-package=$(p_d)
+ 
+ 	# see Debian #533843 for the __aeabi symbol handling; this construct is
+ 	# just to include the symbols for dpkg versions older than 1.15.3 which
+diff -u gcc-5-5.2.1/debian/rules.d/binary-libgccjit.mk gcc-5-5.2.1/debian/rules.d/binary-libgccjit.mk
+--- gcc-5-5.2.1/debian/rules.d/binary-libgccjit.mk
++++ gcc-5-5.2.1/debian/rules.d/binary-libgccjit.mk
+@@ -42,7 +42,7 @@
+ 	debian/dh_doclink -p$(p_jitdev) $(p_base)
+ 	debian/dh_doclink -p$(p_jitdbg) $(p_base)
+ 
+-	dh_strip -p$(p_jitlib) --dbg-package=$(p_jitdbg)
++	$(cross_strip) dh_strip -p$(p_jitlib) --dbg-package=$(p_jitdbg)
+ 	dh_compress -p$(p_jitlib) -p$(p_jitdev) -p$(p_jitdbg)
+ 	dh_fixperms -p$(p_jitlib) -p$(p_jitdev) -p$(p_jitdbg)
+ 	$(cross_makeshlibs) dh_makeshlibs -p$(p_jitlib)
+diff -u gcc-5-5.2.1/debian/rules.d/binary-libgomp.mk gcc-5-5.2.1/debian/rules.d/binary-libgomp.mk
+--- gcc-5-5.2.1/debian/rules.d/binary-libgomp.mk
++++ gcc-5-5.2.1/debian/rules.d/binary-libgomp.mk
+@@ -30,7 +30,7 @@
+ 	debian/dh_doclink -p$(p_l) $(p_lbase)
+ 	debian/dh_doclink -p$(p_d) $(p_lbase)
+ 
+-	dh_strip -p$(p_l) --dbg-package=$(p_d)
++	$(cross_strip) dh_strip -p$(p_l) --dbg-package=$(p_d)
+ 	dh_compress -p$(p_l) -p$(p_d)
+ 	dh_fixperms -p$(p_l) -p$(p_d)
+ 	$(cross_makeshlibs) dh_makeshlibs -p$(p_l)
+diff -u gcc-5-5.2.1/debian/rules.d/binary-libitm.mk gcc-5-5.2.1/debian/rules.d/binary-libitm.mk
+--- gcc-5-5.2.1/debian/rules.d/binary-libitm.mk
++++ gcc-5-5.2.1/debian/rules.d/binary-libitm.mk
+@@ -30,7 +30,7 @@
+ 	debian/dh_doclink -p$(p_l) $(p_lbase)
+ 	debian/dh_doclink -p$(p_d) $(p_lbase)
+ 
+-	dh_strip -p$(p_l) --dbg-package=$(p_d)
++	$(cross_strip) dh_strip -p$(p_l) --dbg-package=$(p_d)
+ 	dh_compress -p$(p_l) -p$(p_d)
+ 	dh_fixperms -p$(p_l) -p$(p_d)
+ 	$(cross_makeshlibs) dh_makeshlibs -p$(p_l)
+diff -u gcc-5-5.2.1/debian/rules.d/binary-liblsan.mk gcc-5-5.2.1/debian/rules.d/binary-liblsan.mk
+--- gcc-5-5.2.1/debian/rules.d/binary-liblsan.mk
++++ gcc-5-5.2.1/debian/rules.d/binary-liblsan.mk
+@@ -35,7 +35,7 @@
+ 		cp debian/$(p_l).overrides debian/$(p_l)/usr/share/lintian/overrides/$(p_l); \
+ 	fi
+ 
+-	dh_strip -p$(p_l) --dbg-package=$(p_d)
++	$(cross_strip) dh_strip -p$(p_l) --dbg-package=$(p_d)
+ 	dh_compress -p$(p_l) -p$(p_d)
+ 	dh_fixperms -p$(p_l) -p$(p_d)
+ 	$(cross_makeshlibs) dh_makeshlibs -p$(p_l)
+diff -u gcc-5-5.2.1/debian/rules.d/binary-libmpx.mk gcc-5-5.2.1/debian/rules.d/binary-libmpx.mk
+--- gcc-5-5.2.1/debian/rules.d/binary-libmpx.mk
++++ gcc-5-5.2.1/debian/rules.d/binary-libmpx.mk
+@@ -37,7 +37,7 @@
+ 		cp debian/$(p_l).overrides debian/$(p_l)/usr/share/lintian/overrides/$(p_l); \
+ 	fi
+ 
+-	dh_strip -p$(p_l) --dbg-package=$(p_d)
++	$(cross_strip) dh_strip -p$(p_l) --dbg-package=$(p_d)
+ 	dh_compress -p$(p_l) -p$(p_d)
+ 	dh_fixperms -p$(p_l) -p$(p_d)
+ 	$(cross_makeshlibs) dh_makeshlibs -p$(p_l)
+diff -u gcc-5-5.2.1/debian/rules.d/binary-libobjc.mk gcc-5-5.2.1/debian/rules.d/binary-libobjc.mk
+--- gcc-5-5.2.1/debian/rules.d/binary-libobjc.mk
++++ gcc-5-5.2.1/debian/rules.d/binary-libobjc.mk
+@@ -65,7 +65,7 @@
+ 	debian/dh_doclink -p$(p_l) $(p_lbase)
+ 	debian/dh_doclink -p$(p_d) $(p_lbase)
+ 
+-	dh_strip -p$(p_l) --dbg-package=$(p_d)
++	$(cross_strip) dh_strip -p$(p_l) --dbg-package=$(p_d)
+ 	dh_compress -p$(p_l) -p$(p_d)
+ 	dh_fixperms -p$(p_l) -p$(p_d)
+ 	$(cross_makeshlibs) dh_makeshlibs -p$(p_l) -Xlibobjc_gc.so
+diff -u gcc-5-5.2.1/debian/rules.d/binary-libquadmath.mk gcc-5-5.2.1/debian/rules.d/binary-libquadmath.mk
+--- gcc-5-5.2.1/debian/rules.d/binary-libquadmath.mk
++++ gcc-5-5.2.1/debian/rules.d/binary-libquadmath.mk
+@@ -30,7 +30,7 @@
+ 	debian/dh_doclink -p$(p_l) $(p_lbase)
+ 	debian/dh_doclink -p$(p_d) $(p_lbase)
+ 
+-	dh_strip -p$(p_l) --dbg-package=$(p_d)
++	$(cross_strip) dh_strip -p$(p_l) --dbg-package=$(p_d)
+ 	dh_compress -p$(p_l) -p$(p_d)
+ 	dh_fixperms -p$(p_l) -p$(p_d)
+ 	$(cross_makeshlibs) dh_makeshlibs -p$(p_l)
+diff -u gcc-5-5.2.1/debian/rules.d/binary-libstdcxx.mk gcc-5-5.2.1/debian/rules.d/binary-libstdcxx.mk
+--- gcc-5-5.2.1/debian/rules.d/binary-libstdcxx.mk
++++ gcc-5-5.2.1/debian/rules.d/binary-libstdcxx.mk
+@@ -207,7 +207,7 @@
+ 	debian/dh_doclink -p$(p_l) $(p_lbase)
+ 	debian/dh_rmemptydirs -p$(p_l)
+ 
+-	dh_strip -p$(p_l) $(if $(filter rtlibs,$(DEB_STAGE)),,--dbg-package=$(1)-$(BASE_VERSION)-dbg$(cross_lib_arch))
++	$(cross_strip) dh_strip -p$(p_l) $(if $(filter rtlibs,$(DEB_STAGE)),,--dbg-package=$(1)-$(BASE_VERSION)-dbg$(cross_lib_arch))
+ 	dh_compress -p$(p_l)
+ 	dh_fixperms -p$(p_l)
+ 
+@@ -244,7 +244,7 @@
+ 	$(if $(filter yes,$(with_lib$(2)cxx)),
+ 		cp -a $(d)/$(usr_lib$(2))/libstdc++.so.*[0-9] \
+ 			$(d_d)/$(usr_lib$(2))/.;
+-		dh_strip -p$(p_d) --keep-debug;
++		$(cross_strip) dh_strip -p$(p_d) --keep-debug;
+ 		$(if $(filter yes,$(with_common_libs)),, # if !with_common_libs
+ 			# remove the debug symbols for libstdc++
+ 			# built by a newer version of GCC
+@@ -299,7 +299,7 @@
+ 	debian/dh_doclink -p$(p_l) $(p_lbase)
+ 	debian/dh_rmemptydirs -p$(p_l)
+ 
+-	dh_strip -p$(p_l)
++	$(cross_strip) dh_strip -p$(p_l)
+ 	dh_compress -p$(p_l)
+ 	dh_fixperms -p$(p_l)
+ 	dh_shlibdeps -p$(p_l) \
+@@ -451,16 +451,16 @@
+ ifeq ($(with_libcxx),yes)
+ 	cp -a $(d)/$(usr_lib)/libstdc++.so.*[0-9] \
+ 		$(d_dbg)/$(usr_lib)/
+-	dh_strip -p$(p_dbg) --keep-debug
++	$(cross_strip) dh_strip -p$(p_dbg) --keep-debug
+ 	rm -f $(d_dbg)/$(usr_lib)/libstdc++.so.*[0-9]
+ endif
+ 
+-	dh_strip -p$(p_dev) --dbg-package=$(p_dbg)
++	$(cross_strip) dh_strip -p$(p_dev) --dbg-package=$(p_dbg)
+ ifneq ($(with_common_libs),yes)
+ 	: # remove the debug symbols for libstdc++ built by a newer version of GCC
+ 	rm -rf $(d_dbg)/usr/lib/debug/$(PF)
+ endif
+-	dh_strip -p$(p_pic)
++	$(cross_strip) dh_strip -p$(p_pic)
+ 
+ ifeq ($(with_cxxdev),yes)
+ 	debian/dh_rmemptydirs -p$(p_dev)
+diff -u gcc-5-5.2.1/debian/rules.d/binary-libtsan.mk gcc-5-5.2.1/debian/rules.d/binary-libtsan.mk
+--- gcc-5-5.2.1/debian/rules.d/binary-libtsan.mk
++++ gcc-5-5.2.1/debian/rules.d/binary-libtsan.mk
+@@ -37,7 +37,7 @@
+ 		cp debian/$(p_l).overrides debian/$(p_l)/usr/share/lintian/overrides/$(p_l); \
+ 	fi
+ 
+-	dh_strip -p$(p_l) --dbg-package=$(p_d)
++	$(cross_strip) dh_strip -p$(p_l) --dbg-package=$(p_d)
+ 	dh_compress -p$(p_l) -p$(p_d)
+ 	dh_fixperms -p$(p_l) -p$(p_d)
+ 	$(cross_makeshlibs) dh_makeshlibs -p$(p_l)
+diff -u gcc-5-5.2.1/debian/rules.d/binary-libubsan.mk gcc-5-5.2.1/debian/rules.d/binary-libubsan.mk
+--- gcc-5-5.2.1/debian/rules.d/binary-libubsan.mk
++++ gcc-5-5.2.1/debian/rules.d/binary-libubsan.mk
+@@ -35,7 +35,7 @@
+ 		cp debian/$(p_l).overrides debian/$(p_l)/usr/share/lintian/overrides/$(p_l); \
+ 	fi
+ 
+-	dh_strip -p$(p_l) --dbg-package=$(p_d)
++	$(cross_strip) dh_strip -p$(p_l) --dbg-package=$(p_d)
+ 	dh_compress -p$(p_l) -p$(p_d)
+ 	dh_fixperms -p$(p_l) -p$(p_d)
+ 	$(cross_makeshlibs) dh_makeshlibs -p$(p_l)
+diff -u gcc-5-5.2.1/debian/rules.d/binary-libvtv.mk gcc-5-5.2.1/debian/rules.d/binary-libvtv.mk
+--- gcc-5-5.2.1/debian/rules.d/binary-libvtv.mk
++++ gcc-5-5.2.1/debian/rules.d/binary-libvtv.mk
+@@ -35,7 +35,7 @@
+ 		cp debian/$(p_l).overrides debian/$(p_l)/usr/share/lintian/overrides/$(p_l); \
+ 	fi
+ 
+-	dh_strip -p$(p_l) --dbg-package=$(p_d)
++	$(cross_strip) dh_strip -p$(p_l) --dbg-package=$(p_d)
+ 	dh_compress -p$(p_l) -p$(p_d)
+ 	dh_fixperms -p$(p_l) -p$(p_d)
+ 	$(cross_makeshlibs) dh_makeshlibs -p$(p_l)
+diff -u gcc-5-5.2.1/debian/rules.defs gcc-5-5.2.1/debian/rules.defs
+--- gcc-5-5.2.1/debian/rules.defs
++++ gcc-5-5.2.1/debian/rules.defs
+@@ -212,6 +212,7 @@
+   cross_gencontrol = DEB_HOST_ARCH=$(TARGET)
+   cross_makeshlibs = DEB_HOST_ARCH=$(TARGET)
+   cross_clean = DEB_HOST_ARCH=$(TARGET)
++  cross_strip = DEB_HOST_GNU_TYPE=$(DEB_TARGET_GNU_TYPE)
+ else
+   TARGET_ALIAS := $(DEB_TARGET_GNU_TYPE)
+ 
+@@ -240,6 +241,7 @@
+   cross_gencontrol :=
+   cross_makeshlibs :=
+   cross_clean :=
++  cross_strip :=
+ endif
+ 
+ printarch:
+EOF
 	if test "$ENABLE_MULTIARCH_GCC" = yes; then
 		echo "applying patches for with_deps_on_target_arch_pkgs"
 		drop_privs QUILT_PATCHES="/usr/share/cross-gcc/patches/gcc-$GCC_VER" quilt push -a
@@ -1250,7 +1586,7 @@ if test -d "$RESULT/gcc1"; then
 	apt_get_remove gcc-multilib
 	dpkg -i $RESULT/gcc1/*.deb
 else
-	$APT_GET install debhelper gawk patchutils bison flex lsb-release quilt libtool autoconf2.64 zlib1g-dev libcloog-isl-dev libmpc-dev libmpfr-dev libgmp-dev autogen systemtap-sdt-dev binutils-multiarch "binutils$HOST_ARCH_SUFFIX"
+	$APT_GET install debhelper gawk patchutils bison flex lsb-release quilt libtool autoconf2.64 zlib1g-dev libcloog-isl-dev libmpc-dev libmpfr-dev libgmp-dev autogen systemtap-sdt-dev "binutils$HOST_ARCH_SUFFIX"
 	if test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = linux; then
 		$APT_GET install "linux-libc-dev:$HOST_ARCH"
 	fi
@@ -1786,7 +2122,7 @@ if test -d "$RESULT/gcc2"; then
 	echo "skipping rebuild of gcc stage2"
 	dpkg -i "$RESULT"/gcc2/*.deb
 else
-	$APT_GET install debhelper gawk patchutils bison flex lsb-release quilt libtool autoconf2.64 zlib1g-dev libcloog-isl-dev libmpc-dev libmpfr-dev libgmp-dev autogen systemtap-sdt-dev "libc-dev:$HOST_ARCH" binutils-multiarch "binutils$HOST_ARCH_SUFFIX"
+	$APT_GET install debhelper gawk patchutils bison flex lsb-release quilt libtool autoconf2.64 zlib1g-dev libcloog-isl-dev libmpc-dev libmpfr-dev libgmp-dev autogen systemtap-sdt-dev "libc-dev:$HOST_ARCH" "binutils$HOST_ARCH_SUFFIX"
 	if test "$HOST_ARCH" = hppa; then
 		$APT_GET install binutils-hppa64-linux-gnu
 	fi
@@ -1891,7 +2227,7 @@ if test -d "$RESULT/gcc3"; then
 	echo "skipping rebuild of gcc stage3"
 	dpkg -i "$RESULT"/gcc3/*.deb
 else
-	$APT_GET install debhelper gawk patchutils bison flex lsb-release quilt libtool autoconf2.64 zlib1g-dev libcloog-isl-dev libmpc-dev libmpfr-dev libgmp-dev dejagnu autogen systemtap-sdt-dev binutils-multiarch "binutils$HOST_ARCH_SUFFIX" "libc-dev:$HOST_ARCH"
+	$APT_GET install debhelper gawk patchutils bison flex lsb-release quilt libtool autoconf2.64 zlib1g-dev libcloog-isl-dev libmpc-dev libmpfr-dev libgmp-dev dejagnu autogen systemtap-sdt-dev "binutils$HOST_ARCH_SUFFIX" "libc-dev:$HOST_ARCH"
 	if test "$HOST_ARCH" = hppa; then
 		$APT_GET install binutils-hppa64-linux-gnu
 	fi
