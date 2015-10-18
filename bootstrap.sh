@@ -2131,9 +2131,8 @@ else
 	echo "$HOST_ARCH" > debian/target
 	if test "$ENABLE_MULTIARCH_GCC" = yes; then
 		export with_deps_on_target_arch_pkgs=yes
-	else
-		export gcc_cv_libc_provides_ssp=yes
 	fi
+	export gcc_cv_libc_provides_ssp=yes
 	if test "$ENABLE_MULTILIB" = yes; then
 		drop_privs DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=$GCC_NOLANG" DEB_STAGE=stage2 dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -T control
 		dpkg-checkbuilddeps || : # tell unmet build depends again after rewriting control
@@ -2239,6 +2238,7 @@ else
 	else
 		export WITH_SYSROOT=/
 	fi
+	export gcc_cv_libc_provides_ssp=yes
 	if test "$ENABLE_MULTILIB" = yes; then
 		drop_privs DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=$GCC_NOLANG" dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -T control
 		dpkg-checkbuilddeps || : # tell unmet build depends again after rewriting control
@@ -2250,6 +2250,7 @@ else
 	fi
 	unset with_deps_on_target_arch_pkgs
 	unset WITH_SYSROOT
+	unset gcc_cv_libc_provides_ssp
 	cd ..
 	ls -l
 	pickup_packages *.changes
