@@ -2649,6 +2649,14 @@ EOF
 }
 
 add_automatic kmod
+
+add_automatic krb5
+buildenv_krb5() {
+	export krb5_cv_attr_constructor_destructor=yes,yes
+	export ac_cv_func_regcomp=yes
+	export ac_cv_printf_positional=yes
+}
+
 add_automatic libatomic-ops
 add_automatic libcap2
 
@@ -3001,8 +3009,8 @@ add_need grep # essential
 add_need groff # for man-db
 add_need gzip # essential
 add_need hostname # essential
-test "`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS`" = linux && add_need keyutils # by krb5
 test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = linux && add_need kmod # by systemd
+add_need krb5 # by curl
 add_need libatomic-ops # by gcc-4.9
 add_need libcap2 # by systemd
 add_need libelf # by systemtap, glib2.0
@@ -3017,7 +3025,6 @@ test "`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS`" = linux && add_need
 add_need libssh2 # by curl
 add_need libtextwrap # by cdebconf
 add_need libunistring # by guile-2.0
-add_need libverto # by krb5
 add_need libx11 # by dbus
 add_need libxau # by libxcb
 add_need libxdmcp # by libxcb
