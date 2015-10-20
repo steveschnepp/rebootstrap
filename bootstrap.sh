@@ -2186,7 +2186,26 @@ if test -d "$RESULT/${LIBC_NAME}2"; then
 	echo "skipping rebuild of $LIBC_NAME stage2"
 	dpkg -i "$RESULT/${LIBC_NAME}2/"*.deb
 else
-	$APT_GET install gettext file quilt autoconf gawk debhelper rdfind symlinks binutils bison netbase "linux-libc-dev:$HOST_ARCH" "gcc-$GCC_VER$HOST_ARCH_SUFFIX"
+	$APT_GET install gettext file quilt autoconf gawk debhelper rdfind symlinks binutils bison netbase "gcc-$GCC_VER$HOST_ARCH_SUFFIX"
+	case "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" in
+		linux)
+			if test "$ENABLE_MULTIARCH_GCC" = yes; then
+				$APT_GET install "linux-libc-dev:$HOST_ARCH"
+			else
+				$APT_GET install "linux-libc-dev-$HOST_ARCH-cross"
+			fi
+		;;
+		hurd)
+			$APT_GET install "gnumach-dev:$HOST_ARCH" "hurd-dev:$HOST_ARCH" "mig$HOST_ARCH_SUFFIX"
+		;;
+		kfreebsd)
+			$APT_GET install "kfreebsd-kernel-headers:$HOST_ARCH"
+		;;
+		*)
+			echo "rebootstrap-error: unsupported kernel"
+			exit 1
+		;;
+	esac
 	cross_build_setup "$LIBC_NAME" "${LIBC_NAME}2"
 	if test "$ENABLE_MULTILIB" = yes; then
 		dpkg-checkbuilddeps -B "-a$HOST_ARCH" -Pstage2 || : # tell unmet build depends
