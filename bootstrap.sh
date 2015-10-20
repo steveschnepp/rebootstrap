@@ -694,6 +694,17 @@ remove_extra_packages() {
 	apt_get_remove $extrapackages
 }
 
+buildpackage_failed() {
+	local err last_config_log
+	err="$1"
+	echo "rebootstrap-error: dpkg-buildpackage failed with status $err"
+	last_config_log=$(find . -type f -name config.log -printf "%T@ %p\n" | sort -g | tail -n1 | cut "-d " -f2-)
+	if test -f "$last_config_log"; then
+		tail -v -n+0 "$last_config_log"
+	fi
+	exit "$err"
+}
+
 cross_build() {
 	local pkg profiles ignorebd hook installedpackages
 	pkg="$1"
@@ -729,7 +740,7 @@ cross_build() {
 				"$hook"
 			fi
 			drop_privs_exec dpkg-buildpackage "-a$HOST_ARCH" -B "-P$profiles" $ignorebd -uc -us
-		)
+		) || buildpackage_failed "$?"
 		cd ..
 		remove_extra_packages "$installedpackages"
 		ls -l
