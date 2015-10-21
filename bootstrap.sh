@@ -1305,6 +1305,20 @@ diff -u gcc-5-5.2.1/debian/rules.defs gcc-5-5.2.1/debian/rules.defs
  
  printarch:
 EOF
+	echo "fixing gcc stage2 control file to contain libgcc4 for hppa"
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/rules.conf
++++ b/debian/rules.conf
+@@ -683,7 +683,7 @@
+   addons += $(if $(findstring armhf,$(biarchsfarchs)),armml)
+   addons += $(if $(findstring amd64,$(biarchx32archs)),x32dev)
+   ifeq ($(DEB_STAGE),stage2)
+-    addons += libgcc
++    addons += libgcc lib4gcc
+     ifeq ($(multilib),yes)
+       addons += lib32gcc lib64gcc libn32gcc
+       addons += $(if $(findstring amd64,$(biarchx32archs)),libx32gcc)
+EOF
 	if test "$ENABLE_MULTIARCH_GCC" = yes; then
 		echo "applying patches for with_deps_on_target_arch_pkgs"
 		drop_privs QUILT_PATCHES="/usr/share/cross-gcc/patches/gcc-$GCC_VER" quilt push -a
