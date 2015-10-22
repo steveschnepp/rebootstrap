@@ -2578,6 +2578,7 @@ patch_gmp() {
 }
 
 add_automatic gnutls28
+add_automatic gpm
 add_automatic grep
 add_automatic groff
 
@@ -3049,6 +3050,7 @@ add_need freetype # by fontconfig
 add_need gdbm # by perl, python2.7
 add_need gmp # by guile-2.0
 add_need gnutls28 # by curl
+add_need gpm # by ncurses
 add_need grep # essential
 add_need groff # for man-db
 add_need gzip # essential
@@ -3274,16 +3276,6 @@ builddep_libtool() {
 cross_build libtool
 mark_built libtool
 # needed by guile-2.0
-
-automatically_cross_build_packages
-
-builddep_gpm() {
-	# texlive-base dependency unsatisfiable
-	$APT_GET install autoconf autotools-dev quilt debhelper mawk bison texlive-base texinfo texi2html
-}
-cross_build gpm
-mark_built gpm
-# needed by ncurses
 
 automatically_cross_build_packages
 
