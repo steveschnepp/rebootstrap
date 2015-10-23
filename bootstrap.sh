@@ -4254,4 +4254,14 @@ mark_built e2fsprogs
 
 automatically_cross_build_packages
 
+builddep_libusb() {
+	# docbook dependency unsatisfiable
+	$APT_GET install debhelper dh-autoreconf pkg-config docbook docbook-dsssl
+}
+cross_build libusb
+mark_built libusb
+# needed by gnupg
+
+automatically_cross_build_packages
+
 assert_built "$need_packages"
