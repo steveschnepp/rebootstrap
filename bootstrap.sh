@@ -2962,7 +2962,41 @@ add_automatic readline5
 add_automatic rtmpdump
 add_automatic sed
 add_automatic slang2
+
 add_automatic sqlite3
+patch_sqlite3() {
+	echo "fixing cross compilation of sqlite3"
+	drop_privs quilt pop -a
+	drop_privs patch -p1 <<'EOF'
+diff --minimal -Nru sqlite3-3.9.1/debian/patches/30-cross.patch sqlite3-3.9.1/debian/patches/30-cross.patch
+--- sqlite3-3.9.1/debian/patches/30-cross.patch
++++ sqlite3-3.9.1/debian/patches/30-cross.patch
+@@ -37,7 +37,20 @@
+  	mv parse.h parse.h.temp
+  	$(NAWK) -f $(TOP)/addopcodes.awk parse.h.temp >parse.h
+  
+-@@ -974,7 +984,10 @@
++@@ -1017,10 +1027,10 @@
++    $(TOP)/ext/fts5/fts5_varint.c \
++    $(TOP)/ext/fts5/fts5_vocab.c  \
++ 
++-fts5parse.c:	$(TOP)/ext/fts5/fts5parse.y lemon 
+++fts5parse.c:	$(TOP)/ext/fts5/fts5parse.y $(LEMON_FOR_BUILD)
++ 	cp $(TOP)/ext/fts5/fts5parse.y .
++ 	rm -f fts5parse.h
++-	./lemon $(OPTS) fts5parse.y
+++	./$(LEMON_FOR_BUILD) $(OPTS) fts5parse.y
++ 
++ fts5parse.h: fts5parse.c
++ 
++@@ -1194,7 +1204,10 @@
+  	rm -f *.lo *.la *.o sqlite3$(TEXE) libsqlite3.la
+  	rm -f sqlite3.h opcodes.*
+  	rm -rf .libs .deps
+EOF
+	drop_privs quilt push -a
+}
+
 add_automatic tar
 
 add_automatic tcl8.6
