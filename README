@@ -17,4 +17,4 @@ others is not prohibited):
  * MIRROR: The Debian mirror to use.
  * DEB_BUILD_OPTIONS: Use with care. It may not work without nocheck and
    setting parallel=n with n > 1 breaks some architectures.
- * RESULT: A directory where built packages should be placed.
+ * REPODIR: A directory where built packages should be placed.

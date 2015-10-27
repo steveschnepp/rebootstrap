@@ -6,7 +6,6 @@ set -u
 
 export DEB_BUILD_OPTIONS="nocheck parallel=1"
 export DH_VERBOSE=1
-RESULT="/tmp/result"
 HOST_ARCH=undefined
 # select gcc version from gcc-defaults package unless set
 GCC_VER=
@@ -429,7 +428,6 @@ fi
 
 rmdir /tmp/buildd || :
 drop_privs mkdir -p /tmp/buildd
-drop_privs mkdir -p "$RESULT"
 
 HOST_ARCH_SUFFIX="-`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE | tr _ -`"
 
@@ -713,7 +711,7 @@ cross_build() {
 		profiles="$profiles nobiarch"
 	fi
 	profiles=`echo "$profiles" | sed 's/ /,/g;s/,,*/,/g;s/^,//;s/,$//'`
-	if test -d "$RESULT/$pkg"; then
+	if test -f "$REPODIR/stamps/$pkg"; then
 		echo "skipping rebuild of $pkg with profiles $profiles"
 	else
 		echo "building $pkg with profiles $profiles"
@@ -745,8 +743,7 @@ cross_build() {
 		remove_extra_packages "$installedpackages"
 		ls -l
 		pickup_packages *.changes
-		test -d "$RESULT" && mkdir "$RESULT/$pkg"
-		test -d "$RESULT" && cp ./*.deb "$RESULT/$pkg/"
+		touch "$REPODIR/stamps/$pkg"
 		compare_native ./*.deb
 		cd ..
 		drop_privs rm -Rf "$pkg"
@@ -1330,9 +1327,9 @@ if test "$ENABLE_MULTIARCH_GCC" != yes; then
 	echo "not building with_deps_on_target_arch_pkgs, version of gcc libraries does not have to match"
 elif test "$GCC_VER" != "$BUILD_GCC_MULTIARCH_VER"; then
 	echo "host gcc version ($GCC_VER) and build gcc version ($BUILD_GCC_MULTIARCH_VER) mismatch. need different build gcc"
-if test -d "$RESULT/gcc0"; then
+if test -f "$REPODIR/stamps/gcc_0"; then
 	echo "skipping rebuild of build gcc"
-	dpkg -i $RESULT/gcc0/*.deb
+	$APT_GET --force-yes dist-upgrade # downgrade!
 else
 	$APT_GET build-dep --arch-only gcc-$GCC_VER
 	# dependencies for common libs no longer declared
@@ -1345,8 +1342,7 @@ else
 	reprepro include rebootstrap-native ./*.changes
 	drop_privs rm -fv ./*-plugin-dev_*.deb ./*-dbg_*.deb
 	dpkg -i *.deb
-	test -d "$RESULT" && mkdir "$RESULT/gcc0"
-	test -d "$RESULT" && cp *.deb "$RESULT/gcc0"
+	touch "$REPODIR/stamps/gcc_0"
 	cd ..
 	drop_privs rm -Rf gcc0
 fi
@@ -1410,7 +1406,7 @@ EOF
  	sed -e 's/@dpkg_dev@/$(DPKG_DEV)/' \
 EOF
 }
-if test -f "`echo $RESULT/binutils${HOST_ARCH_SUFFIX}_*.deb`"; then
+if test -f "$REPODIR/stamps/cross-binutils"; then
 	echo "skipping rebuild of binutils-target"
 else
 	$APT_GET install autoconf bison flex gettext texinfo dejagnu quilt chrpath python3 file xz-utils lsb-release zlib1g-dev
@@ -1426,13 +1422,13 @@ else
 	if ! drop_privs "$assembler" -o test.o /dev/null; then echo "binutils fail to execute"; exit 1; fi
 	if ! test -f test.o; then echo "binutils fail to create object"; exit 1; fi
 	check_arch test.o "$HOST_ARCH"
-	test -d "$RESULT" && cp -v binutils-*.deb "$RESULT"
+	touch "$REPODIR/stamps/cross-binutils"
 	cd ..
 	drop_privs rm -Rf binutils
 fi
 progress_mark "cross binutils"
 
-if test "$HOST_ARCH" = hppa && ! test -f "`echo $RESULT/binutils-hppa64-linux-gnu_*.deb`"; then
+if test "$HOST_ARCH" = hppa && ! test -f "$REPODIR/stamps/cross-binutils-hppa64"; then
 	$APT_GET install autoconf bison flex gettext texinfo dejagnu quilt chrpath python3 file xz-utils lsb-release zlib1g-dev
 	cross_build_setup binutils binutils-hppa64
 	drop_privs TARGET=hppa64-linux-gnu dpkg-buildpackage --target=stamps/control
@@ -1445,7 +1441,7 @@ if test "$HOST_ARCH" = hppa && ! test -f "`echo $RESULT/binutils-hppa64-linux-gn
 	if ! drop_privs hppa64-linux-gnu-as -o test.o /dev/null; then echo "binutils-hppa64 fail to execute"; exit 1; fi
 	if ! test -f test.o; then echo "binutils-hppa64 fail to create object"; exit 1; fi
 	check_arch test.o hppa64
-	test -d "$RESULT" && cp -v binutils-hppa64-linux-gnu_*.deb "$RESULT"
+	touch "$REPODIR/stamps/cross-binutils-hppa64"
 	cd ..
 	drop_privs rm -Rf binutils-hppa64-linux-gnu
 	progress_mark "cross binutils-hppa64"
@@ -1517,8 +1513,7 @@ EOF
 	fi
 }
 if test "`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS`" = "linux"; then
-PKG=`echo $RESULT/linux-libc-dev_*.deb`
-if test -f "$PKG"; then
+if test -f "$REPODIR/stamps/linux_1"; then
 	echo "skipping rebuild of linux-libc-dev"
 else
 	$APT_GET install bc cpio debhelper kernel-wedge patchutils python quilt python-six
@@ -1542,7 +1537,7 @@ else
 		drop_privs dpkg-cross -M -a "$HOST_ARCH" -b ./*"_$HOST_ARCH.deb"
 	fi
 	pickup_packages *.deb
-	test -d "$RESULT" && cp -v linux-libc-dev_*.deb "$RESULT"
+	touch "$REPODIR/stamps/linux_1"
 	compare_native ./*.deb
 	cd ..
 	drop_privs rm -Rf linux
@@ -1552,7 +1547,7 @@ fi
 
 # gnumach
 if test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = hurd; then
-if test -d "$RESULT/gnumach_1"; then
+if test -f "$REPODIR/stamps/gnumach_1"; then
 	echo "skipping rebuild of gnumach stage1"
 else
 	$APT_GET install debhelper sharutils autoconf automake texinfo
@@ -1560,8 +1555,7 @@ else
 	drop_privs dpkg-buildpackage -B "-a$HOST_ARCH" -Pstage1 -uc -us
 	cd ..
 	pickup_packages ./*.deb
-	test -d "$RESULT" && mkdir "$RESULT/gnumach_1"
-	test -d "$RESULT" && cp -v ./*.deb "$RESULT/gnumach_1"
+	touch "$REPODIR/stamps/gnumach_1"
 	cd ..
 	drop_privs rm -Rf gnumach_1
 fi
@@ -1606,10 +1600,8 @@ cross_build kfreebsd-kernel-headers
 fi
 
 # gcc
-if test -d "$RESULT/gcc1"; then
+if test -f "$REPODIR/stamps/gcc_1"; then
 	echo "skipping rebuild of gcc stage1"
-	apt_get_remove gcc-multilib
-	dpkg -i $RESULT/gcc1/*.deb
 else
 	$APT_GET install debhelper gawk patchutils bison flex lsb-release quilt libtool autoconf2.64 zlib1g-dev libcloog-isl-dev libmpc-dev libmpfr-dev libgmp-dev autogen systemtap-sdt-dev "binutils$HOST_ARCH_SUFFIX"
 	if test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = linux; then
@@ -1645,8 +1637,7 @@ else
 	if ! drop_privs "$compiler" -x c -c /dev/null -o test.o; then echo "stage1 gcc fails to execute"; exit 1; fi
 	if ! test -f test.o; then echo "stage1 gcc fails to create binaries"; exit 1; fi
 	check_arch test.o "$HOST_ARCH"
-	test -d "$RESULT" && mkdir "$RESULT/gcc1"
-	test -d "$RESULT" && cp cpp-$GCC_VER-*.deb gcc-$GCC_VER-*.deb "$RESULT/gcc1"
+	touch "$REPODIR/stamps/gcc_1"
 	cd ..
 	drop_privs rm -Rf gcc1
 fi
@@ -1660,7 +1651,7 @@ ln -s "`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_GNU_TYPE`-gcc-$GCC_VER" "/us
 
 # hurd
 if test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = hurd; then
-if test -d "$RESULT/hurd_1"; then
+if test -f "$REPODIR/stamps/hurd_1"; then
 	echo "skipping rebuild of hurd stage1"
 else
 	$APT_GET install texinfo debhelper dh-exec autoconf dh-autoreconf gawk flex bison autotools-dev
@@ -1668,8 +1659,9 @@ else
 	dpkg-checkbuilddeps -B "-a$HOST_ARCH" -Pstage1
 	drop_privs dpkg-buildpackage -B "-a$HOST_ARCH" -Pstage1 -uc -us
 	cd ..
-	pickup_packages ./*.changes
-	test -d "$RESULT" && mkdir "$RESULT/hurd_1" && cp -v ./*.deb "$RESULT/hurd_1"
+	ls -l
+	pickup_packages *.changes
+	touch "$REPODIR/stamps/hurd_1"
 	cd ..
 	drop_privs rm -Rf hurd_1
 fi
@@ -1678,15 +1670,16 @@ fi
 
 # mig
 if test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = hurd; then
-if test -d "$RESULT/mig_1"; then
+if test -f "$REPODIR/stamps/mig_1"; then
 	echo "skipping rebuild of mig cross"
 else
 	$APT_GET build-dep "-a$HOST_ARCH" --arch-only mig # this is correct by luck
 	cross_build_setup mig mig_1
 	drop_privs dpkg-buildpackage -d -B "--target-arch=$HOST_ARCH" -uc -us
 	cd ..
-	pickup_packages ./*.changes
-	test -d "$RESULT" && mkdir "$RESULT/mig_1" && cp -v ./*.deb "$RESULT/mig_1"
+	ls -l
+	pickup_packages *.changes
+	touch "$REPODIR/stamps/mig_1"
 	cd ..
 	drop_privs rm -Rf mig_1
 fi
@@ -2067,10 +2060,8 @@ EOF
  	# For our biarch libc, add an ld.so.conf.d configuration; this
 EOF
 }
-if test -d "$RESULT/${LIBC_NAME}1"; then
+if test -f "$REPODIR/stamps/${LIBC_NAME}_1"; then
 	echo "skipping rebuild of $LIBC_NAME stage1"
-	apt_get_remove libc6-dev-i386
-	dpkg -i "$RESULT/${LIBC_NAME}1/"*.deb
 else
 	if test "$LIBC_NAME" = musl; then
 		$APT_GET build-dep "-a$HOST_ARCH" --arch-only musl
@@ -2127,12 +2118,7 @@ else
 		pickup_packages *.changes *-cross_*.deb
 		dpkg -i libc*-cross_*.deb
 	fi
-	test -d "$RESULT" && mkdir "$RESULT/${LIBC_NAME}1"
-	if test "$LIBC_NAME" = musl; then
-		test -d "$RESULT" && cp -v musl*.deb "$RESULT/${LIBC_NAME}1"
-	else
-		test -d "$RESULT" && cp -v libc*-dev_*.deb "$RESULT/${LIBC_NAME}1"
-	fi
+	touch "$REPODIR/stamps/${LIBC_NAME}_1"
 	cd ..
 	drop_privs rm -Rf "${LIBC_NAME}1"
 fi
@@ -2143,9 +2129,8 @@ apt_get_remove $(dpkg-query -W "lib*gcc*:$(dpkg --print-architecture)" | sed "s/
 
 if test "$LIBC_NAME" != musl; then
 
-if test -d "$RESULT/gcc2"; then
+if test -f "$REPODIR/stamps/gcc_2"; then
 	echo "skipping rebuild of gcc stage2"
-	dpkg -i "$RESULT"/gcc2/*.deb
 else
 	$APT_GET install debhelper gawk patchutils bison flex lsb-release quilt libtool autoconf2.64 zlib1g-dev libcloog-isl-dev libmpc-dev libmpfr-dev libgmp-dev autogen systemtap-sdt-dev "libc-dev:$HOST_ARCH" "binutils$HOST_ARCH_SUFFIX"
 	if test "$HOST_ARCH" = hppa; then
@@ -2179,15 +2164,14 @@ else
 	if ! drop_privs "$compiler" -x c -c /dev/null -o test.o; then echo "stage2 gcc fails to execute"; exit 1; fi
 	if ! test -f test.o; then echo "stage2 gcc fails to create binaries"; exit 1; fi
 	check_arch test.o "$HOST_ARCH"
-	test -d "$RESULT" && mkdir "$RESULT/gcc2"
-	test -d "$RESULT" && cp *.deb "$RESULT/gcc2"
+	touch "$REPODIR/stamps/gcc_2"
 	cd ..
 	drop_privs rm -Rf gcc2
 fi
 progress_mark "cross gcc stage2 build"
 
 if test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = hurd; then
-if test -d "$RESULT/hurd_2"; then
+if test -f "$REPODIR/stamps/hurd_2"; then
 	echo "skipping rebuild of hurd stage2"
 else
 	$APT_GET install texinfo debhelper dh-exec autoconf dh-autoreconf gawk flex bison autotools-dev "libc-dev:$HOST_ARCH"
@@ -2197,7 +2181,7 @@ else
 	cd ..
 	ls -l
 	pickup_packages *.changes
-	test -d "$RESULT" && mkdir "$RESULT/hurd_2" && cp -v ./*.deb "$RESULT/hurd_2"
+	touch "$REPODIR/stamps/hurd_2"
 	cd ..
 	drop_privs rm -Rf hurd_2
 fi
@@ -2207,9 +2191,8 @@ fi
 # several undeclared file conflicts such as #745552 or #784015
 apt_get_remove $(dpkg-query -W "libc[0-9]*:$(dpkg --print-architecture)" | sed "s/\\s.*//;/:$(dpkg --print-architecture)/d")
 
-if test -d "$RESULT/${LIBC_NAME}2"; then
+if test -f "$REPODIR/stamps/${LIBC_NAME}_2"; then
 	echo "skipping rebuild of $LIBC_NAME stage2"
-	dpkg -i "$RESULT/${LIBC_NAME}2/"*.deb
 else
 	$APT_GET install gettext file quilt autoconf gawk debhelper rdfind symlinks binutils bison netbase "gcc-$GCC_VER$HOST_ARCH_SUFFIX"
 	case "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" in
@@ -2256,8 +2239,7 @@ else
 		pickup_packages *.changes *-cross_*.deb
 		$APT_GET dist-upgrade
 	fi
-	test -d "$RESULT" && mkdir "$RESULT/${LIBC_NAME}2"
-	test -d "$RESULT" && cp libc*-dev_*.deb libc*[0-9]_*_*.deb "$RESULT/${LIBC_NAME}2"
+	touch "$REPODIR/stamps/${LIBC_NAME}_2"
 	compare_native ./*.deb
 	cd ..
 	drop_privs rm -Rf "${LIBC_NAME}2"
@@ -2266,9 +2248,8 @@ progress_mark "$LIBC_NAME stage2 cross build"
 
 fi # $LIBC_NAME != musl
 
-if test -d "$RESULT/gcc3"; then
+if test -f "$REPODIR/stamps/gcc_3"; then
 	echo "skipping rebuild of gcc stage3"
-	dpkg -i "$RESULT"/gcc3/*.deb
 else
 	$APT_GET install debhelper gawk patchutils bison flex lsb-release quilt libtool autoconf2.64 zlib1g-dev libcloog-isl-dev libmpc-dev libmpfr-dev libgmp-dev dejagnu autogen systemtap-sdt-dev "binutils$HOST_ARCH_SUFFIX" "libc-dev:$HOST_ARCH"
 	if test "$HOST_ARCH" = hppa; then
@@ -2310,8 +2291,7 @@ else
 	touch /usr/include/`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_MULTIARCH`/include_path_test_header.h
 	preproc="`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE`-cpp-$GCC_VER"
 	if ! echo '#include "include_path_test_header.h"' | drop_privs "$preproc" -E -; then echo "stage3 gcc fails to search /usr/include/<triplet>"; exit 1; fi
-	test -d "$RESULT" && mkdir "$RESULT/gcc3"
-	test -d "$RESULT" && cp *.deb "$RESULT/gcc3"
+	touch "$REPODIR/stamps/gcc_3"
 	if test "$ENABLE_MULTIARCH_GCC" = yes; then
 		compare_native ./*.deb
 	fi
@@ -3399,7 +3379,7 @@ builddep_libselinux() {
 	# gem2deb dependency lacks profile annotation
 	$APT_GET install debhelper file "libsepol1-dev:$1" "libpcre3-dev:$1" pkg-config
 }
-if test -d "$RESULT/libselinux1"; then
+if test -f "$REPODIR/stamps/libselinux_1"; then
 	echo "skipping rebuild of libselinux stage1"
 else
 	builddep_libselinux "$HOST_ARCH"
@@ -3410,8 +3390,7 @@ else
 	cd ..
 	ls -l
 	pickup_packages *.changes
-	test -d "$RESULT" && mkdir "$RESULT/libselinux1"
-	test -d "$RESULT" && cp *.deb "$RESULT/libselinux1"
+	touch "$REPODIR/stamps/libselinux_1"
 	compare_native ./*.deb
 	cd ..
 	drop_privs rm -Rf libselinux1
@@ -3426,7 +3405,7 @@ builddep_util_linux() {
 	assert_built "libselinux ncurses slang2 zlib"
 	$APT_GET build-dep "-a$1" --arch-only -P "$2" util-linux
 }
-if test -d "$RESULT/util-linux_1"; then
+if test -f "$REPODIR/stamps/util-linux_1"; then
 	echo "skipping rebuild of util-linux stage1"
 else
 	builddep_util_linux "$HOST_ARCH" stage1
@@ -3435,8 +3414,7 @@ else
 	cd ..
 	ls -l
 	pickup_packages *.changes
-	test -d "$RESULT" && mkdir "$RESULT/util-linux_1"
-	test -d "$RESULT" && cp ./*.deb "$RESULT/util-linux_1"
+	touch "$REPODIR/stamps/util-linux_1"
 	compare_native ./*.deb
 	cd ..
 	drop_privs rm -Rf util-linux_1
@@ -3452,7 +3430,7 @@ builddep_file() {
 	# python-all lacks build profile annotation #709623
 	$APT_GET install debhelper dh-autoreconf "zlib1g-dev:$HOST_ARCH"
 }
-if test -d "$RESULT/file_1"; then
+if test -f "$REPODIR/stamps/file_1"; then
 	echo "skipping stage1 rebuild of file"
 else
 	builddep_file
@@ -3462,8 +3440,7 @@ else
 	cd ..
 	ls -l
 	pickup_packages *.changes
-	test -d "$RESULT" && mkdir "$RESULT/file_1"
-	test -d "$RESULT" && cp ./*.deb "$RESULT/file_1/"
+	touch "$REPODIR/stamps/file_1"
 	compare_native ./*.deb
 	cd ..
 	drop_privs rm -Rf file_1
@@ -3791,7 +3768,7 @@ builddep_db5_3() {
 	# java stuff lacks build profile annotation
 	$APT_GET install debhelper autotools-dev procps
 }
-if test -d "$RESULT/db5.3_1"; then
+if test -f "$REPODIR/stamps/db5.3_1"; then
 	echo "skipping stage1 rebuild of db5.3"
 else
 	builddep_db5_3 "$HOST_ARCH"
@@ -3802,8 +3779,7 @@ else
 	cd ..
 	ls -l
 	pickup_packages *.changes
-	test -d "$RESULT" && mkdir "$RESULT/db5.3_1"
-	test -d "$RESULT" && cp ./*.deb "$RESULT/db5.3_1/"
+	touch "$REPODIR/stamps/db5.3_1"
 	compare_native ./*.deb
 	cd ..
 	drop_privs rm -Rf db5.3_1
@@ -3818,7 +3794,7 @@ builddep_libidn() {
 	# gcj-jdk dependency lacks build profile annotation
 	$APT_GET install debhelper
 }
-if test -d "$RESULT/libidn_1"; then
+if test -f "$REPODIR/stamps/libidn_1"; then
 	echo "skipping rebuild of libidn stage1"
 else
 	builddep_libidn "$HOST_ARCH"
@@ -3829,8 +3805,7 @@ else
 	cd ..
 	ls -l
 	pickup_packages *.changes
-	test -d "$RESULT" && mkdir "$RESULT/libidn_1"
-	test -d "$RESULT" && cp ./*.deb "$RESULT/libidn_1/"
+	touch "$REPODIR/stamps/libidn_1"
 	compare_native ./*.deb
 	cd ..
 	drop_privs rm -Rf libidn_1
@@ -3871,7 +3846,7 @@ diff -urN libxml2-2.9.1+dfsg1.old/debian/rules libxml2-2.9.1+dfsg1/debian/rules
  CONFIGURE_FLAGS := --disable-silent-rules --with-history CC="$(CC)" CFLAGS="$(CFLAGS)" CPPFLAGS="$(CPPFLAGS)" LDFLAGS="$(LDFLAGS)" --cache-file="$(CURDIR)/builddir/config.cache"
 EOF
 }
-if test -d "$RESULT/libxml2_1"; then
+if test -f "$REPODIR/stamps/libxml2_1"; then
 	echo "skipping rebuild of libxml2 stage1"
 else
 	builddep_libxml2 "$HOST_ARCH"
@@ -3882,8 +3857,7 @@ else
 	cd ..
 	ls -l
 	pickup_packages *.changes
-	test -d "$RESULT" && mkdir "$RESULT/libxml2_1"
-	test -d "$RESULT" && cp ./*.deb "$RESULT/libxml2_1/"
+	touch "$REPODIR/stamps/libxml2_1"
 	compare_native ./*.deb
 	cd ..
 	drop_privs rm -Rf libxml2_1
@@ -3964,7 +3938,7 @@ diff -Nru cracklib2-2.9.2/debian/rules cracklib2-2.9.2/debian/rules
  	mkdir -p $(CURDIR)/debian/libcrack2-dev/usr/lib/$(DEB_HOST_MULTIARCH)
 EOF
 }
-if test -d "$RESULT/cracklib2_1"; then
+if test -f "$REPODIR/stamps/cracklib2_1"; then
 	echo "skipping stage1 rebuild of cracklib2"
 else
 	builddep_cracklib2 "$HOST_ARCH"
@@ -3975,8 +3949,7 @@ else
 	cd ..
 	ls -l
 	pickup_packages *.changes
-	test -d "$RESULT" && mkdir "$RESULT/cracklib2_1"
-	test -d "$RESULT" && cp ./*.deb "$RESULT/cracklib2_1/"
+	touch "$REPODIR/stamps/cracklib2_1"
 	compare_native ./*.deb
 	cd ..
 	drop_privs rm -Rf cracklib2_1
@@ -3999,7 +3972,7 @@ builddep_pam() {
 	# flex wrongly declares M-A:foreign #761449
 	$APT_GET install flex "libfl-dev:$1"
 }
-if test -d "$RESULT/pam_1"; then
+if test -f "$REPODIR/stamps/pam_1"; then
 	echo "skipping stage1 rebuild of pam"
 else
 	builddep_pam "$HOST_ARCH"
@@ -4010,8 +3983,7 @@ else
 	cd ..
 	ls -l
 	pickup_packages *.changes
-	test -d "$RESULT" && mkdir "$RESULT/pam_1"
-	test -d "$RESULT" && cp ./*.deb "$RESULT/pam_1/"
+	touch "$REPODIR/stamps/pam_1"
 	compare_native ./*.deb
 	cd ..
 	drop_privs rm -Rf pam_1
@@ -4108,7 +4080,7 @@ EOF
 	echo cross.patch | drop_privs tee -a debian/patches/series >/dev/null
 	drop_privs quilt push -a
 }
-if test -d "$RESULT/cyrus-sasl2_1"; then
+if test -f "$REPODIR/stamps/cyrus-sasl2_1"; then
 	echo "skipping stage1 rebuild of cyrus-sasl2"
 else
 	builddep_cyrus_sasl2 "$HOST_ARCH"
@@ -4119,8 +4091,7 @@ else
 	cd ..
 	ls -l
 	pickup_packages *.changes
-	test -d "$RESULT" && mkdir "$RESULT/cyrus-sasl2_1"
-	test -d "$RESULT" && cp ./*.deb "$RESULT/cyrus-sasl2_1/"
+	touch "$REPODIR/stamps/cyrus-sasl2_1"
 	compare_native ./*.deb
 	cd ..
 	drop_privs rm -Rf cyrus-sasl2_1
@@ -4131,7 +4102,7 @@ mark_built cyrus-sasl2
 
 automatically_cross_build_packages
 
-if test -d "$RESULT/openldap_1"; then
+if test -f "$REPODIR/stamps/openldap_1"; then
 	echo "skipping stage1 rebuild of openldap"
 else
 	$APT_GET build-dep "-a$HOST_ARCH" --arch-only -P stage1 openldap
@@ -4142,8 +4113,7 @@ else
 	cd ..
 	ls -l
 	pickup_packages *.changes
-	test -d "$RESULT" && mkdir "$RESULT/openldap_1"
-	test -d "$RESULT" && cp ./*.deb "$RESULT/openldap_1/"
+	touch "$REPODIR/stamps/openldap_1"
 	compare_native ./*.deb
 	cd ..
 	drop_privs rm -Rf openldap_1
@@ -4155,7 +4125,7 @@ mark_built openldap
 automatically_cross_build_packages
 
 if test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = linux; then
-if test -d "$RESULT/systemd_1"; then
+if test -f "$REPODIR/stamps/systemd_1"; then
 	echo "skipping stage1 rebuild of systemd"
 else
 	$APT_GET build-dep "-a$HOST_ARCH" --arch-only -P nocheck,noudeb,stage1 systemd
@@ -4165,8 +4135,7 @@ else
 	cd ..
 	ls -l
 	pickup_packages *.changes
-	test -d "$RESULT" && mkdir "$RESULT/systemd_1"
-	test -d "$RESULT" && cp ./*.deb "$RESULT/systemd_1/"
+	touch "$REPODIR/stamps/systemd_1"
 	compare_native ./*.deb
 	cd ..
 	drop_privs rm -Rf systemd_1
