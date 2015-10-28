@@ -431,8 +431,7 @@ drop_privs mkdir -p /tmp/buildd
 
 HOST_ARCH_SUFFIX="-`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE | tr _ -`"
 
-mkdir -p "$REPODIR/conf"
-mkdir -p "$REPODIR/archive"
+mkdir -p "$REPODIR/conf" "$REPODIR/archive" "$REPODIR/stamps"
 cat > "$REPODIR/conf/distributions" <<EOF
 Codename: rebootstrap
 Label: rebootstrap
