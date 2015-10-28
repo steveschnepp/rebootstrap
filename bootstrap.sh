@@ -3621,7 +3621,7 @@ builddep_libxcb() {
 	assert_built "libxau libxdmcp libpthread-stubs"
 	# check dependency lacks nocheck profile annotation
 	# python dependency lacks :native annotation #788861
-	$APT_GET install "libxau-dev:$1" "libxdmcp-dev:$1" xcb-proto "libpthread-stubs0-dev:$1" debhelper pkg-config xsltproc  python-xcbgen libtool automake python dctrl-tools
+	$APT_GET install "libxau-dev:$1" "libxdmcp-dev:$1" xcb-proto "libpthread-stubs0-dev:$1" debhelper pkg-config xsltproc  python-xcbgen libtool automake python dctrl-tools xutils-dev
 }
 cross_build libxcb
 mark_built libxcb
