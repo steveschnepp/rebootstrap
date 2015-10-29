@@ -4167,4 +4167,15 @@ mark_built libusb
 
 automatically_cross_build_packages
 
+builddep_curl() {
+	assert_built "gnutls28 libidn krb5 openldap nss rtmpdump libssh2 openssl zlib"
+	# stunnel4 and openssh-server lack <nocheck> profile annotation
+	$APT_GET install debhelper autoconf automake ca-certificates groff-base "libgnutls28-dev:$1" "libidn11-dev:$1" "libkrb5-dev:$1" "libldap2-dev:$1" "libnss3-dev:$1" "librtmp-dev:$1" "libssh2-1-dev:$1" "libssl-dev:$1" libtool python quilt "zlib1g-dev:$1"
+}
+cross_build curl
+mark_build curl
+# needed by apt, gnupg
+
+automatically_cross_build_packages
+
 assert_built "$need_packages"
