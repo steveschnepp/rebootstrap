@@ -3030,7 +3030,7 @@ add_need freetype # by fontconfig
 add_need gdbm # by perl, python2.7
 add_need gmp # by guile-2.0
 add_need gnutls28 # by curl
-add_need gpm # by ncurses
+test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = linux && add_need gpm # by ncurses
 add_need grep # essential
 add_need groff # for man-db
 add_need gzip # essential
@@ -3260,9 +3260,12 @@ mark_built libtool
 automatically_cross_build_packages
 
 builddep_ncurses() {
-	assert_built gpm
+	if test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = linux; then
+		assert_built gpm
+		$APT_GET install "libgpm-dev:$1"
+	fi
 	# g++-multilib dependency unsatisfiable
-	$APT_GET install debhelper dpkg-dev "libgpm-dev:$1" pkg-config
+	$APT_GET install debhelper dpkg-dev pkg-config
 	case "$ENABLE_MULTILIB:$HOST_ARCH" in
 		yes:amd64|yes:i386|yes:powerpc|yes:ppc64|yes:s390|yes:sparc)
 			test "$1" = "$HOST_ARCH"
