@@ -2829,7 +2829,7 @@ builddep_libverto() {
 	$APT_GET install dh-autoreconf
 }
 patch_libverto() {
-	echo "patching libverto for ppc64el #757953
+	echo "patching libverto for ppc64el #757953"
 	drop_privs patch -p1 <<'EOF'
 --- a/debian/control
 +++ b/debian/control
