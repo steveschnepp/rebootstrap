@@ -2243,6 +2243,42 @@ else
 fi
 progress_mark "cross gcc stage3 build"
 
+if test "$ENABLE_MULTIARCH_GCC" != yes && dpkg --compare-versions "$GCC_VER" ge 5; then
+if test -f "$REPODIR/stamps/gcc_f1"; then
+	echo "skipping rebuild of gcc rtlibs"
+else
+	$APT_GET install debhelper gawk patchutils bison flex lsb-release quilt libtool autoconf2.64 zlib1g-dev libcloog-isl-dev libmpc-dev libmpfr-dev libgmp-dev dejagnu autogen systemtap-sdt-dev "binutils$HOST_ARCH_SUFFIX" "libc-dev:$HOST_ARCH"
+	if test "$HOST_ARCH" = hppa; then
+		$APT_GET install binutils-hppa64-linux-gnu
+	fi
+	cross_build_setup "gcc-$GCC_VER" gcc_f1
+	dpkg-checkbuilddeps || : # tell unmet build depends
+	echo "$HOST_ARCH" > debian/target
+	export WITH_SYSROOT=/
+	if test "$ENABLE_MULTILIB" = yes; then
+		drop_privs DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=$GCC_NOLANG" DEB_STAGE=rtlibs dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -T control
+		cat debian/control
+		dpkg-checkbuilddeps || : # tell unmet build depends again after rewriting control
+		drop_privs DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=$GCC_NOLANG" DEB_STAGE=rtlibs dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -b -uc -us
+	else
+		drop_privs DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=$GCC_NOLANG,biarch" DEB_STAGE=rtlibs dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -T control
+		cat debian/control
+		dpkg-checkbuilddeps || : # tell unmet build depends again after rewriting control
+		drop_privs DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=$GCC_NOLANG,biarch" DEB_STAGE=rtlibs dpkg-buildpackage "-Rdpkg-architecture -f -A$HOST_ARCH -c ./debian/rules" -d -b -uc -us
+	fi
+	unset WITH_SYSROOT
+	cd ..
+	ls -l
+	pickup_additional_packages *.deb
+	$APT_GET dist-upgrade
+	dpkg -i ./*.deb
+	touch "$REPODIR/stamps/gcc_f1"
+	cd ..
+	drop_privs rm -Rf gcc_f1
+fi
+progress_mark "gcc cross rtlibs build"
+fi
+
 apt_get_remove libc6-i386 # breaks cross builds
 
 automatic_packages=
