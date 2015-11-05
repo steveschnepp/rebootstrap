@@ -1274,6 +1274,20 @@ EOF
        addons += lib32gcc lib64gcc libn32gcc
        addons += $(if $(findstring amd64,$(biarchx32archs)),libx32gcc)
 EOF
+	echo "fixing gcc rtlibs to build the non-cross base"
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/rules2
++++ b/debian/rules2
+@@ -1822,7 +1822,7 @@
+   pkg_ver := -$(BASE_VERSION)
+ endif
+ 
+-ifneq ($(DEB_CROSS),yes)
++ifeq ($(if $(filter yes,$(DEB_CROSS)),$(if $(filter rtlibs,$(DEB_STAGE)),native,cross),native),native)
+   p_base = gcc$(pkg_ver)-base
+   p_lbase = $(p_base)
+   p_xbase = gcc$(pkg_ver)-base
+EOF
 	if test "$ENABLE_MULTIARCH_GCC" = yes; then
 		echo "applying patches for with_deps_on_target_arch_pkgs"
 		drop_privs QUILT_PATCHES="/usr/share/cross-gcc/patches/gcc-$GCC_VER" quilt push -a
