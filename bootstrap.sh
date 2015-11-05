@@ -431,6 +431,21 @@ drop_privs mkdir -p /tmp/buildd
 
 HOST_ARCH_SUFFIX="-`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE | tr _ -`"
 
+case "$HOST_ARCH" in
+	amd64) MULTILIB_NAMES="i386 x32" ;;
+	i386) MULTILIB_NAMES="amd64 x32" ;;
+	mips|mipsel) MULTILIB_NAMES="mips64 mipsn32" ;;
+	mips64|mips64el) MULTILIB_NAMES="mips32 mipsn32" ;;
+	mipsn32|mipsn32el) MULTILIB_NAMES="mips32 mips64" ;;
+	powerpc) MULTILIB_NAMES=ppc64 ;;
+	ppc64) MULTILIB_NAMES=powerpc ;;
+	s390x) MULTILIB_NAMES=s390 ;;
+	sparc) MULTILIB_NAMES=sparc64 ;;
+	sparc64) MULTILIB_NAMES=sparc ;;
+	x32) MULTILIB_NAMES="amd64 i386" ;;
+	*) MULTILIB_NAMES="" ;;
+esac
+
 mkdir -p "$REPODIR/conf" "$REPODIR/archive" "$REPODIR/stamps"
 cat > "$REPODIR/conf/distributions" <<EOF
 Codename: rebootstrap
@@ -2250,6 +2265,9 @@ else
 	$APT_GET install debhelper gawk patchutils bison flex lsb-release quilt libtool autoconf2.64 zlib1g-dev libcloog-isl-dev libmpc-dev libmpfr-dev libgmp-dev dejagnu autogen systemtap-sdt-dev "binutils$HOST_ARCH_SUFFIX" "libc-dev:$HOST_ARCH"
 	if test "$HOST_ARCH" = hppa; then
 		$APT_GET install binutils-hppa64-linux-gnu
+	fi
+	if test "$ENABLE_MULTILIB" = yes -a -n "$MULTILIB_NAMES"; then
+		$APT_GET install $(echo $MULTILIB_NAMES | sed "s/\(\S\+\)/libc6-dev-\1-$HOST_ARCH-cross libc6-dev-\1:$HOST_ARCH/g")
 	fi
 	cross_build_setup "gcc-$GCC_VER" gcc_f1
 	dpkg-checkbuilddeps || : # tell unmet build depends
