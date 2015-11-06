@@ -1288,6 +1288,24 @@ EOF
    p_lbase = $(p_base)
    p_xbase = gcc$(pkg_ver)-base
 EOF
+	if test "$ENABLE_MULTIARCH_GCC" != yes; then
+	echo "patching gcc rtlibs to emit deps on gcc-VER-base"
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/control.m4
++++ b/debian/control.m4
+@@ -123,8 +123,8 @@
+ define(`SOFTBASEDEP', `gcc`'PV`'TS-base (>= ${gcc:SoftVersion})')
+ 
+ ifdef(`TARGET',`
+-define(`BASELDEP', `gcc`'PV-cross-base (= ${gcc:Version})')
+-define(`SOFTBASELDEP', `gcc`'PV-cross-base (>= ${gcc:SoftVersion})')
++define(`BASELDEP', `gcc`'PV`'ifelse(CROSS_ARCH,`all',`-cross')-base (= ${gcc:Version})')
++define(`SOFTBASELDEP', `gcc`'PV`'ifelse(CROSS_ARCH, `all',`-cross')-base (>= ${gcc:SoftVersion})')
+ ',`dnl
+ define(`BASELDEP', `BASEDEP')
+ define(`SOFTBASELDEP', `SOFTBASEDEP')
+EOF
+	fi
 	if test "$ENABLE_MULTIARCH_GCC" = yes; then
 		echo "applying patches for with_deps_on_target_arch_pkgs"
 		drop_privs QUILT_PATCHES="/usr/share/cross-gcc/patches/gcc-$GCC_VER" quilt push -a
