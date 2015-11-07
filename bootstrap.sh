@@ -2586,6 +2586,7 @@ patch_gmp() {
 	fi
 }
 
+add_automatic gnupg
 add_automatic gnutls28
 add_automatic gpm
 add_automatic grep
@@ -3055,6 +3056,7 @@ add_need findutils # essential
 add_need freetype # by fontconfig
 add_need gdbm # by perl, python2.7
 add_need gmp # by guile-2.0
+add_need gnupg # for apt
 add_need gnutls28 # by curl
 test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = linux && add_need gpm # by ncurses
 add_need grep # essential
