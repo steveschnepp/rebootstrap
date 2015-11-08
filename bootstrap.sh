@@ -2840,6 +2840,14 @@ buildenv_libgcrypt20() {
 }
 
 add_automatic libgpg-error
+patch_libgpg_error() {
+	echo "patching libgpg-error to support hurd-i386 and kfreebsd-i386 #799177"
+	drop_privs cp src/syscfg/lock-obj-pub.i486-pc-gnu.h src/syscfg/lock-obj-pub.i586-pc-gnu.h
+	drop_privs cp src/syscfg/lock-obj-pub.i486-pc-gnu.h src/syscfg/lock-obj-pub.i686-pc-gnu.h
+	drop_privs cp src/syscfg/lock-obj-pub.i486-pc-kfreebsd-gnu.h src/syscfg/lock-obj-pub.i586-pc-kfreebsd-gnu.h
+	drop_privs cp src/syscfg/lock-obj-pub.i486-pc-kfreebsd-gnu.h src/syscfg/lock-obj-pub.i686-pc-kfreebsd-gnu.h
+}
+
 add_automatic libice
 add_automatic libonig
 add_automatic libpipeline
