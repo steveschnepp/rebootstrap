@@ -393,6 +393,45 @@ drop_privs() {
 
 if test "$ENABLE_MULTIARCH_GCC" = yes; then
 	$APT_GET install cross-gcc-dev
+	echo "adding mpx to cross-ma-install-location.diff #804475"
+	patch /usr/share/cross-gcc/patches/gcc-5/0004-added-multi-arch-specific-install-location-patch.patch <<'EOF'
+@@ -16,7 +16,7 @@
+ index 0000000..6ce481c
+ --- /dev/null
+ +++ b/debian/patches/cross-ma-install-location.diff
+-@@ -0,0 +1,402 @@
++@@ -0,0 +1,422 @@
+ +Index: b/src/boehm-gc/configure.ac
+ +===================================================================
+ +--- a/src/boehm-gc/configure.ac
+@@ -419,6 +419,26 @@
+ +     multi_os_directory=`$CC -print-multi-os-directory`
+ +     case $multi_os_directory in
+ +       .) ;; # Avoid trailing /.
+++--- a/src/libmpx/configure.ac
++++++ b/src/libmpx/configure.ac
+++@@ -70,15 +70,8 @@
+++     toolexeclibdir='$(toolexecdir)/$(gcc_version)$(MULTISUBDIR)'
+++     ;;
+++   no)
+++-    if test -n "$with_cross_host" &&
+++-       test x"$with_cross_host" != x"no"; then
+++-      # Install a library built with a cross compiler in tooldir, not libdir.
+++-      toolexecdir='$(exec_prefix)/$(target_alias)'
+++-      toolexeclibdir='$(toolexecdir)/lib'
+++-    else
+++-      toolexecdir='$(libdir)/gcc-lib/$(target_alias)'
+++-      toolexeclibdir='$(libdir)'
+++-    fi
++++    toolexecdir='$(libdir)/gcc-lib/$(target_alias)'
++++    toolexeclibdir='$(libdir)'
+++     multi_os_directory=`$CC -print-multi-os-directory`
+++     case $multi_os_directory in
+++       .) ;; # Avoid trailing /.
+ diff --git a/debian/rules.patch b/debian/rules.patch
+ index 617b096..e953063 100644
+ --- a/debian/rules.patch
+EOF
 fi
 
 obtain_source_package() {
