@@ -393,6 +393,18 @@ drop_privs() {
 
 if test "$ENABLE_MULTIARCH_GCC" = yes; then
 	$APT_GET install cross-gcc-dev
+	echo "fixing a typo in a cross-gcc-dev patch"
+	patch /usr/share/cross-gcc/patches/gcc-5/0004-added-multi-arch-specific-install-location-patch.patch <<'EOF'
+@@ -401,7 +401,7 @@
+ +===================================================================
+ +--- a/src/libcilkrts/configure.ac
+ ++++ b/src/libcilkrts/configure.ac
+-+@@ -103,15 +103,28 @@
+++@@ -103,15 +103,8 @@
+ +     toolexeclibdir='$(toolexecdir)/$(gcc_version)$(MULTISUBDIR)'
+ +     ;;
+ +   no)
+EOF
 fi
 
 obtain_source_package() {
