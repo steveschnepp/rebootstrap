@@ -3641,27 +3641,6 @@ buildenv_glib2_0() {
 	export ac_cv_func_posix_getgrgid_r=yes
 	export ac_cv_func_posix_getpwuid_r=yes
 }
-patch_glib2_0() {
-	echo "patching glib2.0 to fix cross compilation"
-	drop_privs patch -p1 <<'EOF'
---- a/gio/tests/Makefile.am
-+++ b/gio/tests/Makefile.am
-@@ -71,9 +71,12 @@
- 	$(NULL)
-
- test_data = \
--	test.gresource				\
- 	$(NULL)
-
-+if !CROSS_COMPILING
-+test_data += test.gresource
-+endif
-+
- uninstalled_test_extra_programs = \
- 	gio-du					\
- 
-EOF
-}
 cross_build glib2.0
 mark_built glib2.0
 # needed by pkg-config, dbus, systemd, libxt
