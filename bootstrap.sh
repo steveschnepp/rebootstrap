@@ -1580,10 +1580,88 @@ patch_kfreebsd_kernel_headers() {
  install: install-indep install-arch
 
 EOF
+	echo "patching kfreebsd-kernel-headers to move headers to multiarch locations"
+	drop_privs sed -i -e 's#usr/include#&/${DEB_HOST_MULTIARCH}#' debian/install
+	drop_privs patch -p1 <<'EOF'
+diff --minimal -Nru kfreebsd-kernel-headers-10.1~5/debian/compat kfreebsd-kernel-headers-10.1~7/debian/compat
+--- kfreebsd-kernel-headers-10.1~5/debian/compat
++++ kfreebsd-kernel-headers-10.1~7/debian/compat
+@@ -1 +1 @@
+-7
++9
+diff --minimal -Nru kfreebsd-kernel-headers-10.1~5/debian/control kfreebsd-kernel-headers-10.1~7/debian/control
+--- kfreebsd-kernel-headers-10.1~5/debian/control
++++ kfreebsd-kernel-headers-10.1~7/debian/control
+@@ -8,6 +8,8 @@
+  Christoph Egger <christoph@debian.org>,
+  Steven Chamberlain <steven@pyro.eu.org>,
+ Build-Depends:
+- debhelper (>= 7),
++ debhelper (>= 9.20141010~),
++ dpkg-dev (>= 1.17.14~),
++ dh-exec,
+  quilt,
+  kfreebsd-source-10.1 (>> 10.1~svn273304~),
+diff --minimal -Nru kfreebsd-kernel-headers-10.1~5/debian/install kfreebsd-kernel-headers-10.1~7/debian/install
+--- kfreebsd-kernel-headers-10.1~5/debian/install
++++ kfreebsd-kernel-headers-10.1~7/debian/install
+@@ -1,3 +1,4 @@
++#! /usr/bin/dh-exec
+ sys/bsm/*.h                             usr/include/${DEB_HOST_MULTIARCH}/bsm
+ sys/cam/*.h                             usr/include/${DEB_HOST_MULTIARCH}/cam
+ sys/cam/ata/*.h                         usr/include/${DEB_HOST_MULTIARCH}/cam/ata
+diff --minimal -Nru kfreebsd-kernel-headers-10.1~5/debian/links kfreebsd-kernel-headers-10.1~7/debian/links
+--- kfreebsd-kernel-headers-10.1~5/debian/links
++++ kfreebsd-kernel-headers-10.1~7/debian/links
+@@ -1,2 +1,3 @@
+-usr/include/opencrypto			usr/include/crypto
+-usr/include/fs/cd9660			usr/include/isofs/cd9660
++#! /usr/bin/dh-exec
++usr/include/opencrypto			usr/include/${DEB_HOST_MULTIARCH}/crypto
++usr/include/fs/cd9660			usr/include/${DEB_HOST_MULTIARCH}/isofs/cd9660
+diff --minimal -Nru kfreebsd-kernel-headers-10.1~5/debian/rules kfreebsd-kernel-headers-10.1~7/debian/rules
+--- kfreebsd-kernel-headers-10.1~5/debian/rules
++++ kfreebsd-kernel-headers-10.1~7/debian/rules
+@@ -114,20 +114,28 @@
+ 	dh_link
+ 
+ ifneq ($(filter amd64, $(kfreebsd_cpu)),)
+-	sh debian/generate-asm.sh $(kfreebsd_cpu) $(CURDIR)/sys $(HEADERS_PACKAGE)/usr/include
++	sh debian/generate-asm.sh $(kfreebsd_cpu) $(CURDIR)/sys $(HEADERS_PACKAGE)/usr/include/$(DEB_HOST_MULTIARCH)
+ else
+-	mkdir -p $(HEADERS_PACKAGE)/usr/include/machine
++	mkdir -p $(HEADERS_PACKAGE)/usr/include/$(DEB_HOST_MULTIARCH)/machine
+ 	cd $(CURDIR)/sys/$(kfreebsd_cpu)/include \
+-		&& find . -type f -name "*.h" -exec cp --parents {} $(HEADERS_PACKAGE)/usr/include/machine \;
++		&& find . -type f -name "*.h" -exec cp --parents {} $(HEADERS_PACKAGE)/usr/include/$(DEB_HOST_MULTIARCH)/machine \;
+ endif
+ 
+ ifneq ($(filter i386 amd64, $(kfreebsd_cpu)),)
+ 	# Install "x86" directory (only on i386 and amd64).
+-	mkdir -p $(HEADERS_PACKAGE)/usr/include/x86
++	mkdir -p $(HEADERS_PACKAGE)/usr/include/$(DEB_HOST_MULTIARCH)/x86
+ 	cd $(CURDIR)/sys/x86/include \
+-		&& find . -type f -name "*.h" -exec cp --parents {} $(HEADERS_PACKAGE)/usr/include/x86 \;
++		&& find . -type f -name "*.h" -exec cp --parents {} $(HEADERS_PACKAGE)/usr/include/$(DEB_HOST_MULTIARCH)/x86 \;
+ endif
++
++ifneq ($(filter amd64, $(kfreebsd_cpu)),)
++	# Install compatibility symlinks for -m32 multilib (only on amd64).
++	mkdir -p $(HEADERS_PACKAGE)/usr/include/i386-kfreebsd-gnu
++	for i in x86 machine machine-i386 sys vm osreldate.h; do \
++		ln -sf /usr/include/$(DEB_HOST_MULTIARCH)/$$i $(HEADERS_PACKAGE)/usr/include/i386-kfreebsd-gnu/ ; \
++	done
++endif
+ 
+ ifeq ($(filter nocheck,$(DEB_BUILD_OPTIONS)),)
+ 	# headers must be tested after they're installed
+ 	$(MAKE) -C test
+EOF
+	drop_privs chmod +x debian/install debian/links
 }
 builddep_kfreebsd_kernel_headers() {
 	# libc0.1-dev needs <!nocheck> profile
-	$APT_GET install debhelper quilt kfreebsd-source-10.1
+	$APT_GET install debhelper quilt kfreebsd-source-10.1 dh-exec
 }
 if test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = kfreebsd; then
 cross_build kfreebsd-kernel-headers
