@@ -2941,40 +2941,7 @@ add_automatic libssh2
 add_automatic libtasn1-6
 add_automatic libtextwrap
 add_automatic libunistring
-
 add_automatic libverto
-builddep_libverto() {
-	assert_built "libev glib2.0"
-	$APT_GET build-dep "-a$1" --arch-only libverto
-	$APT_GET install dh-autoreconf
-}
-patch_libverto() {
-	echo "patching libverto for ppc64el #757953"
-	drop_privs patch -p1 <<'EOF'
---- a/debian/control
-+++ b/debian/control
-@@ -1,7 +1,7 @@
- Source: libverto
- Priority: optional
- Maintainer: Sam Hartman <hartmans@debian.org>
--Build-Depends: debhelper (>= 9), libev-dev, libglib2.0-dev
-+Build-Depends: debhelper (>= 9), libev-dev, libglib2.0-dev, dh-autoreconf
- Build-Conflicts: libevent-dev, libtevent-dev
- Standards-Version: 3.9.4
- Section: libs
---- a/debian/rules
-+++ b/debian/rules
-@@ -10,7 +10,7 @@
- #export DH_VERBOSE=1
-
- %:
--	dh $@ 
-+	dh $@ --with autoreconf
- 
- override_dh_auto_configure:
- 	chmod a+x configure
-EOF
-}
 
 add_automatic libx11
 buildenv_libx11() {
