@@ -1306,6 +1306,19 @@ EOF
  define(`SOFTBASELDEP', `SOFTBASEDEP')
 EOF
 	fi
+	echo "patching gcc to build libatomic with rtlibs"
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/rules.defs
++++ b/debian/rules.defs
+@@ -1352,7 +1352,6 @@
+   with_hppa64 := $(call envfilt, hppa64, , , $(with_hppa64))
+
+   ifeq ($(DEB_STAGE),rtlibs)
+-    with_libatomic := disabled for rtlibs stage
+     with_libasan := disabled for rtlibs stage
+     with_liblsan := disabled for rtlibs stage
+     with_libtsan := disabled for rtlibs stage
+EOF
 	if test "$ENABLE_MULTIARCH_GCC" = yes; then
 		echo "applying patches for with_deps_on_target_arch_pkgs"
 		drop_privs QUILT_PATCHES="/usr/share/cross-gcc/patches/gcc-$GCC_VER" quilt push -a
