@@ -3252,6 +3252,21 @@ assert_built() {
 	return 1
 }
 
+$APT_GET install xutils-dev
+echo "fixing xutils-dev #613674"
+patch /usr/share/aclocal/xorg-macros.m4 <<'EOF'
+--- xorg-macros.m4
++++ xorg-macros.m4
+@@ -424,6 +424,7 @@
+ # Test for the ability of xmlto to generate a text target
+ have_xmlto_text=no
+ cat > conftest.xml << "EOF"
++<x></x>
+ EOF
+ AS_IF([test "$have_xmlto" = yes],
+       [AS_IF([$XMLTO --skip-validation txt conftest.xml >/dev/null 2>&1],
+EOF
+
 automatically_cross_build_packages
 
 patch_zlib() {
