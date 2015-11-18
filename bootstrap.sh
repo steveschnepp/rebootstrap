@@ -2553,7 +2553,7 @@ diff -Nru cloog-0.18.3/debian/control cloog-0.18.3/debian/control
  Uploaders: Matthias Klose <doko@debian.org>, Michael Tautschnig <mt@debian.org>
 -Build-Depends: debhelper (>= 5), autotools-dev,
 +Build-Depends: debhelper (>= 5), dh-autoreconf,
-   libisl-dev (>= 0.14), libgmp-dev,
+   libisl-dev (>= 0.15), libgmp-dev,
    texinfo, help2man
  # Build-Depends-Indep: libpod-latex-perl | perl (<< 5.17.0) # not needed, no docs built
 diff -Nru cloog-0.18.3/debian/patches/series cloog-0.18.3/debian/patches/series
