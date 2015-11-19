@@ -2669,6 +2669,10 @@ patch_gmp() {
 }
 
 add_automatic gnupg
+buildenv_gnupg() {
+	export ac_cv_sys_symbol_underscore=no
+}
+
 add_automatic gnutls28
 add_automatic gpm
 add_automatic grep
