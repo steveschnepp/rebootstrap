@@ -2668,6 +2668,11 @@ patch_gmp() {
 	fi
 }
 
+builddep_gnu_efi() {
+	# binutils dependency needs cross translation
+	$APT_GET install debhelper
+}
+
 add_automatic gnupg
 buildenv_gnupg() {
 	export ac_cv_sys_symbol_underscore=no
@@ -4210,6 +4215,14 @@ mark_built openldap
 # needed by curl
 
 automatically_cross_build_packages
+
+if test "$HOST_ARCH" = i386 -o test "$HOST_ARCH" = amd64; then
+cross_build gnu-efi
+mark_built gnu-efi
+# needed by systemd
+
+automatically_cross_build_packages
+fi
 
 if test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = linux; then
 if test -f "$REPODIR/stamps/systemd_1"; then
