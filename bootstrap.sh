@@ -1321,6 +1321,30 @@ EOF
      with_liblsan := disabled for rtlibs stage
      with_libtsan := disabled for rtlibs stage
 EOF
+	echo "fixing package epochs"
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/rules2
++++ b/debian/rules2
+@@ -2435,14 +2435,14 @@
+ 	dh_fixperms $(foreach p,$(shell echo `cat debian/indep_binaries`),-p$(p))
+ 	: # the export should be harmless for the binary indep packages of a native build
+ 	export DEB_HOST_ARCH=$(TARGET); \
+-	dh_gencontrol $(foreach p,$(filter-out lib%gcc1-%-cross libgcc2-%-cross libgcc4-%-cross lib%gcc1-dbg-%-cross libgcc2-dbg-%-cross libgcc4-dbg-%-cross, $(shell echo `cat debian/indep_binaries`)),-p$(p)) \
++	dh_gencontrol $(foreach p,$(filter-out lib%gcc1$(LS) libgcc2$(LS) libgcc4$(LS) lib%gcc1-dbg$(LS) libgcc2-dbg$(LS) libgcc4-dbg$(LS), $(shell echo `cat debian/indep_binaries`)),-p$(p)) \
+ 	  -- -v$(DEB_VERSION) $(common_substvars)
+ 	@set -e; \
+ 	export DEB_HOST_ARCH=$(TARGET); \
+-	pkgs='$(strip $(foreach p,$(filter lib%gcc1-%-cross libgcc2-%-cross libgcc4-%-cross lib%gcc1-dbg-%-cross libgcc2-dbg-%-cross libgcc4-dbg-%-cross, $(shell echo `cat debian/indep_binaries`)),-p$(p)))'; \
++	pkgs='$(strip $(foreach p,$(filter lib%gcc1$(LS) libgcc2$(LS) libgcc4$(LS) lib%gcc1-dbg$(LS) libgcc2-dbg$(LS) libgcc4-dbg$(LS), $(shell echo `cat debian/indep_binaries`)),-p$(p)))'; \
+ 	if [ -n "$$pkgs" ]; then \
+-	  echo dh_gencontrol $$pkgs -- -v$(DEB_EVERSION) $(common_substvars); \
+-	  dh_gencontrol $$pkgs -- -v$(DEB_EVERSION) $(common_substvars); \
++	  echo dh_gencontrol $$pkgs -- -v$(DEB_LIBGCC_VERSION) $(common_substvars); \
++	  dh_gencontrol $$pkgs -- -v$(DEB_LIBGCC_VERSION) $(common_substvars); \
+ 	fi
+
+ ifneq (,$(filter $(DEB_TARGET_ARCH), mips mipsel mips64 mips64el mipsn32 mipsn32el))
+EOF
 	if test "$ENABLE_MULTIARCH_GCC" = yes; then
 		echo "applying patches for with_deps_on_target_arch_pkgs"
 		drop_privs QUILT_PATCHES="/usr/share/cross-gcc/patches/gcc-$GCC_VER" quilt push -a
