@@ -1299,10 +1299,10 @@ EOF
  define(`SOFTBASEDEP', `gcc`'PV`'TS-base (>= ${gcc:SoftVersion})')
  
  ifdef(`TARGET',`
--define(`BASELDEP', `gcc`'PV-cross-base (= ${gcc:Version})')
--define(`SOFTBASELDEP', `gcc`'PV-cross-base (>= ${gcc:SoftVersion})')
-+define(`BASELDEP', `gcc`'PV`'ifelse(CROSS_ARCH,`all',`-cross')-base (= ${gcc:Version})')
-+define(`SOFTBASELDEP', `gcc`'PV`'ifelse(CROSS_ARCH, `all',`-cross')-base (>= ${gcc:SoftVersion})')
+-define(`BASELDEP', `gcc`'PV-cross-base`'GCC_PORTS_BUILD (= ${gcc:Version})')
+-define(`SOFTBASELDEP', `gcc`'PV-cross-base`'GCC_PORTS_BUILD (>= ${gcc:SoftVersion})')
++define(`BASELDEP', `gcc`'PV`'ifelse(CROSS_ARCH,`all',`-cross')-base`'GCC_PORTS_BUILD (= ${gcc:Version})')
++define(`SOFTBASELDEP', `gcc`'PV`'ifelse(CROSS_ARCH, `all',`-cross')-base`'GCC_PORTS_BUILD (>= ${gcc:SoftVersion})')
  ',`dnl
  define(`BASELDEP', `BASEDEP')
  define(`SOFTBASELDEP', `SOFTBASEDEP')
