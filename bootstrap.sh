@@ -358,14 +358,28 @@ check_arch() {
 	return 0
 }
 
-apt_get_remove() {
+filter_dpkg_tracked() {
 	local pkg pkgs
 	pkgs=""
 	for pkg in "$@"; do
 		dpkg-query -s "$pkg" >/dev/null 2>&1 && pkgs=`set_add "$pkgs" "$pkg"`
 	done
+	echo "$pkgs"
+}
+
+apt_get_remove() {
+	local pkgs
+	pkgs=$(filter_dpkg_tracked "$@")
 	if test -n "$pkgs"; then
 		$APT_GET remove $pkgs
+	fi
+}
+
+apt_get_purge() {
+	local pkgs
+	pkgs=$(filter_dpkg_tracked "$@")
+	if test -n "$pkgs"; then
+		$APT_GET purge $pkgs
 	fi
 }
 
@@ -2827,6 +2841,10 @@ EOF
 add_automatic kmod
 
 add_automatic krb5
+builddep_krb5() {
+	apt_get_purge libldap-2.4-2 # work around multiarch:same issue #330695
+	$APT_GET build-dep "-a$1" --arch-only krb5
+}
 buildenv_krb5() {
 	export krb5_cv_attr_constructor_destructor=yes,yes
 	export ac_cv_func_regcomp=yes
