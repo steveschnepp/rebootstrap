@@ -1335,22 +1335,6 @@ EOF
      with_liblsan := disabled for rtlibs stage
      with_libtsan := disabled for rtlibs stage
 EOF
-	if test "$ENABLE_MULTIARCH_GCC" != yes; then
-		echo "fixing gcc's parallel building code to cope with no arch_binaries #806186"
-		drop_privs patch -p1 <<'EOF'
---- a/debian/rules2
-+++ b/debian/rules2
-@@ -2393,7 +2393,7 @@
- # ----------------------------------------------------------------------
- # Build architecture-dependent files here.
- debian/arch_binaries.all: $(foreach i,$(arch_binaries),$(binary_stamp)-$(i))
--	cd debian; du -s `cat arch_binaries` | sort -nr | awk '{print $$2}' \
-+	cd debian; xargs -r du -s < arch_binaries | sort -nr | awk '{print $$2}' \
- 		> arch_binaries.tmp
- 	mv debian/arch_binaries.tmp debian/arch_binaries
- 	sed -i 's/ /\n/g' debian/arch_binaries.epoch || touch debian/arch_binaries.epoch
-EOF
-	fi
 	if test "$ENABLE_MULTIARCH_GCC" = yes; then
 		echo "applying patches for with_deps_on_target_arch_pkgs"
 		drop_privs QUILT_PATCHES="/usr/share/cross-gcc/patches/gcc-$GCC_VER" quilt push -a
