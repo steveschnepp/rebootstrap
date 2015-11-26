@@ -2173,6 +2173,8 @@ EOF
  
  	# For our biarch libc, add an ld.so.conf.d configuration; this
 EOF
+	echo "dropping optimized package for hurd-i386"
+	rm -vf debian/sysdeps/hurd-i386.mk
 }
 if test -f "$REPODIR/stamps/${LIBC_NAME}_1"; then
 	echo "skipping rebuild of $LIBC_NAME stage1"
