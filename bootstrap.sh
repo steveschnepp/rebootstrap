@@ -3050,6 +3050,24 @@ diff -Nru nss-3.17/debian/rules nss-3.17/debian/rules
  NSS_TOOLS := \
 EOF
 	fi
+	echo "fixing the nss build to pass CCC #806292"
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/rules
++++ b/debian/rules
+@@ -33,10 +34,9 @@
+ endif
+ ifeq ($(origin CXX),default)
+ TOOLCHAIN += CXX=$(DEB_HOST_GNU_TYPE)-g++
++CXX := $(DEB_HOST_GNU_TYPE)-g++
+ endif
+-ifeq ($(origin CCC),default)
+-TOOLCHAIN += CCC=$(DEB_HOST_GNU_TYPE)-g++
++TOOLCHAIN += CCC=$(CXX)
+-endif
+ ifeq ($(origin RANLIB),default)
+ TOOLCHAIN += RANLIB=$(DEB_HOST_GNU_TYPE)-ranlib
+ endif
+EOF
 }
 
 add_automatic openssl
