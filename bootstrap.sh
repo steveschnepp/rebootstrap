@@ -3014,9 +3014,49 @@ add_automatic libxau
 add_automatic libxaw
 
 add_automatic libxdmcp
-buildenv_libxdmcp() {
-	# xdmcp.txt.gz is LC_CTYPE dependent and the latest amd64 build happens to use C #783223
-	export LC_ALL=C
+patch_libxdmcp() {
+	echo "work around multiarch desync due to native FTBFS #613674"
+	drop_privs patch -p1 <<EOF
+--- a/debian/changelog
++++ b/debian/changelog
+@@ -1,14 +1,3 @@
+-libxdmcp (1:1.1.2-1.1) unstable; urgency=medium
+-
+-  * Non-maintainer upload.
+-  * Remove &fullrelver; usage from doc/xdmcp.xml to make libxdmcp-dev M-A:same
+-    safe when built with different versions of xorg-sgml-doctools. (closes:
+-    #761628)
+-  * Make usr/share/doc/libxdmcp-dev/xdmcp.txt.gz reproducible in the presence
+-    of locales by exporting LC_ALL (closes: #783223).
+-
+- -- Helmut Grohne <helmut@subdivi.de>  Wed, 11 Nov 2015 20:09:26 +0100
+-
+ libxdmcp (1:1.1.2-1) unstable; urgency=medium
+
+   * Let uscan verify tarball signatures.
+--- a/doc/xdmcp.xml
++++ b/doc/xdmcp.xml
+@@ -23,7 +23,7 @@
+ <bookinfo>
+    <title>X Display Manager Control Protocol</title>
+    <subtitle>X.Org Standard</subtitle>
+-   <releaseinfo>X Version 11</releaseinfo>
++   <releaseinfo>X Version 11, Release 7.7</releaseinfo>
+    <releaseinfo>Version 1.1</releaseinfo>
+    <authorgroup>
+    <author>
+--- a/debian/rules
++++ b/debian/rules
+@@ -11,7 +11,7 @@
+ PACKAGE = libxdmcp6
+
+ # generation of usr/share/doc/libxdmcp-dev/xdmcp.txt.gz is locale dependent
+-export LC_ALL=C.UTF-8
++export LC_ALL=C
+
+ .PHONY: build
+ build:
+EOF
 }
 
 add_automatic libxext
