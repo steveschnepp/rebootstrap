@@ -2447,6 +2447,7 @@ else
 	unset WITH_SYSROOT
 	cd ..
 	ls -l
+	rm -vf "gcc-$GCC_VER-base_"*"_$(dpkg --print-architecture).deb"
 	pickup_additional_packages *.deb
 	$APT_GET dist-upgrade
 	dpkg -i ./*.deb
