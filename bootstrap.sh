@@ -1804,65 +1804,6 @@ fi
 
 # libc
 patch_glibc() {
-	echo "patching eglibc to include a libc6.so and place crt*.o in correct directory"
-	drop_privs patch -p1 <<EOF
-diff -Nru eglibc-2.18/debian/rules.d/build.mk eglibc-2.18/debian/rules.d/build.mk
---- eglibc-2.18/debian/rules.d/build.mk
-+++ eglibc-2.18/debian/rules.d/build.mk
-@@ -163,10 +163,11 @@
- 	    cross-compiling=yes install_root=\$(CURDIR)/debian/tmp-\$(curpass)	\\
- 	    install-bootstrap-headers=yes install-headers )
- 
--	install -d \$(CURDIR)/debian/tmp-\$(curpass)/lib
--	install -m 644 \$(DEB_BUILDDIR)/csu/crt[01in].o \$(CURDIR)/debian/tmp-\$(curpass)/lib
-+	install -d \$(CURDIR)/debian/tmp-\$(curpass)/\$(call xx,libdir)
-+	install -m 644 \$(DEB_BUILDDIR)/csu/crt[01in].o \\
-+		\$(CURDIR)/debian/tmp-\$(curpass)/\$(call xx,libdir)
--	\${CC} -nostdlib -nostartfiles -shared -x c /dev/null \\
-+	\$(call xx,CC) -nostdlib -nostartfiles -shared -x c /dev/null \\
--	        -o \$(CURDIR)/debian/tmp-\$(curpass)/lib/libc.so
-+	        -o \$(CURDIR)/debian/tmp-\$(curpass)/\$(call xx,libdir)/libc.so
- else
- 	: # FIXME: why just needed for ARM multilib?
- 	case "\$(curpass)" in \\
-diff -Nru glibc-2.19/debian/rules.d/debhelper.mk glibc-2.19/debian/rules.d/debhelper.mk
---- glibc-2.19/debian/rules.d/debhelper.mk
-+++ glibc-2.19/debian/rules.d/debhelper.mk
-@@ -197,7 +197,18 @@
- 	curpass=\$(curpass) ; \\
- 	templates="libc-dev" ;\\
--	pass="" ; \\
--	suffix="" ;\\
-+	case "\$\$curpass:\$\$slibdir" in \\
-+	  libc:*) \\
-+	    pass="" \\
-+	    suffix="" \\
-+	    ;; \\
-+	  *:/lib32 | *:/lib64 | *:/libo32 | *:/libx32 | *:/lib/arm-linux-gnueabi*) \\
-+	    pass="-alt" \\
-+	    suffix=-"\$(curpass)" \\
-+	    ;; \\
-+	  *:* ) \\
-+           templates="" \\
-+	    ;; \\
-+	esac ; \\
- 	for t in \$\$templates ; do \\
- 	  for s in debian/\$\$t\$\$pass.* ; do \\
- 	    t=\`echo \$\$s | sed -e "s#libc\\(.*\\)\$\$pass#\$(libc)\\1\$\$suffix#"\` ; \\
-@@ -207,10 +215,10 @@
- 	    sed -e "s#TMPDIR#debian/tmp-\$\$curpass#g" -i \$\$t; \\
- 	    sed -e "s#RTLDDIR#\$\$rtlddir#g" -i \$\$t; \\
- 	    sed -e "s#SLIBDIR#\$\$slibdir#g" -i \$\$t; \\
-+	    sed -e "/LIBDIR.*\\.a /d" -i \$\$t; \\
-+	    sed -e "s#LIBDIR#\$\$libdir#g" -i \$\$t; \\
- 	  done ; \\
- 	done
--
--	sed -e "/LIBDIR.*.a /d" -e "s#LIBDIR#lib#g" -i debian/\$(libc)-dev.install
- else
- \$(patsubst %,debhelper_%,\$(GLIBC_PASSES)) :: debhelper_% : \$(stamp)debhelper_%
- \$(stamp)debhelper_%: \$(stamp)debhelper-common \$(stamp)install_%
-EOF
 	echo "patching glibc to select the correct packages in stage1"
 	drop_privs patch -p1 <<EOF
 diff -Nru glibc-2.19/debian/rules glibc-2.19/debian/rules
@@ -1884,28 +1825,6 @@ diff -Nru glibc-2.19/debian/rules glibc-2.19/debian/rules
  # And now the rules...
  include debian/rules.d/*.mk
  
-EOF
-	echo "patching glibc to use multi-arch paths for headers in stage1"
-	drop_privs patch -p1 <<'EOF'
-diff -Nru glibc-2.19/debian/rules.d/build.mk glibc-2.19/debian/rules.d/build.mk
---- glibc-2.19/debian/rules.d/build.mk
-+++ glibc-2.19/debian/rules.d/build.mk
-@@ -207,6 +207,7 @@
- 	  $(MAKE) -f debian/generate-supported.mk IN=localedata/SUPPORTED \
- 	    OUT=debian/tmp-$(curpass)/usr/share/i18n/SUPPORTED; \
- 	fi
-+endif
- 
- 	# Create the multiarch directories, and the configuration file in /etc/ld.so.conf.d
- 	if [ $(curpass) = libc ]; then \
-@@ -251,6 +252,7 @@
- 	  echo "$(call xx,libdir)" >> $$conffile; \
- 	esac
- 
-+ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
- 	# ARM: add dynamic linker name for the non-default multilib in ldd
- 	if [ $(curpass) = libc ]; then \
- 	  case $(DEB_HOST_ARCH) in \
 EOF
 	echo "patching eglibc to avoid dependency on libc6 from libc6-dev in stage1"
 	drop_privs patch -p1 <<'EOF'
