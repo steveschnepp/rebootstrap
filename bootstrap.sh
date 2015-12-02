@@ -1353,6 +1353,19 @@ EOF
    endif
    ifeq ($(hppa64_no_snap)-$(trunk_build),yes-yes)
 EOF
+	echo "patching gcc to enable build ids for stage2"
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/rules2
++++ b/debian/rules2
+@@ -207,6 +207,7 @@
+   else
+     # stage2
+     CONFARGS += \
++	--enable-linker-build-id \
+ 	--enable-shared
+   endif
+ else
+EOF
 	if test "$ENABLE_MULTIARCH_GCC" = yes; then
 		echo "applying patches for with_deps_on_target_arch_pkgs"
 		drop_privs QUILT_PATCHES="/usr/share/cross-gcc/patches/gcc-$GCC_VER" quilt push -a
