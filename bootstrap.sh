@@ -2109,6 +2109,24 @@ EOF
 EOF
 	echo "dropping optimized package for hurd-i386"
 	rm -vf debian/sysdeps/hurd-i386.mk
+	echo "patching glibc to use cross prefixed tools"
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/rules.d/debhelper.mk
++++ b/debian/rules.d/debhelper.mk
+@@ -55,9 +55,9 @@
+ 	        -e "s#^.*Build ID: \([0-9a-f]\{2\}\)\([0-9a-f]\+\)#\1/\2.debug#") ;	\
+ 	      dbgpath=debian/$(libc)-dbg/usr/lib/debug/.build-id/$$dbgfile ;		\
+ 	      mkdir -p $$(dirname $$dbgpath) ;						\
+-	      objcopy --only-keep-debug $$f $$dbgpath ;					\
++	      $(DEB_HOST_GNU_TYPE)-objcopy --only-keep-debug $$f $$dbgpath ;		\
+-	      objcopy --add-gnu-debuglink=$$dbgpath $$f ;				\
++	      $(DEB_HOST_GNU_TYPE)-objcopy --add-gnu-debuglink=$$dbgpath $$f ;		\
+-	      strip --strip-debug --remove-section=.comment --remove-section=.note $$f ;\
++	      $(DEB_HOST_GNU_TYPE)-strip --strip-debug --remove-section=.comment --remove-section=.note $$f ;\
+ 	    done ;									\
+ 	  else										\
+ 	    dh_strip -p$(curpass) -Xlibpthread;						\
+EOF
 }
 if test -f "$REPODIR/stamps/${LIBC_NAME}_1"; then
 	echo "skipping rebuild of $LIBC_NAME stage1"
