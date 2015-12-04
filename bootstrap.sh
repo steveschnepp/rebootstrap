@@ -3118,6 +3118,12 @@ EOF
 }
 
 add_automatic tar
+buildenv_tar() {
+	case $(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_GNU_SYSTEM) in *gnu*)
+		echo "struct dirent contains working d_ino on glibc systems"
+		export gl_cv_struct_dirent_d_ino=yes
+	;; esac
+}
 
 add_automatic tcl8.6
 buildenv_tcl8_6() {
