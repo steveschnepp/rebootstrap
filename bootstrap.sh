@@ -1335,24 +1335,6 @@ EOF
      with_liblsan := disabled for rtlibs stage
      with_libtsan := disabled for rtlibs stage
 EOF
-	echo "do not build hppa64 cross compilers for x32 #806479"
-	drop_privs patch -p1 <<'EOF'
---- a/debian/rules.defs
-+++ b/debian/rules.defs
-@@ -1349,7 +1349,11 @@
-
-   # hppa64 build ----------------
-   hppa64_no_snap := no
-+  hppa64_archs := hppa
-+  ifneq ($(DEB_CROSS),yes)
-+    hppa64_archs += amd64 i386 x32
-+  endif
--  ifneq (, $(filter $(DEB_TARGET_ARCH),hppa amd64 i386 x32))
-+  ifneq (, $(filter $(DEB_TARGET_ARCH),$(hppa64_archs)))
-     with_hppa64 := yes
-   endif
-   ifeq ($(hppa64_no_snap)-$(trunk_build),yes-yes)
-EOF
 	echo "patching gcc to enable build ids for stage2"
 	drop_privs patch -p1 <<'EOF'
 --- a/debian/rules2
