@@ -928,7 +928,7 @@ patch_gcc_5() {
  	touch $(configure_stamp)
 
 EOF
-	echo "patching gcc-5 to support building without binutils-multiarch"
+	echo "patching gcc-5 to support building without binutils-multiarch #804190"
 	drop_privs patch -p1 <<'EOF'
 diff -u gcc-5-5.2.1/debian/rules.d/binary-ada.mk gcc-5-5.2.1/debian/rules.d/binary-ada.mk
 --- gcc-5-5.2.1/debian/rules.d/binary-ada.mk
@@ -1005,9 +1005,9 @@ diff -u gcc-5-5.2.1/debian/rules.d/binary-fortran.mk gcc-5-5.2.1/debian/rules.d/
  
 -	dh_strip -p$(p_l) --dbg-package=$(p_d)
 +	$(cross_strip) dh_strip -p$(p_l) --dbg-package=$(p_d)
+ 	ln -sf libgfortran.symbols debian/$(p_l).symbols
  	$(cross_makeshlibs) dh_makeshlibs -p$(p_l)
  	$(call cross_mangle_shlibs,$(p_l))
- 	$(ignshld)DIRNAME=$(subst n,,$(2)) $(cross_shlibdeps) dh_shlibdeps -p$(p_l) \
 @@ -130,7 +130,7 @@
  	debian/dh_doclink -p$(p_l) $(p_lbase)
  	debian/dh_rmemptydirs -p$(p_l)
@@ -1050,9 +1050,9 @@ diff -u gcc-5-5.2.1/debian/rules.d/binary-libatomic.mk gcc-5-5.2.1/debian/rules.
  
 -	dh_strip -p$(p_l) --dbg-package=$(p_d)
 +	$(cross_strip) dh_strip -p$(p_l) --dbg-package=$(p_d)
+ 	ln -sf libatomic.symbols debian/$(p_l).symbols
  	$(cross_makeshlibs) dh_makeshlibs -p$(p_l)
  	$(call cross_mangle_shlibs,$(p_l))
- 	$(ignshld)DIRNAME=$(subst n,,$(2)) $(cross_shlibdeps) dh_shlibdeps -p$(p_l) \
 diff -u gcc-5-5.2.1/debian/rules.d/binary-libcilkrts.mk gcc-5-5.2.1/debian/rules.d/binary-libcilkrts.mk
 --- gcc-5-5.2.1/debian/rules.d/binary-libcilkrts.mk
 +++ gcc-5-5.2.1/debian/rules.d/binary-libcilkrts.mk
@@ -1062,9 +1062,9 @@ diff -u gcc-5-5.2.1/debian/rules.d/binary-libcilkrts.mk gcc-5-5.2.1/debian/rules
  
 -	dh_strip -p$(p_l) --dbg-package=$(p_d)
 +	$(cross_strip) dh_strip -p$(p_l) --dbg-package=$(p_d)
+ 	ln -sf libcilkrts.symbols debian/$(p_l).symbols
  	$(cross_makeshlibs) dh_makeshlibs -p$(p_l)
  	$(call cross_mangle_shlibs,$(p_l))
- 	$(ignshld)DIRNAME=$(subst n,,$(2)) $(cross_shlibdeps) dh_shlibdeps -p$(p_l) \
 diff -u gcc-5-5.2.1/debian/rules.d/binary-libgcc.mk gcc-5-5.2.1/debian/rules.d/binary-libgcc.mk
 --- gcc-5-5.2.1/debian/rules.d/binary-libgcc.mk
 +++ gcc-5-5.2.1/debian/rules.d/binary-libgcc.mk
@@ -1107,9 +1107,9 @@ diff -u gcc-5-5.2.1/debian/rules.d/binary-libgomp.mk gcc-5-5.2.1/debian/rules.d/
  
 -	dh_strip -p$(p_l) --dbg-package=$(p_d)
 +	$(cross_strip) dh_strip -p$(p_l) --dbg-package=$(p_d)
+ 	ln -sf libgomp.symbols debian/$(p_l).symbols
  	$(cross_makeshlibs) dh_makeshlibs -p$(p_l)
  	$(call cross_mangle_shlibs,$(p_l))
- 	$(ignshld)DIRNAME=$(subst n,,$(2)) $(cross_shlibdeps) dh_shlibdeps -p$(p_l) \
 diff -u gcc-5-5.2.1/debian/rules.d/binary-libitm.mk gcc-5-5.2.1/debian/rules.d/binary-libitm.mk
 --- gcc-5-5.2.1/debian/rules.d/binary-libitm.mk
 +++ gcc-5-5.2.1/debian/rules.d/binary-libitm.mk
@@ -1119,9 +1119,9 @@ diff -u gcc-5-5.2.1/debian/rules.d/binary-libitm.mk gcc-5-5.2.1/debian/rules.d/b
  
 -	dh_strip -p$(p_l) --dbg-package=$(p_d)
 +	$(cross_strip) dh_strip -p$(p_l) --dbg-package=$(p_d)
+ 	ln -sf libitm.symbols debian/$(p_l).symbols
  	$(cross_makeshlibs) dh_makeshlibs -p$(p_l)
  	$(call cross_mangle_shlibs,$(p_l))
- 	$(ignshld)DIRNAME=$(subst n,,$(2)) $(cross_shlibdeps) dh_shlibdeps -p$(p_l) \
 diff -u gcc-5-5.2.1/debian/rules.d/binary-liblsan.mk gcc-5-5.2.1/debian/rules.d/binary-liblsan.mk
 --- gcc-5-5.2.1/debian/rules.d/binary-liblsan.mk
 +++ gcc-5-5.2.1/debian/rules.d/binary-liblsan.mk
@@ -1143,9 +1143,9 @@ diff -u gcc-5-5.2.1/debian/rules.d/binary-libmpx.mk gcc-5-5.2.1/debian/rules.d/b
  
 -	dh_strip -p$(p_l) --dbg-package=$(p_d)
 +	$(cross_strip) dh_strip -p$(p_l) --dbg-package=$(p_d)
+ 	ln -sf libmpx.symbols debian/$(p_l).symbols
  	$(cross_makeshlibs) dh_makeshlibs -p$(p_l)
  	$(call cross_mangle_shlibs,$(p_l))
- 	$(ignshld)DIRNAME=$(subst n,,$(2)) $(cross_shlibdeps) dh_shlibdeps -p$(p_l)
 diff -u gcc-5-5.2.1/debian/rules.d/binary-libobjc.mk gcc-5-5.2.1/debian/rules.d/binary-libobjc.mk
 --- gcc-5-5.2.1/debian/rules.d/binary-libobjc.mk
 +++ gcc-5-5.2.1/debian/rules.d/binary-libobjc.mk
@@ -1167,9 +1167,9 @@ diff -u gcc-5-5.2.1/debian/rules.d/binary-libquadmath.mk gcc-5-5.2.1/debian/rule
  
 -	dh_strip -p$(p_l) --dbg-package=$(p_d)
 +	$(cross_strip) dh_strip -p$(p_l) --dbg-package=$(p_d)
+ 	ln -sf libquadmath.symbols debian/$(p_l).symbols
  	$(cross_makeshlibs) dh_makeshlibs -p$(p_l)
  	$(call cross_mangle_shlibs,$(p_l))
- 	$(cross_shlibdeps) dh_shlibdeps -p$(p_l) \
 diff -u gcc-5-5.2.1/debian/rules.d/binary-libstdcxx.mk gcc-5-5.2.1/debian/rules.d/binary-libstdcxx.mk
 --- gcc-5-5.2.1/debian/rules.d/binary-libstdcxx.mk
 +++ gcc-5-5.2.1/debian/rules.d/binary-libstdcxx.mk
