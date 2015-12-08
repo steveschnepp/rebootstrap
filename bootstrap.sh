@@ -484,6 +484,11 @@ Explanation: prefer our own rebootstrap (toolchain) packages over everything
 Package: *
 Pin: release l=rebootstrap
 Pin-Priority: 1002
+
+Explanation: do not use archive cross toolchain
+Package: *-$HOST_ARCH-cross *$HOST_ARCH_SUFFIX gcc-*$HOST_ARCH_SUFFIX-base
+Pin: release a=unstable
+Pin-Priority: -1
 EOF
 $APT_GET update
 
