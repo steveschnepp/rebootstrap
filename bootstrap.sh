@@ -4322,4 +4322,17 @@ mark_built curl
 
 automatically_cross_build_packages
 
+builddep_apt() {
+	# libgtest-dev lacks <nocheck> profile
+	apt_get_install dpkg-dev debhelper "libdb-dev:$1" gettext "libcurl4-gnutls-dev:$1" "zlib1g-dev:$1" "libbz2-dev:$1" "liblzma-dev:$1" xsltproc docbook-xsl docbook-xml po4a autotools-dev autoconf automake
+}
+buildenv_apt() {
+	# pretend we had gtest/gtest.h to make configure succeed. it's never used
+	export ac_cv_header_gtest_gtest_h=yes
+}
+maybe_cross_build apt
+# essential
+
+automatically_cross_build_packages
+
 assert_built "$need_packages"
