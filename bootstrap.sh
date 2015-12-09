@@ -4330,7 +4330,8 @@ buildenv_apt() {
 	# pretend we had gtest/gtest.h to make configure succeed. it's never used
 	export ac_cv_header_gtest_gtest_h=yes
 }
-maybe_cross_build apt
+cross_build apt
+mark_built apt
 # essential
 
 automatically_cross_build_packages
