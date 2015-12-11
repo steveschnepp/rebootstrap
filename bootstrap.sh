@@ -367,6 +367,14 @@ filter_dpkg_tracked() {
 	echo "$pkgs"
 }
 
+apt_get_install() {
+	$APT_GET install "$@"
+}
+
+apt_get_build_dep() {
+	$APT_GET build-dep "$@"
+}
+
 apt_get_remove() {
 	local pkgs
 	pkgs=$(filter_dpkg_tracked "$@")
