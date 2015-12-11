@@ -2091,6 +2091,20 @@ EOF
 EOF
 	echo "dropping optimized package for hurd-i386"
 	rm -vf debian/sysdeps/hurd-i386.mk
+	echo "patching glibc to work with regular kfreebsd-kernel-headers"
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/sysdeps/kfreebsd.mk
++++ b/debian/sysdeps/kfreebsd.mk
+@@ -13,7 +13,7 @@
+ libc_extra_config_options = $(extra_config_options)
+
+ ifndef KFREEBSD_SOURCE
+-  ifeq ($(DEB_HOST_GNU_TYPE),$(DEB_BUILD_GNU_TYPE))
++  ifeq ($(shell dpkg-query --status kfreebsd-kernel-headers-$(DEB_HOST_ARCH)-cross 2>/dev/null),)
+     KFREEBSD_HEADERS := /usr/include
+   else
+     KFREEBSD_HEADERS := /usr/$(DEB_HOST_GNU_TYPE)/include
+EOF
 }
 if test -f "$REPODIR/stamps/${LIBC_NAME}_1"; then
 	echo "skipping rebuild of $LIBC_NAME stage1"
