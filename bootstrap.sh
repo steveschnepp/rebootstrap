@@ -2754,6 +2754,46 @@ fi
 
 add_automatic isl
 
+add_automatic jemalloc
+buildenv_jemalloc() {
+	case "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_CPU)" in
+		amd64|arm|arm64|hppa|i386|m68k|mips|s390x|sh4)
+			echo "setting je_cv_static_page_shift=12"
+			export je_cv_static_page_shift=12
+		;;
+		alpha|sparc|sparc64)
+			echo "setting je_cv_static_page_shift=13"
+			export je_cv_static_page_shift=13
+		;;
+		mips64el|mipsel)
+			echo "setting je_cv_static_page_shift=14"
+			export je_cv_static_page_shift=14
+		;;
+		powerpc|ppc64|ppc64el)
+			echo "setting je_cv_static_page_shift=16"
+			export je_cv_static_page_shift=16
+		;;
+	esac
+}
+patch_jemalloc() {
+	echo "patching jemalloc to support DEB_BUILD_OPTIONS=nocheck #807532"
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/rules
++++ b/debian/rules
+@@ -40,8 +40,10 @@
+ override_dh_auto_build:
+ 	make all doc
+
++ifeq ($(filter nocheck,$(DEB_BUILD_OPTIONS)),)
+ override_dh_auto_test:
+ 	make check
++endif
+
+ override_dh_auto_install:
+ 	make install_include install_lib DESTDIR=$(CURDIR)/debian/tmp
+EOF
+}
+
 add_automatic keyutils
 patch_keyutils() {
 	if test "$LIBC_NAME" = musl; then
@@ -3200,6 +3240,7 @@ add_need groff # for man-db
 add_need gzip # essential
 add_need hostname # essential
 test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = linux && add_need kmod # by systemd
+dpkg-architecture "-a$HOST_ARCH" -ihurd-i386 || add_need jemalloc # by nghttp2
 add_need krb5 # by curl
 add_need libatomic-ops # by gcc-4.9
 add_need libcap2 # by systemd
