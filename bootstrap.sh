@@ -421,6 +421,10 @@ obtain_source_package() {
 	drop_privs apt-get source "$1"
 }
 
+cat <<EOF >> /usr/share/dpkg/cputable
+nios2		nios2		nios2		32	little
+EOF
+
 if test -z "$HOST_ARCH" || ! dpkg-architecture "-a$HOST_ARCH"; then
 	echo "architecture $HOST_ARCH unknown to dpkg"
 	exit 1
