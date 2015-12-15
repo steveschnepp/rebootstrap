@@ -2113,6 +2113,20 @@ EOF
    else
      KFREEBSD_HEADERS := /usr/$(DEB_HOST_GNU_TYPE)/include
 EOF
+	echo "patching glibc to work with absent /usr/include/sys"
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/sysdeps/kfreebsd.mk
++++ b/debian/sysdeps/kfreebsd.mk
+@@ -43,7 +43,7 @@
+
+ 	mkdir -p debian/include/sys
+ 	# Link to any headers found in the old locations first
+-	find $(KFREEBSD_HEADERS)/sys -mindepth 1 \
++	test -d $(KFREEBSD_HEADERS/sys && find $(KFREEBSD_HEADERS)/sys -mindepth 1 \
+ 		-exec ln -sf '{}' debian/include/sys ';'
+ 	# Link to any headers found at the new multiarch location,
+ 	# replacing any existing links
+EOF
 }
 if test -f "$REPODIR/stamps/${LIBC_NAME}_1"; then
 	echo "skipping rebuild of $LIBC_NAME stage1"
