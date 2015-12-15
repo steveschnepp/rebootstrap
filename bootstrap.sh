@@ -3693,43 +3693,6 @@ builddep_libffi() {
 	# g++-multilib dependency unsatisfiable
 	$APT_GET install debhelper dejagnu lsb-release texinfo dpkg-dev dh-autoreconf "libltdl-dev:$HOST_ARCH"
 }
-patch_libffi() {
-	echo "fixing libffi to run autoreconf for ppc64el"
-	drop_privs patch -p1 <<'EOF'
-diff -Nru libffi-3.2.1/debian/control libffi-3.2.1/debian/control
---- libffi-3.2.1/debian/control
-+++ libffi-3.2.1/debian/control
-@@ -5,7 +5,8 @@
- Build-Depends: debhelper (>= 5),
-   g++-multilib [amd64 i386 mips mipsel powerpc ppc64 s390 sparc kfreebsd-amd64],
-   dejagnu, lsb-release, texinfo,
--  dpkg-dev (>= 1.16.0~ubuntu4)
-+  dpkg-dev (>= 1.16.0~ubuntu4),
-+  dh-autoreconf, libltdl-dev
- Standards-Version: 3.9.6
- Section: libs
- 
-diff -Nru libffi-3.2.1/debian/rules libffi-3.2.1/debian/rules
---- libffi-3.2.1/debian/rules
-+++ libffi-3.2.1/debian/rules
-@@ -39,6 +39,7 @@
- 	dh_testdir
- 	rm -rf build
- 	mkdir -p build
-+	dh_autoreconf
- 	cd build && ../configure \
- 		--host=$(DEB_HOST_GNU_TYPE) \
- 		--build=$(DEB_BUILD_GNU_TYPE) \
-@@ -75,6 +76,7 @@
- 	rm -f stamp-*
- 	rm -rf build*
- 	rm -f doc/libffi.info
-+	dh_autoreconf_clean
- 	dh_clean 
- 
- install: build
-EOF
-}
 cross_build libffi
 mark_built libffi
 # needed by guile-2.0, p11-kit
