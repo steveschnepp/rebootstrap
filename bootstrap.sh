@@ -2810,6 +2810,8 @@ patch_jemalloc() {
  override_dh_auto_install:
  	make install_include install_lib DESTDIR=$(CURDIR)/debian/tmp
 EOF
+	echo "jemalloc confuses build/host #808174"
+	sed -i 's/DEB_BUILD_/DEB_HOST_/g' debian/rules
 }
 
 add_automatic keyutils
