@@ -2683,6 +2683,8 @@ buildenv_jemalloc() {
 	esac
 }
 patch_jemalloc() {
+	echo "jemalloc confuses build/host #808174"
+	sed -i 's/DEB_BUILD_/DEB_HOST_/g' debian/rules
 	echo "patching jemalloc to support DEB_BUILD_OPTIONS=nocheck #807532"
 	drop_privs patch -p1 <<'EOF'
 --- a/debian/rules
@@ -2699,8 +2701,6 @@ patch_jemalloc() {
  override_dh_auto_install:
  	make install_include install_lib DESTDIR=$(CURDIR)/debian/tmp
 EOF
-	echo "jemalloc confuses build/host #808174"
-	sed -i 's/DEB_BUILD_/DEB_HOST_/g' debian/rules
 }
 
 add_automatic keyutils
