@@ -4,7 +4,7 @@ set -v
 set -e
 set -u
 
-export DEB_BUILD_OPTIONS="nocheck parallel=1"
+export DEB_BUILD_OPTIONS="nocheck noddebs parallel=1"
 export DH_VERBOSE=1
 HOST_ARCH=undefined
 # select gcc version from gcc-defaults package unless set
