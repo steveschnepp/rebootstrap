@@ -1292,7 +1292,7 @@ diff -u gcc-5-5.2.1/debian/rules.defs gcc-5-5.2.1/debian/rules.defs
    cross_gencontrol = DEB_HOST_ARCH=$(TARGET)
    cross_makeshlibs = DEB_HOST_ARCH=$(TARGET)
    cross_clean = DEB_HOST_ARCH=$(TARGET)
-+  cross_strip = DEB_HOST_GNU_TYPE=$(DEB_TARGET_GNU_TYPE)
++  cross_strip = dpkg-architecture -f -a$(TARGET) -c
  else
    TARGET_ALIAS := $(DEB_TARGET_GNU_TYPE)
  
