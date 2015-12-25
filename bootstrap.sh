@@ -1568,6 +1568,29 @@ featuresets:
 EOF
 		drop_privs ./debian/rules debian/rules.gen || : # intentionally exits 1 to avoid being called automatically. we are doing it wrong
 	fi
+	if test "$HOST_ARCH" = nios2; then
+		echo "patching linux for nios2"
+		drop_privs patch -p1 <<'EOF'
+--- a/debian/config/nios2/defines
++++ b/debian/config/nios2/defines
+@@ -0,0 +1,4 @@
++[base]
++kernel-arch: nios2
++featuresets:
++# empty; just building headers yet
+--- a/debian/config/defines
++++ b/debian/config/defines
+@@ -19,6 +19,7 @@
+  mipsel
+  mips64
+  mips64el
++ nios2
+  or1k
+  powerpc
+  powerpcspe
+EOF
+		drop_privs ./debian/rules debian/rules.gen || : # intentionally exits 1 to avoid being called automatically. we are doing it wrong
+	fi
 }
 if test "`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS`" = "linux"; then
 if test -f "$REPODIR/stamps/linux_1"; then
