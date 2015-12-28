@@ -4247,6 +4247,16 @@ mark_built libusb
 
 automatically_cross_build_packages
 
+builddep_jansson() {
+	# python-sphinx should be :native #807848
+	apt_get_install debhelper dh-autoreconf python-sphinx
+}
+cross_build jansson
+mark_built jansson
+# needed by nghttp2
+
+automatically_cross_build_packages
+
 builddep_curl() {
 	assert_built "gnutls28 libidn krb5 openldap nss rtmpdump libssh2 openssl zlib"
 	# stunnel4 and openssh-server lack <nocheck> profile annotation
