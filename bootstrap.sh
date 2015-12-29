@@ -3391,7 +3391,7 @@ builddep_ncurses() {
 		$APT_GET install "libgpm-dev:$1"
 	fi
 	# g++-multilib dependency unsatisfiable
-	$APT_GET install debhelper dpkg-dev pkg-config
+	apt_get_install debhelper dpkg-dev pkg-config autotools-dev
 	case "$ENABLE_MULTILIB:$HOST_ARCH" in
 		yes:amd64|yes:i386|yes:powerpc|yes:ppc64|yes:s390|yes:sparc)
 			test "$1" = "$HOST_ARCH"
