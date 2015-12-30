@@ -2007,6 +2007,27 @@ EOF
 	drop_privs patch -p1 <<'EOF'
 --- a/debian/rules.d/build.mk
 +++ b/debian/rules.d/build.mk
+@@ -10,6 +10,20 @@
+ define logme
+ (exec 3>&1; exit `( ( ( $(2) ) 2>&1 3>&-; echo $$? >&4) | tee $(1) >&3) 4>&1`)
+ endef
++define generic_multilib_extra_pkg_install
++set -e; \
++mkdir -p debian/$(1)/usr/include; \
++for i in `ls debian/tmp-libc/usr/include/$(DEB_HOST_MULTIARCH)`; do \
++	if test -d debian/tmp-libc/usr/include/$(DEB_HOST_MULTIARCH)/$$i && ! test $$i = bits -o $$i = gnu; then \
++		mkdir -p debian/$(1)/usr/include/$$i; \
++		for j in `ls debian/tmp-libc/usr/include/$(DEB_HOST_MULTIARCH)/$$i`; do \
++			ln -sf ../$(DEB_HOST_MULTIARCH)/$$i/$$j debian/$(1)/usr/include/$$i/$$j; \
++		done; \
++	else \
++		ln -sf $(DEB_HOST_MULTIARCH)/$$i debian/$(1)/usr/include/$$i; \
++	fi; \
++done
++endef
+ 
+ ifneq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
+     libc_extra_config_options = $(extra_config_options) --disable-sanity-checks \
 @@ -218,13 +218,9 @@
  	    echo "/lib/$(DEB_HOST_GNU_TYPE)" >> $$conffile; \
  	    echo "/usr/lib/$(DEB_HOST_GNU_TYPE)" >> $$conffile; \
@@ -2024,6 +2045,29 @@ EOF
  	fi
  
  	# For our biarch libc, add an ld.so.conf.d configuration; this
+--- a/debian/sysdeps/mips.mk
++++ b/debian/sysdeps/mips.mk
+@@ -31,19 +31,11 @@
+
+ define libc6-dev-mips64_extra_pkg_install
+ 
+-mkdir -p debian/libc6-dev-mips64/usr/include
+-ln -sf mips-linux-gnu/bits debian/libc6-dev-mips64/usr/include/
+-ln -sf mips-linux-gnu/gnu debian/libc6-dev-mips64/usr/include/
+-ln -sf mips-linux-gnu/fpu_control.h debian/libc6-dev-mips64/usr/include/
++$(call generic_multilib_extra_pkg_install,libc6-dev-mips64)
+ 
+ mkdir -p debian/libc6-dev-mips64/usr/include/mips-linux-gnu/gnu
+ cp -a debian/tmp-mips64/usr/include/gnu/stubs-n64_hard.h \
+         debian/libc6-dev-mips64/usr/include/mips-linux-gnu/gnu
+-
+-mkdir -p debian/libc6-dev-mips64/usr/include/sys
+-for i in `ls debian/tmp-libc/usr/include/mips-linux-gnu/sys` ; do \
+-        ln -sf ../mips-linux-gnu/sys/$$i debian/libc6-dev-mips64/usr/include/sys/$$i ; \
+-done
+ 
+ endef
+ 
 EOF
 	echo "dropping optimized package for hurd-i386"
 	rm -vf debian/sysdeps/hurd-i386.mk
