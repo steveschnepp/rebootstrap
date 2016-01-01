@@ -530,6 +530,10 @@ else
 	apt-get download "$LIBC_DEV_PKG"
 	dpkg-deb -R "./$LIBC_DEV_PKG"_*.deb x
 	sed -i -e '/^Conflicts: /d' x/DEBIAN/control
+	mv -nv -t x/usr/include "x/usr/include/$(dpkg-architecture -qDEB_HOST_MULTIARCH)/"*
+	mv -nv x/usr/include x/usr/include.orig
+	mkdir x/usr/include
+	mv -nv x/usr/include.orig "x/usr/include/$(dpkg-architecture -qDEB_HOST_MULTIARCH)"
 	dpkg-deb -b x "./$LIBC_DEV_PKG"_*.deb
 	reprepro includedeb rebootstrap-native "./$LIBC_DEV_PKG"_*.deb
 	dpkg -i "./$LIBC_DEV_PKG"_*.deb
