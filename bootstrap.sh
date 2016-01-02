@@ -1317,6 +1317,34 @@ diff -u gcc-5-5.2.1/debian/rules.defs gcc-5-5.2.1/debian/rules.defs
  
  printarch:
 EOF
+	echo "patching gcc to always detect the availability of glibc's limits.h even in multiarch locations"
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/rules.patch
++++ b/debian/rules.patch
+@@ -91,6 +91,8 @@
+ 	pr67590 \
+ 	pr67736 \
+ 
++debian_patches += multiarch-limits-h
++
+ # this is still needed on powerpc, e.g. firefox and insighttoolkit4 will ftbfs.
+ ifneq (,$(filter $(DEB_TARGET_ARCH),powerpc))
+   debian_patches += pr65913-workaround
+--- /dev/null
++++ b/debian/patches/multiarch-limits-h.diff
+@@ -0,0 +1,11 @@
++--- a/src/gcc/Makefile.in
+++++ b/src/gcc/Makefile.in
++@@ -494,7 +494,7 @@
++ STMP_FIXINC = @STMP_FIXINC@
++ 
++ # Test to see whether <limits.h> exists in the system header files.
++-LIMITS_H_TEST = [ -f $(SYSTEM_HEADER_DIR)/limits.h ]
+++LIMITS_H_TEST = :
++ 
++ # Directory for prefix to system directories, for
++ # each of $(system_prefix)/usr/include, $(system_prefix)/usr/lib, etc.
+EOF
 	echo "fixing gcc stage2 control file to contain libgcc4 for hppa"
 	drop_privs patch -p1 <<'EOF'
 --- a/debian/rules.conf
