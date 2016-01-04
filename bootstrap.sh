@@ -13,7 +13,7 @@ GCC_VER=
 ENABLE_MULTILIB=no
 ENABLE_MULTIARCH_GCC=yes
 REPODIR=/tmp/repo
-APT_GET="apt-get --no-install-recommends -y -o Debug::pkgProblemResolver=true -o Debug::pkgDepCache::Marker=1 -o Debug::pkgDepCache::AutoInstall=1 -o Acquire::Languages=none"
+APT_GET="apt-get --no-install-recommends -y -o Debug::pkgProblemResolver=true -o Debug::pkgDepCache::Marker=1 -o Debug::pkgDepCache::AutoInstall=1 -o Acquire::Languages=none -o Debug::BuildDeps=1"
 DEFAULT_PROFILES="cross nocheck"
 LIBC_NAME=glibc
 DROP_PRIVS=buildd
