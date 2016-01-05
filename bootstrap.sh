@@ -2088,6 +2088,29 @@ EOF
  	fi
  
  	# For our biarch libc, add an ld.so.conf.d configuration; this
+--- a/debian/sysdeps/ppc64.mk
++++ b/debian/sysdeps/ppc64.mk
+@@ -15,19 +15,11 @@
+
+ define libc6-dev-powerpc_extra_pkg_install
+
+-mkdir -p debian/libc6-dev-powerpc/usr/include
+-ln -s powerpc64-linux-gnu/bits debian/libc6-dev-powerpc/usr/include/
+-ln -s powerpc64-linux-gnu/gnu debian/libc6-dev-powerpc/usr/include/
+-ln -s powerpc64-linux-gnu/fpu_control.h debian/libc6-dev-powerpc/usr/include/
++$(call generic_multilib_extra_pkg_install,libc6-dev-powerpc)
+
+ mkdir -p debian/libc6-dev-powerpc/usr/include/powerpc64-linux-gnu/gnu
+ cp -a debian/tmp-powerpc/usr/include/gnu/stubs-32.h \
+         debian/libc6-dev-powerpc/usr/include/powerpc64-linux-gnu/gnu
+-
+-mkdir -p debian/libc6-dev-powerpc/usr/include/sys
+-for i in `ls debian/tmp-libc/usr/include/powerpc64-linux-gnu/sys` ; do \
+-        ln -s ../powerpc64-linux-gnu/sys/$$i debian/libc6-dev-powerpc/usr/include/sys/$$i ; \
+-done
+
+ endef
+
 --- a/debian/sysdeps/mips.mk
 +++ b/debian/sysdeps/mips.mk
 @@ -31,19 +31,11 @@
@@ -2111,6 +2134,52 @@ EOF
  
  endef
  
+--- a/debian/sysdeps/mipsel.mk
++++ b/debian/sysdeps/mipsel.mk
+@@ -31,19 +31,11 @@
+
+ define libc6-dev-mips64_extra_pkg_install
+
+-mkdir -p debian/libc6-dev-mips64/usr/include
+-ln -sf mipsel-linux-gnu/bits debian/libc6-dev-mips64/usr/include/
+-ln -sf mipsel-linux-gnu/gnu debian/libc6-dev-mips64/usr/include/
+-ln -sf mipsel-linux-gnu/fpu_control.h debian/libc6-dev-mips64/usr/include/
++$(call generic_multilib_extra_pkg_install,libc6-dev-mips64)
+
+ mkdir -p debian/libc6-dev-mips64/usr/include/mipsel-linux-gnu/gnu
+ cp -a debian/tmp-mips64/usr/include/gnu/stubs-n64_hard.h \
+         debian/libc6-dev-mips64/usr/include/mipsel-linux-gnu/gnu
+-
+-mkdir -p debian/libc6-dev-mips64/usr/include/sys
+-for i in `ls debian/tmp-libc/usr/include/mipsel-linux-gnu/sys` ; do \
+-        ln -sf ../mipsel-linux-gnu/sys/$$i debian/libc6-dev-mips64/usr/include/sys/$$i ; \
+-done
+
+ endef
+
+--- a/debian/sysdeps/s390x.mk
++++ b/debian/sysdeps/s390x.mk
+@@ -14,19 +14,11 @@
+
+ define libc6-dev-s390_extra_pkg_install
+
+-mkdir -p debian/libc6-dev-s390/usr/include
+-ln -s s390x-linux-gnu/bits debian/libc6-dev-s390/usr/include/
+-ln -s s390x-linux-gnu/gnu debian/libc6-dev-s390/usr/include/
+-ln -s s390x-linux-gnu/fpu_control.h debian/libc6-dev-s390/usr/include/
++$(call generic_multilib_extra_pkg_install,libc6-dev-s390)
+
+ mkdir -p debian/libc6-dev-s390/usr/include/s390x-linux-gnu/gnu
+ cp -a debian/tmp-s390/usr/include/gnu/stubs-32.h \
+         debian/libc6-dev-s390/usr/include/s390x-linux-gnu/gnu
+-
+-mkdir -p debian/libc6-dev-s390/usr/include/sys
+-for i in `ls debian/tmp-libc/usr/include/s390x-linux-gnu/sys` ; do \
+-        ln -s ../s390x-linux-gnu/sys/$$i debian/libc6-dev-s390/usr/include/sys/$$i ; \
+-done
+
+ endef
+
 EOF
 	echo "dropping optimized package for hurd-i386"
 	rm -vf debian/sysdeps/hurd-i386.mk
