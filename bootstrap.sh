@@ -3196,6 +3196,7 @@ add_automatic readline5
 add_automatic rtmpdump
 add_automatic sed
 add_automatic slang2
+add_automatic spdylay
 add_automatic sqlite3
 
 add_automatic tar
@@ -3332,6 +3333,7 @@ add_need readline5 # by lvm2
 add_need rtmpdump # by curl
 add_need sed # essential
 add_need slang2 # by cdebconf, newt
+add_need spdylay # by nghttp2
 add_need sqlite3 # by python2.7
 add_need tar # essential
 add_need tcl8.6 # by newt
