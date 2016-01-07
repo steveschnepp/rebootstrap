@@ -3035,6 +3035,7 @@ buildenv_libelf() {
 }
 
 add_automatic libev
+add_automatic libevent
 add_automatic libgc
 
 add_automatic libgcrypt20
