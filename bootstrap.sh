@@ -3359,8 +3359,9 @@ automatically_cross_build_packages() {
 		new_needed=
 		while IFS= read -r line; do
 			case "$line" in
-				"  package: src:"*)
-					pkg=${line#*src:}
+				"  package: "*)
+					pkg=${line#  package: }
+					pkg=${pkg#src:} # dose3 << 4.1
 				;;
 				"  status: ok")
 					buildable=`set_add "$buildable" "$pkg"`
