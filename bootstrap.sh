@@ -2437,7 +2437,9 @@ else
 	# avoid file conflicts between differently staged M-A:same packages
 	apt_get_remove "gcc-$GCC_VER-base:$HOST_ARCH"
 	drop_privs rm -fv gcc-*-plugin-*.deb gcj-*.deb gdc-*.deb ./*objc*.deb ./*-dbg_*.deb
-	dpkg -i "gcc-${GCC_VER}-base_"*"_$(dpkg --print-architecture).deb"
+	if test "$ENABLE_MULTIARCH_GCC" = yes; then
+		dpkg -i "gcc-${GCC_VER}-base_"*"_$(dpkg --print-architecture).deb"
+	fi
 	dpkg -i *.deb
 	compiler="`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE`-gcc-$GCC_VER"
 	if ! which "$compiler"; then echo "$compiler missing in stage3 gcc package"; exit 1; fi
