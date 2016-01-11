@@ -1418,13 +1418,8 @@ elif test "$GCC_VER" != "$BUILD_GCC_MULTIARCH_VER"; then
 if test "$GCC_VER" = 6 -a "$BUILD_GCC_MULTIARCH_VER" = 5; then
 	echo "deb [ arch=$(dpkg --print-architecture) ] $MIRROR experimental main" > /etc/apt/sources.list.d/tmp-experimental.list
 	$APT_GET update
-	cat >/etc/apt/preferences.d/experimental_unstable_gcc <<EOF
-Package: cpp* g++* gcc* libcilkrts* libasan* libatomic* libgcc* libgomp* libitm* liblsan* libquadmath* libstdc++* libtsan* libubsan*
-Pin: release a=experimental
-Pin-Priority: 1000
-EOF
-	$APT_GET dist-upgrade
-	rm -f /etc/apt/preferences.d/experimental_unstable_gcc /etc/apt/sources.list.d/tmp-experimental.list
+	$APT_GET -t experimental install gcc g++
+	rm -f /etc/apt/sources.list.d/tmp-experimental.list
 	$APT_GET update
 elif test -f "$REPODIR/stamps/gcc_0"; then
 	echo "skipping rebuild of build gcc"
