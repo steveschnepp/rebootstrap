@@ -2152,6 +2152,29 @@ EOF
 
  endef
 
+--- a/debian/sysdeps/powerpc.mk
++++ b/debian/sysdeps/powerpc.mk
+@@ -15,19 +15,11 @@
+
+ define libc6-dev-ppc64_extra_pkg_install
+
+-mkdir -p debian/libc6-dev-ppc64/usr/include
+-ln -s powerpc-linux-gnu/bits debian/libc6-dev-ppc64/usr/include/
+-ln -s powerpc-linux-gnu/gnu debian/libc6-dev-ppc64/usr/include/
+-ln -s powerpc-linux-gnu/fpu_control.h debian/libc6-dev-ppc64/usr/include/
++$(call generic_multilib_extra_pkg_install,libc6-dev-ppc64)
+
+ mkdir -p debian/libc6-dev-ppc64/usr/include/powerpc-linux-gnu/gnu
+ cp -a debian/tmp-ppc64/usr/include/gnu/stubs-64-v1.h \
+         debian/libc6-dev-ppc64/usr/include/powerpc-linux-gnu/gnu
+-
+-mkdir -p debian/libc6-dev-ppc64/usr/include/sys
+-for i in `ls debian/tmp-libc/usr/include/powerpc-linux-gnu/sys` ; do \
+-        ln -s ../powerpc-linux-gnu/sys/$$i debian/libc6-dev-ppc64/usr/include/sys/$$i ; \
+-done
+
+ endef
+
 --- a/debian/sysdeps/s390x.mk
 +++ b/debian/sysdeps/s390x.mk
 @@ -14,19 +14,11 @@
@@ -2175,6 +2198,28 @@ EOF
 
  endef
 
+--- a/debian/sysdeps/sparc.mk
++++ b/debian/sysdeps/sparc.mk
+@@ -15,18 +15,10 @@
+
+ define libc6-dev-sparc64_extra_pkg_install
+
+-mkdir -p debian/libc6-dev-sparc64/usr/include
+-ln -s sparc-linux-gnu/bits debian/libc6-dev-sparc64/usr/include/
+-ln -s sparc-linux-gnu/gnu debian/libc6-dev-sparc64/usr/include/
+-ln -s sparc-linux-gnu/fpu_control.h debian/libc6-dev-sparc64/usr/include/
++$(call generic_multilib_extra_pkg_install,libc6-dev-sparc64)
+
+ mkdir -p debian/libc6-dev-sparc64/usr/include/sparc-linux-gnu/gnu
+ cp -a debian/tmp-sparc64/usr/include/gnu/stubs-64.h \
+         debian/libc6-dev-sparc64/usr/include/sparc-linux-gnu/gnu
+-
+-mkdir -p debian/libc6-dev-sparc64/usr/include/sys
+-for i in `ls debian/tmp-libc/usr/include/sparc-linux-gnu/sys` ; do \
+-        ln -s ../sparc-linux-gnu/sys/$$i debian/libc6-dev-sparc64/usr/include/sys/$$i ; \
+-done
+
+ endef
 EOF
 	echo "dropping optimized package for hurd-i386"
 	rm -vf debian/sysdeps/hurd-i386.mk
