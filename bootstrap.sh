@@ -531,8 +531,8 @@ sed -i '/dh_update_autotools_config/d' /usr/bin/dh
 # removing libc*-dev conflict with each other
 LIBC_DEV_PKG=$(apt-cache showpkg libc-dev | sed '1,/^Reverse Provides:/d;s/ .*//;q')
 if test "$(apt-cache show "$LIBC_DEV_PKG" | sed -n 's/^Source: //;T;p;q')" = glibc; then
-if test -f "$REPODIR/pool/main/g/glibc/$LIBC_DEV_PKG"_*"$(dpkg --print-architecture).deb"; then
-	dpkg -i "$REPODIR/pool/main/g/glibc/$LIBC_DEV_PKG"_*"$(dpkg --print-architecture).deb"
+if test -f "$REPODIR/pool/main/g/glibc/$LIBC_DEV_PKG"_*_"$(dpkg --print-architecture).deb"; then
+	dpkg -i "$REPODIR/pool/main/g/glibc/$LIBC_DEV_PKG"_*_"$(dpkg --print-architecture).deb"
 else
 	cd /tmp/buildd
 	apt-get download "$LIBC_DEV_PKG"
