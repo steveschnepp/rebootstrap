@@ -522,6 +522,8 @@ $APT_GET update
 
 # work around debhelper bug #811038
 touch /usr/share/debhelper/autoscripts/postinst-makeshlibs /usr/share/debhelper/autoscripts/postrm-makeshlibs
+# work around debhelper bug #811052
+sed -i '/dh_update_autotools_config/d' /usr/bin/dh
 
 # removing libc*-dev conflict with each other
 LIBC_DEV_PKG=$(apt-cache showpkg libc-dev | sed '1,/^Reverse Provides:/d;s/ .*//;q')
