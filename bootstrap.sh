@@ -458,7 +458,7 @@ if test -z "$GCC_VER"; then
 	GCC_VER=`apt-cache depends gcc | sed 's/^ *Depends: gcc-\([0-9.]*\)$/\1/;t;d'`
 fi
 
-rmdir /tmp/buildd || :
+rm -Rf /tmp/buildd
 drop_privs mkdir -p /tmp/buildd
 
 HOST_ARCH_SUFFIX="-`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE | tr _ -`"
