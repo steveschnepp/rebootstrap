@@ -883,6 +883,12 @@ diff -u gcc-4.9-4.9.2/debian/rules.conf gcc-4.9-4.9.2/debian/rules.conf
      LIBC_DEP = libc0.3
 EOF
 }
+patch_gcc_wdotap() {
+	if test "$ENABLE_MULTIARCH_GCC" = yes; then
+		echo "applying patches for with_deps_on_target_arch_pkgs"
+		drop_privs QUILT_PATCHES="/usr/share/cross-gcc/patches/gcc-$GCC_VER" quilt push -a
+	fi
+}
 patch_gcc_4_9() {
 	echo "patching gcc-4.9 to build common libraries. not a bug"
 	drop_privs patch -p1 <<'EOF'
@@ -949,10 +955,7 @@ diff -u gcc-4.9-4.9.2/debian/patches/cross-biarch.diff gcc-4.9-4.9.2/debian/patc
 EOF
 	patch_gcc_os_include_dir_musl
 	patch_gcc_musl_depends
-	if test "$ENABLE_MULTIARCH_GCC" = yes; then
-		echo "applying patches for with_deps_on_target_arch_pkgs"
-		drop_privs QUILT_PATCHES="/usr/share/cross-gcc/patches/gcc-$GCC_VER" quilt push -a
-	fi
+	patch_gcc_wdotap
 }
 patch_gcc_5() {
 	patch_gcc_os_include_dir_musl
@@ -1409,10 +1412,10 @@ EOF
      with_liblsan := disabled for rtlibs stage
      with_libtsan := disabled for rtlibs stage
 EOF
-	if test "$ENABLE_MULTIARCH_GCC" = yes; then
-		echo "applying patches for with_deps_on_target_arch_pkgs"
-		drop_privs QUILT_PATCHES="/usr/share/cross-gcc/patches/gcc-$GCC_VER" quilt push -a
-	fi
+	patch_gcc_wdotap
+}
+patch_gcc_6() {
+	patch_gcc_wdotap
 }
 # choosing libatomic1 arbitrarily here, cause it never bumped soname
 BUILD_GCC_MULTIARCH_VER=`apt-cache show --no-all-versions libatomic1 | sed 's/^Source: gcc-\([0-9.]*\)$/\1/;t;d'`
