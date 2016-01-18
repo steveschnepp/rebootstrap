@@ -1419,9 +1419,7 @@ patch_gcc_6() {
 }
 # choosing libatomic1 arbitrarily here, cause it never bumped soname
 BUILD_GCC_MULTIARCH_VER=`apt-cache show --no-all-versions libatomic1 | sed 's/^Source: gcc-\([0-9.]*\)$/\1/;t;d'`
-if test "$ENABLE_MULTIARCH_GCC" != yes; then
-	echo "not building with_deps_on_target_arch_pkgs, version of gcc libraries does not have to match"
-elif test "$GCC_VER" != "$BUILD_GCC_MULTIARCH_VER"; then
+if test "$GCC_VER" != "$BUILD_GCC_MULTIARCH_VER"; then
 	echo "host gcc version ($GCC_VER) and build gcc version ($BUILD_GCC_MULTIARCH_VER) mismatch. need different build gcc"
 if test "$GCC_VER" = 6 -a "$BUILD_GCC_MULTIARCH_VER" = 5; then
 	echo "deb [ arch=$(dpkg --print-architecture) ] $MIRROR experimental main" > /etc/apt/sources.list.d/tmp-experimental.list
