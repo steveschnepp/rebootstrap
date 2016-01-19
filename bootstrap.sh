@@ -3317,6 +3317,414 @@ EOF
  TOOLCHAIN += RANLIB=$(DEB_HOST_GNU_TYPE)-ranlib
  endif
 EOF
+	echo "fixing FTCBFS for kfreebsd-any #810579"
+	drop_privs quilt pop -a
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/patches/10_linux.patch
++++ b/debian/patches/10_linux.patch
+@@ -0,0 +1,239 @@
++From: Steven Chamberlain <steven@pyro.eu.org>
++Subject: use __linux__ macro instead of other variations
++Date: Tue, 12 Jan 2016 02:12:28 +0000
++
++Use the preferred, POSIX-compliant __linux__ macro instead of obsolete
++__linux, linux and LINUX.  No longer define those via CFLAGS but defer
++to the compiler toolchain to do as necessary.
++
++--- a/nss/coreconf/nsinstall/nsinstall.c
+++++ b/nss/coreconf/nsinstall/nsinstall.c
++@@ -26,7 +26,7 @@
++ 
++ #define HAVE_LCHOWN
++ 
++-#if defined(AIX) || defined(BSDI) || defined(HPUX) || defined(LINUX) || defined(SUNOS4) || defined(SCO) || defined(UNIXWARE) || defined(NTO) || defined(DARWIN) || defined(BEOS) || defined(__riscos__)
+++#if defined(AIX) || defined(BSDI) || defined(HPUX) || defined(__linux__) || defined(SUNOS4) || defined(SCO) || defined(UNIXWARE) || defined(NTO) || defined(DARWIN) || defined(BEOS) || defined(__riscos__)
++ #undef HAVE_LCHOWN
++ #endif
++ 
++@@ -36,7 +36,7 @@
++ #undef HAVE_FCHMOD
++ #endif
++ 
++-#ifdef LINUX
+++#ifdef __linux__
++ #include <getopt.h>
++ #endif
++ 
++--- a/nss/lib/dbm/include/mcom_db.h
+++++ b/nss/lib/dbm/include/mcom_db.h
++@@ -60,14 +60,14 @@
++ #include <sys/byteorder.h>
++ #endif
++ 
++-#if defined(__linux) || defined(__BEOS__)
+++#if defined(__linux__) || defined(__BEOS__)
++ #include <endian.h>
++ #ifndef BYTE_ORDER
++ #define BYTE_ORDER    __BYTE_ORDER
++ #define BIG_ENDIAN    __BIG_ENDIAN
++ #define LITTLE_ENDIAN __LITTLE_ENDIAN
++ #endif
++-#endif /* __linux */
+++#endif /* __linux__ */
++ 
++ #ifdef __sgi
++ #define BYTE_ORDER BIG_ENDIAN
++--- a/nss/lib/freebl/nsslowhash.c
+++++ b/nss/lib/freebl/nsslowhash.c
++@@ -257,7 +257,7 @@
++ };
++ 
++ static int nsslow_GetFIPSEnabled(void) {
++-#ifdef LINUX
+++#ifdef __linux__
++     FILE *f;
++     char d;
++     size_t size;
++--- a/nss/lib/freebl/unix_rand.c
+++++ b/nss/lib/freebl/unix_rand.c
++@@ -346,7 +346,7 @@
++ }
++ #endif /* IBM R2 */
++ 
++-#if defined(LINUX)
+++#if defined(__linux__)
++ #include <sys/sysinfo.h>
++ 
++ static size_t
++@@ -365,7 +365,7 @@
++     }
++ #endif
++ }
++-#endif /* LINUX */
+++#endif /* __linux__ */
++ 
++ #if defined(NCR)
++ 
++@@ -914,7 +914,7 @@
++  */
++ 
++ #if defined(BSDI) || defined(FREEBSD) || defined(NETBSD) \
++-    || defined(OPENBSD) || defined(DARWIN) || defined(LINUX) \
+++    || defined(OPENBSD) || defined(DARWIN) || defined(__linux__) \
++     || defined(HPUX)
++     if (bytes)
++         return;
++--- a/nss/lib/softoken/fipstokn.c
+++++ b/nss/lib/softoken/fipstokn.c
++@@ -33,7 +33,7 @@
++ #include <unistd.h>
++ #endif
++ 
++-#ifdef LINUX
+++#ifdef __linux__
++ #include <pthread.h>
++ #include <dlfcn.h>
++ #define LIBAUDIT_NAME "libaudit.so.0"
++@@ -85,7 +85,7 @@
++ 	audit_send_user_message_func = NULL;
++     }
++ }
++-#endif /* LINUX */
+++#endif /* __linux__ */
++ 
++ 
++ /*
++@@ -289,7 +289,7 @@
++     return rv;
++ }
++ 
++-#ifdef LINUX
+++#ifdef __linux__
++ 
++ int
++ sftk_mapLinuxAuditType(NSSAuditSeverity severity, NSSAuditType auditType)
++@@ -374,7 +374,7 @@
++     syslog(level | LOG_USER /* facility */,
++ 	   "NSS " SOFTOKEN_LIB_NAME "[pid=%d uid=%d]: %s",
++ 	   (int)getpid(), (int)getuid(), msg);
++-#ifdef LINUX
+++#ifdef __linux__
++     if (pthread_once(&libaudit_once_control, libaudit_init) != 0) {
++ 	return;
++     }
++@@ -401,7 +401,7 @@
++ 	audit_close_func(audit_fd);
++ 	PR_smprintf_free(message);
++     }
++-#endif /* LINUX */
+++#endif /* __linux__ */
++ #else
++     /* do nothing */
++ #endif
++--- a/nss/lib/softoken/softoken.h
+++++ b/nss/lib/softoken/softoken.h
++@@ -184,7 +184,7 @@
++ 
++ #define CHECK_FORK_MIXED
++ 
++-#elif defined(LINUX)
+++#elif defined(__linux__)
++ 
++ #define CHECK_FORK_PTHREAD
++ 
++--- a/nss/lib/ssl/sslmutex.c
+++++ b/nss/lib/ssl/sslmutex.c
++@@ -56,7 +56,7 @@
++     return SECSuccess;
++ }
++ 
++-#if defined(LINUX) || defined(AIX) || defined(BEOS) || defined(BSDI) || (defined(NETBSD) && __NetBSD_Version__ < 500000000) || defined(OPENBSD)
+++#if defined(__linux__) || defined(AIX) || defined(BEOS) || defined(BSDI) || (defined(NETBSD) && __NetBSD_Version__ < 500000000) || defined(OPENBSD)
++ 
++ #include <unistd.h>
++ #include <fcntl.h>
++@@ -119,7 +119,7 @@
++ 
++     pMutex->u.pipeStr.mPipes[2] = SSL_MUTEX_MAGIC;
++ 
++-#if defined(LINUX) && defined(i386)
+++#if defined(__linux__) && defined(i386)
++     /* Pipe starts out empty */
++     return SECSuccess;
++ #else
++@@ -159,7 +159,7 @@
++     return SECSuccess;
++ }
++ 
++-#if defined(LINUX) && defined(i386)
+++#if defined(__linux__) && defined(i386)
++ /* No memory barrier needed for this platform */
++ 
++ /* nWaiters includes the holder of the lock (if any) and the number
++--- a/nss/lib/ssl/sslmutex.h
+++++ b/nss/lib/ssl/sslmutex.h
++@@ -50,7 +50,7 @@
++ 
++ typedef int    sslPID;
++ 
++-#elif defined(LINUX) || defined(AIX) || defined(BEOS) || defined(BSDI) || (defined(NETBSD) && __NetBSD_Version__ < 500000000) || defined(OPENBSD)
+++#elif defined(__linux__) || defined(AIX) || defined(BEOS) || defined(BSDI) || (defined(NETBSD) && __NetBSD_Version__ < 500000000) || defined(OPENBSD)
++ 
++ #include <sys/types.h>
++ #include "prtypes.h"
++--- a/nss/lib/ssl/sslsnce.c
+++++ b/nss/lib/ssl/sslsnce.c
++@@ -255,7 +255,7 @@
++ #define MAX_SSL3_TIMEOUT      86400L  /* 24 hours */
++ #define MIN_SSL3_TIMEOUT          5   /* seconds  */
++ 
++-#if defined(AIX) || defined(LINUX) || defined(NETBSD) || defined(OPENBSD)
+++#if defined(AIX) || defined(__linux__) || defined(NETBSD) || defined(OPENBSD)
++ #define MAX_SID_CACHE_LOCKS 8	/* two FDs per lock */
++ #elif defined(OSF1)
++ #define MAX_SID_CACHE_LOCKS 16	/* one FD per lock */
++--- a/nss/coreconf/Linux.mk
+++++ b/nss/coreconf/Linux.mk
++@@ -140,7 +140,7 @@
++ OS_PTHREAD = -lpthread 
++ endif
++ 
++-OS_CFLAGS		= $(DSO_CFLAGS) $(OS_REL_CFLAGS) $(ARCHFLAG) $(WARNING_CFLAGS) -pipe -ffunction-sections -fdata-sections -DLINUX -Dlinux -DHAVE_STRERROR
+++OS_CFLAGS		= $(DSO_CFLAGS) $(OS_REL_CFLAGS) $(ARCHFLAG) $(WARNING_CFLAGS) -pipe -ffunction-sections -fdata-sections -DHAVE_STRERROR
++ OS_LIBS			= $(OS_PTHREAD) -ldl -lc
++ 
++ ifdef USE_PTHREADS
++--- a/nss/coreconf/mkdepend/imakemdep.h
+++++ b/nss/coreconf/mkdepend/imakemdep.h
++@@ -461,9 +461,8 @@
++ #ifdef NCR
++ 	"-DNCR",	/* NCR */
++ #endif
++-#ifdef linux
+++#ifdef __linux__
++         "-traditional",
++-        "-Dlinux",
++ #endif
++ #ifdef __uxp__
++ 	"-D__uxp__",
++--- a/nss/lib/freebl/mpi/target.mk
+++++ b/nss/lib/freebl/mpi/target.mk
++@@ -173,13 +173,13 @@
++ MPICMN += -DMP_ASSEMBLY_MULTIPLY -DMP_ASSEMBLY_SQUARE -DMP_ASSEMBLY_DIV_2DX1D
++ MPICMN += -DMP_MONT_USE_MP_MUL -DMP_CHAR_STORE_SLOW -DMP_IS_LITTLE_ENDIAN
++ CFLAGS= -O2 -fPIC -DLINUX1_2 -Di386 -D_XOPEN_SOURCE -DLINUX2_1 -ansi -Wall \
++- -pipe -DLINUX -Dlinux -D_POSIX_SOURCE -D_BSD_SOURCE -DHAVE_STRERROR \
+++ -pipe -D_POSIX_SOURCE -D_BSD_SOURCE -DHAVE_STRERROR \
++  -DXP_UNIX -UDEBUG -DNDEBUG -D_REENTRANT $(MPICMN)
++ #CFLAGS= -g -fPIC -DLINUX1_2 -Di386 -D_XOPEN_SOURCE -DLINUX2_1 -ansi -Wall \
++- -pipe -DLINUX -Dlinux -D_POSIX_SOURCE -D_BSD_SOURCE -DHAVE_STRERROR \
+++ -pipe -D_POSIX_SOURCE -D_BSD_SOURCE -DHAVE_STRERROR \
++  -DXP_UNIX -DDEBUG -UNDEBUG -D_REENTRANT $(MPICMN)
++ #CFLAGS= -g -fPIC -DLINUX1_2 -Di386 -D_XOPEN_SOURCE -DLINUX2_1 -ansi -Wall \
++- -pipe -DLINUX -Dlinux -D_POSIX_SOURCE -D_BSD_SOURCE -DHAVE_STRERROR \
+++ -pipe -D_POSIX_SOURCE -D_BSD_SOURCE -DHAVE_STRERROR \
++  -DXP_UNIX -UDEBUG -DNDEBUG -D_REENTRANT $(MPICMN)
++ endif
++ 
+--- a/debian/patches/38_kbsd.patch
++++ b/debian/patches/38_kbsd.patch
+@@ -4,11 +4,9 @@
+ ## DP: GNU/kFreeBSD support. bz#356011
+ ## DP: Added Hurd support.
+ 
+-Index: nss/nss/lib/freebl/unix_rand.c
+-===================================================================
+---- nss.orig/nss/lib/freebl/unix_rand.c
+-+++ nss/nss/lib/freebl/unix_rand.c
+-@@ -156,7 +156,8 @@ static SECStatus RNG_kstat(PRUint32* fed
++--- a/nss/lib/freebl/unix_rand.c
+++++ b/nss/lib/freebl/unix_rand.c
++@@ -156,7 +156,8 @@
+  
+  #if defined(SCO) || defined(UNIXWARE) || defined(BSDI) || defined(FREEBSD) \
+      || defined(NETBSD) || defined(DARWIN) || defined(OPENBSD) \
+@@ -18,50 +16,42 @@
+  #include <sys/times.h>
+  
+  #define getdtablesize() sysconf(_SC_OPEN_MAX)
+-Index: nss/nss/lib/softoken/softoken.h
+-===================================================================
+---- nss.orig/nss/lib/softoken/softoken.h
+-+++ nss/nss/lib/softoken/softoken.h
+-@@ -184,7 +184,7 @@ extern PRBool sftk_fatalError;
++--- a/nss/lib/softoken/softoken.h
+++++ b/nss/lib/softoken/softoken.h
++@@ -184,7 +184,7 @@
+  
+  #define CHECK_FORK_MIXED
+  
+--#elif defined(LINUX)
+-+#elif defined(LINUX) || defined (__GLIBC__)
++-#elif defined(__linux__)
+++#elif defined(__linux__) || defined (__GLIBC__)
+  
+  #define CHECK_FORK_PTHREAD
+  
+-Index: nss/nss/lib/ssl/sslmutex.c
+-===================================================================
+---- nss.orig/nss/lib/ssl/sslmutex.c
+-+++ nss/nss/lib/ssl/sslmutex.c
+-@@ -56,7 +56,7 @@ static SECStatus single_process_sslMutex
++--- a/nss/lib/ssl/sslmutex.c
+++++ b/nss/lib/ssl/sslmutex.c
++@@ -56,7 +56,7 @@
+      return SECSuccess;
+  }
+  
+--#if defined(LINUX) || defined(AIX) || defined(BEOS) || defined(BSDI) || (defined(NETBSD) && __NetBSD_Version__ < 500000000) || defined(OPENBSD)
+-+#if defined(LINUX) || defined(AIX) || defined(BEOS) || defined(BSDI) || (defined(NETBSD) && __NetBSD_Version__ < 500000000) || defined(OPENBSD) || defined(__GLIBC__)
++-#if defined(__linux__) || defined(AIX) || defined(BEOS) || defined(BSDI) || (defined(NETBSD) && __NetBSD_Version__ < 500000000) || defined(OPENBSD)
+++#if defined(__linux__) || defined(AIX) || defined(BEOS) || defined(BSDI) || (defined(NETBSD) && __NetBSD_Version__ < 500000000) || defined(OPENBSD) || defined(__GLIBC__)
+  
+  #include <unistd.h>
+  #include <fcntl.h>
+-Index: nss/nss/lib/ssl/sslmutex.h
+-===================================================================
+---- nss.orig/nss/lib/ssl/sslmutex.h
+-+++ nss/nss/lib/ssl/sslmutex.h
+-@@ -50,7 +50,7 @@ typedef struct
++--- a/nss/lib/ssl/sslmutex.h
+++++ b/nss/lib/ssl/sslmutex.h
++@@ -50,7 +50,7 @@
+  
+  typedef int    sslPID;
+  
+--#elif defined(LINUX) || defined(AIX) || defined(BEOS) || defined(BSDI) || (defined(NETBSD) && __NetBSD_Version__ < 500000000) || defined(OPENBSD)
+-+#elif defined(LINUX) || defined(AIX) || defined(BEOS) || defined(BSDI) || (defined(NETBSD) && __NetBSD_Version__ < 500000000) || defined(OPENBSD) || defined(__GLIBC__)
++-#elif defined(__linux__) || defined(AIX) || defined(BEOS) || defined(BSDI) || (defined(NETBSD) && __NetBSD_Version__ < 500000000) || defined(OPENBSD)
+++#elif defined(__linux__) || defined(AIX) || defined(BEOS) || defined(BSDI) || (defined(NETBSD) && __NetBSD_Version__ < 500000000) || defined(OPENBSD) || defined(__GLIBC__)
+  
+  #include <sys/types.h>
+  #include "prtypes.h"
+-Index: nss/nss/coreconf/arch.mk
+-===================================================================
+---- nss.orig/nss/coreconf/arch.mk
+-+++ nss/nss/coreconf/arch.mk
+-@@ -122,6 +122,14 @@ ifeq ($(OS_ARCH),Linux)
++--- a/nss/coreconf/arch.mk
+++++ b/nss/coreconf/arch.mk
++@@ -122,6 +122,14 @@
+      ifneq ($(words $(OS_RELEASE)),1)
+  	OS_RELEASE := $(word 1,$(OS_RELEASE)).$(word 2,$(OS_RELEASE))
+      endif
+@@ -76,11 +66,9 @@
+  endif
+  
+  #
+-Index: nss/nss/coreconf/Linux.mk
+-===================================================================
+---- nss.orig/nss/coreconf/Linux.mk
+-+++ nss/nss/coreconf/Linux.mk
+-@@ -107,7 +107,7 @@ ifneq ($(OS_TARGET),Android)
++--- a/nss/coreconf/Linux.mk
+++++ b/nss/coreconf/Linux.mk
++@@ -107,7 +107,7 @@
+  LIBC_TAG		= _glibc
+  endif
+  
+@@ -89,18 +77,7 @@
+  	OS_REL_CFLAGS	+= -DLINUX2_0
+  	MKSHLIB		= $(CC) -shared -Wl,-soname -Wl,$(@:$(OBJDIR)/%.so=%.so) $(RPATH)
+  	ifdef MAPFILE
+-@@ -140,14 +140,21 @@ ifeq ($(USE_PTHREADS),1)
+- OS_PTHREAD = -lpthread 
+- endif
+- 
+--OS_CFLAGS		= $(DSO_CFLAGS) $(OS_REL_CFLAGS) $(ARCHFLAG) $(WARNING_CFLAGS) -pipe -ffunction-sections -fdata-sections -DLINUX -Dlinux -DHAVE_STRERROR
+-+OS_CFLAGS		= $(DSO_CFLAGS) $(OS_REL_CFLAGS) $(ARCHFLAG) $(WARNING_CFLAGS) -pipe -ffunction-sections -fdata-sections -DHAVE_STRERROR
+-+ifeq ($(KERNEL),linux)
+-+OS_CFLAGS		+= -DLINUX -Dlinux
+-+endif
+- OS_LIBS			= $(OS_PTHREAD) -ldl -lc
+- 
+- ifdef USE_PTHREADS
++@@ -147,7 +147,11 @@
+  	DEFINES		+= -D_REENTRANT
+  endif
+  
+@@ -113,7 +90,7 @@
+  
+  DSO_CFLAGS		= -fPIC
+  DSO_LDOPTS		= -shared $(ARCHFLAG) -Wl,--gc-sections
+-@@ -164,7 +171,7 @@ ifdef _SBOX_DIR
++@@ -164,7 +168,7 @@
+  LDFLAGS			+= -Wl,-rpath-link,/usr/lib:/lib
+  endif
+  
+@@ -122,7 +99,7 @@
+  G++INCLUDES		= -I/usr/include/g++
+  
+  #
+-@@ -199,7 +206,9 @@ RPATH = -Wl,-rpath,'$$ORIGIN:/opt/sun/pr
++@@ -199,7 +203,9 @@
+  endif
+  endif
+  
+@@ -132,11 +109,9 @@
+  MKSHLIB         = $(CC) $(DSO_LDOPTS) -Wl,-soname -Wl,$(@:$(OBJDIR)/%.so=%.so) $(RPATH)
+  
+  ifdef MAPFILE
+-Index: nss/nss/coreconf/config.mk
+-===================================================================
+---- nss.orig/nss/coreconf/config.mk
+-+++ nss/nss/coreconf/config.mk
+-@@ -31,7 +31,7 @@ endif
++--- a/nss/coreconf/config.mk
+++++ b/nss/coreconf/config.mk
++@@ -31,7 +31,7 @@
+  #######################################################################
+  
+  TARGET_OSES = FreeBSD BSD_OS NetBSD OpenUNIX OS2 QNX Darwin BeOS OpenBSD \
+--- a/debian/patches/series
++++ b/debian/patches/series
+@@ -1,3 +1,4 @@
++10_linux.patch
+ 38_hurd.patch
+ 38_kbsd.patch
+ 80_security_tools.patch
+EOF
+	drop_privs quilt push -a
 }
 
 add_automatic openssl
