@@ -3682,6 +3682,7 @@ add_automatic mawk
 add_automatic mpclib3
 add_automatic mpfr4
 add_automatic nettle
+add_automatic nghttp2
 add_automatic nspr
 
 add_automatic nss
@@ -4250,7 +4251,6 @@ add_need groff # for man-db
 add_need gzip # essential
 add_need hostname # essential
 test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = linux && add_need kmod # by systemd
-dpkg-architecture "-a$HOST_ARCH" -ihurd-i386 || add_need jemalloc # by nghttp2
 add_need krb5 # by curl
 add_need libatomic-ops # by gcc-4.9
 add_need libcap2 # by systemd
@@ -4275,6 +4275,7 @@ add_need man-db # for debhelper
 add_need mawk # for base-files (alternatively: gawk)
 add_need mpclib3 # by gcc-4.9
 add_need mpfr4 # by gcc-4.9
+add_need nghttp2 # by curl
 add_need nss # by curl
 add_need openssl # by curl
 add_need patch # for dpkg-dev
@@ -4283,7 +4284,6 @@ add_need readline5 # by lvm2
 add_need rtmpdump # by curl
 add_need sed # essential
 add_need slang2 # by cdebconf, newt
-add_need spdylay # by nghttp2
 add_need sqlite3 # by python2.7
 add_need tar # essential
 add_need tcl8.6 # by newt
@@ -5349,9 +5349,9 @@ mark_built jansson
 automatically_cross_build_packages
 
 builddep_curl() {
-	assert_built "gnutls28 libidn krb5 openldap nss rtmpdump libssh2 openssl zlib"
+	assert_built "gnutls28 libidn krb5 openldap nss rtmpdump libssh2 openssl zlib nghttp2"
 	# stunnel4 and openssh-server lack <nocheck> profile annotation
-	$APT_GET install debhelper autoconf automake ca-certificates groff-base "libgnutls28-dev:$1" "libidn11-dev:$1" "libkrb5-dev:$1" "libldap2-dev:$1" "libnss3-dev:$1" "librtmp-dev:$1" "libssh2-1-dev:$1" "libssl-dev:$1" libtool python quilt "zlib1g-dev:$1"
+	apt_get_install debhelper autoconf automake ca-certificates groff-base "libgnutls28-dev:$1" "libidn11-dev:$1" "libkrb5-dev:$1" "libldap2-dev:$1" "libnss3-dev:$1" "librtmp-dev:$1" "libssh2-1-dev:$1" "libssl-dev:$1" libtool python quilt "zlib1g-dev:$1" "libnghttp2-dev:$1"
 }
 cross_build curl
 mark_built curl
