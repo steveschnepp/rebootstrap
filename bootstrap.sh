@@ -4710,50 +4710,30 @@ builddep_flex() {
 patch_flex() {
 	echo "patching flex to not run host arch executables #762180"
 	drop_privs patch -p1 <<'EOF'
-diff -Nru flex-2.5.39/debian/patches/help2man-cross.patch flex-2.5.39/debian/patches/help2man-cross.patch
---- flex-2.5.39/debian/patches/help2man-cross.patch
-+++ flex-2.5.39/debian/patches/help2man-cross.patch
-@@ -0,0 +1,32 @@
-+From: Helmut Grohne <helmut@subdivi.de>
-+Subject: Run help2man on the system copy of flex when cross building
-+Last-Modified: 2014-09-18
-+
-+Index: flex-2.5.39/configure.ac
-+===================================================================
-+--- flex-2.5.39.orig/configure.ac
-++++ flex-2.5.39/configure.ac
-+@@ -50,6 +50,12 @@
-+ 
-+ AC_PATH_PROG(BISON, bison,bison)
-+ AC_PATH_PROG(HELP2MAN, help2man, help2man)
-++if test "$cross_compiling" = yes; then
-++FLEXexe='flex$(EXEEXT)'
-++else
-++FLEXexe='$(top_builddir)/flex$(EXEEXT)'
-++fi
-++AC_SUBST(FLEXexe)
-+ 
-+ # Check for a m4 that supports -P
-+ 
-+Index: flex-2.5.39/doc/Makefile.am
-+===================================================================
-+--- flex-2.5.39.orig/doc/Makefile.am
-++++ flex-2.5.39/doc/Makefile.am
-+@@ -27,5 +27,5 @@
-+ 	for i in $(dist_man_MANS) ; do \
-+ 	$(help2man) --name='$(PACKAGE_NAME)' \
-+ 	--section=`echo $$i | sed -e 's/.*\.\([^.]*\)$$/\1/'` \
-+-	 ../flex$(EXEEXT) > $$i || rm -f $$i ; \
-++	 $(FLEXexe) > $$i || rm -f $$i ; \
-+ 	done
-diff -Nru flex-2.5.39/debian/patches/series flex-2.5.39/debian/patches/series
---- flex-2.5.39/debian/patches/series
-+++ flex-2.5.39/debian/patches/series
-@@ -4,3 +4,4 @@
- 0003-ia64-buffer-fix-Some-more-fixes-for-the-ia64-buffer-.patch
- 0004-bison-test-fixes-Do-not-use-obsolete-bison-construct.patch
- 0005-fix-off-by-one-error-generatred-line-numbers-are-off.patch
-+help2man-cross.patch
+--- a/configure.ac
++++ b/configure.ac
+@@ -50,6 +50,12 @@
+ 
+ AC_PATH_PROG(BISON, bison,bison)
+ AC_PATH_PROG(HELP2MAN, help2man, help2man)
++if test "$cross_compiling" = yes; then
++FLEXexe='flex$(EXEEXT)'
++else
++FLEXexe='$(top_srcdir)/src/flex$(EXEEXT)'
++fi
++AC_SUBST(FLEXexe)
+ 
+ # Check for a m4 that supports -P
+ 
+--- a/doc/Makefile.am
++++ b/doc/Makefile.am
+@@ -27,5 +27,5 @@
+ 	for i in $(dist_man_MANS) ; do \
+ 	$(help2man) --name='$(PACKAGE_NAME)' \
+ 	--section=`echo $$i | sed -e 's/.*\.\([^.]*\)$$/\1/'` \
+-	 $(top_srcdir)/src/flex$(EXEEXT) > $$i || rm -f $$i ; \
++	 $(FLEXexe) > $$i || rm -f $$i ; \
+ 	done
 EOF
 }
 cross_build flex
