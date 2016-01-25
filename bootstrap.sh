@@ -4735,6 +4735,24 @@ patch_flex() {
 +	 $(FLEXexe) > $$i || rm -f $$i ; \
  	done
 EOF
+	echo "patching flex to not run tests under DEB_BUILD_OPTIONS=nocheck #812659"
+	drop_privs patch -p1 <<'EOF'
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -53,9 +53,11 @@
+	doc \
+	examples \
+	po \
+-	tests \
+	tools
+ 
++check:
++	$(MAKE) -C tests
++
+ # Create the ChangeLog, but only if we're inside a git working directory
+
+ ChangeLog: $(srcdir)/tools/git2cl
+EOF
 }
 cross_build flex
 mark_built flex
