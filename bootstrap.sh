@@ -3326,23 +3326,6 @@ EOF
 }
 
 add_automatic dash
-patch_dash() {
-	echo "patching dash to invoke the host arch prefixed strip #665965"
-	drop_privs patch -p1 <<'EOF'
-diff -u dash-0.5.7/debian/rules dash-0.5.7/debian/rules
---- dash-0.5.7/debian/rules
-+++ dash-0.5.7/debian/rules
-@@ -8,6 +8,7 @@
- DEB_BUILD_GNU_TYPE =$(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
- ifneq ($(DEB_HOST_GNU_TYPE),$(DEB_BUILD_GNU_TYPE))
-   CC =$(DEB_HOST_GNU_TYPE)-gcc
-+  STRIP =$(DEB_HOST_GNU_TYPE)-strip
- endif
-
- ifneq (,$(findstring diet,$(DEB_BUILD_OPTIONS)))
-EOF
-}
-
 add_automatic datefudge
 add_automatic db-defaults
 add_automatic debianutils
