@@ -2820,6 +2820,19 @@ EOF
    else
      KFREEBSD_HEADERS := /usr/$(DEB_HOST_GNU_TYPE)/include
 EOF
+	echo "patching glibc to avoid -Werror"
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/rules.d/build.mk
++++ b/debian/rules.d/build.mk
+@@ -85,6 +85,7 @@
+ 		$(CURDIR)/configure \
+ 		--host=$(call xx,configure_target) \
+ 		--build=$$configure_build --prefix=/usr \
++		--disable-werror \
+ 		--enable-add-ons=$(standard-add-ons)"$(call xx,add-ons)" \
+ 		--without-selinux \
+ 		--enable-stackguard-randomization \
+EOF
 }
 if test -f "$REPODIR/stamps/${LIBC_NAME}_1"; then
 	echo "skipping rebuild of $LIBC_NAME stage1"
