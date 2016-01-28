@@ -4615,6 +4615,7 @@ mark_built readline6
 
 automatically_cross_build_packages
 
+if dpkg-architecture "-a$HOST_ARCH" -ilinux-any; then
 builddep_libselinux() {
 	assert_built "libsepol pcre3"
 	# gem2deb dependency lacks profile annotation
@@ -4641,9 +4642,11 @@ mark_built libselinux
 # needed by coreutils, dpkg, findutils, glibc, sed, tar, util-linux
 
 automatically_cross_build_packages
+fi # $HOST_ARCH matches linux-any
 
 builddep_util_linux() {
-	assert_built "libselinux ncurses slang2 zlib"
+	dpkg-architecture "-a$1" -ilinux-any && assert_built libselinux
+	assert_built "ncurses slang2 zlib"
 	$APT_GET build-dep "-a$1" --arch-only -P "$2" util-linux
 }
 if test -f "$REPODIR/stamps/util-linux_1"; then
@@ -4783,9 +4786,11 @@ mark_built flex
 automatically_cross_build_packages
 
 builddep_glib2_0() {
-	assert_built "libelf libffi libselinux pcre3 zlib" # also linux-libc-dev
+	dpkg-architecture "-a$1" -ilinux-any && assert_built libselinux
+	assert_built "libelf libffi pcre3 zlib" # also linux-libc-dev
 	# python-dbus dependency unsatisifable
-	$APT_GET install debhelper cdbs dh-autoreconf pkg-config gettext autotools-dev gnome-pkg-tools dpkg-dev "libelfg0-dev:$1" "libpcre3-dev:$1" desktop-file-utils gtk-doc-tools "libselinux1-dev:$1" "linux-libc-dev:$1" "zlib1g-dev:$1" dbus dbus-x11 shared-mime-info xterm python python-dbus python-gi libxml2-utils "libffi-dev:$1"
+	dpkg-architecture "-a$1" -ilinux-any && apt_get_install "libselinux1-dev:$1"
+	apt_get_install debhelper cdbs dh-autoreconf pkg-config gettext autotools-dev gnome-pkg-tools dpkg-dev "libelfg0-dev:$1" "libpcre3-dev:$1" desktop-file-utils gtk-doc-tools "linux-libc-dev:$1" "zlib1g-dev:$1" dbus dbus-x11 shared-mime-info xterm python python-dbus python-gi libxml2-utils "libffi-dev:$1"
 }
 buildenv_glib2_0() {
 	export glib_cv_stack_grows=no
@@ -5148,8 +5153,10 @@ mark_built build-essential
 automatically_cross_build_packages
 
 builddep_pam() {
-	assert_built "cracklib2 db-defaults db5.3 flex libselinux"
-	$APT_GET install "libcrack2-dev:$1" bzip2 debhelper quilt flex "libdb-dev:$1" "libselinux1-dev:$1" po-debconf dh-autoreconf autopoint pkg-config
+	dpkg-architecture "-a$1" -ilinux-any && assert_built libselinux
+	assert_built "cracklib2 db-defaults db5.3 flex"
+	dpkg-architecture "-a$1" -ilinux-any && apt_get_install "libselinux1-dev:$1"
+	apt_get_install "libcrack2-dev:$1" bzip2 debhelper quilt flex "libdb-dev:$1" po-debconf dh-autoreconf autopoint pkg-config
 	# flex wrongly declares M-A:foreign #761449
 	$APT_GET install flex "libfl-dev:$1"
 }
