@@ -5379,7 +5379,20 @@ automatically_cross_build_packages
 builddep_curl() {
 	assert_built "gnutls28 libidn krb5 openldap nss rtmpdump libssh2 openssl zlib nghttp2"
 	# stunnel4 and openssh-server lack <nocheck> profile annotation
-	apt_get_install debhelper autoconf automake ca-certificates groff-base "libgnutls28-dev:$1" "libidn11-dev:$1" "libkrb5-dev:$1" "libldap2-dev:$1" "libnss3-dev:$1" "librtmp-dev:$1" "libssh2-1-dev:$1" "libssl-dev:$1" libtool python quilt "zlib1g-dev:$1" "libnghttp2-dev:$1"
+	apt_get_install debhelper autoconf automake ca-certificates groff-base "libgnutls28-dev:$1" "libidn11-dev:$1" "libkrb5-dev:$1" "libldap2-dev:$1" "libnss3-dev:$1" "librtmp-dev:$1" "libssh2-1-dev:$1" "libssl-dev:$1" libtool python quilt "zlib1g-dev:$1" "libnghttp2-dev:$1" dh-exec
+}
+patch_curl() {
+	echo "patching curl to not install absent zsh completions #812965"
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/curl.install
++++ b/debian/curl.install
+@@ -1,2 +1,3 @@
++#!/usr/bin/dh-exec
+ usr/bin/curl
+-usr/share/zsh/*
++<!cross> usr/share/zsh/*
+EOF
+	chmod +x deban/curl.install
 }
 cross_build curl
 mark_built curl
