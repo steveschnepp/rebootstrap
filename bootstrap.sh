@@ -5150,6 +5150,32 @@ builddep_guile_2_0() {
 	# flex dependency satisfied from host arch
 	# needs Build-Depends: guile-2.0 <cross> #809732
 	apt_get_install libtool debhelper autoconf automake dh-autoreconf "libncurses5-dev:$1" "libreadline6-dev:$1" "libltdl-dev:$1" "libgmp-dev:$1" texinfo flex "libunistring-dev:$1" "libgc-dev:$1" "libffi-dev:$1" pkg-config guile-2.0
+	sed -i 's/"sh4"/& "nios2"/' /usr/share/guile/2.0/system/base/target.scm
+}
+patch_guile_2_0() {
+	echo "Patching guile nios2 support http://debbugs.gnu.org/cgi/bugreport.cgi?bug=22480"
+	drop_privs patch -p1 <<'EOF'
+--- a/module/system/base/target.scm
++++ b/module/system/base/target.scm
+@@ -65,7 +65,7 @@
+       (cond ((string-match "^i[0-9]86$" cpu)
+              (endianness little))
+             ((member cpu '("x86_64" "ia64"
+-                           "powerpcle" "powerpc64le" "mipsel" "mips64el" "sh4"))
++                           "powerpcle" "powerpc64le" "mipsel" "mips64el" "sh4" "nios2"))
+              (endianness little))
+             ((member cpu '("sparc" "sparc64" "powerpc" "powerpc64" "spu"
+                            "mips" "mips64" "m68k" "s390x"))
+@@ -104,7 +104,7 @@
+ 
+           ((string-match "64$" cpu) 8)
+           ((string-match "64_?[lbe][lbe]$" cpu) 8)
+-          ((member cpu '("sparc" "powerpc" "mips" "mipsel" "m68k" "sh4")) 4)
++          ((member cpu '("sparc" "powerpc" "mips" "mipsel" "m68k" "sh4" "nios2")) 4)
+           ((member cpu '("s390x")) 8)
+           ((string-match "^arm.*" cpu) 4)
+           (else (error "unknown CPU word size" cpu)))))
+EOF
 }
 cross_build guile-2.0
 mark_built guile-2.0
