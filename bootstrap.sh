@@ -5392,7 +5392,7 @@ patch_curl() {
 -usr/share/zsh/*
 +<!cross> usr/share/zsh/*
 EOF
-	chmod +x deban/curl.install
+	chmod +x debian/curl.install
 }
 cross_build curl
 mark_built curl
