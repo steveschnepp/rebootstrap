@@ -2906,7 +2906,12 @@ if test "$LIBC_NAME" != musl; then
 if test -f "$REPODIR/stamps/gcc_2"; then
 	echo "skipping rebuild of gcc stage2"
 else
-	$APT_GET install debhelper gawk patchutils bison flex lsb-release quilt libtool autoconf2.64 zlib1g-dev libcloog-isl-dev libmpc-dev libmpfr-dev libgmp-dev autogen systemtap-sdt-dev "libc-dev:$HOST_ARCH" "binutils$HOST_ARCH_SUFFIX"
+	apt_get_install debhelper gawk patchutils bison flex lsb-release quilt libtool autoconf2.64 zlib1g-dev libcloog-isl-dev libmpc-dev libmpfr-dev libgmp-dev autogen systemtap-sdt-dev "binutils$HOST_ARCH_SUFFIX"
+	if test "$ENABLE_MULTIARCH_GCC" = yes -o "$LIBC_NAME" != glibc; then
+		apt_get_install "libc-dev:$HOST_ARCH"
+	else
+		apt_get_install "libc6-dev-${HOST_ARCH}-cross"
+	fi
 	if test "$HOST_ARCH" = hppa; then
 		$APT_GET install binutils-hppa64-linux-gnu
 	fi
