@@ -477,6 +477,9 @@ case "$HOST_ARCH" in
 	x32) MULTILIB_NAMES="amd64 i386" ;;
 	*) MULTILIB_NAMES="" ;;
 esac
+if test "$ENABLE_MULTILIB" != yes; then
+	MULTILIB_NAMES=""
+fi
 
 mkdir -p "$REPODIR/conf" "$REPODIR/archive" "$REPODIR/stamps"
 cat > "$REPODIR/conf/distributions" <<EOF
@@ -3058,9 +3061,21 @@ fi # $LIBC_NAME != musl
 if test -f "$REPODIR/stamps/gcc_3"; then
 	echo "skipping rebuild of gcc stage3"
 else
-	$APT_GET install debhelper gawk patchutils bison flex lsb-release quilt libtool autoconf2.64 zlib1g-dev libcloog-isl-dev libmpc-dev libmpfr-dev libgmp-dev dejagnu autogen systemtap-sdt-dev "binutils$HOST_ARCH_SUFFIX" "libc-dev:$HOST_ARCH"
+	apt_get_install debhelper gawk patchutils bison flex lsb-release quilt libtool autoconf2.64 zlib1g-dev libcloog-isl-dev libmpc-dev libmpfr-dev libgmp-dev dejagnu autogen systemtap-sdt-dev "binutils$HOST_ARCH_SUFFIX"
 	if test "$HOST_ARCH" = hppa; then
 		$APT_GET install binutils-hppa64-linux-gnu
+	fi
+	if test "$ENABLE_MULTIARCH_GCC" = yes; then
+		apt_get_install "libc-dev:$HOST_ARCH" $(echo $MULTILIB_NAMES | sed "s/\(\S\+\)/libc6-dev-\1:$HOST_ARCH/g")
+	else
+		case "$LIBC_NAME" in
+			glibc)
+				apt_get_install "libc6-dev-$HOST_ARCH-cross" $(echo $MULTILIB_NAMES | sed "s/\(\S\+\)/libc6-dev-\1-$HOST_ARCH-cross/g")
+			;;
+			musl)
+				apt_get_install "musl-dev-$HOST_ARCH-cross"
+			;;
+		esac
 	fi
 	cross_build_setup "gcc-$GCC_VER" gcc3
 	dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends
