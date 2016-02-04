@@ -2336,9 +2336,9 @@ if test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = hurd; then
 if test -f "$REPODIR/stamps/hurd_1"; then
 	echo "skipping rebuild of hurd stage1"
 else
-	$APT_GET install texinfo debhelper dh-exec autoconf dh-autoreconf gawk flex bison autotools-dev
+	apt_get_install texinfo debhelper dh-exec autoconf dh-autoreconf gawk flex bison autotools-dev perl
 	cross_build_setup hurd hurd_1
-	dpkg-checkbuilddeps -B "-a$HOST_ARCH" -Pstage1
+	dpkg-checkbuilddeps -B "-a$HOST_ARCH" -Pstage1 || :
 	drop_privs dpkg-buildpackage -B "-a$HOST_ARCH" -Pstage1 -uc -us
 	cd ..
 	ls -l
@@ -2984,9 +2984,9 @@ if test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = hurd; then
 if test -f "$REPODIR/stamps/hurd_2"; then
 	echo "skipping rebuild of hurd stage2"
 else
-	$APT_GET install texinfo debhelper dh-exec autoconf dh-autoreconf gawk flex bison autotools-dev "libc-dev:$HOST_ARCH"
+	apt_get_install texinfo debhelper dh-exec autoconf dh-autoreconf gawk flex bison autotools-dev "libc-dev:$HOST_ARCH" perl
 	cross_build_setup hurd hurd_2
-	dpkg-checkbuilddeps -B "-a$HOST_ARCH" -Pstage2
+	dpkg-checkbuilddeps -B "-a$HOST_ARCH" -Pstage2 || :
 	drop_privs dpkg-buildpackage -B "-a$HOST_ARCH" -Pstage2 -uc -us
 	cd ..
 	ls -l
