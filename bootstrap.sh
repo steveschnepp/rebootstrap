@@ -1917,6 +1917,22 @@ EOF
  #	gdc-multiarch
    ifneq ($(GFDL_INVARIANT_FREE),yes)
 EOF
+	if test "$ENABLE_MULTIARCH_GCC" != yes; then
+		echo "fixing gcc rtlibs to build the non-cross base"
+		drop_privs patch -p1 <<'EOF'
+--- a/debian/rules2
++++ b/debian/rules2
+@@ -1822,7 +1822,7 @@
+   pkg_ver := -$(BASE_VERSION)
+ endif
+ 
+-ifneq ($(DEB_CROSS),yes)
++ifeq ($(if $(filter yes,$(DEB_CROSS)),$(if $(filter rtlibs,$(DEB_STAGE)),native,cross),native),native)
+   p_base = gcc$(pkg_ver)-base
+   p_lbase = $(p_base)
+   p_xbase = gcc$(pkg_ver)-base
+EOF
+	fi
 	patch_gcc_wdotap
 }
 # choosing libatomic1 arbitrarily here, cause it never bumped soname
