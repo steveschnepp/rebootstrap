@@ -1910,29 +1910,6 @@ EOF
 + # Directory for prefix to system directories, for
 + # each of $(system_prefix)/usr/include, $(system_prefix)/usr/lib, etc.
 EOF
-	echo "patching gcc-6 to only apply d patches when building d"
-	drop_privs patch -p1 <<'EOF'
---- a/debian/rules.patch
-+++ b/debian/rules.patch
-@@ -80,8 +80,7 @@
- 	pr66368 \
- 	pr67590 \
- 	ada-gnattools-ldflags \
--	libjit-ldflags \
-+	libjit-ldflags
--	gdc-libphobos-no-werror \
-
- #	pr66904 \
-
-@@ -174,6 +174,7 @@
- 	gdc-versym-os \
- 	gdc-frontend-posix \
- 	gdc-base-version \
-+	gdc-libphobos-no-werror \
- 	gdc-profiledbuild
- #	gdc-multiarch
-   ifneq ($(GFDL_INVARIANT_FREE),yes)
-EOF
 	if test "$ENABLE_MULTIARCH_GCC" != yes; then
 		echo "fixing gcc rtlibs to build the non-cross base"
 		drop_privs patch -p1 <<'EOF'
