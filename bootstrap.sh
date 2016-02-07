@@ -1534,6 +1534,22 @@ diff -Naru a/debian/rules.patch b/debian/rules.patch
 +endif
 +
 EOF
+	if test "$ENABLE_MULTIARCH_GCC" != yes; then
+		echo "fixing multilib libc dependencies"
+		drop_privs patch -p1 <<'EOF'
+--- a/debian/rules.defs
++++ b/debian/rules.defs
+@@ -1960,7 +1960,7 @@
+ 	if [ -f debian/$(1).substvars ]; then \
+ 	  sed -i \
+ 	    -e 's/:$(DEB_TARGET_ARCH)/$(cross_lib_arch)/g' \
+-	    -e 's/\(libc[.0-9]*-[^:]*\):\([a-z0-9-]*\)/\1-\2-cross/g' \
++	    -e 's/\(libc[.0-9]*-[^: ]*\)\(:$(DEB_TARGET_ARCH)\)\?/\1$(cross_lib_arch)/g' \
+ 	    $(if $(filter armel,$(DEB_TARGET_ARCH)),-e 's/:armhf/-armhf-cross/g') \
+ 	    $(if $(filter armhf,$(DEB_TARGET_ARCH)),-e 's/:armel/-armel-cross/g') \
+ 	    debian/$(1).substvars; \
+EOF
+	fi
 	patch_gcc_wdotap
 }
 patch_gcc_6() {
