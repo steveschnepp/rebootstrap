@@ -4795,8 +4795,9 @@ automatically_cross_build_packages
 
 builddep_guile_2_0() {
 	assert_built "gmp libffi libgc libtool libunistring ncurses readline6"
-	$APT_GET build-dep --arch-only "-a$1" guile-2.0
-	$APT_GET install guile-2.0 # needs Build-Depends: guile-2.0 <cross>
+	# flex dependency satisfied from host arch
+	# needs Build-Depends: guile-2.0 <cross> #809732
+	apt_get_install libtool debhelper autoconf automake dh-autoreconf "libncurses5-dev:$1" "libreadline6-dev:$1" "libltdl-dev:$1" "libgmp-dev:$1" texinfo flex "libunistring-dev:$1" "libgc-dev:$1" "libffi-dev:$1" pkg-config guile-2.0
 }
 cross_build guile-2.0
 mark_built guile-2.0
