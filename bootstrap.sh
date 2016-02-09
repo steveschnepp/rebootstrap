@@ -577,19 +577,21 @@ if test "$ENABLE_DEBBINDIFF" = yes; then
 			fi
 			pkgname=`dpkg-deb -f "$pkg" Package`
 			tmpdir=`mktemp -d`
-			if ! (cd "$tmpdir" && chdist_native apt-get download "$pkgname"); then
+			mkdir "$tmpdir/a" "$tmpdir/b"
+			cp "$pkg" "$tmpdir/a" # work around diffoscope recursing over the build tree
+			if ! (cd "$tmpdir/b" && chdist_native apt-get download "$pkgname"); then
 				echo "not comparing $pkg: download failed"
 				rm -R "$tmpdir"
 				continue
 			fi
 			downloadname=`dpkg-deb -W --showformat '${Package}_${Version}_${Architecture}.deb' "$pkg" | sed 's/:/%3a/'`
-			if ! test -f "$tmpdir/$downloadname"; then
+			if ! test -f "$tmpdir/b/$downloadname"; then
 				echo "not comparing $pkg: downloaded different version"
 				rm -R "$tmpdir"
 				continue
 			fi
 			errcode=0
-			timeout --kill-after=1m 1h debbindiff --text "$tmpdir/out" "$pkg" "$tmpdir/$downloadname" || errcode=$?
+			timeout --kill-after=1m 1h debbindiff --text "$tmpdir/out" "$tmpdir/a/$(basename -- "$pkg")" "$tmpdir/b/$downloadname" || errcode=$?
 			case $errcode in
 				0)
 					echo "debbindiff-success: $pkg"
