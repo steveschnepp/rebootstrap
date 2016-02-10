@@ -550,6 +550,22 @@ else
 fi # already repacked
 fi # is glibc
 
+# make flex Multi-Arch again
+if test -f "$REPODIR/pool/main/f/flex/flex"_*_"$(dpkg --print-architecture).deb"; then
+	dpkg -i "$REPODIR/pool/main/f/flex"_*_"$(dpkg --print-architecture).deb" "$REPODIR/pool/main/f/libfl-dev"_*_"$(dpkg --print-architecture).deb"
+else
+	cd /tmp/buildd
+	apt-get download flex
+	dpkg-deb -R ./flex_*.deb x
+	sed -i '/^Depends:/s/, *libfl-dev[^,]*,/,/;/^Package:/aMulti-Arch: foreign' x/DEBIAN/control
+	dpkg-deb -b x ./flex_*.deb
+	reprepro includedeb rebootstrap-native ./flex_*.deb
+	apt_get_install m4
+	dpkg -i ./flex_*.deb
+	$APT_GET update
+	rm -Rf ./flex_*.deb x
+fi
+
 chdist_native() {
 	local command
 	command="$1"
@@ -3714,12 +3730,7 @@ add_automatic libpipeline
 add_automatic libpng
 add_automatic libpthread-stubs
 add_automatic libseccomp
-
-builddep_libsepol() {
-	# flex dependency satisfied from host arch
-	apt_get_install debhelper dpkg-dev file flex
-}
-
+add_automatic libsepol
 add_automatic libsm
 add_automatic libssh2
 add_automatic libtasn1-6
@@ -4349,6 +4360,7 @@ add_need libpthread-stubs # by libxcb
 if apt-cache showsrc libseccomp | sed 's/^Architecture:\(.*\)/\1 /;t;d' | grep -q " $HOST_ARCH "; then
 	add_need libseccomp # by systemd
 fi
+dpkg-architecture "-a$HOST_ARCH" -ilinux-any && add_need libsepol # by libselinux
 add_need libssh2 # by curl
 add_need libtextwrap # by cdebconf
 add_need libunistring # by guile-2.0
@@ -4684,14 +4696,6 @@ mark_built readline6
 # needed by gnupg, guile-2.0, libxml2
 
 automatically_cross_build_packages
-
-if dpkg-architecture "-a$HOST_ARCH" -ilinux-any; then
-cross_build libsepol
-mark_built libsepol
-# needed by libselinux
-
-automatically_cross_build_packages
-fi
 
 if dpkg-architecture "-a$HOST_ARCH" -ilinux-any; then
 builddep_libselinux() {
