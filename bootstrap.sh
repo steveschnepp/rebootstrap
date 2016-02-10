@@ -3730,7 +3730,12 @@ add_automatic libpipeline
 add_automatic libpng
 add_automatic libpthread-stubs
 add_automatic libseccomp
-add_automatic libsepol
+
+builddep_libsepol() {
+	# flex dependency satisfied from host arch
+	apt_get_install debhelper dpkg-dev file flex
+}
+
 add_automatic libsm
 add_automatic libssh2
 add_automatic libtasn1-6
@@ -4360,7 +4365,6 @@ add_need libpthread-stubs # by libxcb
 if apt-cache showsrc libseccomp | sed 's/^Architecture:\(.*\)/\1 /;t;d' | grep -q " $HOST_ARCH "; then
 	add_need libseccomp # by systemd
 fi
-dpkg-architecture "-a$HOST_ARCH" -ilinux-any && add_need libsepol # by libselinux
 add_need libssh2 # by curl
 add_need libtextwrap # by cdebconf
 add_need libunistring # by guile-2.0
@@ -4698,6 +4702,12 @@ mark_built readline6
 automatically_cross_build_packages
 
 if dpkg-architecture "-a$HOST_ARCH" -ilinux-any; then
+cross_build libsepol
+mark_built libsepol
+# needed by libselinux
+
+automatically_cross_build_packages
+
 builddep_libselinux() {
 	assert_built "libsepol pcre3"
 	# gem2deb dependency lacks profile annotation
