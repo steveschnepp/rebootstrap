@@ -5251,7 +5251,7 @@ builddep_pam() {
 	dpkg-architecture "-a$1" -ilinux-any && apt_get_install "libselinux1-dev:$1"
 	apt_get_install "libcrack2-dev:$1" bzip2 debhelper quilt flex "libdb-dev:$1" po-debconf dh-autoreconf autopoint pkg-config
 	# flex wrongly declares M-A:foreign #761449
-	$APT_GET install flex "libfl-dev:$1"
+	apt_get_install flex "libfl-dev:$1" libfl-dev
 }
 if test -f "$REPODIR/stamps/pam_1"; then
 	echo "skipping stage1 rebuild of pam"
