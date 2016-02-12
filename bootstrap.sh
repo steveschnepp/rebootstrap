@@ -400,6 +400,7 @@ apt_get_purge() {
 }
 
 $APT_GET update
+$APT_GET dist-upgrade # we need upgrade later, so make sure the system is clean
 $APT_GET install pinentry-curses # avoid installing pinentry-gtk (via reprepro)
 $APT_GET install build-essential debhelper reprepro quilt
 
@@ -4362,7 +4363,7 @@ add_need libgc # by guile-2.0
 add_need libgcrypt20 # by libprelude, cryptsetup
 add_need libpng # by slang2
 add_need libpthread-stubs # by libxcb
-if apt-cache showsrc libseccomp | sed 's/^Architecture:\(.*\)/\1 /;t;d' | grep -q " $HOST_ARCH "; then
+if apt-cache showsrc systemd | grep -q "^Build-Depends:.*libseccomp-dev[^,]*[[ ]$HOST_ARCH[] ]"; then
 	add_need libseccomp # by systemd
 fi
 add_need libssh2 # by curl
