@@ -3431,6 +3431,8 @@ patch_gmp() {
 		# musl does not implement GNU obstack
 		sed -i -r 's/(.*_obstack_)/(arch=!musl-linux-any !musleabihf-linux-any)\1/' debian/libgmp10.symbols
 	fi
+	echo "patching gmp symbols for nios2 #814671"
+	sed -i 's/!mips /!nios2 &/' debian/libgmp10.symbols
 }
 
 builddep_gnu_efi() {
