@@ -529,6 +529,13 @@ touch /usr/share/debhelper/autoscripts/postinst-makeshlibs /usr/share/debhelper/
 # work around debhelper bug #811052
 sed -i '/dh_update_autotools_config/d' /usr/bin/dh
 
+# Work around libglib2.0-0 bug #814668. Running kfreebsd-i386 binaries on linux
+# can result in clock jumps.
+cat >/etc/dpkg/dpkg.cfg.d/bug-814668 <<EOF
+path-exclude=/usr/lib/$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_MULTIARCH)/glib-2.0/glib-compile-schemas
+path-exclude=/usr/lib/$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_MULTIARCH)/glib-2.0/gio-querymodules
+EOF
+
 # removing libc*-dev conflict with each other
 LIBC_DEV_PKG=$(apt-cache showpkg libc-dev | sed '1,/^Reverse Provides:/d;s/ .*//;q')
 if test "$(apt-cache show "$LIBC_DEV_PKG" | sed -n 's/^Source: //;T;p;q')" = glibc; then
