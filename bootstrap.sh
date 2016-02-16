@@ -4255,7 +4255,23 @@ builddep_p11_kit() {
 }
 
 add_automatic patch
+
 add_automatic pcre3
+patch_pcre3() {
+	echo "marking variant pcrecpp symbols optional #811969"
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/libpcrecpp0v5.symbols
++++ b/debian/libpcrecpp0v5.symbols
+@@ -80,4 +80,5 @@
+  (c++)"pcrecpp::Scanner::Scanner(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)@Base" 7.7
+  (c++)"pcrecpp::Scanner::SetSkipExpression(char const*)@Base" 7.7
+  (c++)"pcrecpp::Scanner::Skip(char const*)@Base" 7.7
+- (c++)"std::vector<pcrecpp::StringPiece, std::allocator<pcrecpp::StringPiece> >::_M_insert_aux(__gnu_cxx::__normal_iterator<pcrecpp::StringPiece*, std::vector<pcrecpp::StringPiece, std::allocator<pcrecpp::StringPiece> > >, pcrecpp::StringPiece const&)@Base" 7.7
++ (optional|c++)"std::vector<pcrecpp::StringPiece, std::allocator<pcrecpp::StringPiece> >::_M_insert_aux(__gnu_cxx::__normal_iterator<pcrecpp::StringPiece*, std::vector<pcrecpp::StringPiece, std::allocator<pcrecpp::StringPiece> > >, pcrecpp::StringPiece const&)@Base" 7.7
++ (optional)"_ZNSt6vectorIN7pcrecpp11StringPieceESaIS1_EE19_M_emplace_back_auxIJS1_EEEvDpOT_@Base" 7.7
+EOF
+}
+
 add_automatic readline5
 add_automatic rtmpdump
 add_automatic sed
