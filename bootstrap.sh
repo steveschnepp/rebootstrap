@@ -3436,7 +3436,7 @@ patch_gmp() {
 		echo "patching gmp symbols for musl arch #788411"
 		sed -i -r "s/([= ])(\!)?\<(${HOST_ARCH#musl-linux-})\>/\1\2\3 \2musl-linux-\3/" debian/libgmp10.symbols
 		# musl does not implement GNU obstack
-		sed -i -r 's/(.*_obstack_)/(arch=!musl-linux-any !musleabihf-linux-any)\1/' debian/libgmp10.symbols
+		sed -i -r 's/^ (.*_obstack_)/ (arch=!musl-linux-any !musleabihf-linux-any)\1/' debian/libgmp10.symbols
 	fi
 	echo "patching gmp symbols for nios2 #814671"
 	sed -i 's/!mips /!nios2 &/' debian/libgmp10.symbols
