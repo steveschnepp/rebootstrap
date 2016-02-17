@@ -4849,36 +4849,9 @@ automatically_cross_build_packages
 
 builddep_flex() {
 	$APT_GET build-dep "-a$1" --arch-only flex
-	$APT_GET install flex # needs Build-Depends: flex <profile.cross>
+	$APT_GET install flex # needs Build-Depends: flex <cross> #762180
 }
 patch_flex() {
-	echo "patching flex to not run host arch executables #762180"
-	drop_privs patch -p1 <<'EOF'
---- a/configure.ac
-+++ b/configure.ac
-@@ -50,6 +50,12 @@
- 
- AC_PATH_PROG(BISON, bison,bison)
- AC_PATH_PROG(HELP2MAN, help2man, help2man)
-+if test "$cross_compiling" = yes; then
-+FLEXexe='flex$(EXEEXT)'
-+else
-+FLEXexe='$(top_srcdir)/src/flex$(EXEEXT)'
-+fi
-+AC_SUBST(FLEXexe)
- 
- # Check for a m4 that supports -P
- 
---- a/doc/Makefile.am
-+++ b/doc/Makefile.am
-@@ -27,5 +27,5 @@
- 	for i in $(dist_man_MANS) ; do \
- 	$(help2man) --name='$(PACKAGE_NAME)' \
- 	--section=`echo $$i | sed -e 's/.*\.\([^.]*\)$$/\1/'` \
--	 $(top_srcdir)/src/flex$(EXEEXT) > $$i || rm -f $$i ; \
-+	 $(FLEXexe) > $$i || rm -f $$i ; \
- 	done
-EOF
 	echo "patching flex to not run tests under DEB_BUILD_OPTIONS=nocheck #812659"
 	drop_privs patch -p1 <<'EOF'
 --- a/Makefile.am
