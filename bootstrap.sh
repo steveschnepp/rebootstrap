@@ -3453,7 +3453,82 @@ buildenv_gnupg() {
 }
 
 add_automatic gnutls28
+
 add_automatic gpm
+patch_gpm() {
+	echo "patching gpm to support musl #813751"
+	drop_privs patch -p1 <<'EOF'
+--- a/src/lib/liblow.c
++++ a/src/lib/liblow.c
+@@ -173,7 +173,7 @@
+   /* Reincarnation. Prepare for another death early. */
+   sigemptyset(&sa.sa_mask);
+   sa.sa_handler = gpm_suspend_hook;
+-  sa.sa_flags = SA_NOMASK;
++  sa.sa_flags = SA_NODEFER;
+   sigaction (SIGTSTP, &sa, 0);
+ 
+   /* Pop the gpm stack by closing the useless connection */
+@@ -350,7 +350,7 @@
+ 
+          /* if signal was originally ignored, job control is not supported */
+          if (gpm_saved_suspend_hook.sa_handler != SIG_IGN) {
+-            sa.sa_flags = SA_NOMASK;
++            sa.sa_flags = SA_NODEFER;
+             sa.sa_handler = gpm_suspend_hook;
+             sigaction(SIGTSTP, &sa, 0);
+          }
+--- a/src/prog/display-buttons.c
++++ b/src/prog/display-buttons.c
+@@ -36,6 +36,7 @@
+ #include <stdio.h>            /* printf()             */
+ #include <time.h>             /* time()               */
+ #include <errno.h>            /* errno                */
++#include <sys/select.h>       /* fd_set, FD_ZERO      */
+ #include <gpm.h>              /* gpm information      */
+ 
+ /* display resulting data */
+--- a/src/prog/display-coords.c
++++ b/src/prog/display-coords.c
+@@ -37,6 +37,7 @@
+ #include <stdio.h>            /* printf()             */
+ #include <time.h>             /* time()               */
+ #include <errno.h>            /* errno                */
++#include <sys/select.h>       /* fd_set, FD_ZERO      */
+ #include <gpm.h>              /* gpm information      */
+ 
+ /* display resulting data */
+--- a/src/prog/gpm-root.y
++++ b/src/prog/gpm-root.y
+@@ -1197,11 +1197,10 @@
+                                                         LOG_DAEMON : LOG_USER);
+    /* reap your zombies */
+    childaction.sa_handler=reap_children;
+-#if defined(__GLIBC__)
+-   __sigemptyset(&childaction.sa_mask);
+-#else /* __GLIBC__ */
+-   childaction.sa_mask=0;
+-#endif /* __GLIBC__ */
++   sigemptyset(&childaction.sa_mask);
++#ifndef SA_INTERRUPT
++#define SA_INTERRUPT 0
++#endif
+    childaction.sa_flags=SA_INTERRUPT; /* need to break the select() call */
+    sigaction(SIGCHLD,&childaction,NULL);
+ 
+--- a/src/prog/open_console.c
++++ b/src/prog/open_console.c
+@@ -22,6 +22,7 @@
+ #include "headers/message.h"        /* messaging in gpm */
+ #include "headers/daemon.h"         /* daemon internals */
+ #include <unistd.h>
++#include <fcntl.h>
+ 
+ int open_console(const int mode)
+ {
+EOF
+}
+
 add_automatic grep
 add_automatic groff
 
