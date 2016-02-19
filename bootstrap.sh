@@ -2391,6 +2391,7 @@ if test -f "$REPODIR/stamps/mig_1"; then
 	echo "skipping rebuild of mig cross"
 else
 	$APT_GET build-dep "-a$HOST_ARCH" --arch-only mig # this is correct by luck
+	apt_get_install libfl-dev # flex is about to drop this dependency
 	cross_build_setup mig mig_1
 	drop_privs dpkg-buildpackage -d -B "--target-arch=$HOST_ARCH" -uc -us
 	cd ..
