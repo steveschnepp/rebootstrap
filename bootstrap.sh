@@ -3793,6 +3793,8 @@ buildenv_libxt() {
 	export xorg_cv_malloc0_returns_null=no
 }
 
+add_automatic lz4
+
 builddep_make_dfsg() {
 	# libbsd-resource-perl dependency lacks <!nocheck> profile #812725
 	apt_get_install gettext po-debconf debhelper dh-autoreconf autoconf automake autopoint file pkg-config "guile-2.0-dev:$1" procps
@@ -4406,6 +4408,7 @@ add_need libx11 # by dbus
 add_need libxau # by libxcb
 add_need libxdmcp # by libxcb
 add_need libxrender # by cairo
+add_need lz4 # by apt
 add_need man-db # for debhelper
 add_need mawk # for base-files (alternatively: gawk)
 add_need mpclib3 # by gcc-4.9
@@ -5502,7 +5505,7 @@ automatically_cross_build_packages
 
 builddep_apt() {
 	# libgtest-dev lacks <nocheck> profile
-	apt_get_install dpkg-dev debhelper "libdb-dev:$1" gettext "libcurl4-gnutls-dev:$1" "zlib1g-dev:$1" "libbz2-dev:$1" "liblzma-dev:$1" xsltproc docbook-xsl docbook-xml po4a autotools-dev autoconf automake
+	apt_get_install dpkg-dev debhelper "libdb-dev:$1" gettext "libcurl4-gnutls-dev:$1" "zlib1g-dev:$1" "libbz2-dev:$1" "liblzma-dev:$1" "liblz4-dev:$1" xsltproc docbook-xsl docbook-xml po4a autotools-dev autoconf automake
 }
 buildenv_apt() {
 	# pretend we had gtest/gtest.h to make configure succeed. it's never used
