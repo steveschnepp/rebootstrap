@@ -3810,22 +3810,6 @@ add_automatic nspr
 
 add_automatic nss
 patch_nss() {
-	if test "$HOST_ARCH" = x32; then
-		echo "fixing nss FTBFS on x32 #699217"
-		drop_privs patch -p1 <<'EOF'
-diff -Nru nss-3.17/debian/rules nss-3.17/debian/rules
---- nss-3.17/debian/rules
-+++ nss-3.17/debian/rules
-@@ -63,6 +63,7 @@
- 	DIST=$(DISTDIR) \
- 	OBJDIR_NAME=OBJS \
- 	$(and $(filter 64,$(shell dpkg-architecture -qDEB_HOST_ARCH_BITS)),USE_64=1) \
-+	$(and $(filter x32,$(DEB_HOST_ARCH)),USE_X32=1) \
- 	$(NULL)
-
- NSS_TOOLS := \
-EOF
-	fi
 	echo "fixing the nss build to pass CCC #806292"
 	drop_privs patch -p1 <<'EOF'
 --- a/debian/rules
