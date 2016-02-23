@@ -3427,6 +3427,45 @@ add_automatic datefudge
 add_automatic db-defaults
 add_automatic debianutils
 add_automatic dpkg
+
+builddep_elfutils() {
+	assert_built "bzip2 xz-utils zlib"
+	# gcc-multilib dependency lacks nocheck profile
+	apt_get_install debhelper autotools-dev autoconf automake bzip2 "zlib1g-dev:$1" zlib1g-dev "libbz2-dev:$1" "liblzma-dev:$1" m4 gettext gawk dpkg-dev flex libfl-dev bison
+}
+patch_elfutils() {
+	echo "fix elfutils FTCBFS"
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/rules
++++ b/debian/rules
+@@ -20,7 +20,7 @@
+ DEB_HOST_MULTIARCH  ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
+ 
+ ifeq ($(DEB_BUILD_GNU_TYPE), $(DEB_HOST_GNU_TYPE))
+-        confflags += --build=$(DEB_HOST_GNU_TYPE)
++        confflags += --build=$(DEB_HOST_GNU_TYPE) --enable-maintainer-mode
+         make_check = yes
+ else
+ 	confflags += --build=$(DEB_BUILD_GNU_TYPE) --host=$(DEB_HOST_GNU_TYPE)
+@@ -41,10 +41,14 @@
+ config.status: configure.ac
+ 	dh_testdir
+ 	autoreconf -fis
++ifneq ($(DEB_BUILD_GNU_TYPE),$(DEB_HOST_GNU_TYPE))
++	./configure --enable-maintainer-mode
++	$(MAKE) $(MAKEFLAGS)
++	$(MAKE) clean
++endif
+ 	CFLAGS="$(CFLAGS)" CPPFLAGS="$(CPPFLAGS)" LDFLAGS="$(LDFLAGS)" \
+ 		./configure $(confflags) --prefix=/usr \
+ 		--libdir=/usr/lib/$(DEB_HOST_MULTIARCH) \
+-		--enable-maintainer-mode \
+ 		--program-prefix=eu-
+ 
+ build: build-stamp
+EOF
+}
+
 add_automatic findutils
 add_automatic freetype
 add_automatic gdbm
@@ -3684,52 +3723,6 @@ diff -Nru libdebian-installer-0.101/debian/rules libdebian-installer-0.101+nmu1/
  	dh_auto_build
  	$(MAKE) -C build/doc doc
 EOF
-}
-
-add_automatic libelf
-builddep_libelf() {
-	$APT_GET build-dep "-a$1" --arch-only libelf
-	$APT_GET install autotools-dev
-}
-patch_libelf() {
-	echo "patching libelf to update config.guess to fix the musl build #799005"
-	drop_privs patch -p1 <<'EOF'
---- a/debian/control
-+++ b/debian/control
-@@ -2,7 +2,7 @@
- Section: devel
- Priority: optional
- Maintainer: Alex Pennace <alex@pennace.org>
--Build-Depends: gettext, debhelper (>= 5), dpkg-dev (>= 1.16)
-+Build-Depends: gettext, debhelper (>= 5), dpkg-dev (>= 1.16), autotools-dev
- Standards-Version: 3.6.2.2
-
- Package: libelfg0
---- a/debian/rules
-+++ b/debian/rules
-@@ -18,6 +18,7 @@
- build: build-stamp
- build-stamp: 
- 	dh_testdir
-+	dh_autotools-dev_updateconfig
- 	mv po/de.gmo po/de.gmo.orig
- 	cp po/de.gmo.orig po/de.gmo
- 	# --enable-compat per bug 477025
-@@ -39,6 +39,7 @@
- 	-make distclean
- # distclean misses w32/Makefile; kludge around it.
- 	-rm -f w32/Makefile
-+	dh_autotools-dev_restoreconfig
- 	dh_clean build-stamp debian/libelfg0-dev.links
-
- debian/%.links: debian/%.links.in
-EOF
-}
-buildenv_libelf() {
-	# gettext.m4 is broken. same as #786885
-	if test "$LIBC_NAME" = musl; then
-		export mr_cv_gnu_gettext=yes && echo mr_cv_gnu_gettext exported
-	fi
 }
 
 add_automatic libev
@@ -4390,7 +4383,6 @@ test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = linux && add_nee
 add_need krb5 # by curl
 add_need libatomic-ops # by gcc-4.9
 add_need libcap2 # by systemd
-add_need libelf # by systemtap, glib2.0
 add_need libgc # by guile-2.0
 add_need libgcrypt20 # by libprelude, cryptsetup
 add_need libpng # by slang2
@@ -4885,12 +4877,18 @@ mark_built flex
 
 automatically_cross_build_packages
 
+cross_build elfutils
+mark_built elfutils
+# needed by glib2.0, systemtap
+
+automatically_cross_build_packages
+
 builddep_glib2_0() {
 	dpkg-architecture "-a$1" -ilinux-any && assert_built libselinux
-	assert_built "libelf libffi pcre3 zlib" # also linux-libc-dev
+	assert_built "elfutils libffi pcre3 zlib" # also linux-libc-dev
 	# python-dbus dependency unsatisifable
 	dpkg-architecture "-a$1" -ilinux-any && apt_get_install "libselinux1-dev:$1" "linux-libc-dev:$1"
-	apt_get_install debhelper cdbs dh-autoreconf pkg-config gettext autotools-dev gnome-pkg-tools dpkg-dev "libelfg0-dev:$1" "libpcre3-dev:$1" desktop-file-utils gtk-doc-tools "zlib1g-dev:$1" dbus dbus-x11 shared-mime-info xterm python python-dbus python-gi libxml2-utils "libffi-dev:$1"
+	apt_get_install debhelper cdbs dh-autoreconf pkg-config gettext autotools-dev gnome-pkg-tools dpkg-dev "libelf-dev:$1" "libpcre3-dev:$1" desktop-file-utils gtk-doc-tools "zlib1g-dev:$1" dbus dbus-x11 shared-mime-info xterm python python-dbus python-gi libxml2-utils "libffi-dev:$1"
 }
 buildenv_glib2_0() {
 	export glib_cv_stack_grows=no
