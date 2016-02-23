@@ -4236,6 +4236,19 @@ EOF
  80_security_tools.patch
 EOF
 	drop_privs quilt push -a
+	echo "disable -Werror for nss #811575"
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/rules
++++ b/debian/rules
+@@ -108,6 +108,7 @@
+ 		NSPR_LIB_DIR=/usr/lib/$(DEB_HOST_MULTIARCH) \
+ 		BUILD_OPT=1 \
+ 		NS_USE_GCC=1 \
++		NSS_ENABLE_WERROR=0 \
+ 		OPTIMIZER="$(CFLAGS) $(CPPFLAGS)" \
+ 		LDFLAGS='$(LDFLAGS) $$(ARCHFLAG) $$(ZDEFS_FLAG)' \
+ 		DSO_LDOPTS='-shared $$(LDFLAGS)' \
+EOF
 }
 
 add_automatic openssl
