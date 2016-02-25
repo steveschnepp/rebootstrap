@@ -4319,6 +4319,7 @@ Description: fake crossbuild-essential package for dose-builddebcheck
 
 EOF
 	sed -i -e '/^Conflicts:.* libc[0-9][^ ]*-dev\(,\|$\)/d' "$package_list" # also make dose ignore the glibc conflict
+	apt-cache show libgcc1=installed libstdc++6=installed >> "$package_list" # helps when pulling gcc from experimental
 	cat /var/lib/apt/lists/*_Sources > "$source_list"
 	errcode=0
 	dose-builddebcheck "--deb-native-arch=`dpkg --print-architecture`" "--deb-host-arch=$HOST_ARCH" "$@" "$package_list" "$source_list" || errcode=$?
