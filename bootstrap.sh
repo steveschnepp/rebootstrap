@@ -18,13 +18,15 @@ DEFAULT_PROFILES="cross nocheck"
 LIBC_NAME=glibc
 DROP_PRIVS=buildd
 GCC_NOLANG=ada,d,go,java,jit,objc,objc++
-ENABLE_DEBBINDIFF=no
+ENABLE_DEBBINDIFF=no # deprecated. use ENABLE_DIFFOSCOPE instead
 
 # evaluate command line parameters of the form KEY=VALUE
 for param in "$@"; do
 	echo "bootstrap-configuration: $param"
 	eval $param
 done
+
+: "${ENABLE_DIFFOSCOPE:=$ENABLE_DEBBINDIFF}"
 
 # test whether element $2 is in set $1
 set_contains() {
@@ -581,19 +583,19 @@ chdist_native() {
 	chdist --data-dir /tmp/chdist_native --arch "$HOST_ARCH" "$command" native "$@"
 }
 
-if test "$ENABLE_DEBBINDIFF" = yes; then
+if test "$ENABLE_DIFFOSCOPE" = yes; then
 	$APT_GET install devscripts
 	chdist_native create "$MIRROR" sid main
 	if ! chdist_native apt-get update; then
 		echo "rebootstrap-warning: not comparing packages to native builds"
 		rm -Rf /tmp/chdist_native
-		ENABLE_DEBBINDIFF=no
+		ENABLE_DIFFOSCOPE=no
 	fi
 fi
-if test "$ENABLE_DEBBINDIFF" = yes; then
+if test "$ENABLE_DIFFOSCOPE" = yes; then
 	compare_native() {
 		local pkg pkgname tmpdir downloadname errcode
-		$APT_GET install debbindiff binutils-multiarch vim-common python3-pkg-resources
+		apt_get_install diffoscope binutils-multiarch vim-common
 		for pkg in "$@"; do
 			if test "`dpkg-deb -f "$pkg" Architecture`" != "$HOST_ARCH"; then
 				echo "not comparing $pkg: wrong architecture"
@@ -615,28 +617,28 @@ if test "$ENABLE_DEBBINDIFF" = yes; then
 				continue
 			fi
 			errcode=0
-			timeout --kill-after=1m 1h debbindiff --text "$tmpdir/out" "$tmpdir/a/$(basename -- "$pkg")" "$tmpdir/b/$downloadname" || errcode=$?
+			timeout --kill-after=1m 1h diffoscope --text "$tmpdir/out" "$tmpdir/a/$(basename -- "$pkg")" "$tmpdir/b/$downloadname" || errcode=$?
 			case $errcode in
 				0)
-					echo "debbindiff-success: $pkg"
+					echo "diffoscope-success: $pkg"
 				;;
 				1)
 					if ! test -f "$tmpdir/out"; then
-						echo "rebootstrap-error: no debbindiff output for $pkg"
+						echo "rebootstrap-error: no diffoscope output for $pkg"
 						exit 1
 					elif test "`wc -l < "$tmpdir/out"`" -gt 1000; then
-						echo "truncated debbindiff output for $pkg:"
+						echo "truncated diffoscope output for $pkg:"
 						head -n1000 "$tmpdir/out"
 					else
-						echo "debbindiff output for $pkg:"
+						echo "diffoscope output for $pkg:"
 						cat "$tmpdir/out"
 					fi
 				;;
 				124)
-					echo "rebootstrap-warning: debbindiff timed out"
+					echo "rebootstrap-warning: diffoscope timed out"
 				;;
 				*)
-					echo "rebootstrap-error: debbindiff terminated with abnormal exit code $errcode"
+					echo "rebootstrap-error: diffoscope terminated with abnormal exit code $errcode"
 					exit 1
 				;;
 			esac
