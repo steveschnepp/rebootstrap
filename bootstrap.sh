@@ -3646,12 +3646,10 @@ builddep_icu() {
 	# g++ dependency needs cross translation
 	$APT_GET install cdbs debhelper dpkg-dev autotools-dev
 }
-if test "$ENABLE_MULTIARCH_GCC" != yes; then
 patch_icu() {
 	echo "patching icu to drop versioned libstdc++-dev dependency"
 	sed -i -e '/^[^:]*Depends:/s/,\s*libstdc++-5-dev[^,]*\(,\|$\)/\1/g' debian/control
 }
-fi
 
 add_automatic isl
 
