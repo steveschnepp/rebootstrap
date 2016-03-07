@@ -4381,7 +4381,7 @@ EOF
 	apt-cache show libgcc1=installed libstdc++6=installed >> "$package_list" # helps when pulling gcc from experimental
 	cat /var/lib/apt/lists/*_Sources > "$source_list"
 	errcode=0
-	dose-builddebcheck "--deb-native-arch=`dpkg --print-architecture`" "--deb-host-arch=$HOST_ARCH" "$@" "$package_list" "$source_list" || errcode=$?
+	dose-builddebcheck --deb-triplettable=/usr/share/dpkg/triplettable --deb-cputable=/usr/share/dpkg/cputable "--deb-native-arch=$(dpkg --print-architecture)" "--deb-host-arch=$HOST_ARCH" "$@" "$package_list" "$source_list" || errcode=$?
 	if test "$errcode" -gt 1; then
 		echo "dose-builddebcheck failed with error code $errcode" 1>&2
 		exit 1
