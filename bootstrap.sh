@@ -2545,8 +2545,8 @@ diff -Nru glibc-2.19/debian/control.in/libc glibc-2.19/debian/control.in/libc
  Section: libdevel
  Priority: optional
  Multi-Arch: same
--Depends: @libc@ (= ${binary:Version}), libc-dev-bin (= ${binary:Version}), ${misc:Depends}, linux-libc-dev [linux-any], kfreebsd-kernel-headers (>= 0.11) [kfreebsd-any], gnumach-dev [hurd-i386], hurd-dev (>= 20080607-3) [hurd-i386]
-+Depends: @libc@ (= ${binary:Version}) <!stage1>, libc-dev-bin (= ${binary:Version}), ${misc:Depends}, linux-libc-dev [linux-any], kfreebsd-kernel-headers (>= 0.11) [kfreebsd-any], gnumach-dev [hurd-i386], hurd-dev (>= 20080607-3) [hurd-i386]
+-Depends: @libc@ (= ${binary:Version}), libc-dev-bin (= ${binary:Version}), ${misc:Depends}, linux-libc-dev [linux-any], kfreebsd-kernel-headers (>= 0.11) [kfreebsd-any], gnumach-dev [hurd-i386], hurd-dev (>= 20080607-3) [hurd-i386] | hurd-headers-dev [hurd-i386]
++Depends: @libc@ (= ${binary:Version}) <!stage1>, libc-dev-bin (= ${binary:Version}), ${misc:Depends}, linux-libc-dev [linux-any], kfreebsd-kernel-headers (>= 0.11) [kfreebsd-any], gnumach-dev [hurd-i386], hurd-dev (>= 20080607-3) [hurd-i386] | hurd-headers-dev [hurd-i386]
  Replaces: hurd-dev (<< 20120408-3) [hurd-i386]
  Recommends: gcc | c-compiler
  Suggests: glibc-doc, manpages-dev
