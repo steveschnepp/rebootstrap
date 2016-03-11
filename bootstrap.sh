@@ -914,6 +914,25 @@ diff -u gcc-4.9-4.9.2/debian/rules.conf gcc-4.9-4.9.2/debian/rules.conf
      LIBC_DEP = libc0.3
 EOF
 }
+patch_gcc_rtlibs_base_dep() {
+	test "$ENABLE_MULTIARCH_GCC" != yes || return 0
+	echo "patching gcc rtlibs to emit deps on gcc-VER-base"
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/control.m4
++++ b/debian/control.m4
+@@ -123,8 +123,8 @@
+ define(`SOFTBASEDEP', `gcc`'PV`'TS-base (>= ${gcc:SoftVersion})')
+ 
+ ifdef(`TARGET',`
+-define(`BASELDEP', `gcc`'PV-cross-base`'GCC_PORTS_BUILD (= ${gcc:Version})')
+-define(`SOFTBASELDEP', `gcc`'PV-cross-base`'GCC_PORTS_BUILD (>= ${gcc:SoftVersion})')
++define(`BASELDEP', `gcc`'PV`'ifelse(CROSS_ARCH,`all',`-cross')-base`'GCC_PORTS_BUILD (= ${gcc:Version})')
++define(`SOFTBASELDEP', `gcc`'PV`'ifelse(CROSS_ARCH, `all',`-cross')-base`'GCC_PORTS_BUILD (>= ${gcc:SoftVersion})')
+ ',`dnl
+ define(`BASELDEP', `BASEDEP')
+ define(`SOFTBASELDEP', `SOFTBASEDEP')
+EOF
+}
 patch_gcc_wdotap() {
 	if test "$ENABLE_MULTIARCH_GCC" = yes; then
 		echo "applying patches for with_deps_on_target_arch_pkgs"
@@ -1412,24 +1431,7 @@ EOF
    p_lbase = $(p_base)
    p_xbase = gcc$(pkg_ver)-base
 EOF
-	if test "$ENABLE_MULTIARCH_GCC" != yes; then
-	echo "patching gcc rtlibs to emit deps on gcc-VER-base"
-	drop_privs patch -p1 <<'EOF'
---- a/debian/control.m4
-+++ b/debian/control.m4
-@@ -123,8 +123,8 @@
- define(`SOFTBASEDEP', `gcc`'PV`'TS-base (>= ${gcc:SoftVersion})')
- 
- ifdef(`TARGET',`
--define(`BASELDEP', `gcc`'PV-cross-base`'GCC_PORTS_BUILD (= ${gcc:Version})')
--define(`SOFTBASELDEP', `gcc`'PV-cross-base`'GCC_PORTS_BUILD (>= ${gcc:SoftVersion})')
-+define(`BASELDEP', `gcc`'PV`'ifelse(CROSS_ARCH,`all',`-cross')-base`'GCC_PORTS_BUILD (= ${gcc:Version})')
-+define(`SOFTBASELDEP', `gcc`'PV`'ifelse(CROSS_ARCH, `all',`-cross')-base`'GCC_PORTS_BUILD (>= ${gcc:SoftVersion})')
- ',`dnl
- define(`BASELDEP', `BASEDEP')
- define(`SOFTBASELDEP', `SOFTBASEDEP')
-EOF
-	fi
+	patch_gcc_rtlibs_base_dep
 	echo "patching gcc to build libatomic with rtlibs"
 	drop_privs patch -p1 <<'EOF'
 --- a/debian/rules.defs
@@ -2000,6 +2002,7 @@ EOF
    p_xbase = gcc$(pkg_ver)-base
 EOF
 	fi
+	patch_gcc_rtlibs_base_dep
 	patch_gcc_wdotap
 }
 # choosing libatomic1 arbitrarily here, cause it never bumped soname
