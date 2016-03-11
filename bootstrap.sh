@@ -4793,9 +4793,9 @@ mark_built file
 automatically_cross_build_packages
 
 builddep_bsdmainutils() {
-	assert_built "ncurses"
+	assert_built "ncurses libbsd"
 	# python-hdate dependency unsatisfiable #792867
-	$APT_GET install debhelper "libncurses5-dev:$HOST_ARCH" quilt python python-hdate
+	apt_get_install debhelper "libncurses5-dev:$1" quilt python python-hdate "libbsd-dev:$1"
 }
 cross_build bsdmainutils
 mark_built bsdmainutils
