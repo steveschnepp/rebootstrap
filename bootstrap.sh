@@ -3728,6 +3728,7 @@ buildenv_krb5() {
 }
 
 add_automatic libatomic-ops
+add_automatic libbsd
 add_automatic libcap2
 
 builddep_libdebian_installer() {
@@ -4361,6 +4362,7 @@ add_need hostname # essential
 test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = linux && add_need kmod # by systemd
 add_need krb5 # by curl
 add_need libatomic-ops # by gcc-4.9
+add_need libbsd # by bsdmainutils
 dpkg-architecture "-a$HOST_ARCH" -ilinux-any && add_need libcap2 # by systemd
 add_need libgc # by guile-2.0
 add_need libgcrypt20 # by libprelude, cryptsetup
