@@ -20,6 +20,10 @@ DROP_PRIVS=buildd
 GCC_NOLANG=ada,d,go,java,jit,objc,objc++
 ENABLE_DEBBINDIFF=no # deprecated. use ENABLE_DIFFOSCOPE instead
 
+if df -t tmpfs /var/cache/apt/archives >/dev/null 2>&1; then
+	APT_GET="$APT_GET -o APT::Keep-Downloaded-Packages=false"
+fi
+
 # evaluate command line parameters of the form KEY=VALUE
 for param in "$@"; do
 	echo "bootstrap-configuration: $param"
