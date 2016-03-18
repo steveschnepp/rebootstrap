@@ -918,6 +918,33 @@ diff -u gcc-4.9-4.9.2/debian/rules.conf gcc-4.9-4.9.2/debian/rules.conf
      LIBC_DEP = libc0.3
 EOF
 }
+patch_gcc_musl_arm() {
+	echo "patching gcc to correctly detect arm architectures"
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/rules.defs
++++ b/debian/rules.defs
+@@ -376,7 +376,7 @@
+ endif
+
+ # check if we're building for armel or armhf
+-ifeq ($(DEB_TARGET_ARCH),armhf)
++ifneq (,$(filter %eabihf,$(DEB_TARGET_GNU_SYSTEM)))
+   float_abi := hard
+ else ifneq (,$(filter $(distribution)-$(DEB_TARGET_ARCH), Ubuntu-armel))
+   ifneq (,$(filter $(distrelease),lucid maverick natty oneiric precise))
+--- a/debian/rules2
++++ b/debian/rules2
+@@ -483,7 +483,7 @@
+   CONFARGS += --disable-sjlj-exceptions
+   # FIXME: libjava is not ported for thumb, this hack only works for
+   # separate gcj builds
+-  ifneq (,$(filter armhf,$(DEB_TARGET_ARCH)))
++  ifneq (,$(filter %armhf,$(DEB_TARGET_ARCH)))
+     ifeq ($(distribution),Raspbian)
+       with_arm_arch = armv6
+       with_arm_fpu = vfp
+EOF
+}
 patch_gcc_rtlibs_base_dep() {
 	test "$ENABLE_MULTIARCH_GCC" != yes || return 0
 	echo "patching gcc rtlibs to emit deps on gcc-VER-base"
@@ -1014,6 +1041,7 @@ EOF
 patch_gcc_5() {
 	patch_gcc_os_include_dir_musl
 	patch_gcc_musl_depends
+	patch_gcc_musl_arm
 	echo "patching gcc-5 to use all of /usr/include/<triplet>"
 	drop_privs patch -p1 <<'EOF'
 --- a/debian/rules2
