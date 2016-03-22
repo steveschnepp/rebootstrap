@@ -3390,6 +3390,11 @@ EOF
 	drop_privs quilt push -a
 }
 
+add_automatic autogen
+buildenv_autogen() {
+	export libopts_cv_with_libregex=yes
+}
+
 add_automatic base-files
 add_automatic bash
 
@@ -4398,6 +4403,7 @@ mark_built() {
 
 add_need acl # by coreutils, systemd
 add_need attr # by coreutils, libcap-ng, libcap2
+add_need autogen # by gcc-5, gnutls28
 add_need base-files # essential
 add_need bash # essential
 add_need bzip2 # by dpkg, perl
@@ -5189,20 +5195,6 @@ fi
 progress_mark "libxml2 stage1 cross build"
 mark_built libxml2
 # needed by autogen
-
-automatically_cross_build_packages
-
-builddep_autogen() {
-	assert_built "guile-2.0 libxml2"
-	$APT_GET build-dep "-a$1" --arch-only autogen
-	$APT_GET install autogen # needs Build-Depends: autogen <cross>
-}
-buildenv_autogen() {
-	export libopts_cv_with_libregex=yes
-}
-cross_build autogen
-mark_built autogen
-# needed by gnutls28, gcc-4.9
 
 automatically_cross_build_packages
 
