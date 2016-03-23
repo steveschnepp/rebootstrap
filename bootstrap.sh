@@ -2960,19 +2960,6 @@ EOF
  		--without-selinux \
  		--enable-stackguard-randomization \
 EOF
-	echo "patching glibc to run build arch localedef"
-	drop_privs patch -p1 <<'EOF'
---- a/debian/rules.d/build.mk
-+++ b/debian/rules.d/build.mk
-@@ -114,6 +114,7 @@
- 	fi
- 	if [ $(curpass) = libc ]; then \
- 	  $(MAKE) -C $(DEB_BUILDDIR) $(NJOBS) \
-+	    $(if $(filter-out $(DEB_BUILD_ARCH),$(DEB_HOST_ARCH)),"LOCALEDEF=I18NPATH=. LC_ALL=C localedef") \
- 	    objdir=$(DEB_BUILDDIR) install_root=$(CURDIR)/build-tree/locales-all \
- 	    localedata/install-locales; \
- 	  sync; \
-EOF
 }
 if test -f "$REPODIR/stamps/${LIBC_NAME}_1"; then
 	echo "skipping rebuild of $LIBC_NAME stage1"
