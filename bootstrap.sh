@@ -2266,89 +2266,32 @@ fi
 
 # linux
 patch_linux() {
-	if test "$HOST_ARCH" = arm; then
-		echo "patching linux for arm"
-		drop_privs patch -p1 <<EOF
-diff -Nru linux-3.14.7/debian/config/arm/defines linux-3.14.7/debian/config/arm/defines
---- linux-3.14.7/debian/config/arm/defines
-+++ linux-3.14.7/debian/config/arm/defines
-@@ -0,0 +1,4 @@
-+[base]
-+kernel-arch: arm
-+featuresets:
-+# empty; just building headers yet
-diff -Nru linux-3.14.7/debian/config/defines linux-3.14.7/debian/config/defines
---- linux-3.14.7/debian/config/defines
-+++ linux-3.14.7/debian/config/defines
-@@ -23,6 +23,7 @@
- arches:
-  alpha
-  amd64
-+ arm
-  arm64
-  armel
-  armhf
-EOF
-		drop_privs ./debian/rules debian/rules.gen || : # intentionally exits 1 to avoid being called automatically. we are doing it wrong
-	fi
-	if test "$HOST_ARCH" = powerpcel; then
-		echo "patching linux for powerpcel"
-		drop_privs patch -p1 <<'EOF'
-diff -Nru linux-*/debian/config/powerpcel/defines linux-*/debian/config/powerpcel/defines
---- linux-*/debian/config/powerpcel/defines
-+++ linux-*/debian/config/powerpcel/defines
-@@ -0,0 +1,4 @@
-+[base]
-+kernel-arch: powerpc
-+featuresets:
-+# empty; just building headers yet
-diff -Nru linux-*/debian/config/defines linux-*/debian/config/defines
---- linux-*/debian/config/defines
-+++ linux-*/debian/config/defines
-@@ -22,6 +22,7 @@
-  mips64el
-  or1k
-  powerpc
-+ powerpcel
-  powerpcspe
-  ppc64
-  ppc64el
-EOF
-		drop_privs ./debian/rules debian/rules.gen || : # intentionally exits 1 to avoid being called automatically. we are doing it wrong
-	fi
-	if test "$LIBC_NAME" = musl; then
-		echo "patching linux for musl-linux-any"
-		drop_privs sed -i "/^arches:/a\ $HOST_ARCH" debian/config/defines
+	local kernel_arch comment
+	kernel_arch=
+	comment="just building headers yet"
+	case "$HOST_ARCH" in
+		arm|nios2)
+			kernel_arch=$HOST_ARCH
+		;;
+		powerpcel) kernel_arch=powerpc; ;;
+		*-linux-*)
+			if ! test -d "debian/config/$HOST_ARCH"; then
+				kernel_arch=$(sed 's/^kernel-arch: //;t;d' < "debian/config/${HOST_ARCH#*-linux-}/defines")
+				comment="$HOST_ARCH must be part of a multiarch installation with a ${HOST_ARCH#*-linux-*} kernel"
+			fi
+		;;
+	esac
+	if test -n "$kernel_arch"; then
+		echo "patching linux for $HOST_ARCH with kernel-arch $kernel_arch"
 		drop_privs mkdir -p "debian/config/$HOST_ARCH"
-		drop_privs cat > "debian/config/$HOST_ARCH/defines" <<EOF
+		drop_privs tee "debian/config/$HOST_ARCH/defines" >/dev/null <<EOF
 [base]
-kernel-arch: `sed 's/^kernel-arch: //;t;d' < "debian/config/${HOST_ARCH#musl-linux-}/defines"`
+kernel-arch: $kernel_arch
 featuresets:
-# empty; $HOST_ARCH must be part of a multiarch installation with an ${HOST_ARCH#musl-linux-} kernel
+# empty; $comment
 EOF
-		drop_privs ./debian/rules debian/rules.gen || : # intentionally exits 1 to avoid being called automatically. we are doing it wrong
-	fi
-	if test "$HOST_ARCH" = nios2; then
-		echo "patching linux for nios2"
-		drop_privs patch -p1 <<'EOF'
---- a/debian/config/nios2/defines
-+++ b/debian/config/nios2/defines
-@@ -0,0 +1,4 @@
-+[base]
-+kernel-arch: nios2
-+featuresets:
-+# empty; just building headers yet
---- a/debian/config/defines
-+++ b/debian/config/defines
-@@ -19,6 +19,7 @@
-  mipsel
-  mips64
-  mips64el
-+ nios2
-  or1k
-  powerpc
-  powerpcspe
-EOF
+		drop_privs sed -i -e "/^arches:/a\\ $HOST_ARCH" debian/config/defines
+		apt_get_install kernel-wedge
 		drop_privs ./debian/rules debian/rules.gen || : # intentionally exits 1 to avoid being called automatically. we are doing it wrong
 	fi
 }
