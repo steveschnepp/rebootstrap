@@ -3210,6 +3210,7 @@ automatic_packages=
 add_automatic() { automatic_packages=`set_add "$automatic_packages" "$1"`; }
 
 add_automatic acl
+add_automatic apt
 
 add_automatic attr
 patch_attr() {
@@ -4365,6 +4366,7 @@ mark_built() {
 }
 
 add_need acl # by coreutils, systemd
+add_need apt # almost essential
 add_need attr # by coreutils, libcap-ng, libcap2
 add_need autogen # by gcc-5, gnutls28
 add_need base-files # essential
@@ -4406,7 +4408,6 @@ add_need libx11 # by dbus
 add_need libxau # by libxcb
 add_need libxdmcp # by libxcb
 add_need libxrender # by cairo
-add_need lz4 # by apt
 add_need man-db # for debhelper
 add_need mawk # for base-files (alternatively: gawk)
 add_need mpclib3 # by gcc-4.9
@@ -5490,20 +5491,6 @@ EOF
 cross_build curl
 mark_built curl
 # needed by apt, gnupg
-
-automatically_cross_build_packages
-
-builddep_apt() {
-	# libgtest-dev lacks <nocheck> profile
-	apt_get_install dpkg-dev debhelper "libdb-dev:$1" gettext "libcurl4-gnutls-dev:$1" "zlib1g-dev:$1" "libbz2-dev:$1" "liblzma-dev:$1" "liblz4-dev:$1" xsltproc docbook-xsl docbook-xml po4a autotools-dev autoconf automake
-}
-buildenv_apt() {
-	# pretend we had gtest/gtest.h to make configure succeed. it's never used
-	export ac_cv_header_gtest_gtest_h=yes
-}
-cross_build apt
-mark_built apt
-# essential
 
 automatically_cross_build_packages
 
