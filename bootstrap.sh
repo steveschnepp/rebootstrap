@@ -3489,6 +3489,7 @@ EOF
 }
 
 add_automatic findutils
+add_automatic freebsd-glue
 add_automatic freetype
 add_automatic gdbm
 
@@ -4379,6 +4380,7 @@ add_need debianutils # essential
 add_need diffutils # essential
 add_need dpkg # essential
 add_need findutils # essential
+dpkg-architecture "-a$HOST_ARCH" -ikfreebsd-any && add_need freebsd-glue # by freebsd-libs
 add_need freetype # by fontconfig
 add_need gdbm # by perl, python2.7
 add_need gmp # by guile-2.0
