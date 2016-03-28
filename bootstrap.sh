@@ -3815,6 +3815,7 @@ EOF
 
 add_automatic libev
 add_automatic libevent
+add_automatic libffi
 add_automatic libgc
 
 add_automatic libgcrypt20
@@ -4396,6 +4397,7 @@ add_need krb5 # by curl
 add_need libatomic-ops # by gcc-4.9
 add_need libbsd # by bsdmainutils
 dpkg-architecture "-a$HOST_ARCH" -ilinux-any && add_need libcap2 # by systemd
+add_need libffi # by guile-2.0
 add_need libgc # by guile-2.0
 add_need libgcrypt20 # by libprelude, cryptsetup
 add_need libpng # by slang2
@@ -4833,17 +4835,6 @@ builddep_bsdmainutils() {
 cross_build bsdmainutils
 mark_built bsdmainutils
 # needed for man-db
-
-automatically_cross_build_packages
-
-builddep_libffi() {
-	assert_built "libtool"
-	# g++-multilib dependency unsatisfiable
-	$APT_GET install debhelper dejagnu lsb-release texinfo dpkg-dev dh-autoreconf "libltdl-dev:$HOST_ARCH"
-}
-cross_build libffi
-mark_built libffi
-# needed by guile-2.0, p11-kit
 
 automatically_cross_build_packages
 
