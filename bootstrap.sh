@@ -5020,40 +5020,6 @@ builddep_fontconfig() {
 	# versioned dependency on binutils needs cross-translation #779460
 	$APT_GET install cdbs dh-autoreconf debhelper "libfreetype6-dev:$1" "libexpat1-dev:$1" pkg-config gperf po-debconf
 }
-patch_fontconfig() {
-	echo "patching fontconfig to use the build compiler #779461"
-	drop_privs patch -p1 <<'EOF'
-diff -Nru fontconfig-2.11.0/debian/patches/06_cross.patch fontconfig-2.11.0/debian/patches/06_cross.patch
---- fontconfig-2.11.0/debian/patches/06_cross.patch
-+++ fontconfig-2.11.0/debian/patches/06_cross.patch
-@@ -0,0 +1,16 @@
-+Index: fontconfig-2.11.0/doc/Makefile.am
-+===================================================================
-+--- fontconfig-2.11.0.orig/doc/Makefile.am
-++++ fontconfig-2.11.0/doc/Makefile.am
-+@@ -121,7 +121,10 @@
-+ edit_sgml_SOURCES =	\
-+ 	edit-sgml.c	\
-+ 	$(NULL)
-+-edit_sgml_CC = $(CC_FOR_BUILD)
-++$(edit_sgml_OBJECTS) : CC=$(CC_FOR_BUILD)
-++$(edit_sgml_OBJECTS) : CFLAGS=$(CFLAGS_FOR_BUILD)
-++$(edit_sgml_OBJECTS) : CPPFLAGS=$(CPPFLAGS_FOR_BUILD)
-++edit_sgml_LINK = $(CC_FOR_BUILD) -o $@
-+ #
-+ check_SCRIPTS =			\
-+ 	check-missing-doc	\
-diff -Nru fontconfig-2.11.0/debian/patches/series fontconfig-2.11.0/debian/patches/series
---- fontconfig-2.11.0/debian/patches/series
-+++ fontconfig-2.11.0/debian/patches/series
-@@ -3,3 +3,4 @@
- 03_locale_c.utf8.patch
- 04_mgopen_fonts.patch
- 05_doc_files.patch
-+06_cross.patch
-EOF
-	drop_privs quilt push -a
-}
 cross_build fontconfig
 mark_built fontconfig
 # needed by cairo, xft
