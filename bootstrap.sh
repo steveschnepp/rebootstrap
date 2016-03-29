@@ -3877,11 +3877,7 @@ buildenv_libxt() {
 
 add_automatic lz4
 
-builddep_make_dfsg() {
-	# libbsd-resource-perl dependency lacks <!nocheck> profile #812725
-	apt_get_install gettext po-debconf debhelper dh-autoreconf autoconf automake autopoint file pkg-config "guile-2.0-dev:$1" procps
-}
-
+add_automatic make-dfsg
 add_automatic man-db
 add_automatic mawk
 add_automatic mpclib3
@@ -4412,6 +4408,7 @@ add_need libx11 # by dbus
 add_need libxau # by libxcb
 add_need libxdmcp # by libxcb
 add_need libxrender # by cairo
+add_need make-dfsg # for build-essential
 add_need man-db # for debhelper
 add_need mawk # for base-files (alternatively: gawk)
 add_need mpclib3 # by gcc-4.9
@@ -5450,12 +5447,6 @@ EOF
 cross_build curl
 mark_built curl
 # needed by apt, gnupg
-
-automatically_cross_build_packages
-
-cross_build make-dfsg
-mark_built make-dfsg
-# needed for build-essential
 
 automatically_cross_build_packages
 
