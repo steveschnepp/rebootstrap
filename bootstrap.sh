@@ -2415,6 +2415,10 @@ done
 ln -fs "`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_GNU_TYPE`-gcc-$GCC_VER" "/usr/bin/`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_GNU_TYPE`-cc"
 
 # hurd
+patch_hurd() {
+	echo "working around #818618"
+	sed -i -e '/^#.*818618/d;s/^#//' debian/control
+}
 if test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = hurd; then
 if test -f "$REPODIR/stamps/hurd_1"; then
 	echo "skipping rebuild of hurd stage1"
@@ -2935,7 +2939,7 @@ else
 				fi
 			;;
 			hurd)
-				$APT_GET install "gnumach-dev:$HOST_ARCH" "hurd-dev:$HOST_ARCH" "mig$HOST_ARCH_SUFFIX"
+				apt_get_install "gnumach-dev:$HOST_ARCH" "hurd-headers-dev:$HOST_ARCH" "mig$HOST_ARCH_SUFFIX"
 			;;
 			kfreebsd)
 				$APT_GET install "kfreebsd-kernel-headers:$HOST_ARCH"
@@ -3068,7 +3072,7 @@ else
 			fi
 		;;
 		hurd)
-			$APT_GET install "gnumach-dev:$HOST_ARCH" "hurd-dev:$HOST_ARCH" "mig$HOST_ARCH_SUFFIX"
+			apt_get_install "gnumach-dev:$HOST_ARCH" "hurd-headers-dev:$HOST_ARCH" "libihash-dev:$HOST_ARCH" "mig$HOST_ARCH_SUFFIX"
 		;;
 		kfreebsd)
 			$APT_GET install "kfreebsd-kernel-headers:$HOST_ARCH"
