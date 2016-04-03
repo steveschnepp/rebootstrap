@@ -3542,6 +3542,7 @@ EOF
 }
 
 add_automatic findutils
+add_automatic fontconfig
 add_automatic freebsd-glue
 add_automatic freetype
 add_automatic gdbm
@@ -4431,7 +4432,6 @@ add_need diffutils # essential
 add_need dpkg # essential
 add_need findutils # essential
 dpkg-architecture "-a$HOST_ARCH" -ikfreebsd-any && add_need freebsd-glue # by freebsd-libs
-add_need freetype # by fontconfig
 add_need gdbm # by perl, python2.7
 add_need gmp # by guile-2.0
 add_need gnupg # for apt
@@ -5053,17 +5053,6 @@ builddep_expat() {
 cross_build expat
 mark_built expat
 # needed by fontconfig
-
-automatically_cross_build_packages
-
-builddep_fontconfig() {
-	assert_built "expat freetype"
-	# versioned dependency on binutils needs cross-translation #779460
-	$APT_GET install cdbs dh-autoreconf debhelper "libfreetype6-dev:$1" "libexpat1-dev:$1" pkg-config gperf po-debconf
-}
-cross_build fontconfig
-mark_built fontconfig
-# needed by cairo, xft
 
 automatically_cross_build_packages
 
