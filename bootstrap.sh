@@ -4553,13 +4553,18 @@ automatically_cross_build_packages() {
 }
 
 assert_built() {
-	local missing_pkgs missing_pkgs_comma_sep
+	local missing_pkgs missing_pkgs_comma_sep profiles
 	missing_pkgs=`set_difference "$1" "$built_packages"`
 	test -z "$missing_pkgs" && return 0
 	echo "rebootstrap-error: missing asserted packages: $missing_pkgs"
 	missing_pkgs=`set_union "$missing_pkgs" "$need_packages"`
 	missing_pkgs_comma_sep=`echo $missing_pkgs | sed 's/ /,/g'`
-	call_dose_builddebcheck --failures --explain --latest --deb-drop-b-d-indep "--checkonly=$missing_pkgs_comma_sep"
+	profiles="$DEFAULT_PROFILES"
+	if test "$ENABLE_MULTILIB" = no; then
+		profiles=$(set_add "$profiles" nobiarch)
+	fi
+	profiles=$(echo "$profiles" | tr ' ' ,)
+	call_dose_builddebcheck --failures --explain --latest --deb-drop-b-d-indep "--deb-profiles=$profiles" "--checkonly=$missing_pkgs_comma_sep"
 	return 1
 }
 
