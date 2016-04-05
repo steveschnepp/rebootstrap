@@ -3715,22 +3715,6 @@ EOF
 }
 
 add_automatic kmod
-patch_kmod() {
-	echo "fixing kmod FTBFS #819089"
-	drop_privs patch -p1 <<'EOF'
---- a/libkmod/docs/Makefile.am
-+++ b/libkmod/docs/Makefile.am
-@@ -26,6 +26,8 @@ IGNORE_HFILES = libkmod-internal.h \
- content_files = version.xml
- 
- if ENABLE_GTK_DOC
-+# gtk-doc.make assigns with += to EXTRA_DIST.
-+EXTRA_DIST =
- include $(top_srcdir)/libkmod/docs/gtk-doc.make
- else
- EXTRA_DIST = libkmod-docs.xml libkmod-sections.txt
-EOF
-}
 
 add_automatic krb5
 builddep_krb5() {
