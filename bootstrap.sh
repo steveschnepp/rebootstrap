@@ -2129,6 +2129,32 @@ fi
 
 # binutils
 patch_binutils() {
+	if test "$HOST_ARCH" = "hurd-amd64"; then
+		echo "patching binutils for hurd-amd64"
+		drop_privs patch -p1 <<'EOF'
+--- a/bfd/config.bfd
++++ b/bfd/config.bfd
+@@ -671,7 +671,7 @@
+     targ_selvecs="i386_elf32_vec i386_aout_nbsd_vec i386_coff_vec i386_pei_vec x86_64_pei_vec l1om_elf64_vec k1om_elf64_vec"
+     want64=true
+     ;;
+-  x86_64-*-linux-*)
++  x86_64-*-linux-* | x86_64-*-gnu*)
+     targ_defvec=x86_64_elf64_vec
+     targ_selvecs="i386_elf32_vec x86_64_elf32_vec i386_aout_linux_vec i386_pei_vec x86_64_pei_vec l1om_elf64_vec k1om_elf64_vec"
+     want64=true
+--- a/ld/configure.tgt
++++ b/ld/configure.tgt
+@@ -311,6 +311,7 @@
+ i[3-7]86-*-mach*)	targ_emul=i386mach ;;
+ i[3-7]86-*-gnu*)	targ_emul=elf_i386
+ 			targ_extra_emuls=elf_iamcu ;;
++x86_64-*-gnu*)		targ_emul=elf_x86_64 ;;
+ i[3-7]86-*-msdos*)	targ_emul=i386msdos; targ_extra_emuls=i386aout ;;
+ i[3-7]86-*-moss*)	targ_emul=i386moss; targ_extra_emuls=i386msdos ;;
+ i[3-7]86-*-winnt*)	targ_emul=i386pe ;
+EOF
+	fi
 	if test "$HOST_ARCH" = "kfreebsd-armhf"; then
 		echo "patching binutils for kfreebsd-armhf"
 		drop_privs patch -p1 <<'EOF'
