@@ -3514,6 +3514,7 @@ add_automatic dash
 add_automatic datefudge
 add_automatic db-defaults
 add_automatic debianutils
+add_automatic diffutils
 add_automatic dpkg
 
 builddep_elfutils() {
@@ -4475,6 +4476,12 @@ what_builds() {
 	set_create "$source"
 }
 
+# determine a set of source package names which are essential to some
+# architecture
+discover_essential() {
+	set_create "$(grep-dctrl -F Package-List -e '\bessential=yes\b' -s Package -n /var/lib/apt/lists/*_Sources)"
+}
+
 need_packages=
 add_need() { need_packages=`set_add "$need_packages" "$1"`; }
 built_packages=
@@ -4483,30 +4490,29 @@ mark_built() {
 	built_packages=`set_add "$built_packages" "$1"`
 }
 
+for pkg in $(discover_essential); do
+	if set_contains "$automatic_packages" "$pkg"; then
+		echo "rebootstrap-debug: automatically scheduling essential package $pkg"
+		add_need "$pkg"
+	else
+		echo "rebootstrap-debug: not scheduling essential package $pkg"
+	fi
+done
 add_need acl # by coreutils, systemd
 add_need apt # almost essential
 add_need attr # by coreutils, libcap-ng, libcap2
 add_need autogen # by gcc-5, gnutls28
-add_need base-files # essential
-add_need bash # essential
 add_need bzip2 # by dpkg, perl
 add_need cloog # by gcc-4.9
-add_need dash # essential
 add_need db-defaults # by apt, perl, python2.7
-add_need debianutils # essential
-add_need diffutils # essential
-add_need dpkg # essential
-add_need findutils # essential
 dpkg-architecture "-a$HOST_ARCH" -ikfreebsd-any && add_need freebsd-glue # by freebsd-libs
 add_need gdbm # by perl, python2.7
 add_need gmp # by guile-2.0
 add_need gnupg # for apt
 add_need gnutls28 # by curl
 test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = linux && add_need gpm # by ncurses
-add_need grep # essential
 add_need groff # for man-db
 add_need gzip # essential
-add_need hostname # essential
 test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = linux && add_need kmod # by systemd
 add_need krb5 # by curl
 add_need libatomic-ops # by gcc-4.9
@@ -4539,7 +4545,6 @@ add_need patch # for dpkg-dev
 add_need pcre3 # by libselinux
 add_need readline5 # by lvm2
 add_need rtmpdump # by curl
-add_need sed # essential
 add_need slang2 # by cdebconf, newt
 add_need sqlite3 # by python2.7
 add_need tar # essential
