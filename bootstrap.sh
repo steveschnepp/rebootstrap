@@ -532,8 +532,6 @@ $APT_GET update
 
 # work around debhelper bug #811038
 touch /usr/share/debhelper/autoscripts/postinst-makeshlibs /usr/share/debhelper/autoscripts/postrm-makeshlibs
-# work around debhelper bug #811052
-sed -i '/dh_update_autotools_config/d' /usr/bin/dh
 
 # Work around libglib2.0-0 bug #814668. Running kfreebsd-i386 binaries on linux
 # can result in clock jumps.
