@@ -2470,7 +2470,6 @@ progress_mark "cross gcc stage1 build"
 for prog in c++ cpp g++ gcc gcc-ar gcc-ranlib gfortran; do
 	ln -fs "`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_GNU_TYPE`-$prog-$GCC_VER" "/usr/bin/`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_GNU_TYPE`-$prog"
 done
-ln -fs "`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_GNU_TYPE`-gcc-$GCC_VER" "/usr/bin/`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_GNU_TYPE`-cc"
 
 # hurd
 patch_hurd() {
@@ -5099,7 +5098,7 @@ diff -Nru expat-2.1.0/debian/rules expat-2.1.0/debian/rules
  endif
  
 +ifeq ($(origin CC),default)
-+CC = $(DEB_HOST_GNU_TYPE)-cc
++CC = $(DEB_HOST_GNU_TYPE)-gcc
 +endif
 +
  # -pthread -D_REENTRANT #551079
