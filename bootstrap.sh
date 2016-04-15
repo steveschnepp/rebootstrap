@@ -2372,21 +2372,14 @@ if test "`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS`" = "linux"; then
 if test -f "$REPODIR/stamps/linux_1"; then
 	echo "skipping rebuild of linux-libc-dev"
 else
-	$APT_GET install bc cpio debhelper kernel-wedge patchutils python quilt python-six
 	cross_build_setup linux
-	linux_ma_skew=no
-	if test "$(dpkg-architecture -qDEB_HOST_ARCH_OS)" = linux && test "$(dpkg-query -W -f '${Version}' "linux-libc-dev:$(dpkg --print-architecture)")" != "$(dpkg-parsechangelog -SVersion)"; then
+	if dpkg-architecture -ilinux-any && test "$(dpkg-query -W -f '${Version}' "linux-libc-dev:$(dpkg --print-architecture)")" != "$(dpkg-parsechangelog -SVersion)"; then
 		echo "rebootstrap-warning: working around linux-libc-dev m-a:same skew"
-		linux_ma_skew=yes
+		apt_get_build_dep --arch-only -Pstage1 ./
+		drop_privs KBUILD_VERBOSE=1 dpkg-buildpackage -B -Pstage1 -uc -us
 	fi
-	dpkg-checkbuilddeps -B "-a$HOST_ARCH" || : # tell unmet build depends
-	if test -n "$DROP_PRIVS"; then
-		test "$linux_ma_skew" = yes && drop_privs KBUILD_VERBOSE=1 fakeroot make -f debian/rules.gen "binary-libc-dev_$(dpkg --print-architecture)"
-		drop_privs KBUILD_VERBOSE=1 fakeroot make -f debian/rules.gen "binary-libc-dev_$HOST_ARCH"
-	else
-		test "$linux_ma_skew" = yes && KBUILD_VERBOSE=1 make -f debian/rules.gen "binary-libc-dev_$(dpkg --print-architecture)"
-		KBUILD_VERBOSE=1 make -f debian/rules.gen "binary-libc-dev_$HOST_ARCH"
-	fi
+	apt_get_build_dep --arch-only "-a$HOST_ARCH" -Pstage1 ./
+	drop_privs KBUILD_VERBOSE=1 dpkg-buildpackage -B "-a$HOST_ARCH" -Pstage1 -uc -us
 	cd ..
 	ls -l
 	if test "$ENABLE_MULTIARCH_GCC" != yes; then
