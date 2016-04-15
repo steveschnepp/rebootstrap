@@ -834,6 +834,7 @@ cross_build() {
 		echo "skipping rebuild of $pkg with profiles $profiles"
 	else
 		echo "building $pkg with profiles $profiles"
+		cross_build_setup "$pkg"
 		installedpackages=$(record_installed_packages)
 		if hook=`get_hook builddep "$pkg"`; then
 			echo "installing Build-Depends for $pkg using custom function"
@@ -842,7 +843,6 @@ cross_build() {
 			echo "installing Build-Depends for $pkg using apt-get build-dep"
 			$APT_GET build-dep -a$HOST_ARCH --arch-only -P "$profiles" "$pkg"
 		fi
-		cross_build_setup "$pkg"
 		check_binNMU
 		ignorebd=
 		if get_hook builddep "$pkg" >/dev/null; then
