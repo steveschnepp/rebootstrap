@@ -841,7 +841,7 @@ cross_build() {
 			"$hook" "$HOST_ARCH" "$profiles"
 		else
 			echo "installing Build-Depends for $pkg using apt-get build-dep"
-			$APT_GET build-dep -a$HOST_ARCH --arch-only -P "$profiles" "$pkg"
+			apt_get_build_dep "-a$HOST_ARCH" --arch-only -P "$profiles" ./
 		fi
 		check_binNMU
 		ignorebd=
