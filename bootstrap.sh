@@ -4441,6 +4441,7 @@ buildenv_tcl8_6() {
 }
 
 add_automatic tcltk-defaults
+add_automatic tcp-wrappers
 
 add_automatic tk8.6
 buildenv_tk8_6() {
@@ -4571,6 +4572,7 @@ add_need sqlite3 # by python2.7
 add_need tar # essential
 add_need tcl8.6 # by newt
 add_need tcltk-defaults # by python2.7
+dpkg-architecture "-a$HOST_ARCH" -ilinux-any && add_need tcp-wrappers # by audit
 add_need tk8.6 # by blt
 add_need ustr # by libsemanage
 add_need xz-utils # by dpkg, libxml2
