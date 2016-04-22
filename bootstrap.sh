@@ -1712,6 +1712,22 @@ EOF
 + 		tmake_file="${tmake_file} rs6000/t-ppcos rs6000/t-linux"
 EOF
 	fi
+	if test "$ENABLE_MULTIARCH_GCC" = yes -a "$ENABLE_MULTILIB" = yes; then
+		echo "patching gcc to fix wrong shlibdeps"
+		drop_privs patch -p1 <<'EOF'
+--- a/debian/rules.d/binary-gcc.mk
++++ b/debian/rules.d/binary-gcc.mk
+@@ -182,7 +182,7 @@
+ 	debian/dh_rmemptydirs -p$(p_gcc)
+ 	dh_strip -p$(p_gcc) \
+ 	  $(if $(unstripped_exe),-X/lto1)
+-	dh_shlibdeps -p$(p_gcc)
++	dh_shlibdeps -p$(p_gcc) $(if $(filter $(DEB_HOST_ARCH),$(DEB_TARGET_ARCH)),,-l`realpath --relative-to . /lib/$(DEB_HOST_MULTIARCH`))
+ 	echo $(p_gcc) >> debian/arch_binaries
+
+ 	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)
+EOF
+	fi
 	patch_gcc_wdotap
 }
 patch_gcc_6() {
