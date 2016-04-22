@@ -1720,7 +1720,7 @@ EOF
 @@ -182,7 +182,7 @@
  	debian/dh_rmemptydirs -p$(p_gcc)
  	dh_strip -p$(p_gcc) \
- 	  $(if $(unstripped_exe),-X/lto1)
+ 	  # save some disk space $(if $(unstripped_exe),-X/lto1)
 -	dh_shlibdeps -p$(p_gcc)
 +	dh_shlibdeps -p$(p_gcc) $(if $(filter $(DEB_HOST_ARCH),$(DEB_TARGET_ARCH)),,-l`realpath --relative-to . /lib/$(DEB_HOST_MULTIARCH`))
  	echo $(p_gcc) >> debian/arch_binaries
