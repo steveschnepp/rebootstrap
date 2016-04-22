@@ -1722,7 +1722,7 @@ EOF
  	dh_strip -p$(p_gcc) \
  	  # save some disk space $(if $(unstripped_exe),-X/lto1)
 -	dh_shlibdeps -p$(p_gcc)
-+	dh_shlibdeps -p$(p_gcc) $(if $(filter $(DEB_HOST_ARCH),$(DEB_TARGET_ARCH)),,-l`realpath --relative-to . /lib/$(DEB_HOST_MULTIARCH`))
++	dh_shlibdeps -p$(p_gcc) $(if $(filter $(DEB_HOST_ARCH),$(DEB_TARGET_ARCH)),,-l`realpath --relative-to . /lib/$(DEB_HOST_MULTIARCH)`)
  	echo $(p_gcc) >> debian/arch_binaries
 
  	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)
