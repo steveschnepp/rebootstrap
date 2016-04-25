@@ -1728,6 +1728,8 @@ EOF
  	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)
 EOF
 	fi
+	echo "enable building gcc libraries. not a bug"
+	sed -i -e '/^#with_common_/s/#//' debian/rules.defs
 	patch_gcc_wdotap
 }
 patch_gcc_6() {
