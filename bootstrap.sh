@@ -3974,6 +3974,8 @@ patch_libgc() {
       || ((defined(RTEMS) || defined(PLATFORM_ANDROID)) && defined(I386))) \
      && !defined(NO_GETCONTEXT)
 EOF
+		echo "updating libgc symbols for nios2 #822445"
+		sed -i -e '/^ /s/=\(!\?\)arm64 /&\1nios2 /' debian/libgc1c2.symbols
 	fi
 }
 
