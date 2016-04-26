@@ -17,7 +17,7 @@ APT_GET="apt-get --no-install-recommends -y -o Debug::pkgProblemResolver=true -o
 DEFAULT_PROFILES="cross nocheck"
 LIBC_NAME=glibc
 DROP_PRIVS=buildd
-GCC_NOLANG=ada,d,go,java,jit,objc,objc++
+GCC_NOLANG=ada,d,go,java,jit,hppa64,objc,obj-c++
 ENABLE_DEBBINDIFF=no # deprecated. use ENABLE_DIFFOSCOPE instead
 
 if df -t tmpfs /var/cache/apt/archives >/dev/null 2>&1; then
