@@ -3075,21 +3075,23 @@ else
 	cross_build_setup "gcc-$GCC_VER" gcc2
 	dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends
 	echo "$HOST_ARCH" > debian/target
-	if test "$ENABLE_MULTIARCH_GCC" = yes; then
-		export with_deps_on_target_arch_pkgs=yes
-	fi
-	export gcc_cv_libc_provides_ssp=yes
-	if test "$ENABLE_MULTILIB" = yes; then
-		drop_privs DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=$GCC_NOLANG" DEB_STAGE=stage2 dpkg-buildpackage -d -T control
+	(
+		export DEB_STAGE=stage2
+		if test "$ENABLE_MULTILIB" = yes; then
+			nolang="${GCC_NOLANG:+nolang=$GCC_NOLANG}"
+		else
+			nolang="nolang=${GCC_NOLANG:+$GCC_NOLANG,}biarch"
+		fi
+		export DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS${nolang:+ $nolang}"
+		if test "$ENABLE_MULTIARCH_GCC" = yes; then
+			export with_deps_on_target_arch_pkgs=yes
+		fi
+		export gcc_cv_libc_provides_ssp=yes
+		drop_privs dpkg-buildpackage -d -T control
+		drop_privs dpkg-buildpackage -d -T clean
 		dpkg-checkbuilddeps || : # tell unmet build depends again after rewriting control
-		drop_privs DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=$GCC_NOLANG" DEB_STAGE=stage2 dpkg-buildpackage -d -b -uc -us
-	else
-		drop_privs DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=$GCC_NOLANG" DEB_CROSS_NO_BIARCH=yes DEB_STAGE=stage2 dpkg-buildpackage -d -T control
-		dpkg-checkbuilddeps || : # tell unmet build depends again after rewriting control
-		drop_privs DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=$GCC_NOLANG" DEB_CROSS_NO_BIARCH=yes DEB_STAGE=stage2 dpkg-buildpackage -d -b -uc -us
-	fi
-	unset with_deps_on_target_arch_pkgs
-	unset gcc_cv_libc_provides_ssp
+		drop_privs_exec dpkg-buildpackage -d -b -uc -us
+	)
 	cd ..
 	ls -l
 	pickup_packages *.changes
@@ -3206,24 +3208,24 @@ else
 	cross_build_setup "gcc-$GCC_VER" gcc3
 	dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends
 	echo "$HOST_ARCH" > debian/target
-	if test "$ENABLE_MULTIARCH_GCC" = yes; then
-		export with_deps_on_target_arch_pkgs=yes
-	else
-		export WITH_SYSROOT=/
-	fi
-	export gcc_cv_libc_provides_ssp=yes
-	if test "$ENABLE_MULTILIB" = yes; then
-		drop_privs DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=$GCC_NOLANG" dpkg-buildpackage -d -T control
+	(
+		if test "$ENABLE_MULTILIB" = yes; then
+			nolang="${GCC_NOLANG:+nolang=$GCC_NOLANG}"
+		else
+			nolang="nolang=${GCC_NOLANG:+$GCC_NOLANG,}biarch"
+		fi
+		export DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS${nolang:+ $nolang}"
+		if test "$ENABLE_MULTIARCH_GCC" = yes; then
+			export with_deps_on_target_arch_pkgs=yes
+		else
+			export WITH_SYSROOT=/
+		fi
+		export gcc_cv_libc_provides_ssp=yes
+		drop_privs dpkg-buildpackage -d -T control
+		drop_privs dpkg-buildpackage -d -T clean
 		dpkg-checkbuilddeps || : # tell unmet build depends again after rewriting control
-		drop_privs DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=$GCC_NOLANG" dpkg-buildpackage -d -b -uc -us
-	else
-		drop_privs DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=$GCC_NOLANG" DEB_CROSS_NO_BIARCH=yes dpkg-buildpackage -d -T control
-		dpkg-checkbuilddeps || : # tell unmet build depends again after rewriting control
-		drop_privs DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=$GCC_NOLANG" DEB_CROSS_NO_BIARCH=yes dpkg-buildpackage -d -b -uc -us
-	fi
-	unset with_deps_on_target_arch_pkgs
-	unset WITH_SYSROOT
-	unset gcc_cv_libc_provides_ssp
+		drop_privs_exec dpkg-buildpackage -d -b -uc -us
+	)
 	cd ..
 	ls -l
 	pickup_packages *.changes
