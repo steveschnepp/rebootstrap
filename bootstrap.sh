@@ -3094,6 +3094,10 @@ else
 	)
 	cd ..
 	ls -l
+	if test "$ENABLE_MULTIARCH_GCC" = yes; then
+		# also built with the cross compiler
+		reprepro -A "$(dpkg --print-architecture)" remove rebootstrap-native "gcc-${GCC_VER}-base"
+	fi
 	pickup_packages *.changes
 	drop_privs rm -vf ./*multilib*.deb
 	dpkg -i *.deb
