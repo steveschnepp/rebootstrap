@@ -984,6 +984,24 @@ patch_gcc_rtlibs_base_dep() {
  define(`SOFTBASELDEP', `SOFTBASEDEP')
 EOF
 }
+patch_gcc_multilib_builddep() {
+	echo "patching gcc-N to emit valid Build-Depends #823280"
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/rules.conf
++++ b/debian/rules.conf
+@@ -363,7 +363,9 @@
+
+ # needed for the include/asm symlink to run the testsuite for
+ # non default multilibs
++ifneq ($(multilib_archs),)
+-GCC_MULTILIB_BUILD_DEP = g++-multilib [$(multilib_archs)]$(pf_ncross),
++GCC_MULTILIB_BUILD_DEP += g++-multilib [$(multilib_archs)]$(pf_ncross),
++endif
+ GCC_MULTILIB_BUILD_DEP += g++-5 [arm64]$(pf_ncross),
+
+ LIBUNWIND_DEV_DEP := libunwind7-dev$(LS)$(AQ) (>= 0.98.5-6)
+EOF
+}
 patch_gcc_wdotap() {
 	if test "$ENABLE_MULTIARCH_GCC" = yes; then
 		echo "applying patches for with_deps_on_target_arch_pkgs"
@@ -1730,6 +1748,7 @@ EOF
 	fi
 	echo "enable building gcc libraries. not a bug"
 	sed -i -e '/^#with_common_/s/#//' debian/rules.defs
+	patch_gcc_multilib_builddep
 	patch_gcc_wdotap
 }
 patch_gcc_6() {
@@ -2107,6 +2126,7 @@ EOF
 EOF
 	fi
 	patch_gcc_rtlibs_base_dep
+	patch_gcc_multilib_builddep
 	patch_gcc_wdotap
 }
 # choosing libatomic1 arbitrarily here, cause it never bumped soname
