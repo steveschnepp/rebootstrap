@@ -537,9 +537,6 @@ Pin-Priority: -1
 EOF
 $APT_GET update
 
-# work around debhelper bug #811038
-touch /usr/share/debhelper/autoscripts/postinst-makeshlibs /usr/share/debhelper/autoscripts/postrm-makeshlibs
-
 # Work around libglib2.0-0 bug #814668. Running kfreebsd-i386 binaries on linux
 # can result in clock jumps.
 cat >/etc/dpkg/dpkg.cfg.d/bug-814668 <<EOF
