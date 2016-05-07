@@ -266,6 +266,17 @@ check_arch() {
 				;;
 			esac
 		;;
+		*", MIPS, MIPS64 rel6 version "*)
+			case "$(dpkg-architecture "-a$2" -qDEB_HOST_ARCH_CPU)" in
+				mips64r6|mips64r6el) ;;
+				*)
+					echo "cpu mismatch"
+					echo "expected $2"
+					echo "got $FILE_RES"
+					return 1
+				;;
+			esac
+		;;
 		*", OpenRISC"*)
 			if test or1k != `dpkg-architecture -a$2 -qDEB_HOST_ARCH_CPU`; then
 				echo "cpu mismatch"
