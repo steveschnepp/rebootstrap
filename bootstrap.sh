@@ -562,21 +562,6 @@ cat >/etc/dpkg/dpkg.cfg.d/ignore-foreign-linker-paths <<EOF
 path-exclude=/etc/ld.so.conf.d/$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_MULTIARCH).conf
 EOF
 
-if test "$HOST_ARCH" = nios2; then
-	echo "patching dpkg to drop -fstack-prottector for nios2 dpkg ba511d919ea9bfe727fefb897a5503be93f1cade"
-	patch /usr/share/perl5/Dpkg/Vendor/Debian.pm <<'EOF'
-@@ -262,7 +262,7 @@
- 	#  (#574716).
- 	$use_feature{pie} = 0;
-     }
--    if ($cpu =~ /^(?:ia64|alpha|hppa)$/ or $arch eq 'arm') {
-+    if ($cpu =~ /^(?:ia64|alpha|hppa|nios2)$/ or $arch eq 'arm') {
- 	# Stack protector disabled on ia64, alpha, hppa.
- 	#   "warning: -fstack-protector not supported for this target"
- 	# Stack protector disabled on arm (ok on armel).
-EOF
-fi
-
 # removing libc*-dev conflict with each other
 LIBC_DEV_PKG=$(apt-cache showpkg libc-dev | sed '1,/^Reverse Provides:/d;s/ .*//;q')
 if test "$(apt-cache show "$LIBC_DEV_PKG" | sed -n 's/^Source: //;T;p;q')" = glibc; then
