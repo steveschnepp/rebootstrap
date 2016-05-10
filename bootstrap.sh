@@ -1125,7 +1125,7 @@ diff -u gcc-5-5.2.1/debian/rules.d/binary-ada.mk gcc-5-5.2.1/debian/rules.d/bina
  	debian/dh_doclink -p$(p_lgnatvsn) $(p_glbase)
 -	dh_strip -p$(p_lgnatvsn) --dbg-package=$(p_lgnatvsn_dbg)
 +	$(cross_strip) dh_strip -p$(p_lgnatvsn) --dbg-package=$(p_lgnatvsn_dbg)
- 	$(cross_makeshlibs) dh_makeshlibs -p$(p_lgnatvsn) \
+ 	$(cross_makeshlibs) dh_makeshlibs $(ldconfig_arg) -p$(p_lgnatvsn) \
  		-V '$(p_lgnatvsn) (>= $(DEB_VERSION))'
  	$(call cross_mangle_shlibs,$(p_lgnatvsn))
 @@ -206,7 +206,7 @@
@@ -1143,7 +1143,7 @@ diff -u gcc-5-5.2.1/debian/rules.d/binary-ada.mk gcc-5-5.2.1/debian/rules.d/bina
  	debian/dh_doclink -p$(p_lgnatprj) $(p_glbase)
 -	dh_strip -p$(p_lgnatprj) --dbg-package=$(p_lgnatprj_dbg)
 +	$(cross_strip) dh_strip -p$(p_lgnatprj) --dbg-package=$(p_lgnatprj_dbg)
- 	$(cross_makeshlibs) dh_makeshlibs -p$(p_lgnatprj) \
+ 	$(cross_makeshlibs) dh_makeshlibs $(ldconfig_arg) -p$(p_lgnatprj) \
  		-V '$(p_lgnatprj) (>= $(DEB_VERSION))'
  	$(call cross_mangle_shlibs,$(p_lgnatprj))
 @@ -347,7 +347,7 @@
@@ -1194,7 +1194,7 @@ diff -u gcc-5-5.2.1/debian/rules.d/binary-go.mk gcc-5-5.2.1/debian/rules.d/binar
  	: # don't strip: https://gcc.gnu.org/ml/gcc-patches/2015-02/msg01722.html
 -	: # dh_strip -p$(p_l) --dbg-package=$(p_d)
 +	: # $(cross_strip) dh_strip -p$(p_l) --dbg-package=$(p_d)
- 	$(cross_makeshlibs) dh_makeshlibs -p$(p_l)
+ 	$(cross_makeshlibs) dh_makeshlibs $(ldconfig_arg) -p$(p_l)
  	$(call cross_mangle_shlibs,$(p_l))
  	$(ignshld)DIRNAME=$(subst n,,$(2)) $(cross_shlibdeps) dh_shlibdeps -p$(p_l) \
 diff -u gcc-5-5.2.1/debian/rules.d/binary-libasan.mk gcc-5-5.2.1/debian/rules.d/binary-libasan.mk
@@ -1206,7 +1206,7 @@ diff -u gcc-5-5.2.1/debian/rules.d/binary-libasan.mk gcc-5-5.2.1/debian/rules.d/
  
 -	dh_strip -p$(p_l) --dbg-package=$(p_d)
 +	$(cross_strip) dh_strip -p$(p_l) --dbg-package=$(p_d)
- 	$(cross_makeshlibs) dh_makeshlibs -p$(p_l)
+ 	$(cross_makeshlibs) dh_makeshlibs $(ldconfig_arg) -p$(p_l)
  	$(call cross_mangle_shlibs,$(p_l))
  	$(ignshld)DIRNAME=$(subst n,,$(2)) $(cross_shlibdeps) dh_shlibdeps -p$(p_l) \
 diff -u gcc-5-5.2.1/debian/rules.d/binary-libatomic.mk gcc-5-5.2.1/debian/rules.d/binary-libatomic.mk
@@ -1299,7 +1299,7 @@ diff -u gcc-5-5.2.1/debian/rules.d/binary-liblsan.mk gcc-5-5.2.1/debian/rules.d/
  
 -	dh_strip -p$(p_l) --dbg-package=$(p_d)
 +	$(cross_strip) dh_strip -p$(p_l) --dbg-package=$(p_d)
- 	$(cross_makeshlibs) dh_makeshlibs -p$(p_l)
+ 	$(cross_makeshlibs) dh_makeshlibs $(ldconfig_arg) -p$(p_l)
  	$(call cross_mangle_shlibs,$(p_l))
  	$(ignshld)DIRNAME=$(subst n,,$(2)) $(cross_shlibdeps) dh_shlibdeps -p$(p_l) \
 diff -u gcc-5-5.2.1/debian/rules.d/binary-libmpx.mk gcc-5-5.2.1/debian/rules.d/binary-libmpx.mk
@@ -1323,7 +1323,7 @@ diff -u gcc-5-5.2.1/debian/rules.d/binary-libobjc.mk gcc-5-5.2.1/debian/rules.d/
  
 -	dh_strip -p$(p_l) --dbg-package=$(p_d)
 +	$(cross_strip) dh_strip -p$(p_l) --dbg-package=$(p_d)
- 	$(cross_makeshlibs) dh_makeshlibs -p$(p_l) -Xlibobjc_gc.so
+ 	$(cross_makeshlibs) dh_makeshlibs $(ldconfig_arg) -p$(p_l) -Xlibobjc_gc.so
  	$(call cross_mangle_shlibs,$(p_l))
  	$(ignshld)DIRNAME=$(subst n,,$(2)) $(cross_shlibdeps) dh_shlibdeps -p$(p_l) \
 diff -u gcc-5-5.2.1/debian/rules.d/binary-libquadmath.mk gcc-5-5.2.1/debian/rules.d/binary-libquadmath.mk
@@ -1397,7 +1397,7 @@ diff -u gcc-5-5.2.1/debian/rules.d/binary-libtsan.mk gcc-5-5.2.1/debian/rules.d/
  
 -	dh_strip -p$(p_l) --dbg-package=$(p_d)
 +	$(cross_strip) dh_strip -p$(p_l) --dbg-package=$(p_d)
- 	$(cross_makeshlibs) dh_makeshlibs -p$(p_l)
+ 	$(cross_makeshlibs) dh_makeshlibs $(ldconfig_arg) -p$(p_l)
  	$(call cross_mangle_shlibs,$(p_l))
  	$(ignshld)DIRNAME=$(subst n,,$(2)) $(cross_shlibdeps) dh_shlibdeps -p$(p_l) \
 diff -u gcc-5-5.2.1/debian/rules.d/binary-libubsan.mk gcc-5-5.2.1/debian/rules.d/binary-libubsan.mk
@@ -1409,7 +1409,7 @@ diff -u gcc-5-5.2.1/debian/rules.d/binary-libubsan.mk gcc-5-5.2.1/debian/rules.d
  
 -	dh_strip -p$(p_l) --dbg-package=$(p_d)
 +	$(cross_strip) dh_strip -p$(p_l) --dbg-package=$(p_d)
- 	$(cross_makeshlibs) dh_makeshlibs -p$(p_l)
+ 	$(cross_makeshlibs) dh_makeshlibs $(ldconfig_arg) -p$(p_l)
  	$(call cross_mangle_shlibs,$(p_l))
  	$(ignshld)DIRNAME=$(subst n,,$(2)) $(cross_shlibdeps) dh_shlibdeps -p$(p_l) \
 diff -u gcc-5-5.2.1/debian/rules.d/binary-libvtv.mk gcc-5-5.2.1/debian/rules.d/binary-libvtv.mk
@@ -1421,7 +1421,7 @@ diff -u gcc-5-5.2.1/debian/rules.d/binary-libvtv.mk gcc-5-5.2.1/debian/rules.d/b
  
 -	dh_strip -p$(p_l) --dbg-package=$(p_d)
 +	$(cross_strip) dh_strip -p$(p_l) --dbg-package=$(p_d)
- 	$(cross_makeshlibs) dh_makeshlibs -p$(p_l)
+ 	$(cross_makeshlibs) dh_makeshlibs $(ldconfig_arg) -p$(p_l)
  	$(call cross_mangle_shlibs,$(p_l))
  	$(ignshld)DIRNAME=$(subst n,,$(2)) $(cross_shlibdeps) dh_shlibdeps -p$(p_l) \
 diff -u gcc-5-5.2.1/debian/rules.defs gcc-5-5.2.1/debian/rules.defs
