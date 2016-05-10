@@ -1078,7 +1078,6 @@ EOF
 }
 patch_gcc_5() {
 	patch_gcc_os_include_dir_musl
-	patch_gcc_musl_depends
 	patch_gcc_musl_arm
 	echo "patching gcc-5 to use all of /usr/include/<triplet>"
 	drop_privs patch -p1 <<'EOF'
