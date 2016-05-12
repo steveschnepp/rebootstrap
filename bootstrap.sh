@@ -374,6 +374,14 @@ check_arch() {
 				return 1
 			fi
 		;;
+		*", Tilera TILE-Gx, version"*)
+			if test tilegx != "$(dpkg-architecture "-a$2" -qDEB_HOST_ARCH_CPU)"; then
+				echo "cpu mismatch"
+				echo "expected $2"
+				echo "got $FILE_RES"
+				return 1
+			fi
+		;;
 		*)
 			echo "unknown ELF cpu"
 			echo "got $FILE_RES"
