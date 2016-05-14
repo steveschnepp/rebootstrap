@@ -463,10 +463,6 @@ obtain_source_package() {
 	fi
 }
 
-cat <<EOF >> /usr/share/dpkg/cputable
-nios2		nios2		nios2		32	little
-EOF
-
 if test "$HOST_ARCH" = tilegx; then
 	echo "adding tilegx to dpkg #823167"
 	cat <<EOF >> /usr/share/dpkg/cputable
