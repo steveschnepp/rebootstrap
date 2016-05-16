@@ -2319,6 +2319,37 @@ index 1c54320..babecf3 100644
  	      r = nios2_elf32_do_ujmp_relocate (input_bfd, howto,
 EOF
 	fi
+	echo "patching binutils to benefit from the new cross method"
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/rules
++++ b/debian/rules
+@@ -816,7 +816,11 @@
+   ifneq (,$(findstring static-cross,$(DEB_BUILD_OPTIONS)))
+        build_stamps = stamps/build-static-cross
+   else
+-       build_stamps = stamps/build-cross
++       ifeq ($(TARGET),hppa64-linux-gnu)
++         build_stamps = stamps/build-hppa64
++       else
++         build_stamps = stamps/build.$(DEB_TARGET_ARCH)
++       endif
+   endif
+ endif
+ ifeq ($(BACKPORT),true)
+@@ -848,7 +848,11 @@
+   ifneq (,$(findstring static-cross,$(DEB_BUILD_OPTIONS)))
+         install_stamps = stamps/install-static-cross
+   else
+-        install_stamp = stamps/install-cross
++        ifeq ($(TARGET),hppa64-linux-gnu)
++          install_stamp = stamps/install-hppa64
++        else
++          install_stamp = stamps/install.$(DEB_TARGET_ARCH)
++        endif
+   endif
+ else
+         install_stamp = stamps/install
+EOF
 }
 if test -f "$REPODIR/stamps/cross-binutils"; then
 	echo "skipping rebuild of binutils-target"
@@ -2326,7 +2357,7 @@ else
 	$APT_GET install autoconf bison flex gettext texinfo dejagnu quilt chrpath python3 file xz-utils lsb-release zlib1g-dev
 	cross_build_setup binutils
 	drop_privs TARGET=$HOST_ARCH dpkg-buildpackage --target=stamps/control
-	drop_privs WITH_SYSROOT=/ TARGET=$HOST_ARCH dpkg-buildpackage -B -uc -us
+	drop_privs TARGET=$HOST_ARCH dpkg-buildpackage -B -uc -us
 	cd ..
 	ls -l
 	pickup_packages *.changes
@@ -2346,7 +2377,7 @@ if test "$HOST_ARCH" = hppa && ! test -f "$REPODIR/stamps/cross-binutils-hppa64"
 	$APT_GET install autoconf bison flex gettext texinfo dejagnu quilt chrpath python3 file xz-utils lsb-release zlib1g-dev
 	cross_build_setup binutils binutils-hppa64
 	drop_privs TARGET=hppa64-linux-gnu dpkg-buildpackage --target=stamps/control
-	drop_privs WITH_SYSROOT=/ TARGET=hppa64-linux-gnu dpkg-buildpackage -B -uc -us
+	drop_privs TARGET=hppa64-linux-gnu dpkg-buildpackage -B -uc -us
 	cd ..
 	ls -l
 	pickup_additional_packages *.changes
