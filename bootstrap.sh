@@ -4035,6 +4035,7 @@ add_automatic libssh2
 add_automatic libtasn1-6
 add_automatic libtextwrap
 add_automatic libunistring
+add_automatic libusb
 add_automatic libverto
 
 add_automatic libx11
@@ -5583,16 +5584,6 @@ builddep_e2fsprogs() {
 cross_build e2fsprogs
 mark_built e2fsprogs
 # essential
-
-automatically_cross_build_packages
-
-builddep_libusb() {
-	# docbook dependency unsatisfiable
-	$APT_GET install debhelper dh-autoreconf pkg-config docbook docbook-dsssl
-}
-cross_build libusb
-mark_built libusb
-# needed by gnupg
 
 automatically_cross_build_packages
 
