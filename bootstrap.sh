@@ -266,6 +266,17 @@ check_arch() {
 				;;
 			esac
 		;;
+		*", MIPS, MIPS32 rel6 version "*)
+			case "$(dpkg-architecture "-a$2" -qDEB_HOST_ARCH_CPU)" in
+				mipsr6|mipsr6el) ;;
+				*)
+					echo "cpu mismatch"
+					echo "expected $2"
+					echo "got $FILE_RES"
+					return 1
+				;;
+			esac
+		;;
 		*", MIPS, MIPS64 rel6 version "*)
 			case "$(dpkg-architecture "-a$2" -qDEB_HOST_ARCH_CPU)" in
 				mips64r6|mips64r6el) ;;
