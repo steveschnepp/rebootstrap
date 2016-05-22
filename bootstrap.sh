@@ -4049,7 +4049,13 @@ add_automatic libssh2
 add_automatic libtasn1-6
 add_automatic libtextwrap
 add_automatic libunistring
+
 add_automatic libusb
+builddep_libusb() {
+	apt_get_build_dep --arch-only "-a$1" ./
+	dpkg-reconfigure sgml-base # work around #825002
+}
+
 add_automatic libverto
 
 add_automatic libx11
