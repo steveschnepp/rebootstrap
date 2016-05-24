@@ -577,6 +577,11 @@ cat >/etc/dpkg/dpkg.cfg.d/ignore-foreign-linker-paths <<EOF
 path-exclude=/etc/ld.so.conf.d/$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_MULTIARCH).conf
 EOF
 
+# Work around Multi-Arch: same file conflict in libxdmcp-dev. #825146
+cat >/etc/dpkg/dpkg.cfg.d/bug-825146 <<'EOF'
+path-exclude=/usr/share/doc/libxdmcp-dev/xdmcp.txt.gz
+EOF
+
 # removing libc*-dev conflict with each other
 LIBC_DEV_PKG=$(apt-cache showpkg libc-dev | sed '1,/^Reverse Provides:/d;s/ .*//;q')
 if test "$(apt-cache show "$LIBC_DEV_PKG" | sed -n 's/^Source: //;T;p;q')" = glibc; then
