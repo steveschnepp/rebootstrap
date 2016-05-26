@@ -3277,6 +3277,10 @@ else
 	)
 	cd ..
 	ls -l
+	if test "$ENABLE_MULTIARCH_GCC"; then
+		# also built with the cross compiler
+		reprepro -A "$(dpkg --print-architecture)" remove rebootstrap-native "gcc-${GCC_VER}-base"
+	fi
 	pickup_packages *.changes
 	# avoid file conflicts between differently staged M-A:same packages
 	apt_get_remove "gcc-$GCC_VER-base:$HOST_ARCH"
