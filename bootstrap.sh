@@ -620,9 +620,6 @@ else
 	rm -Rf ./flex_*.deb x
 fi
 
-# work around #824835
-apt_get_install context
-
 chdist_native() {
 	local command
 	command="$1"
