@@ -3761,6 +3761,7 @@ patch_icu() {
 }
 
 add_automatic isl
+add_automatic jansson
 
 add_automatic jemalloc
 buildenv_jemalloc() {
@@ -5701,16 +5702,6 @@ builddep_e2fsprogs() {
 cross_build e2fsprogs
 mark_built e2fsprogs
 # essential
-
-automatically_cross_build_packages
-
-builddep_jansson() {
-	# python-sphinx should be :native #807848
-	apt_get_install debhelper dh-autoreconf python-sphinx
-}
-cross_build jansson
-mark_built jansson
-# needed by nghttp2
 
 automatically_cross_build_packages
 
