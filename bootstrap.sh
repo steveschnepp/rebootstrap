@@ -3632,6 +3632,7 @@ add_automatic findutils
 add_automatic fontconfig
 add_automatic freebsd-glue
 add_automatic freetype
+add_automatic fuse
 add_automatic gdbm
 
 add_automatic gmp
@@ -4687,6 +4688,7 @@ add_need bzip2 # by dpkg, perl
 add_need cloog # by gcc-4.9
 add_need db-defaults # by apt, perl, python2.7
 dpkg-architecture "-a$HOST_ARCH" -ikfreebsd-any && add_need freebsd-glue # by freebsd-libs
+add_need fuse # by e2fsprogs
 add_need gdbm # by perl, python2.7
 add_need gmp # by guile-2.0
 add_need gnupg # for apt
@@ -5721,9 +5723,9 @@ fi
 automatically_cross_build_packages
 
 builddep_e2fsprogs() {
-	assert_built "util-linux"
+	assert_built "fuse attr util-linux"
 	# dietlibc-dev lacks build profile annotation
-	$APT_GET install gettext texinfo pkg-config debhelper "libblkid-dev:$1" "uuid-dev:$1" m4
+	apt_get_install gettext texinfo pkg-config "libfuse-dev:$1" "libattr1-dev:$1" debhelper "libblkid-dev:$1" "uuid-dev:$1" m4
 }
 cross_build e2fsprogs
 mark_built e2fsprogs
