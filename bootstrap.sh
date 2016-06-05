@@ -938,26 +938,6 @@ diff -u gcc-4.9-4.9.2/debian/rules.patch gcc-4.9-4.9.2/debian/rules.patch
 +       os_include_dir="os/uclibc"
 EOF
 }
-patch_gcc_musl_depends() {
-	echo "patching gcc for musl dependencies"
-	drop_privs patch -p1 <<'EOF'
-diff -u gcc-4.9-4.9.2/debian/rules.conf gcc-4.9-4.9.2/debian/rules.conf
---- gcc-4.9-4.9.2/debian/rules.conf
-+++ gcc-4.9-4.9.2/debian/rules.conf
-@@ -240,6 +240,11 @@
-   else
-     LIBC_DEP = libc6
-   endif
-+  ifneq (,$(findstring musl-linux-,$(DEB_TARGET_ARCH)))
-+    LIBC_DEP = musl
-+    libc_ver = 0.9
-+    libc_dev_ver = 0.9
-+  endif
- else
-   ifeq ($(DEB_TARGET_ARCH_OS),hurd)
-     LIBC_DEP = libc0.3
-EOF
-}
 patch_gcc_musl_arm() {
 	echo "patching gcc to correctly detect arm architectures"
 	drop_privs patch -p1 <<'EOF'
@@ -1009,74 +989,6 @@ patch_gcc_wdotap() {
 		echo "applying patches for with_deps_on_target_arch_pkgs"
 		drop_privs QUILT_PATCHES="/usr/share/cross-gcc/patches/gcc-$GCC_VER" quilt push -a
 	fi
-}
-patch_gcc_4_9() {
-	echo "patching gcc-4.9 to build common libraries. not a bug"
-	drop_privs patch -p1 <<'EOF'
---- a/debian/rules.defs
-+++ b/debian/rules.defs
-@@ -378,8 +378,6 @@ with_common_pkgs := yes
- with_common_libs := yes
- # XXX: should with_common_libs be "yes" only if this is the default compiler
- # version on the targeted arch?
--with_common_pkgs :=
--with_common_libs :=
- 
- # is this a multiarch-enabled build?
- ifeq (,$(filter $(distrelease),lenny etch squeeze dapper hardy jaunty karmic lucid maverick))
-EOF
-	echo "patching gcc to fix placement of biarch libs in i386 build"
-	drop_privs patch -p1 <<'EOF'
-diff -u gcc-4.9-4.9.2/debian/rules2 gcc-4.9-4.9.2/debian/rules2
---- gcc-4.9-4.9.2/debian/rules2
-+++ gcc-4.9-4.9.2/debian/rules2
-@@ -2185,6 +2185,16 @@
- 	mkdir -p $(d)/$(PF)/powerpc-linux-gnu/lib64
- 	cp -a $(d)/$(PF)/powerpc64-linux-gnu/lib64/* $(d)/$(PF)/powerpc-linux-gnu/lib64/
-     endif
-+    ifeq ($(DEB_TARGET_ARCH)-$(biarch64),i386-yes)
-+	: # i386 64bit build happens to be in x86_64-linux-gnu/lib64
-+	mkdir -p $(d)/$(PF)/i586-linux-gnu/lib64
-+	cp -a $(d)/$(PF)/x86_64-linux-gnu/lib64/* $(d)/$(PF)/i586-linux-gnu/lib64/
-+    endif
-+    ifeq ($(DEB_TARGET_ARCH)-$(biarchx32),i386-yes)
-+	: # i386 x32 build happens to be in x86_64-linux-gnux32/libx32
-+	mkdir -p $(d)/$(PF)/i586-linux-gnu/libx32
-+	cp -a $(d)/$(PF)/x86_64-linux-gnux32/libx32/* $(d)/$(PF)/i586-linux-gnu/libx32/
-+    endif
-   endif
- endif
- 
-EOF
-	echo "fixing cross-biarch.diff to remap lib32 to libo32 on mips64el"
-	drop_privs patch -p1 <<'EOF'
-diff -u gcc-4.9-4.9.2/debian/patches/cross-biarch.diff gcc-4.9-4.9.2/debian/patches/cross-biarch.diff
---- gcc-4.9-4.9.2/debian/patches/cross-biarch.diff
-+++ gcc-4.9-4.9.2/debian/patches/cross-biarch.diff
-@@ -4,13 +4,18 @@
- 
- --- a/src/config-ml.in
- +++ b/src/config-ml.in
--@@ -514,7 +514,12 @@ multi-do:
-+@@ -514,7 +514,17 @@ multi-do:
-  	    else \
-  	      if [ -d ../$${dir}/$${lib} ]; then \
-  		flags=`echo $$i | sed -e 's/^[^;]*;//' -e 's/@/ -/g'`; \
- -		if (cd ../$${dir}/$${lib}; $(MAKE) $(FLAGS_TO_PASS) \
- +		libsuffix_="$${dir}"; \
- +		if [ "$${dir}" = "n32" ]; then libsuffix_=32; fi; \
-++EOF
-++cat >>Multi.tem <<EOF
-++		case "\$\${dir}:${host}" in 32:mips*) libsuffix_=o32; ;; esac; \\
-++EOF
-++cat >>Multi.tem <<\EOF
- +		if (cd ../$${dir}/$${lib}; $(MAKE) $(subst \
- +				-B$(build_tooldir)/lib/, \
- +				-B$(build_tooldir)/lib$${libsuffix_}/, \
-EOF
-	patch_gcc_os_include_dir_musl
-	patch_gcc_musl_depends
-	patch_gcc_wdotap
 }
 patch_gcc_5() {
 	patch_gcc_os_include_dir_musl
