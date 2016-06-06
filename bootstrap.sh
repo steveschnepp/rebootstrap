@@ -5638,8 +5638,12 @@ if test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = linux; then
 if test -f "$REPODIR/stamps/systemd_1"; then
 	echo "skipping stage1 rebuild of systemd"
 else
-	$APT_GET build-dep "-a$HOST_ARCH" --arch-only -P nocheck,noudeb,stage1 systemd
 	cross_build_setup systemd systemd_1
+	assert_built "libcap2 pam libselinux acl xz-utils libgcrypt20 kmod util-linux"
+	if grep -q "^Build-Depends:.*libseccomp-dev[^,]*[[ ]$HOST_ARCH[] ]" debian/control; then
+		assert_built libseccomp
+	fi
+	apt_get_build_dep "-a$HOST_ARCH" --arch-only -P nocheck,noudeb,stage1 ./
 	check_binNMU
 	drop_privs ac_cv_func_malloc_0_nonnull=yes dpkg-buildpackage "-a$HOST_ARCH" -B -uc -us -Pnocheck,noudeb,stage1
 	cd ..
