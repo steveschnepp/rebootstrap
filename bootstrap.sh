@@ -3057,6 +3057,7 @@ else
 			export with_deps_on_target_arch_pkgs=yes
 		fi
 		export gcc_cv_libc_provides_ssp=yes
+		export gcc_cv_initfini_array=yes
 		drop_privs dpkg-buildpackage -d -T control
 		drop_privs dpkg-buildpackage -d -T clean
 		dpkg-checkbuilddeps || : # tell unmet build depends again after rewriting control
@@ -3195,6 +3196,7 @@ else
 			export WITH_SYSROOT=/
 		fi
 		export gcc_cv_libc_provides_ssp=yes
+		export gcc_cv_initfini_array=yes
 		drop_privs dpkg-buildpackage -d -T control
 		drop_privs dpkg-buildpackage -d -T clean
 		dpkg-checkbuilddeps || : # tell unmet build depends again after rewriting control
