@@ -3554,11 +3554,7 @@ builddep_fontconfig() {
 add_automatic freebsd-glue
 add_automatic freetype
 add_automatic fuse
-
-builddep_gdbm() {
-	# strip-nondeterminism lacks Multi-Arch: foreign #826700
-	apt_get_install texinfo libtool automake autoconf autotools-dev dpkg-dev debhelper strip-nondeterminism
-}
+add_automatic gdbm
 
 add_automatic gmp
 patch_gmp() {
@@ -4614,6 +4610,7 @@ add_need cloog # by gcc-4.9
 add_need db-defaults # by apt, perl, python2.7
 dpkg-architecture "-a$HOST_ARCH" -ikfreebsd-any && add_need freebsd-glue # by freebsd-libs
 add_need fuse # by e2fsprogs
+add_need gdbm # by perl, python2.7
 add_need gmp # by guile-2.0
 add_need gnupg # for apt
 add_need gnutls28 # by curl
@@ -5682,12 +5679,6 @@ EOF
 cross_build curl
 mark_built curl
 # needed by apt, gnupg
-
-automatically_cross_build_packages
-
-cross_build gdbm
-mark_built gdbm
-# needed by man-db, perl, python2.7
 
 automatically_cross_build_packages
 
