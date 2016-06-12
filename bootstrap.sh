@@ -2351,22 +2351,6 @@ EOF
 		apt_get_install kernel-wedge
 		drop_privs ./debian/rules debian/rules.gen || : # intentionally exits 1 to avoid being called automatically. we are doing it wrong
 	fi
-	if test "$HOST_ARCH" = tilegx; then
-		echo "moving arch headers to multiarch directory #823632"
-		drop_privs patch -p1 <<'EOF'
---- a/debian/rules.real
-+++ b/debian/rules.real
-@@ -341,6 +341,8 @@
- # Move include/asm to arch-specific directory
- 	mkdir -p $(OUT_DIR)/include/$(DEB_HOST_MULTIARCH)
- 	mv $(OUT_DIR)/include/asm $(OUT_DIR)/include/$(DEB_HOST_MULTIARCH)/
-+	test -d $(OUT_DIR)/include/arch && \
-+		mv $(OUT_DIR)/include/arch $(OUT_DIR)/include/$(DEB_HOST_MULTIARCH)/
-
- 	+$(MAKE_SELF) install-base
-
-EOF
-	fi
 }
 if test "`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS`" = "linux"; then
 if test -f "$REPODIR/stamps/linux_1"; then
