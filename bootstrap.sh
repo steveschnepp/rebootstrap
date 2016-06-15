@@ -3757,6 +3757,8 @@ buildenv_krb5() {
 	export ac_cv_printf_positional=yes
 }
 
+add_automatic libassuan
+
 add_automatic libatomic-ops
 patch_libatomic_ops() {
 	local need_autoreconf
@@ -4635,6 +4637,7 @@ add_need groff # for man-db
 add_need gzip # essential
 test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = linux && add_need kmod # by systemd
 add_need krb5 # by curl
+add_need libassuan # by gnupg2
 add_need libatomic-ops # by gcc-4.9
 add_need libbsd # by bsdmainutils
 dpkg-architecture "-a$HOST_ARCH" -ilinux-any && add_need libcap2 # by systemd
