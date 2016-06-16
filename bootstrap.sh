@@ -4634,7 +4634,6 @@ add_need gnupg # for apt
 add_need gnutls28 # by curl
 test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = linux && add_need gpm # by ncurses
 add_need groff # for man-db
-add_need gzip # essential
 test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = linux && add_need kmod # by systemd
 add_need krb5 # by curl
 add_need libassuan # by gnupg2
