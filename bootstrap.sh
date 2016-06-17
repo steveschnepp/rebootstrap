@@ -2329,6 +2329,9 @@ patch_linux() {
 		arm|nios2)
 			kernel_arch=$HOST_ARCH
 		;;
+		mipsr6|mipsr6el|mipsn32r6|mipsn32r6el|mips64r6|mips64r6el)
+			kernel_arch=defines-only
+		;;
 		powerpcel) kernel_arch=powerpc; ;;
 		tilegx) kernel_arch=tile; ;; # #824524
 		*-linux-*)
@@ -2339,14 +2342,18 @@ patch_linux() {
 		;;
 	esac
 	if test -n "$kernel_arch"; then
-		echo "patching linux for $HOST_ARCH with kernel-arch $kernel_arch"
-		drop_privs mkdir -p "debian/config/$HOST_ARCH"
-		drop_privs tee "debian/config/$HOST_ARCH/defines" >/dev/null <<EOF
+		if test "$kernel_arch" != defines-only; then
+			echo "patching linux for $HOST_ARCH with kernel-arch $kernel_arch"
+			drop_privs mkdir -p "debian/config/$HOST_ARCH"
+			drop_privs tee "debian/config/$HOST_ARCH/defines" >/dev/null <<EOF
 [base]
 kernel-arch: $kernel_arch
 featuresets:
 # empty; $comment
 EOF
+		else
+			echo "patching linux to enable $HOST_ARCH"
+		fi
 		drop_privs sed -i -e "/^arches:/a\\ $HOST_ARCH" debian/config/defines
 		apt_get_install kernel-wedge
 		drop_privs ./debian/rules debian/rules.gen || : # intentionally exits 1 to avoid being called automatically. we are doing it wrong
