@@ -3584,10 +3584,6 @@ add_automatic gnupg
 buildenv_gnupg() {
 	export ac_cv_sys_symbol_underscore=no
 }
-patch_gnupg() {
-	echo "fixing build/host confusion in gnupg #820776"
-	sed -i -e '/^ifeq (\$(DEB_BUILD_ARCH),[a-z]/s/BUILD/HOST/' debian/rules
-}
 
 add_automatic gnutls28
 
