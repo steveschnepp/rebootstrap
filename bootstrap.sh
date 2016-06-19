@@ -984,6 +984,23 @@ patch_gcc_rtlibs_base_dep() {
  define(`SOFTBASELDEP', `SOFTBASEDEP')
 EOF
 }
+patch_gcc_tilegx_multiarch() {
+	test "$HOST_ARCH" = tilegx || return 0
+	echo "patching gcc to consider multiarch paths for tilegx #827578"
+	drop_privs tee -a debian/patches/gcc-multiarch.diff >/dev/null <<'EOF'
+--- a/src/gcc/config/tilegx/t-tilegx
++++ a/src/gcc/config/tilegx/t-tilegx
+@@ -1,6 +1,7 @@
+ MULTILIB_OPTIONS = m64/m32
+ MULTILIB_DIRNAMES = 64 32
+-MULTILIB_OSDIRNAMES = ../lib ../lib32
++MULTILIB_OSDIRNAMES = ../lib$(call if_multiarch,:tilegx-linux-gnu) ../lib32$(call if_multiarch,:tilegx32-linux-gnu)
++MULTIARCH_DIRNAME = $(call if_multiarch,tilegx-linux-gnu)
+
+ LIBGCC = stmp-multilib
+ INSTALL_LIBGCC = install-multilib
+EOF
+}
 patch_gcc_wdotap() {
 	if test "$ENABLE_MULTIARCH_GCC" = yes; then
 		echo "applying patches for with_deps_on_target_arch_pkgs"
@@ -1659,6 +1676,7 @@ EOF
  	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)
 EOF
 	fi
+	patch_gcc_tilegx_multiarch
 	echo "enable building gcc libraries. not a bug"
 	sed -i -e '/^#with_common_/s/#//' debian/rules.defs
 	patch_gcc_wdotap
@@ -2038,6 +2056,7 @@ EOF
 EOF
 	fi
 	patch_gcc_rtlibs_base_dep
+	patch_gcc_tilegx_multiarch
 	patch_gcc_wdotap
 }
 # choosing libatomic1 arbitrarily here, cause it never bumped soname
