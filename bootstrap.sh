@@ -4003,6 +4003,7 @@ buildenv_libgcrypt20() {
 
 add_automatic libgpg-error
 add_automatic libice
+add_automatic libksba
 add_automatic libonig
 add_automatic libpipeline
 add_automatic libpng1.6
@@ -4665,6 +4666,7 @@ dpkg-architecture "-a$HOST_ARCH" -ilinux-any && add_need libcap2 # by systemd
 add_need libffi # by guile-2.0
 add_need libgc # by guile-2.0
 add_need libgcrypt20 # by libprelude, cryptsetup
+add_need libksba # by gnupg2
 add_need libpthread-stubs # by libxcb
 if apt-cache showsrc systemd | grep -q "^Build-Depends:.*libseccomp-dev[^,]*[[ ]$HOST_ARCH[] ]"; then
 	add_need libseccomp # by systemd
