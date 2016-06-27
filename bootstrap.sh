@@ -2297,6 +2297,21 @@ EOF
  else
          install_stamp = stamps/install
 EOF
+	echo "patching binutils to discard ldscripts"
+	# They cause file conflicts with binutils and the in-archive cross
+	# binutils discard ldscripts as well.
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/rules
++++ b/debian/rules
+@@ -751,6 +751,7 @@
+ 		mandir=$(pwd)/$(D_CROSS)/$(PF)/share/man install
+ 
+ 	rm -rf \
++		$(D_CROSS)/$(PF)/lib/ldscripts \
+ 		$(D_CROSS)/$(PF)/share/info \
+ 		$(D_CROSS)/$(PF)/share/locale
+ 
+EOF
 }
 if test -f "$REPODIR/stamps/cross-binutils"; then
 	echo "skipping rebuild of binutils-target"
