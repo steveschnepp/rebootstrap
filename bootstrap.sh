@@ -2312,6 +2312,54 @@ EOF
  		$(D_CROSS)/$(PF)/share/locale
  
 EOF
+	if test "$HOST_ARCH" = nios2; then
+		echo "fixing linker assertion failure for nios https://sourceware.org/git/gitweb.cgi?p=binutils-gdb.git;h=83da6e748c8f105f07e17f53aa6b99ed7867ff5f"
+		drop_privs patch -p1 <<'EOF'
+--- a/bfd/elf-eh-frame.c
++++ b/bfd/elf-eh-frame.c
+@@ -1369,14 +1369,26 @@
+ 		     && ent->make_relative == 0)
+ 		    || (ent->fde_encoding & 0x70) == DW_EH_PE_aligned))
+ 	      {
++		static int num_warnings_issued = 0;
++
+ 		/* If a shared library uses absolute pointers
+ 		   which we cannot turn into PC relative,
+ 		   don't create the binary search table,
+ 		   since it is affected by runtime relocations.  */
+ 		hdr_info->u.dwarf.table = FALSE;
+-		(*info->callbacks->einfo)
+-		  (_("%P: FDE encoding in %B(%A) prevents .eh_frame_hdr"
+-		     " table being created.\n"), abfd, sec);
++		if (num_warnings_issued < 10)
++		  {
++		    (*info->callbacks->einfo)
++		      (_("%P: FDE encoding in %B(%A) prevents .eh_frame_hdr"
++			 " table being created.\n"), abfd, sec);
++		    num_warnings_issued ++;
++		  }
++		else if (num_warnings_issued == 10)
++		  {
++		    (*info->callbacks->einfo)
++		      (_("%P: Further warnings about FDE encoding preventing .eh_frame_hdr generation dropped.\n"));
++		    num_warnings_issued ++;
++		  }
+ 	      }
+ 	    ent->removed = 0;
+ 	    hdr_info->u.dwarf.fde_count++;
+--- a/bfd/elf32-nios2.c
++++ b/bfd/elf32-nios2.c
+@@ -1905,7 +1905,7 @@
+ {
+   bfd_vma word = bfd_get_32 (sec->owner, sec->contents + offset);
+ 
+-  BFD_ASSERT(value <= 0xffff);
++  BFD_ASSERT (value <= 0xffff || ((bfd_signed_vma) value) >= -0xffff);
+ 
+   bfd_put_32 (sec->owner, word | ((value & 0xffff) << 6),
+ 	      sec->contents + offset);
+EOF
+	fi
 }
 if test -f "$REPODIR/stamps/cross-binutils"; then
 	echo "skipping rebuild of binutils-target"
