@@ -1445,8 +1445,9 @@ EOF
      with_liblsan := disabled for rtlibs stage
      with_libtsan := disabled for rtlibs stage
 EOF
-	echo "patching gcc for nios2 https://gcc.gnu.org/git/?p=gcc.git;a=commitdiff;h=1d67120d95c2c6e0ed4f7357d1cc62887eaba463"
-	drop_privs patch -p1 <<'EOF'
+	if test "$HOST_ARCH" = nios2; then
+		echo "patching gcc for nios2 https://gcc.gnu.org/git/?p=gcc.git;a=commitdiff;h=1d67120d95c2c6e0ed4f7357d1cc62887eaba463"
+		drop_privs patch -p1 <<'EOF'
 diff -Naru a/debian/patches/ijmp_regs.diff b/debian/patches/ijmp_regs.diff
 --- a/debian/patches/ijmp_regs.diff	1970-01-01 01:00:00.000000000 +0100
 +++ b/debian/patches/ijmp_regs.diff	2016-01-12 16:16:39.000000000 +0100
@@ -1552,18 +1553,21 @@ diff -Naru a/debian/patches/ijmp_regs.diff b/debian/patches/ijmp_regs.diff
 +-- 
 +2.6.4
 +
-diff -Naru a/debian/rules.patch b/debian/rules.patch
---- a/debian/rules.patch	2016-01-12 16:26:19.000000000 +0100
-+++ b/debian/rules.patch	2016-01-12 16:35:09.583260777 +0100
-@@ -227,6 +227,10 @@
+--- a/debian/rules.patch
++++ b/debian/rules.patch
+@@ -246,6 +246,10 @@
    endif
  endif
  
-+ifneq (,$(findstring $(DEB_TARGET_ARCH),nios2))
++ifeq ($(DEB_TARGET_ARCH),nios2)
 +  debian_patches += ijmp_regs
 +endif
 +
+ ifeq ($(DEB_TARGET_ARCH),powerpcspe)
+   debian_patches += powerpc_remove_many
+   debian_patches += powerpc_nofprs
 EOF
+	fi
 	echo "patching gcc to fix multiarch locations for non-glibc"
 	drop_privs patch -p1 <<'EOF'
 --- a/debian/rules.patch
