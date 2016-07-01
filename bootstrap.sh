@@ -2060,7 +2060,6 @@ EOF
 EOF
 	fi
 	patch_gcc_rtlibs_base_dep
-	patch_gcc_tilegx_multiarch
 	patch_gcc_wdotap
 }
 # choosing libatomic1 arbitrarily here, cause it never bumped soname
