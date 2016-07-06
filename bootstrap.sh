@@ -4663,13 +4663,6 @@ assert_built() {
 	return 1
 }
 
-# work around dh-autoreconf/libtool #814063
-apt_get_install dh-autoreconf
-if ! test -f /usr/share/libtool/config/ltmain.sh; then
-	mkdir -p /usr/share/libtool/config
-	ln -s ../build-aux/ltmain.sh /usr/share/libtool/config/ltmain.sh
-fi
-
 automatically_cross_build_packages
 
 patch_zlib() {
