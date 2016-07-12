@@ -4986,7 +4986,12 @@ builddep_guile_2_0() {
 	# flex dependency satisfied from host arch
 	# needs Build-Depends: guile-2.0 <cross> #809732
 	apt_get_install libtool debhelper autoconf automake dh-autoreconf "libncurses5-dev:$1" "libreadline6-dev:$1" "libltdl-dev:$1" "libgmp-dev:$1" texinfo flex "libunistring-dev:$1" "libgc-dev:$1" "libffi-dev:$1" pkg-config guile-2.0
-	sed -i 's/"sh4"/& "nios2"/' /usr/share/guile/2.0/system/base/target.scm
+	if test "$HOST_ARCH" = nios2; then
+		sed -i 's/"sh4"/& "nios2"/' /usr/share/guile/2.0/system/base/target.scm
+	fi
+	if test "$HOST_ARCH" = alpha; then
+		sed -i 's/"s390x"/& "alpha"/' /usr/share/guile/2.0/system/base/target.scm
+	fi
 }
 patch_guile_2_0() {
 	if test "$HOST_ARCH" = nios2; then
