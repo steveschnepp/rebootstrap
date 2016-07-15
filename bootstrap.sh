@@ -474,13 +474,6 @@ obtain_source_package() {
 	fi
 }
 
-if test "$HOST_ARCH" = tilegx; then
-	echo "adding tilegx to dpkg #823167"
-	cat <<EOF >> /usr/share/dpkg/cputable
-tilegx		tilegx		tilegx		64      little
-EOF
-fi
-
 if test -z "$HOST_ARCH" || ! dpkg-architecture "-a$HOST_ARCH"; then
 	echo "architecture $HOST_ARCH unknown to dpkg"
 	exit 1
