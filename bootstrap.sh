@@ -888,11 +888,7 @@ case "$HOST_ARCH" in
 esac
 
 if test "$ENABLE_MULTIARCH_GCC" != yes; then
-	echo "deb [ arch=`dpkg --print-architecture` ] $MIRROR experimental main" > /etc/apt/sources.list.d/tmp-experimental.list
-	$APT_GET update
-	$APT_GET -t experimental install dpkg-cross
-	rm /etc/apt/sources.list.d/tmp-experimental.list
-	$APT_GET update
+	apt_get_install dpkg-cross
 fi
 
 # gcc0
