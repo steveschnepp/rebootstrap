@@ -2627,9 +2627,9 @@ diff -Nru glibc-2.19/debian/sysdeps/linux.mk glibc-2.19/debian/sysdeps/linux.mk
    else
      LINUX_HEADERS := /usr/$(DEB_HOST_GNU_TYPE)/include
 EOF
-	if test "$HOST_ARCH" = powerpcel; then
-		echo "patching glibc for powerpcel"
-		drop_privs sed -i -e 's/^libc6_archs *:=.*/& powerpcel/' debian/rules.d/control.mk
+	if ! grep -q '^libc[0-9_]\+_archs *:=.*\<'"$HOST_ARCH"'\>' debian/rules.d/control.mk; then
+		echo "adding $HOST_ARCH to libc6_archs"
+		drop_privs sed -i -e "s/^libc6_archs *:=.*/& $HOST_ARCH/" debian/rules.d/control.mk
 		drop_privs ./debian/rules debian/control
 	fi
 	echo "patching glibc to drop dev package conflict"
