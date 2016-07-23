@@ -2814,8 +2814,6 @@ EOF
 
  endef
 EOF
-	echo "dropping optimized package for hurd-i386"
-	rm -vf debian/sysdeps/hurd-i386.mk
 	echo "patching glibc to work with regular kfreebsd-kernel-headers"
 	drop_privs patch -p1 <<'EOF'
 --- a/debian/sysdeps/kfreebsd.mk
