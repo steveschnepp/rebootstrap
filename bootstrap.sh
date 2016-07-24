@@ -3394,36 +3394,6 @@ builddep_elfutils() {
 	apt_get_install debhelper autotools-dev autoconf automake bzip2 "zlib1g-dev:$1" zlib1g-dev "libbz2-dev:$1" "liblzma-dev:$1" m4 gettext gawk dpkg-dev flex libfl-dev bison
 }
 patch_elfutils() {
-	echo "fix elfutils FTCBFS"
-	drop_privs patch -p1 <<'EOF'
---- a/debian/rules
-+++ b/debian/rules
-@@ -20,7 +20,7 @@
- DEB_HOST_MULTIARCH  ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
- 
- ifeq ($(DEB_BUILD_GNU_TYPE), $(DEB_HOST_GNU_TYPE))
--        confflags += --build=$(DEB_HOST_GNU_TYPE)
-+        confflags += --build=$(DEB_HOST_GNU_TYPE) --enable-maintainer-mode
-         make_check = yes
- else
- 	confflags += --build=$(DEB_BUILD_GNU_TYPE) --host=$(DEB_HOST_GNU_TYPE)
-@@ -41,10 +41,14 @@
- config.status: configure.ac
- 	dh_testdir
- 	autoreconf -fis
-+ifneq ($(DEB_BUILD_GNU_TYPE),$(DEB_HOST_GNU_TYPE))
-+	./configure --enable-maintainer-mode
-+	$(MAKE) $(MAKEFLAGS)
-+	$(MAKE) clean
-+endif
- 	CFLAGS="$(CFLAGS)" CPPFLAGS="$(CPPFLAGS)" LDFLAGS="$(LDFLAGS)" \
- 		./configure $(confflags) --prefix=/usr \
- 		--libdir=/usr/lib/$(DEB_HOST_MULTIARCH) \
--		--enable-maintainer-mode \
- 		--program-prefix=eu-
- 
- build: build-stamp
-EOF
 	echo "fix elfutils on sparc upstream git f6d080336caaf3894ff0583c277588a3a234c4ec"
 	drop_privs patch -p1 <<'EOF'
 --- a/backends/sparc_initreg.c
