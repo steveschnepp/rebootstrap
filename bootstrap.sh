@@ -3393,21 +3393,6 @@ builddep_elfutils() {
 	# gcc-multilib dependency lacks nocheck profile
 	apt_get_install debhelper autotools-dev autoconf automake bzip2 "zlib1g-dev:$1" zlib1g-dev "libbz2-dev:$1" "liblzma-dev:$1" m4 gettext gawk dpkg-dev flex libfl-dev bison
 }
-patch_elfutils() {
-	echo "fix elfutils on sparc upstream git f6d080336caaf3894ff0583c277588a3a234c4ec"
-	drop_privs patch -p1 <<'EOF'
---- a/backends/sparc_initreg.c
-+++ b/backends/sparc_initreg.c
-@@ -45,7 +45,7 @@
-                                      ebl_tid_registers_t *setfunc __attribute__ ((unused)),
-                                      void *arg __attribute__ ((unused)))
- {
--#ifndef __sparc__
-+#if !defined(__sparc__) || !defined( __arch64__)
-   return false;
- #else /* __sparc__ */
-EOF
-}
 
 add_automatic findutils
 
