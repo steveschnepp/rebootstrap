@@ -4703,7 +4703,8 @@ builddep_libtool() {
 	assert_built "zlib"
 	test "$1" = "$HOST_ARCH"
 	# gfortran dependency needs cross-translation
-	$APT_GET install debhelper texi2html texinfo file "gfortran-$GCC_VER$HOST_ARCH_SUFFIX" automake autoconf autotools-dev help2man "zlib1g-dev:$HOST_ARCH"
+	# gnulib dependency lacks M-A:foreign
+	apt_get_install debhelper file "gfortran-$GCC_VER$HOST_ARCH_SUFFIX" automake autoconf autotools-dev help2man texinfo "zlib1g-dev:$HOST_ARCH" gnulib
 }
 cross_build libtool
 mark_built libtool
