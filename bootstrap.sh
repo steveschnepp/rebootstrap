@@ -3687,6 +3687,73 @@ EOF
 }
 
 add_automatic libbsd
+
+patch_libcap_ng() {
+	echo "patching libcap-ng for nopython profile #831362"
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/control
++++ b/debian/control
+@@ -3,13 +3,13 @@
+ Maintainer: Pierre Chifflier <pollux@debian.org>
+ Build-Depends: debhelper (>= 9),
+     dh-autoreconf,
+-    dh-python,
++    dh-python <!nopython>,
+     autotools-dev,
+     libattr1-dev,
+     linux-kernel-headers,
+-    swig,
+-    python-all-dev,
+-    python3-dev
++    swig <!nopython>,
++    python-all-dev <!nopython>,
++    python3-dev <!nopython>
+ Standards-Version: 3.9.8
+ Section: libs
+ X-Python-Version: >= 2.6
+@@ -65,6 +65,7 @@
+ Section: python
+ Architecture: any
+ Depends: ${shlibs:Depends}, ${misc:Depends}, ${python:Depends}
++Build-Profiles: <!nopython>
+ Description: Python bindings for libcap-ng
+  This library implements the user-space interfaces to the POSIX
+  1003.1e capabilities available in Linux kernels.  These capabilities are
+@@ -81,6 +82,7 @@
+ Architecture: any
+ Depends: ${shlibs:Depends}, ${misc:Depends}, ${python3:Depends}
+ Provides: ${python3:Provides}
++Build-Profiles: <!nopython>
+ Description: Python3 bindings for libcap-ng
+  This library implements the user-space interfaces to the POSIX
+  1003.1e capabilities available in Linux kernels.  These capabilities are
+--- a/debian/rules
++++ b/debian/rules
+@@ -8,6 +8,11 @@
+ 
+ export DEB_BUILD_HARDENING=1
+ 
++ifneq ($(filter nopython,$(DEB_BUILD_PROFILES)),)
++override_dh_auto_configure:
++	dh_auto_configure -- --without-python --without-python3
++endif
++
+ override_dh_install:
+ 	mkdir -p $(CURDIR)/debian/tmp/lib/$(DEB_HOST_MULTIARCH) && \
+ 	mv $(CURDIR)/debian/tmp/usr/lib/$(DEB_HOST_MULTIARCH)/lib*.so.0* $(CURDIR)/debian/tmp/lib/$(DEB_HOST_MULTIARCH)/; \
+@@ -24,5 +29,8 @@
+ 	:
+ 
+ %:
++ifeq ($(filter nopython,$(DEB_BUILD_PROFILES)),)
+ 	dh $@ --with=python2,python3,autoreconf
+-
++else
++	dh $@ --with=autoreconf
++endif
+EOF
+}
+
 add_automatic libcap2
 
 builddep_libdebian_installer() {
@@ -5592,6 +5659,30 @@ mark_built curl
 # needed by apt, gnupg
 
 automatically_cross_build_packages
+
+if dpkg-architecture "-a$HOST_ARCH" -ilinux-any; then
+if test -f "$REPODIR/stamps/libcap-ng_1"; then
+	echo "skipping rebuild of libcap-ng stage1"
+else
+	cross_build_setup libcap-ng libcap-ng_1
+	assert_built attr
+	apt_get_build_dep "-a$HOST_ARCH" --arch-only -Pnopython ./
+	check_binNMU
+	drop_privs dpkg-buildpackage -B -uc -us -a$HOST_ARCH -Pnopython
+	cd ..
+	ls -l
+	pickup_packages *.changes
+	touch "$REPODIR/stamps/libcap-ng_1"
+	compare_native ./*.deb
+	cd ..
+	drop_privs rm -Rf libcap-ng_1
+fi
+progress_mark "libcap-ng stage1 cross build"
+mark_built libcap-ng
+# needed by audit, dbus
+
+automatically_cross_build_packages
+fi # $HOST_ARCH matches linux-any
 
 assert_built "$need_packages"
 
