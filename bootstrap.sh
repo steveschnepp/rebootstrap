@@ -5106,6 +5106,35 @@ patch_flex() {
 
  ChangeLog: $(srcdir)/tools/git2cl
 EOF
+	echo "patching flex to fix FTCBFS #833146"
+	drop_privs patch -p1 <<'EOF'
+--- flex-2.6.1/configure.ac
++++ flex-2.6.1/configure.ac
+@@ -70,6 +70,7 @@
+ FLEXexe='$(top_builddir)/src/flex$(EXEEXT)'
+ fi
+ AC_SUBST(FLEXexe)
++AM_CONDITIONAL([CROSS_COMPILING],[test "$cross_compiling" = yes])
+ 
+ # Check for a m4 that supports -P
+ 
+--- flex-2.6.1/src/Makefile.am
++++ flex-2.6.1/src/Makefile.am
+@@ -89,8 +89,13 @@
+ stage1scan.l: scan.l
+ 	cp $(srcdir)/scan.l $(srcdir)/stage1scan.l
+ 
++if CROSS_COMPILING
++stage1scan.c: stage1scan.l
++	$(FLEXexe) -o $@ $<
++else
+ stage1scan.c: stage1scan.l stage1flex$(EXEEXT)
+ 	$(top_builddir)/src/stage1flex$(EXEEXT) -o $@ $<
++endif
+ 
+ # Explicitly describe dependencies.
+ # You can recreate this with `gcc -I. -MM *.c'
+EOF
 }
 cross_build flex
 mark_built flex
