@@ -2485,7 +2485,11 @@ if test -f "$REPODIR/stamps/gcc_1"; then
 else
 	$APT_GET install debhelper gawk patchutils bison flex lsb-release quilt libtool autoconf2.64 zlib1g-dev libcloog-isl-dev libmpc-dev libmpfr-dev libgmp-dev autogen systemtap-sdt-dev "binutils$HOST_ARCH_SUFFIX"
 	if test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = linux; then
-		$APT_GET install "linux-libc-dev:$HOST_ARCH"
+		if test "$ENABLE_MULTIARCH_GCC" = yes; then
+			apt_get_install "linux-libc-dev:$HOST_ARCH"
+		else
+			apt_get_install "linux-libc-dev-${HOST_ARCH}-cross"
+		fi
 	fi
 	if test "$HOST_ARCH" = hppa; then
 		$APT_GET install binutils-hppa64-linux-gnu
