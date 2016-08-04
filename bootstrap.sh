@@ -3523,48 +3523,6 @@ add_automatic hostname
 patch_icu() {
 	echo "patching icu to drop versioned libstdc++-dev dependency"
 	sed -i -e '/^[^:]*Depends:/s/,\s*libstdc++-5-dev[^,]*\(,\|$\)/\1/g' debian/control
-	echo "add cross build support again #833416"
-	drop_privs patch -p1 <<'EOF'
---- icu-57.1/debian/control
-+++ icu-57.1/debian/control
-@@ -3,7 +3,7 @@
- Priority: optional
- Maintainer: Laszlo Boszormenyi (GCS) <gcs@debian.org>
- Standards-Version: 3.9.8
--Build-Depends: debhelper (>> 9~), dpkg-dev (>= 1.16.1~), autotools-dev, g++ (>= 4:5-0), g++-5 (>= 5.2.1-10)
-+Build-Depends: debhelper (>> 9~), dpkg-dev (>= 1.16.1~), autotools-dev
- Build-Depends-Indep: doxygen (>= 1.7.1)
- Build-Conflicts: clang
- Homepage: http://www.icu-project.org
---- icu-57.1/debian/rules
-+++ icu-57.1/debian/rules
-@@ -1,6 +1,8 @@
- #!/usr/bin/make -f
- # -*- makefile -*-
- 
-+include /usr/share/dpkg/architecture.mk
-+
- # Uncomment this to turn on verbose mode.
- #export DH_VERBOSE=1
- 
-@@ -10,9 +12,16 @@
- 	dh_clean
- 	find $(CURDIR)/source/ \( -name Makefile -o -name pkgdataMakefile \) \
- 		-exec rm {} \;
-+	rm -Rf build-native
- 
- override_dh_auto_configure:
-+ifeq ($(DEB_BUILD_ARCH),$(DEB_HOST_ARCH))
- 	dh_auto_configure -- --enable-static
-+else
-+	dh_auto_configure -B build-native -- --host=$(DEB_BUILD_GNU_TYPE)
-+	dh_auto_build -B build-native
-+	dh_auto_configure -- --enable-static --with-cross-build=$(CURDIR)/build-native
-+endif
- 
- override_dh_auto_build:
- 	dh_auto_build --parallel
-EOF
 }
 
 add_automatic isl
