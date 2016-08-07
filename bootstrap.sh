@@ -990,6 +990,41 @@ patch_gcc_tilegx_multiarch() {
  INSTALL_LIBGCC = install-multilib
 EOF
 }
+patch_gcc_powerpcel() {
+	test "$HOST_ARCH" = powerpcel || return 0
+	echo "patching gcc for powerpcel"
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/rules.patch
++++ b/debian/rules.patch
+@@ -233,6 +233,10 @@
+   debian_patches += powerpc_nofprs
+ endif
+
++ifeq ($(DEB_TARGET_ARCH),powerpcel)
++  debian_patches += powerpcel
++endif
++
+ #debian_patches += link-libs
+
+ # all patches below this line are applied for gcc-snapshot builds as well
+--- /dev/null
++++ b/debian/patches/powerpcel.diff
+@@ -0,0 +1,13 @@
++--- a/src/gcc/config.gcc
+++++ b/src/gcc/config.gcc
++@@ -2401,6 +2401,10 @@
++ 		extra_options="${extra_options} rs6000/linux64.opt"
++ 		tmake_file="${tmake_file} rs6000/t-linux"
++ 		;;
+++	    powerpcle-*)
+++		tm_file="${tm_file} rs6000/linux.h glibc-stdint.h"
+++		tmake_file="${tmake_file} rs6000/t-linux"
+++		;;
++ 	    *)
++ 		tm_file="${tm_file} rs6000/linux.h glibc-stdint.h"
++ 		tmake_file="${tmake_file} rs6000/t-ppcos rs6000/t-linux"
+EOF
+}
 patch_gcc_wdotap() {
 	if test "$ENABLE_MULTIARCH_GCC" = yes; then
 		echo "applying patches for with_deps_on_target_arch_pkgs"
@@ -1619,40 +1654,7 @@ EOF
  	    debian/$(1).substvars; \
 EOF
 	fi
-	if test "$HOST_ARCH" = powerpcel; then
-		echo "patching gcc-5 for powerpcel"
-		drop_privs patch -p1 <<'EOF'
---- a/debian/rules.patch
-+++ b/debian/rules.patch
-@@ -237,6 +237,10 @@
-   debian_patches += fix-powerpcspe
- endif
-
-+ifeq ($(DEB_TARGET_ARCH),powerpcel)
-+  debian_patches += powerpcel
-+endif
-+
- #debian_patches += link-libs
-
- # all patches below this line are applied for gcc-snapshot builds as well
---- /dev/null
-+++ b/debian/patches/powerpcel.diff
-@@ -0,0 +1,13 @@
-+--- a/src/gcc/config.gcc
-++++ b/src/gcc/config.gcc
-+@@ -2401,6 +2401,10 @@
-+ 		extra_options="${extra_options} rs6000/linux64.opt"
-+ 		tmake_file="${tmake_file} rs6000/t-linux"
-+ 		;;
-++	    powerpcle-*)
-++		tm_file="${tm_file} rs6000/linux.h glibc-stdint.h"
-++		tmake_file="${tmake_file} rs6000/t-linux"
-++		;;
-+ 	    *)
-+ 		tm_file="${tm_file} rs6000/linux.h glibc-stdint.h"
-+ 		tmake_file="${tmake_file} rs6000/t-ppcos rs6000/t-linux"
-EOF
-	fi
+	patch_gcc_powerpcel
 	if test "$ENABLE_MULTIARCH_GCC" = yes -a "$ENABLE_MULTILIB" = yes; then
 		echo "patching gcc to fix wrong shlibdeps"
 		drop_privs patch -p1 <<'EOF'
@@ -2049,6 +2051,7 @@ EOF
 EOF
 	fi
 	patch_gcc_rtlibs_base_dep
+	patch_gcc_powerpcel
 	patch_gcc_wdotap
 }
 # choosing libatomic1 arbitrarily here, cause it never bumped soname
