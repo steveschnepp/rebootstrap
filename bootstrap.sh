@@ -4044,6 +4044,27 @@ patch_nspr() {
  #if defined(__GNUC__)
  /* Use GCC built-in functions */
 EOF
+	echo "adding DEB_BUILD_OPTIONS=nocheck support to nspr #833771"
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/rules
++++ b/debian/rules
+@@ -76,6 +76,7 @@
+ 	dh_makeshlibs -a -- -c4
+ 
+ override_dh_auto_test:
++ifeq ($(filter nocheck,$(DEB_BUILD_OPTIONS)),)
+ 	$(MAKE) -C nspr/pr/tests
+ 	$(MAKE) -C nspr/lib/tests
+ 	# Skip gethost because it needs DNS, and thus networking
+@@ -84,6 +85,7 @@
+ 	cd nspr/pr/tests && grep -v '^\(fdcach\|gethost\|peek\|socket\|vercheck\)$$' ./runtests.sh | sh
+ 	cd nspr/lib/tests && ./base64t
+ 	cd nspr/lib/tests && ./string
++endif
+ 
+ ifneq (,$(DEB_HOST_MULTIARCH))
+ override_dh_gencontrol:
+EOF
 }
 
 add_automatic nss
