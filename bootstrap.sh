@@ -1025,6 +1025,55 @@ patch_gcc_powerpcel() {
 + 		tmake_file="${tmake_file} rs6000/t-ppcos rs6000/t-linux"
 EOF
 }
+patch_gcc_nonglibc() {
+	test "$LIBC_NAME" != glibc || return 0
+	echo "patching gcc to fix multiarch locations for non-glibc"
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/rules.patch
++++ b/debian/rules.patch
+@@ -313,6 +313,8 @@
+ endif
+ debian_patches += gcc-multilib-multiarch
+ 
++debian_patches += gcc-multiarch-nonglibc
++
+ ifneq (,$(filter $(derivative),Ubuntu))
+   ifeq (,$(filter $(distrelease),dapper hardy intrepid jaunty karmic lucid maverick))
+     debian_patches += gcc-as-needed
+--- /dev/null
++++ b/debian/patches/gcc-multiarch-nonglibc.diff
+@@ -0,0 +1,29 @@
++--- a/src/gcc/config.gcc
+++++ b/src/gcc/config.gcc
++@@ -3002,6 +3002,16 @@
++ 	tm_file="${tm_file} rs6000/option-defaults.h"
++ esac
++ 
+++# non-glibc systems
+++case ${target} in
+++*-linux-musl*)
+++	tmake_file="${tmake_file} t-musl"
+++	;;
+++*-linux-uclibc*)
+++	tmake_file="${tmake_file} t-uclibc"
+++	;;
+++esac
+++
++ # Build mkoffload tool
++ case ${target} in
++ *-intelmic-* | *-intelmicemul-*)
++--- /dev/null
+++++ b/src/gcc/config/t-musl
++@@ -0,0 +1,2 @@
+++MULTIARCH_DIRNAME := $(subst -linux-gnu,-linux-musl,$(MULTIARCH_DIRNAME))
+++MULTILIB_OSDIRNAMES := $(subst -linux-gnu,-linux-musl,$(MULTILIB_OSDIRNAMES))
++--- /dev/null
+++++ b/src/gcc/config/t-uclibc
++@@ -0,0 +1,2 @@
+++MULTIARCH_DIRNAME := $(subst -linux-gnu,-linux-uclibc,$(MULTIARCH_DIRNAME))
+++MULTILIB_OSDIRNAMES := $(subst -linux-gnu,-linux-uclibc,$(MULTILIB_OSDIRNAMES))
+EOF
+}
 patch_gcc_wdotap() {
 	if test "$ENABLE_MULTIARCH_GCC" = yes; then
 		echo "applying patches for with_deps_on_target_arch_pkgs"
@@ -1592,52 +1641,7 @@ diff -Naru a/debian/patches/ijmp_regs.diff b/debian/patches/ijmp_regs.diff
    debian_patches += powerpc_nofprs
 EOF
 	fi
-	echo "patching gcc to fix multiarch locations for non-glibc"
-	drop_privs patch -p1 <<'EOF'
---- a/debian/rules.patch
-+++ b/debian/rules.patch
-@@ -313,6 +313,8 @@
- endif
- debian_patches += gcc-multilib-multiarch
- 
-+debian_patches += gcc-multiarch-nonglibc
-+
- ifneq (,$(filter $(derivative),Ubuntu))
-   ifeq (,$(filter $(distrelease),dapper hardy intrepid jaunty karmic lucid maverick))
-     debian_patches += gcc-as-needed
---- /dev/null
-+++ b/debian/patches/gcc-multiarch-nonglibc.diff
-@@ -0,0 +1,29 @@
-+--- a/src/gcc/config.gcc
-++++ b/src/gcc/config.gcc
-+@@ -3002,6 +3002,16 @@
-+ 	tm_file="${tm_file} rs6000/option-defaults.h"
-+ esac
-+ 
-++# non-glibc systems
-++case ${target} in
-++*-linux-musl*)
-++	tmake_file="${tmake_file} t-musl"
-++	;;
-++*-linux-uclibc*)
-++	tmake_file="${tmake_file} t-uclibc"
-++	;;
-++esac
-++
-+ # Build mkoffload tool
-+ case ${target} in
-+ *-intelmic-* | *-intelmicemul-*)
-+--- /dev/null
-++++ b/src/gcc/config/t-musl
-+@@ -0,0 +1,2 @@
-++MULTIARCH_DIRNAME := $(subst -linux-gnu,-linux-musl,$(MULTIARCH_DIRNAME))
-++MULTILIB_OSDIRNAMES := $(subst -linux-gnu,-linux-musl,$(MULTILIB_OSDIRNAMES))
-+--- /dev/null
-++++ b/src/gcc/config/t-uclibc
-+@@ -0,0 +1,2 @@
-++MULTIARCH_DIRNAME := $(subst -linux-gnu,-linux-uclibc,$(MULTIARCH_DIRNAME))
-++MULTILIB_OSDIRNAMES := $(subst -linux-gnu,-linux-uclibc,$(MULTILIB_OSDIRNAMES))
-EOF
+	patch_gcc_nonglibc
 	if test "$ENABLE_MULTIARCH_GCC" != yes; then
 		echo "fixing multilib libc dependencies"
 		drop_privs patch -p1 <<'EOF'
@@ -2052,6 +2056,7 @@ EOF
 	fi
 	patch_gcc_rtlibs_base_dep
 	patch_gcc_powerpcel
+	patch_gcc_nonglibc
 	patch_gcc_wdotap
 }
 # choosing libatomic1 arbitrarily here, cause it never bumped soname
