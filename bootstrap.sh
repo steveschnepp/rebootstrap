@@ -437,7 +437,6 @@ apt_get_purge() {
 
 $APT_GET update
 $APT_GET dist-upgrade # we need upgrade later, so make sure the system is clean
-$APT_GET install pinentry-curses # avoid installing pinentry-gtk (via reprepro)
 $APT_GET install build-essential debhelper reprepro quilt
 
 if test -z "$DROP_PRIVS"; then
