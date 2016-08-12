@@ -574,6 +574,12 @@ cat >/etc/dpkg/dpkg.cfg.d/bug-825146 <<'EOF'
 path-exclude=/usr/share/doc/libxdmcp-dev/xdmcp.txt.gz
 EOF
 
+# Work around Multi-Arch: same file conflict in libldap-2.4-2. #330695
+apt_get_install libldap-2.4-2 # install /etc/ldap/ldap.conf, preserved on removal
+cat >/etc/dpkg/dpkg.cfg.d/bug-330695 <<'EOF'
+path-exclude=/etc/ldap/ldap.conf
+EOF
+
 # removing libc*-dev conflict with each other
 LIBC_DEV_PKG=$(apt-cache showpkg libc-dev | sed '1,/^Reverse Provides:/d;s/ .*//;q')
 if test "$(apt-cache show "$LIBC_DEV_PKG" | sed -n 's/^Source: //;T;p;q')" = glibc; then
@@ -3465,10 +3471,6 @@ EOF
 add_automatic kmod
 
 add_automatic krb5
-builddep_krb5() {
-	apt_get_purge libldap-2.4-2 # work around multiarch:same issue #330695
-	$APT_GET build-dep "-a$1" --arch-only krb5
-}
 buildenv_krb5() {
 	export krb5_cv_attr_constructor_destructor=yes,yes
 	export ac_cv_func_regcomp=yes
