@@ -3799,6 +3799,7 @@ add_automatic libtasn1-6
 add_automatic libtextwrap
 add_automatic libunistring
 add_automatic libusb
+add_automatic libusb-1.0
 add_automatic libverto
 
 add_automatic libx11
@@ -4468,6 +4469,7 @@ fi
 add_need libssh2 # by curl
 add_need libtextwrap # by cdebconf
 add_need libunistring # by guile-2.0
+add_need libusb-1.0 # by gnupg2
 add_need libx11 # by dbus
 add_need libxau # by libxcb
 add_need libxdmcp # by libxcb
