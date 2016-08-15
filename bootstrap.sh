@@ -3318,11 +3318,7 @@ builddep_gnu_efi() {
 	$APT_GET install debhelper
 }
 
-add_automatic gnupg
-buildenv_gnupg() {
-	export ac_cv_sys_symbol_underscore=no
-}
-
+add_automatic gnupg2
 add_automatic gnutls28
 
 add_automatic gpm
@@ -4448,20 +4444,18 @@ dpkg-architecture "-a$HOST_ARCH" -ikfreebsd-any && add_need freebsd-glue # by fr
 add_need fuse # by e2fsprogs
 add_need gdbm # by perl, python2.7
 add_need gmp # by guile-2.0
-add_need gnupg # for apt
+add_need gnupg2 # for apt
 add_need gnutls28 # by curl
 test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = linux && add_need gpm # by ncurses
 add_need groff # for man-db
 test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = linux && add_need kmod # by systemd
 add_need krb5 # by curl
-add_need libassuan # by gnupg2
 add_need libatomic-ops # by gcc-4.9
 add_need libbsd # by bsdmainutils
 dpkg-architecture "-a$HOST_ARCH" -ilinux-any && add_need libcap2 # by systemd
 add_need libffi # by guile-2.0
 add_need libgc # by guile-2.0
 add_need libgcrypt20 # by libprelude, cryptsetup
-add_need libksba # by gnupg2
 add_need libpthread-stubs # by libxcb
 if apt-cache showsrc systemd | grep -q "^Build-Depends:.*libseccomp-dev[^,]*[[ ]$HOST_ARCH[] ]"; then
 	add_need libseccomp # by systemd
@@ -4469,7 +4463,6 @@ fi
 add_need libssh2 # by curl
 add_need libtextwrap # by cdebconf
 add_need libunistring # by guile-2.0
-add_need libusb-1.0 # by gnupg2
 add_need libx11 # by dbus
 add_need libxau # by libxcb
 add_need libxdmcp # by libxcb
@@ -4480,7 +4473,6 @@ add_need mawk # for base-files (alternatively: gawk)
 add_need mpclib3 # by gcc-4.9
 add_need mpfr4 # by gcc-4.9
 add_need nghttp2 # by curl
-add_need npth # by gnupg2
 add_need nss # by curl
 add_need openssl # by curl
 add_need patch # for dpkg-dev
