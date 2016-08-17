@@ -3926,24 +3926,6 @@ EOF
 
 add_automatic nss
 patch_nss() {
-	echo "fixing the nss build to pass CCC #806292"
-	drop_privs patch -p1 <<'EOF'
---- a/debian/rules
-+++ b/debian/rules
-@@ -33,10 +34,9 @@
- endif
- ifeq ($(origin CXX),default)
- TOOLCHAIN += CXX=$(DEB_HOST_GNU_TYPE)-g++
-+CXX := $(DEB_HOST_GNU_TYPE)-g++
- endif
--ifeq ($(origin CCC),default)
--TOOLCHAIN += CCC=$(DEB_HOST_GNU_TYPE)-g++
-+TOOLCHAIN += CCC=$(CXX)
--endif
- ifeq ($(origin RANLIB),default)
- TOOLCHAIN += RANLIB=$(DEB_HOST_GNU_TYPE)-ranlib
- endif
-EOF
 	if ! dpkg-architecture "-a$HOST_ARCH" -ilinux-any; then
 		echo "fixing FTCBFS for kfreebsd-any #810579"
 		drop_privs quilt pop -a
