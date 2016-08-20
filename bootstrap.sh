@@ -2219,8 +2219,8 @@ EOF
 if test -f "$REPODIR/stamps/cross-binutils"; then
 	echo "skipping rebuild of binutils-target"
 else
-	$APT_GET install autoconf bison flex gettext texinfo dejagnu quilt chrpath python3 file xz-utils lsb-release zlib1g-dev
 	cross_build_setup binutils
+	apt_get_build_dep ./
 	drop_privs TARGET=$HOST_ARCH dpkg-buildpackage --target=stamps/control
 	drop_privs TARGET=$HOST_ARCH dpkg-buildpackage -B -uc -us
 	cd ..
@@ -2239,8 +2239,8 @@ fi
 progress_mark "cross binutils"
 
 if test "$HOST_ARCH" = hppa && ! test -f "$REPODIR/stamps/cross-binutils-hppa64"; then
-	$APT_GET install autoconf bison flex gettext texinfo dejagnu quilt chrpath python3 file xz-utils lsb-release zlib1g-dev
 	cross_build_setup binutils binutils-hppa64
+	apt_get_build_dep ./
 	drop_privs TARGET=hppa64-linux-gnu dpkg-buildpackage --target=stamps/control
 	drop_privs TARGET=hppa64-linux-gnu dpkg-buildpackage -B -uc -us
 	cd ..
