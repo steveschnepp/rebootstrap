@@ -3399,7 +3399,7 @@ add_automatic hostname
 
 patch_icu() {
 	echo "patching icu to drop versioned libstdc++-dev dependency"
-	sed -i -e '/^[^:]*Depends:/s/,\s*libstdc++-5-dev[^,]*\(,\|$\)/\1/g' debian/control
+	sed -i -e '/^[^:]*Depends:/s/,\s*libstdc++-[0-9]-dev[^,]*\(,\|$\)/\1/g' debian/control
 }
 
 add_automatic isl
