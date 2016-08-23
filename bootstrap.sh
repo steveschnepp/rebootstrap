@@ -1079,6 +1079,23 @@ patch_gcc_nonglibc() {
 ++MULTILIB_OSDIRNAMES := $(subst -linux-gnu,-linux-uclibc,$(MULTILIB_OSDIRNAMES))
 EOF
 }
+patch_gcc_multilib_deps() {
+		test "$ENABLE_MULTIARCH_GCC" != yes || return 0
+		echo "fixing multilib libc dependencies"
+		drop_privs patch -p1 <<'EOF'
+--- a/debian/rules.defs
++++ b/debian/rules.defs
+@@ -1960,7 +1960,7 @@
+ 	if [ -f debian/$(1).substvars ]; then \
+ 	  sed -i \
+ 	    -e 's/:$(DEB_TARGET_ARCH)/$(cross_lib_arch)/g' \
+-	    -e 's/\(libc[.0-9]*-[^:]*\):\([a-z0-9-]*\)/\1-\2-cross/g' \
++	    -e 's/\(libc[.0-9]*-[^: ]*\)\(:$(DEB_TARGET_ARCH)\)\?/\1$(cross_lib_arch)/g' \
+ 	    $(if $(filter armel,$(DEB_TARGET_ARCH)),-e 's/:armhf/-armhf-cross/g') \
+ 	    $(if $(filter armhf,$(DEB_TARGET_ARCH)),-e 's/:armel/-armel-cross/g') \
+ 	    debian/$(1).substvars; \
+EOF
+}
 patch_gcc_wdotap() {
 	if test "$ENABLE_MULTIARCH_GCC" = yes; then
 		echo "applying patches for with_deps_on_target_arch_pkgs"
@@ -1647,22 +1664,7 @@ diff -Naru a/debian/patches/ijmp_regs.diff b/debian/patches/ijmp_regs.diff
 EOF
 	fi
 	patch_gcc_nonglibc
-	if test "$ENABLE_MULTIARCH_GCC" != yes; then
-		echo "fixing multilib libc dependencies"
-		drop_privs patch -p1 <<'EOF'
---- a/debian/rules.defs
-+++ b/debian/rules.defs
-@@ -1960,7 +1960,7 @@
- 	if [ -f debian/$(1).substvars ]; then \
- 	  sed -i \
- 	    -e 's/:$(DEB_TARGET_ARCH)/$(cross_lib_arch)/g' \
--	    -e 's/\(libc[.0-9]*-[^:]*\):\([a-z0-9-]*\)/\1-\2-cross/g' \
-+	    -e 's/\(libc[.0-9]*-[^: ]*\)\(:$(DEB_TARGET_ARCH)\)\?/\1$(cross_lib_arch)/g' \
- 	    $(if $(filter armel,$(DEB_TARGET_ARCH)),-e 's/:armhf/-armhf-cross/g') \
- 	    $(if $(filter armhf,$(DEB_TARGET_ARCH)),-e 's/:armel/-armel-cross/g') \
- 	    debian/$(1).substvars; \
-EOF
-	fi
+	patch_gcc_multilib_deps
 	patch_gcc_powerpcel
 	if test "$ENABLE_MULTIARCH_GCC" = yes -a "$ENABLE_MULTILIB" = yes; then
 		echo "patching gcc to fix wrong shlibdeps"
@@ -2049,6 +2051,7 @@ EOF
 	patch_gcc_rtlibs_base_dep
 	patch_gcc_powerpcel
 	patch_gcc_nonglibc
+	patch_gcc_multilib_deps
 	patch_gcc_wdotap
 }
 # choosing libatomic1 arbitrarily here, cause it never bumped soname
