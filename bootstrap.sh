@@ -3155,10 +3155,6 @@ EOF
 }
 
 add_automatic autogen
-buildenv_autogen() {
-	export libopts_cv_with_libregex=yes
-}
-
 add_automatic base-files
 add_automatic bash
 
