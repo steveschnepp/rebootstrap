@@ -5196,56 +5196,6 @@ builddep_cracklib2() {
 	# additional B-D for cross
 	$APT_GET install cracklib-runtime
 }
-patch_cracklib2() {
-	echo "patching cracklib2 to use build arch cracklib-packer #792860"
-	drop_privs patch -p1 <<'EOF'
-diff -Nru cracklib2-2.9.2/debian/control cracklib2-2.9.2/debian/control
---- cracklib2-2.9.2/debian/control
-+++ cracklib2-2.9.2/debian/control
-@@ -8,6 +8,7 @@
-                automake (>= 1.10),
-                autotools-dev,
-                chrpath,
-+               cracklib-runtime:native <cross>,
-                debhelper (>= 9),
-                docbook-utils,
-                docbook-xml,
-diff -Nru cracklib2-2.9.2/debian/rules cracklib2-2.9.2/debian/rules
---- cracklib2-2.9.2/debian/rules
-+++ cracklib2-2.9.2/debian/rules
-@@ -17,6 +17,12 @@
- NOPYTHON_OPTIONS = -Npython-cracklib -Npython3-cracklib
- endif
- 
-+ifeq ($(DEB_HOST_GNU_TYPE),$(DEB_BUILD_GNU_TYPE))
-+CRACKLIB_PACKER=$(CURDIR)/debian/buildtmp/base/util/cracklib-packer
-+else
-+CRACKLIB_PACKER=/usr/sbin/cracklib-packer
-+endif
-+
- override_dh_auto_configure:
- 	aclocal && libtoolize && automake --add-missing && autoreconf
- 	mkdir -p $(CURDIR)/debian/buildtmp/base
-@@ -57,7 +63,7 @@
- override_dh_auto_test:
- 	mkdir $(CURDIR)/debian/tmp
- ifneq ($(DEB_STAGE),stage1)
--	$(CURDIR)/debian/buildtmp/base/util/cracklib-packer $(CURDIR)/debian/tmp/cracklib_dict < \
-+	$(CRACKLIB_PACKER) $(CURDIR)/debian/tmp/cracklib_dict < \
- 	 $(CURDIR)/dicts/cracklib-small
- 	for i in $(PYVERS) $(PY3VERS); do \
- 		cd $(CURDIR)/debian/buildtmp/python$$i/python/$(call py_builddir_sh,$$i); \
-@@ -91,7 +97,7 @@
- 	      $(CURDIR)/debian/libcrack2-udeb/usr/lib/$(DEB_HOST_MULTIARCH)
- 	cp -r $(CURDIR)/debian/libcrack2/usr/share/locale/* \
- 	      $(CURDIR)/debian/libcrack2-udeb/usr/share/locale
--	$(CURDIR)/debian/buildtmp/base/util/cracklib-packer $(CURDIR)/debian/libcrack2-udeb/var/cache/cracklib/cracklib_dict < \
-+	$(CRACKLIB_PACKER) $(CURDIR)/debian/libcrack2-udeb/var/cache/cracklib/cracklib_dict < \
- 	    $(CURDIR)/dicts/cracklib-small
- 	# move files to libcrack2-dev
- 	mkdir -p $(CURDIR)/debian/libcrack2-dev/usr/lib/$(DEB_HOST_MULTIARCH)
-EOF
-}
 if test -f "$REPODIR/stamps/cracklib2_1"; then
 	echo "skipping stage1 rebuild of cracklib2"
 else
