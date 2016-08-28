@@ -4410,7 +4410,6 @@ add_need readline5 # by lvm2
 add_need rtmpdump # by curl
 add_need slang2 # by cdebconf, newt
 add_need sqlite3 # by python2.7
-add_need tar # essential
 add_need tcl8.6 # by newt
 add_need tcltk-defaults # by python2.7
 dpkg-architecture "-a$HOST_ARCH" -ilinux-any && add_need tcp-wrappers # by audit
