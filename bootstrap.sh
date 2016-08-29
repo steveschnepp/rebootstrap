@@ -18,7 +18,7 @@ DEFAULT_PROFILES="cross nocheck"
 LIBC_NAME=glibc
 DROP_PRIVS=buildd
 GCC_NOLANG=ada,d,go,java,jit,hppa64,objc,obj-c++
-ENABLE_DEBBINDIFF=no # deprecated. use ENABLE_DIFFOSCOPE instead
+ENABLE_DIFFOSCOPE=no
 
 if df -t tmpfs /var/cache/apt/archives >/dev/null 2>&1; then
 	APT_GET="$APT_GET -o APT::Keep-Downloaded-Packages=false"
@@ -29,8 +29,6 @@ for param in "$@"; do
 	echo "bootstrap-configuration: $param"
 	eval $param
 done
-
-: "${ENABLE_DIFFOSCOPE:=$ENABLE_DEBBINDIFF}"
 
 # test whether element $2 is in set $1
 set_contains() {

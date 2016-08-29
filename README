@@ -18,3 +18,5 @@ others is not prohibited):
  * DEB_BUILD_OPTIONS: Use with care. It may not work without nocheck and
    setting parallel=n with n > 1 breaks some architectures.
  * REPODIR: A directory where built packages should be placed.
+ * ENABLE_DIFFOSCOPE=yes: Compare cross built packages against natively
+   built packages from the archive.
