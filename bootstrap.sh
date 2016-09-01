@@ -976,6 +976,22 @@ patch_gcc_rtlibs_base_dep() {
  define(`SOFTBASELDEP', `SOFTBASEDEP')
 EOF
 }
+patch_gcc_rtlibs_libatomic() {
+	test "$ENABLE_MULTIARCH_GCC" != yes || return 0
+	echo "patching gcc to build libatomic with rtlibs"
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/rules.defs
++++ b/debian/rules.defs
+@@ -1352,7 +1352,6 @@
+   with_hppa64 := $(call envfilt, hppa64, , , $(with_hppa64))
+
+   ifeq ($(DEB_STAGE),rtlibs)
+-    with_libatomic := disabled for rtlibs stage
+     with_libasan := disabled for rtlibs stage
+     with_liblsan := disabled for rtlibs stage
+     with_libtsan := disabled for rtlibs stage
+EOF
+}
 patch_gcc_tilegx_multiarch() {
 	test "$HOST_ARCH" = tilegx || return 0
 	echo "patching gcc to consider multiarch paths for tilegx #827578"
@@ -1525,19 +1541,7 @@ EOF
    p_xbase = gcc$(pkg_ver)-base
 EOF
 	patch_gcc_rtlibs_base_dep
-	echo "patching gcc to build libatomic with rtlibs"
-	drop_privs patch -p1 <<'EOF'
---- a/debian/rules.defs
-+++ b/debian/rules.defs
-@@ -1352,7 +1352,6 @@
-   with_hppa64 := $(call envfilt, hppa64, , , $(with_hppa64))
-
-   ifeq ($(DEB_STAGE),rtlibs)
--    with_libatomic := disabled for rtlibs stage
-     with_libasan := disabled for rtlibs stage
-     with_liblsan := disabled for rtlibs stage
-     with_libtsan := disabled for rtlibs stage
-EOF
+	patch_gcc_rtlibs_libatomic
 	if test "$HOST_ARCH" = nios2; then
 		echo "patching gcc for nios2 https://gcc.gnu.org/git/?p=gcc.git;a=commitdiff;h=1d67120d95c2c6e0ed4f7357d1cc62887eaba463"
 		drop_privs patch -p1 <<'EOF'
@@ -2047,6 +2051,7 @@ EOF
 EOF
 	fi
 	patch_gcc_rtlibs_base_dep
+	patch_gcc_rtlibs_libatomic
 	patch_gcc_powerpcel
 	patch_gcc_nonglibc
 	patch_gcc_multilib_deps
