@@ -3626,77 +3626,7 @@ EOF
 }
 
 add_automatic libcap2
-
-builddep_libdebian_installer() {
-	# check dependency lacks <!nocheck> #787044
-	$APT_GET install dpkg-dev debhelper dh-autoreconf doxygen pkg-config
-}
-patch_libdebian_installer() {
-	echo "patching libdebian-installer to support nocheck profile"
-	drop_privs patch -p1 <<'EOF'
-diff -Nru libdebian-installer-0.101/Makefile.am libdebian-installer-0.101+nmu1/Makefile.am
---- libdebian-installer-0.101/Makefile.am
-+++ libdebian-installer-0.101+nmu1/Makefile.am
-@@ -1,6 +1,9 @@
- AUTOMAKE_OPTIONS = foreign
- 
--SUBDIRS = doc include src test
-+SUBDIRS = doc include src
-+if ENABLE_CHECK
-+SUBDIRS += test
-+endif
- 
- pkgconfigdir = ${libdir}/pkgconfig
- pkgconfig_DATA = \
-diff -Nru libdebian-installer-0.101/configure.ac libdebian-installer-0.101+nmu1/configure.ac
---- libdebian-installer-0.101/configure.ac
-+++ libdebian-installer-0.101+nmu1/configure.ac
-@@ -7,9 +7,14 @@
- 
- AC_CHECK_FUNCS(memrchr)
- 
-+AC_ARG_ENABLE([check],AS_HELP_STRING([--disable-check],[Disable running the test suite]))
-+
- AC_CHECK_PROGS(DOXYGEN, doxygen, true)
- 
--PKG_CHECK_MODULES([CHECK], [check >= 0.9.4])
-+AS_IF([test "x$enable_check" != xno],[
-+	PKG_CHECK_MODULES([CHECK], [check >= 0.9.4])
-+])
-+AM_CONDITIONAL([ENABLE_CHECK],[test "x$enable_check" != xno])
- 
- LIBRARY_VERSION_MAJOR=4
- LIBRARY_VERSION_MINOR=0
-diff -Nru libdebian-installer-0.101/debian/control libdebian-installer-0.101+nmu1/debian/control
---- libdebian-installer-0.101/debian/control
-+++ libdebian-installer-0.101+nmu1/debian/control
-@@ -3,7 +3,7 @@
- Priority: optional
- Maintainer: Debian Install System Team <debian-boot@lists.debian.org>
- Uploaders: Bastian Blank <waldi@debian.org>, Colin Watson <cjwatson@debian.org>, Christian Perrier <bubulle@debian.org>, Steve McIntyre <93sam@debian.org>
--Build-Depends: dpkg-dev (>= 1.13.5), debhelper (>= 9), dh-autoreconf, doxygen, pkg-config, check
-+Build-Depends: dpkg-dev (>= 1.13.5), debhelper (>= 9), dh-autoreconf, doxygen, pkg-config, check <!nocheck>
- Standards-Version: 3.9.6
- Vcs-Browser: http://anonscm.debian.org/gitweb/?p=d-i/libdebian-installer.git
- Vcs-Git: git://anonscm.debian.org/d-i/libdebian-installer.git
-diff -Nru libdebian-installer-0.101/debian/rules libdebian-installer-0.101+nmu1/debian/rules
---- libdebian-installer-0.101/debian/rules
-+++ libdebian-installer-0.101+nmu1/debian/rules
-@@ -16,6 +16,11 @@
- 
- export CFLAGS
- 
-+ifneq ($(filter nocheck,$(DEB_BUILD_OPTIONS)),)
-+override_dh_auto_configure:
-+	dh_auto_configure -- --disable-check
-+endif
-+
- override_dh_auto_build:
- 	dh_auto_build
- 	$(MAKE) -C build/doc doc
-EOF
-}
-
+add_automatic libdebian-installer
 add_automatic libev
 add_automatic libevent
 add_automatic libffi
@@ -4389,6 +4319,7 @@ add_need krb5 # by curl
 add_need libatomic-ops # by gcc-4.9
 add_need libbsd # by bsdmainutils
 dpkg-architecture "-a$HOST_ARCH" -ilinux-any && add_need libcap2 # by systemd
+add_need libdebian-installer # by cdebconf
 add_need libffi # by guile-2.0
 add_need libgc # by guile-2.0
 add_need libgcrypt20 # by libprelude, cryptsetup
@@ -5254,12 +5185,6 @@ fi
 progress_mark "pam stage1 cross build"
 mark_built pam
 # needed by shadow
-
-automatically_cross_build_packages
-
-cross_build libdebian-installer
-mark_built libdebian-installer
-# needed by cdebconf
 
 automatically_cross_build_packages
 
