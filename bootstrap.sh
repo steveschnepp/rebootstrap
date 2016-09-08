@@ -3389,6 +3389,70 @@ EOF
 add_automatic grep
 add_automatic groff
 
+add_automatic guile-2.0
+builddep_guile_2_0() {
+	assert_built "gmp libffi libgc libtool libunistring ncurses readline6"
+	apt_get_build_dep "-a$HOST_ARCH" --arch-only -P cross ./
+	if test "$HOST_ARCH" = nios2; then
+		sed -i 's/"sh4"/& "nios2"/' /usr/share/guile/2.0/system/base/target.scm
+	fi
+	if test "$HOST_ARCH" = alpha; then
+		patch /usr/share/guile/2.0/system/base/target.scm <<'EOF'
+--- a/module/system/base/target.scm
++++ b/module/system/base/target.scm
+@@ -65,7 +65,7 @@
+       (cond ((string-match "^i[0-9]86$" cpu)
+              (endianness little))
+             ((member cpu '("x86_64" "ia64"
+-                           "powerpcle" "powerpc64le" "mipsel" "mips64el" "sh4"))
++                           "powerpcle" "powerpc64le" "mipsel" "mips64el" "sh4" "alpha"))
+              (endianness little))
+             ((member cpu '("sparc" "sparc64" "powerpc" "powerpc64" "spu"
+                            "mips" "mips64" "m68k" "s390x"))
+@@ -105,7 +105,7 @@
+           ((string-match "64$" cpu) 8)
+           ((string-match "64_?[lbe][lbe]$" cpu) 8)
+           ((member cpu '("sparc" "powerpc" "mips" "mipsel" "m68k" "sh4")) 4)
+-          ((member cpu '("s390x")) 8)
++          ((member cpu '("s390x" "alpha")) 8)
+           ((string-match "^arm.*" cpu) 4)
+           (else (error "unknown CPU word size" cpu)))))
+ 
+EOF
+	fi
+}
+patch_guile_2_0() {
+	if test "$HOST_ARCH" = nios2; then
+		echo "Patching guile nios2 support http://debbugs.gnu.org/cgi/bugreport.cgi?bug=22480"
+		drop_privs sed -i 's/"sh4"/& "nios2"/' /usr/share/guile/2.0/system/base/target.scm
+	fi
+	if test "$HOST_ARCH" = alpha; then
+		echo "patching guile alpha support #829260"
+		drop_privs patch -p1 <<'EOF'
+--- a/module/system/base/target.scm
++++ b/module/system/base/target.scm
+@@ -65,7 +65,7 @@
+       (cond ((string-match "^i[0-9]86$" cpu)
+              (endianness little))
+             ((member cpu '("x86_64" "ia64"
+-                           "powerpcle" "powerpc64le" "mipsel" "mips64el" "sh4"))
++                           "powerpcle" "powerpc64le" "mipsel" "mips64el" "sh4" "alpha"))
+              (endianness little))
+             ((member cpu '("sparc" "sparc64" "powerpc" "powerpc64" "spu"
+                            "mips" "mips64" "m68k" "s390x"))
+@@ -105,7 +105,7 @@
+           ((string-match "64$" cpu) 8)
+           ((string-match "64_?[lbe][lbe]$" cpu) 8)
+           ((member cpu '("sparc" "powerpc" "mips" "mipsel" "m68k" "sh4")) 4)
+-          ((member cpu '("s390x")) 8)
++          ((member cpu '("s390x" "alpha")) 8)
+           ((string-match "^arm.*" cpu) 4)
+           (else (error "unknown CPU word size" cpu)))))
+ 
+EOF
+	fi
+}
+
 add_automatic gzip
 buildenv_gzip() {
 	if test "$LIBC_NAME" = musl; then
@@ -4309,7 +4373,6 @@ add_need db-defaults # by apt, perl, python2.7
 dpkg-architecture "-a$HOST_ARCH" -ikfreebsd-any && add_need freebsd-glue # by freebsd-libs
 add_need fuse # by e2fsprogs
 add_need gdbm # by perl, python2.7
-add_need gmp # by guile-2.0
 add_need gnupg2 # for apt
 add_need gnutls28 # by curl
 test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = linux && add_need gpm # by ncurses
@@ -4320,15 +4383,12 @@ add_need libatomic-ops # by gcc-4.9
 add_need libbsd # by bsdmainutils
 dpkg-architecture "-a$HOST_ARCH" -ilinux-any && add_need libcap2 # by systemd
 add_need libdebian-installer # by cdebconf
-add_need libffi # by guile-2.0
-add_need libgc # by guile-2.0
 add_need libgcrypt20 # by libprelude, cryptsetup
 if apt-cache showsrc systemd | grep -q "^Build-Depends:.*libseccomp-dev[^,]*[[ ]$HOST_ARCH[] ]"; then
 	add_need libseccomp # by systemd
 fi
 add_need libssh2 # by curl
 add_need libtextwrap # by cdebconf
-add_need libunistring # by guile-2.0
 add_need libx11 # by dbus
 add_need libxrender # by cairo
 add_need make-dfsg # for build-essential
@@ -4753,97 +4813,6 @@ builddep_bsdmainutils() {
 cross_build bsdmainutils
 mark_built bsdmainutils
 # needed for man-db
-
-automatically_cross_build_packages
-
-builddep_guile_2_0() {
-	assert_built "gmp libffi libgc libtool libunistring ncurses readline6"
-	# flex dependency satisfied from host arch
-	# needs Build-Depends: guile-2.0 <cross> #809732
-	apt_get_install libtool debhelper autoconf automake dh-autoreconf "libncurses5-dev:$1" "libreadline6-dev:$1" "libltdl-dev:$1" "libgmp-dev:$1" texinfo flex "libunistring-dev:$1" "libgc-dev:$1" "libffi-dev:$1" pkg-config guile-2.0
-	if test "$HOST_ARCH" = nios2; then
-		sed -i 's/"sh4"/& "nios2"/' /usr/share/guile/2.0/system/base/target.scm
-	fi
-	if test "$HOST_ARCH" = alpha; then
-		patch /usr/share/guile/2.0/system/base/target.scm <<'EOF'
---- a/module/system/base/target.scm
-+++ b/module/system/base/target.scm
-@@ -65,7 +65,7 @@
-       (cond ((string-match "^i[0-9]86$" cpu)
-              (endianness little))
-             ((member cpu '("x86_64" "ia64"
--                           "powerpcle" "powerpc64le" "mipsel" "mips64el" "sh4"))
-+                           "powerpcle" "powerpc64le" "mipsel" "mips64el" "sh4" "alpha"))
-              (endianness little))
-             ((member cpu '("sparc" "sparc64" "powerpc" "powerpc64" "spu"
-                            "mips" "mips64" "m68k" "s390x"))
-@@ -105,7 +105,7 @@
-           ((string-match "64$" cpu) 8)
-           ((string-match "64_?[lbe][lbe]$" cpu) 8)
-           ((member cpu '("sparc" "powerpc" "mips" "mipsel" "m68k" "sh4")) 4)
--          ((member cpu '("s390x")) 8)
-+          ((member cpu '("s390x" "alpha")) 8)
-           ((string-match "^arm.*" cpu) 4)
-           (else (error "unknown CPU word size" cpu)))))
- 
-EOF
-	fi
-}
-patch_guile_2_0() {
-	if test "$HOST_ARCH" = nios2; then
-		echo "Patching guile nios2 support http://debbugs.gnu.org/cgi/bugreport.cgi?bug=22480"
-		drop_privs patch -p1 <<'EOF'
---- a/module/system/base/target.scm
-+++ b/module/system/base/target.scm
-@@ -65,7 +65,7 @@
-       (cond ((string-match "^i[0-9]86$" cpu)
-              (endianness little))
-             ((member cpu '("x86_64" "ia64"
--                           "powerpcle" "powerpc64le" "mipsel" "mips64el" "sh4"))
-+                           "powerpcle" "powerpc64le" "mipsel" "mips64el" "sh4" "nios2"))
-              (endianness little))
-             ((member cpu '("sparc" "sparc64" "powerpc" "powerpc64" "spu"
-                            "mips" "mips64" "m68k" "s390x"))
-@@ -104,7 +104,7 @@
- 
-           ((string-match "64$" cpu) 8)
-           ((string-match "64_?[lbe][lbe]$" cpu) 8)
--          ((member cpu '("sparc" "powerpc" "mips" "mipsel" "m68k" "sh4")) 4)
-+          ((member cpu '("sparc" "powerpc" "mips" "mipsel" "m68k" "sh4" "nios2")) 4)
-           ((member cpu '("s390x")) 8)
-           ((string-match "^arm.*" cpu) 4)
-           (else (error "unknown CPU word size" cpu)))))
-EOF
-	fi
-	if test "$HOST_ARCH" = alpha; then
-		echo "patching guile alpha support #829260"
-		drop_privs patch -p1 <<'EOF'
---- a/module/system/base/target.scm
-+++ b/module/system/base/target.scm
-@@ -65,7 +65,7 @@
-       (cond ((string-match "^i[0-9]86$" cpu)
-              (endianness little))
-             ((member cpu '("x86_64" "ia64"
--                           "powerpcle" "powerpc64le" "mipsel" "mips64el" "sh4"))
-+                           "powerpcle" "powerpc64le" "mipsel" "mips64el" "sh4" "alpha"))
-              (endianness little))
-             ((member cpu '("sparc" "sparc64" "powerpc" "powerpc64" "spu"
-                            "mips" "mips64" "m68k" "s390x"))
-@@ -105,7 +105,7 @@
-           ((string-match "64$" cpu) 8)
-           ((string-match "64_?[lbe][lbe]$" cpu) 8)
-           ((member cpu '("sparc" "powerpc" "mips" "mipsel" "m68k" "sh4")) 4)
--          ((member cpu '("s390x")) 8)
-+          ((member cpu '("s390x" "alpha")) 8)
-           ((string-match "^arm.*" cpu) 4)
-           (else (error "unknown CPU word size" cpu)))))
- 
-EOF
-	fi
-}
-cross_build guile-2.0
-mark_built guile-2.0
-# needed by gnutls28, make-dfsg, autogen
 
 automatically_cross_build_packages
 
