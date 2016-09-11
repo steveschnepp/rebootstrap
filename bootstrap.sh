@@ -3424,7 +3424,7 @@ EOF
 patch_guile_2_0() {
 	if test "$HOST_ARCH" = nios2; then
 		echo "Patching guile nios2 support http://debbugs.gnu.org/cgi/bugreport.cgi?bug=22480"
-		drop_privs sed -i 's/"sh4"/& "nios2"/' /usr/share/guile/2.0/system/base/target.scm
+		drop_privs sed -i 's/"sh4"/& "nios2"/' module/system/base/target.scm
 	fi
 	if test "$HOST_ARCH" = alpha; then
 		echo "patching guile alpha support #829260"
