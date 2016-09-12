@@ -3464,6 +3464,7 @@ buildenv_gzip() {
 
 add_automatic hostname
 
+add_automatic icu
 patch_icu() {
 	echo "patching icu to drop versioned libstdc++-dev dependency"
 	sed -i -e '/^[^:]*Depends:/s/,\s*libstdc++-[0-9]-dev[^,]*\(,\|$\)/\1/g' debian/control
@@ -4378,6 +4379,7 @@ add_need gnutls28 # by curl
 test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = linux && add_need gpm # by ncurses
 add_need groff # for man-db
 test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = linux && add_need kmod # by systemd
+add_need icu # by libxml2
 add_need krb5 # by curl
 add_need libatomic-ops # by gcc-4.9
 add_need libbsd # by bsdmainutils
@@ -5038,12 +5040,6 @@ fi
 progress_mark "libidn stage1 cross build"
 mark_built libidn
 # needed by gnutls28
-
-automatically_cross_build_packages
-
-cross_build icu
-mark_built icu
-# needed by libxml2
 
 automatically_cross_build_packages
 
