@@ -991,6 +991,26 @@ patch_gcc_rtlibs_libatomic() {
      with_libtsan := disabled for rtlibs stage
 EOF
 }
+patch_gcc_include_multiarch() {
+	test "$ENABLE_MULTIARCH_GCC" = yes || return 0
+	echo "patching gcc-N to use all of /usr/include/<triplet>"
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/rules2
++++ b/debian/rules2
+@@ -1122,10 +1122,7 @@
+ 		../src/configure $(subst ___, ,$(CONFARGS))
+
+ 	: # multilib builds without b-d on gcc-multilib (used in FLAGS_FOR_TARGET)
+-	if [ -d /usr/include/$(DEB_TARGET_MULTIARCH)/asm ]; then \
+-	  mkdir -p $(builddir)/sys-include; \
+-	  ln -sf /usr/include/$(DEB_TARGET_MULTIARCH)/asm $(builddir)/sys-include/asm; \
+-	fi
++	ln -sf /usr/include/$(DEB_TARGET_MULTIARCH) $(builddir)/sys-include
+
+ 	touch $(configure_stamp)
+
+EOF
+}
 patch_gcc_tilegx_multiarch() {
 	test "$HOST_ARCH" = tilegx || return 0
 	echo "patching gcc to consider multiarch paths for tilegx #827578"
@@ -1118,23 +1138,7 @@ patch_gcc_wdotap() {
 patch_gcc_5() {
 	patch_gcc_os_include_dir_musl
 	patch_gcc_musl_arm
-	echo "patching gcc-5 to use all of /usr/include/<triplet>"
-	drop_privs patch -p1 <<'EOF'
---- a/debian/rules2
-+++ b/debian/rules2
-@@ -1122,10 +1122,7 @@
- 		../src/configure $(subst ___, ,$(CONFARGS))
-
- 	: # multilib builds without b-d on gcc-multilib (used in FLAGS_FOR_TARGET)
--	if [ -d /usr/include/$(DEB_TARGET_MULTIARCH)/asm ]; then \
--	  mkdir -p $(builddir)/sys-include; \
--	  ln -sf /usr/include/$(DEB_TARGET_MULTIARCH)/asm $(builddir)/sys-include/asm; \
--	fi
-+	ln -sf /usr/include/$(DEB_TARGET_MULTIARCH) $(builddir)/sys-include
-
- 	touch $(configure_stamp)
-
-EOF
+	patch_gcc_include_multiarch
 	echo "patching gcc-5 to support building without binutils-multiarch #804190"
 	drop_privs patch -p1 <<'EOF'
 diff -u gcc-5-5.2.1/debian/rules.d/binary-ada.mk gcc-5-5.2.1/debian/rules.d/binary-ada.mk
@@ -2051,6 +2055,7 @@ EOF
 	fi
 	patch_gcc_rtlibs_base_dep
 	patch_gcc_rtlibs_libatomic
+	patch_gcc_include_multiarch
 	patch_gcc_powerpcel
 	patch_gcc_nonglibc
 	patch_gcc_multilib_deps
