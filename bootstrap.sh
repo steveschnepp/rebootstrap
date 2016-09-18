@@ -3164,7 +3164,11 @@ EOF
 
 add_automatic autogen
 add_automatic base-files
-add_automatic bash
+
+builddeb_bash() {
+	# locales dependency lacks <!nocheck> annotation #838201
+	apt_get_install autoconf autotools-dev bison "libncurses5-dev:$1" texinfo texi2html debhelper gettext sharutils xz-utils dpkg-dev
+}
 
 builddep_build_essential() {
 	# g++ dependency needs cross translation
@@ -5376,6 +5380,12 @@ mark_built libcap-ng
 
 automatically_cross_build_packages
 fi # $HOST_ARCH matches linux-any
+
+cross_build bash
+mark_built bash
+# essential
+
+automatically_cross_build_packages
 
 assert_built "$need_packages"
 
