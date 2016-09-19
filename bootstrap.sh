@@ -3165,7 +3165,7 @@ EOF
 add_automatic autogen
 add_automatic base-files
 
-builddeb_bash() {
+builddep_bash() {
 	# locales dependency lacks <!nocheck> annotation #838201
 	apt_get_install autoconf autotools-dev bison "libncurses5-dev:$1" texinfo texi2html debhelper gettext sharutils xz-utils dpkg-dev
 }
