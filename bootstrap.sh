@@ -4892,11 +4892,11 @@ mark_built elfutils
 automatically_cross_build_packages
 
 builddep_glib2_0() {
-	dpkg-architecture "-a$1" -ilinux-any && assert_built libselinux
+	dpkg-architecture "-a$1" -ilinux-any && assert_built "libselinux util-linux"
 	assert_built "elfutils libffi pcre3 zlib" # also linux-libc-dev
-	# python-dbus dependency unsatisifable
-	dpkg-architecture "-a$1" -ilinux-any && apt_get_install "libselinux1-dev:$1" "linux-libc-dev:$1"
-	apt_get_install debhelper cdbs dh-autoreconf pkg-config gettext autotools-dev gnome-pkg-tools dpkg-dev "libelf-dev:$1" "libpcre3-dev:$1" desktop-file-utils gtk-doc-tools "zlib1g-dev:$1" dbus dbus-x11 shared-mime-info xterm python python-dbus python-gi libxml2-utils "libffi-dev:$1"
+	# python3-dbus dependency unsatisifable
+	dpkg-architecture "-a$1" -ilinux-any && apt_get_install "libmount-dev:$1" "libselinux1-dev:$1" "linux-libc-dev:$1"
+	apt_get_install debhelper cdbs dh-autoreconf pkg-config gettext autotools-dev gnome-pkg-tools dpkg-dev "libelf-dev:$1" "libpcre3-dev:$1" desktop-file-utils gtk-doc-tools "zlib1g-dev:$1" dbus dbus-x11 shared-mime-info xterm python3 python3-dbus python3-gi libxml2-utils "libffi-dev:$1"
 }
 buildenv_glib2_0() {
 	export glib_cv_stack_grows=no
