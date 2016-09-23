@@ -3774,6 +3774,100 @@ add_automatic libksba
 add_automatic libonig
 add_automatic libpipeline
 add_automatic libpng1.6
+
+patch_libprelude() {
+	echo "adding noperl and nopython profiles to libprelude #838115"
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/control
++++ b/debian/control
+@@ -9,12 +9,12 @@
+     quilt,
+     libgnutls28-dev,
+     libgcrypt20-dev,
+-    python-all-dev (>> 2.6.6),
+-    libperl-dev,
++    python-all-dev (>> 2.6.6) <!nopython>,
++    libperl-dev <!noperl>,
+     libltdl-dev,
+     pkg-config,
+     gawk,
+-    swig
++    swig <!noperl> <!nopython>
+ Standards-Version: 3.9.3
+ 
+ Package: libprelude-dev
+@@ -74,6 +74,7 @@
+ Section: perl
+ Architecture: any
+ Depends: ${perl:Depends}, libprelude2 (= ${binary:Version}), ${shlibs:Depends}, ${misc:Depends}
++Build-Profiles: <!noperl>
+ Description: Security Information Management System [ Base library ]
+  Prelude is a Universal "Security Information Management" (SIM) system.
+  Its goals are performance and modularity. It is divided in two main
+@@ -92,6 +93,7 @@
+ Architecture: any
+ Depends: ${python:Depends}, libprelude2 (= ${binary:Version}), ${shlibs:Depends}, ${misc:Depends}
+ Provides: ${python:Provides}
++Build-Profiles: <!nopython>
+ Description: Security Information Management System [ Base library ]
+  Prelude is a Universal "Security Information Management" (SIM) system.
+  Its goals are performance and modularity. It is divided in two main
+diff --minimal -Nru libprelude-1.0.0/debian/rules libprelude-1.0.0/debian/rules
+--- a/debian/rules
++++ b/debian/rules
+@@ -3,13 +3,26 @@
+ 
+ export DEB_BUILD_MAINT_OPTIONS=hardening=+all,-pie
+ 
++DH_ADDONS = --with quilt --with autoreconf
++
++ifeq ($(filter nopython,$(DEB_BUILD_PROFILES)),)
+ PYVERS=$(shell pyversions -vr)
++DH_ADDONS += --with python2
++else
++CONFIGURE_FLAGS += --without-python
++endif
++
++ifeq ($(filter noperl,$(DEB_BUILD_PROFILES)),)
++CONFIGURE_FLAGS += --with-perl-installdirs=vendor
++else
++CONFIGURE_FLAGS += --without-perl
++endif
+ 
+ override_dh_auto_configure:
+ 	# backup files to be regenerated
+ 	mkdir debian/temp.backup; \
+ 	cp -a bindings/python/PreludeEasy.py bindings/python/_PreludeEasy.cxx debian/temp.backup/
+-	dh_auto_configure -- --with-perl-installdirs=vendor
++	dh_auto_configure -- $(CONFIGURE_FLAGS)
+ 
+ override_dh_auto_build: build-core $(PYVERS:%=build-python%)
+ 
+@@ -32,10 +45,12 @@
+ 	echo "OK"
+ 
+ override_dh_auto_install:
+-	dh_auto_install; \
+-	rm -rf debian/tmp/usr/lib/python*; \
+-	find debian/tmp-python-libprelude/usr/lib -name "*.la" -delete; \
++	dh_auto_install
++	rm -rf debian/tmp/usr/lib/python*
++ifeq ($(filter nopython,$(DEB_BUILD_PROFILES)),)
++	find debian/tmp-python-libprelude/usr/lib -name "*.la" -delete
+ 	mv debian/tmp-python-libprelude/usr/lib/* debian/tmp/usr/lib/
++endif
+ 
+ override_dh_strip:
+ 	dh_strip --dbg-package=libprelude2-dbg
+@@ -51,4 +66,4 @@
+ 	[ ! -d debian/temp.backup ] || rm -rf debian/temp.backup
+ 
+ %:
+-	dh $@ --with=quilt,python2,autoreconf
++	dh $@ $(DH_ADDONS)
+EOF
+}
+
 add_automatic libpthread-stubs
 add_automatic libseccomp
 
@@ -5386,6 +5480,30 @@ mark_built bash
 # essential
 
 automatically_cross_build_packages
+
+if dpkg-architecture "-a$HOST_ARCH" -ilinux-any; then
+if test -f "$REPODIR/stamps/libprelude_1"; then
+	echo "skipping rebuild of libprelude stage1"
+else
+	cross_build_setup libprelude libprelude_1
+	assert_built "gnutls28 libgcrypt20 libtool"
+	apt_get_build_dep "-a$HOST_ARCH" --arch-only -Pnoperl,nopython ./
+	check_binNMU
+	drop_privs dpkg-buildpackage -B -uc -us -a$HOST_ARCH -Pnoperl,nopython
+	cd ..
+	ls -l
+	pickup_packages *.changes
+	touch "$REPODIR/stamps/libprelude_1"
+	compare_native ./*.deb
+	cd ..
+	drop_privs rm -Rf libprelude_1
+fi
+progress_mark "libprelude stage1 cross build"
+mark_built libprelude
+# needed by audit, dbus
+
+automatically_cross_build_packages
+fi # $HOST_ARCH matches linux-any
 
 assert_built "$need_packages"
 
