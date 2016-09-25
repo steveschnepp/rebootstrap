@@ -2310,6 +2310,7 @@ if test -f "$REPODIR/stamps/linux_1"; then
 	echo "skipping rebuild of linux-libc-dev"
 else
 	cross_build_setup linux
+	check_binNMU
 	if dpkg-architecture -ilinux-any && test "$(dpkg-query -W -f '${Version}' "linux-libc-dev:$(dpkg --print-architecture)")" != "$(dpkg-parsechangelog -SVersion)"; then
 		echo "rebootstrap-warning: working around linux-libc-dev m-a:same skew"
 		apt_get_build_dep --arch-only -Pstage1 ./
