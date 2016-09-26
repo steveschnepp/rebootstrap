@@ -5496,7 +5496,10 @@ else
 	assert_built "gnutls28 libgcrypt20 libtool"
 	apt_get_build_dep "-a$HOST_ARCH" --arch-only -Pnoperl,nopython ./
 	check_binNMU
-	drop_privs dpkg-buildpackage -B -uc -us -a$HOST_ARCH -Pnoperl,nopython
+	(
+		buildenv_libprelude
+		drop_privs_exec dpkg-buildpackage -B -uc -us "-a$HOST_ARCH" -Pnoperl,nopython
+	)
 	cd ..
 	ls -l
 	pickup_packages *.changes
