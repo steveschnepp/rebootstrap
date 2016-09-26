@@ -3868,6 +3868,12 @@ diff --minimal -Nru libprelude-1.0.0/debian/rules libprelude-1.0.0/debian/rules
 +	dh $@ $(DH_ADDONS)
 EOF
 }
+buildenv_libprelude() {
+	case $(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_GNU_SYSTEM) in *gnu*)
+		echo "glibc does not return NULL for malloc(0)"
+		export ac_cv_func_malloc_0_nonnull=yes
+	;; esac
+}
 
 add_automatic libpthread-stubs
 add_automatic libseccomp
