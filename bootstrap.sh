@@ -3899,7 +3899,6 @@ buildenv_libx11() {
 
 add_automatic libxau
 add_automatic libxaw
-add_automatic libxcb
 add_automatic libxdmcp
 
 add_automatic libxext
@@ -4495,12 +4494,15 @@ add_need libbsd # by bsdmainutils
 dpkg-architecture "-a$HOST_ARCH" -ilinux-any && add_need libcap2 # by systemd
 add_need libdebian-installer # by cdebconf
 add_need libgcrypt20 # by libprelude, cryptsetup
+add_need libpthread-stubs # by libxcb
 if apt-cache showsrc systemd | grep -q "^Build-Depends:.*libseccomp-dev[^,]*[[ ]$HOST_ARCH[] ]"; then
 	add_need libseccomp # by systemd
 fi
 add_need libssh2 # by curl
 add_need libtextwrap # by cdebconf
 add_need libx11 # by dbus
+add_need libxau # by libxcb
+add_need libxdmcp # by libxcb
 add_need libxrender # by cairo
 add_need make-dfsg # for build-essential
 add_need man-db # for debhelper
@@ -5008,6 +5010,18 @@ buildenv_glib2_0() {
 cross_build glib2.0
 mark_built glib2.0
 # needed by pkg-config, dbus, systemd, libxt
+
+automatically_cross_build_packages
+
+builddep_libxcb() {
+	assert_built "libxau libxdmcp libpthread-stubs"
+	# check dependency lacks nocheck profile annotation
+	# python dependency lacks :native annotation #788861
+	$APT_GET install "libxau-dev:$1" "libxdmcp-dev:$1" xcb-proto "libpthread-stubs0-dev:$1" debhelper pkg-config xsltproc  python-xcbgen libtool automake python dctrl-tools xutils-dev
+}
+cross_build libxcb
+mark_built libxcb
+# needed by libx11
 
 automatically_cross_build_packages
 
