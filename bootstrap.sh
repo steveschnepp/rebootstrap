@@ -437,6 +437,33 @@ $APT_GET update
 $APT_GET dist-upgrade # we need upgrade later, so make sure the system is clean
 $APT_GET install build-essential debhelper reprepro quilt
 
+echo "fixing regression in debhelpers' autoconf buildsystem #839681"
+patch /usr/share/perl5/Debian/Debhelper/Buildsystem/autoconf.pm <<'EOF'
+--- a/Debian/Debhelper/Buildsystem/autoconf.pm
++++ b/Debian/Debhelper/Buildsystem/autoconf.pm
+@@ -19,15 +19,11 @@ sub check_auto_buildable {
+ 	my $this=shift;
+ 	my ($step)=@_;
+ 
+-	# Handle configure; the rest - next class (compat with 7.0.x code path)
+-	if ($step eq "configure") {
+-		return 1 if -x $this->get_sourcepath("configure");
+-	}
+-	if ($step eq "test") {
+-		return 1 if (-e $this->get_buildpath("Makefile") &&
+-			     -x $this->get_sourcepath("configure"));
+-	}
+-	return 0;
++	return 0 unless -x $this->get_sourcepath("configure");
++
++	# Handle configure explicitly; inherit the rest
++	return 1 if $step eq "configure";
++	return $this->SUPER::check_auto_buildable(@_);
+ }
+ 
+ sub configure {
+EOF
+
 if test -z "$DROP_PRIVS"; then
 	drop_privs_exec() {
 		exec env -- "$@"
