@@ -3446,7 +3446,7 @@ add_automatic groff
 
 add_automatic guile-2.0
 builddep_guile_2_0() {
-	assert_built "gmp libffi libgc libtool libunistring ncurses readline6"
+	assert_built "gmp libffi libgc libtool libunistring ncurses readline"
 	apt_get_build_dep "-a$HOST_ARCH" --arch-only -P cross ./
 	if test "$HOST_ARCH" = nios2; then
 		sed -i 's/"sh4"/& "nios2"/' /usr/share/guile/2.0/system/base/target.scm
@@ -4779,20 +4779,19 @@ builddep_ncurses() {
 }
 cross_build ncurses
 mark_built ncurses
-# needed by bash, bsdmainutils, dpkg, guile-2.0, readline6, slang2
+# needed by bash, bsdmainutils, dpkg, guile-2.0, readline, slang2
 
 automatically_cross_build_packages
 
-patch_readline6() {
-	echo "patching readline6 to support nobiarch profile #737955"
+patch_readline() {
+	echo "patching readline to support nobiarch profile #737955"
 	drop_privs patch -p1 <<EOF
-diff -Nru readline6-6.3/debian/control readline6-6.3/debian/control
---- readline6-6.3/debian/control
-+++ readline6-6.3/debian/control
+--- a/debian/control
++++ b/debian/control
 @@ -4,11 +4,11 @@
  Maintainer: Matthias Klose <doko@debian.org>
- Standards-Version: 3.9.5
- Build-Depends: debhelper (>= 8.1.3),
+ Standards-Version: 3.9.8
+ Build-Depends: debhelper (>= 9),
 -  libtinfo-dev, lib32tinfo-dev [amd64 ppc64],
 +  libtinfo-dev, lib32tinfo-dev [amd64 ppc64] <!nobiarch>,
    libncursesw5-dev (>= 5.6),
@@ -4802,7 +4801,7 @@ diff -Nru readline6-6.3/debian/control readline6-6.3/debian/control
 -  gcc-multilib [amd64 i386 kfreebsd-amd64 powerpc ppc64 s390 sparc]
 +  gcc-multilib [amd64 i386 kfreebsd-amd64 powerpc ppc64 s390 sparc] <!nobiarch>
  
- Package: libreadline6
+ Package: libreadline7
  Architecture: any
 @@ -30,6 +30,7 @@
  Depends: readline-common, \${shlibs:Depends}, \${misc:Depends}
@@ -4836,9 +4835,8 @@ diff -Nru readline6-6.3/debian/control readline6-6.3/debian/control
  Description: GNU readline and history libraries, development files (32-bit)
   The GNU readline library aids in the consistency of user interface
   across discrete programs that need to provide a command line
-diff -Nru readline6-6.3/debian/rules readline6-6.3/debian/rules
---- readline6-6.3/debian/rules	2014-03-19 17:05:34.000000000 +0100
-+++ readline6-6.3/debian/rules	2014-05-04 14:46:45.000000000 +0200
+--- a/debian/rules
++++ b/debian/rules
 @@ -57,6 +57,11 @@
    endif
  endif
@@ -4853,7 +4851,7 @@ diff -Nru readline6-6.3/debian/rules readline6-6.3/debian/rules
  LDFLAGS := \$(shell dpkg-buildflags --get LDFLAGS)
 EOF
 }
-builddep_readline6() {
+builddep_readline() {
 	assert_built "ncurses"
 	# gcc-multilib dependency unsatisfiable
 	$APT_GET install debhelper "libtinfo-dev:$1" "libncursesw5-dev:$1" mawk texinfo autotools-dev
@@ -4872,8 +4870,8 @@ builddep_readline6() {
 		;;
 	esac
 }
-cross_build readline6
-mark_built readline6
+cross_build readline
+mark_built readline
 # needed by gnupg, guile-2.0, libxml2
 
 automatically_cross_build_packages
@@ -5213,10 +5211,9 @@ mark_built libidn
 automatically_cross_build_packages
 
 builddep_libxml2() {
-	assert_built "icu readline6 xz-utils zlib"
+	assert_built "icu xz-utils zlib"
 	# python-all-dev dependency lacks profile annotation
-	# icu-dev-tools wrongly declared m-a:foreign #776821
-	$APT_GET install debhelper perl dh-autoreconf autotools-dev "zlib1g-dev:$1" "liblzma-dev:$1" "libreadline6-dev:$1" "libicu-dev:$1" "icu-devtools:$1"
+	apt_get_install debhelper dh-autoreconf autotools-dev pkg-config "zlib1g-dev:$1" "liblzma-dev:$1" "libicu-dev:$1"
 	# autodetects python2.7
 	apt_get_remove python2.7
 }
