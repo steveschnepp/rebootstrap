@@ -2727,6 +2727,25 @@ EOF
  		--without-selinux \
  		--enable-stackguard-randomization \
 EOF
+	if test "$HOST_ARCH" = tilegx; then
+		echo "patch glibc to find /usr/include/<triplet>/arch #840260"
+		drop_privs patch -p1 <<'EOF'
+--- a/debian/sysdeps/linux.mk
++++ b/debian/sysdeps/linux.mk
+@@ -41,6 +41,11 @@
+ 	else \
+ 		ln -s $(LINUX_HEADERS)/asm debian/include ; \
+ 	fi
++	if [ -d "$(LINUX_ARCH_HEADERS)/arch" ]; then \
++		ln -s $(LINUX_ARCH_HEADERS)/arch debian/include ; \
++	else \
++		ln -s $(LINUX_HEADERS)/arch debian/include ; \
++	fi
+ 	ln -s $(LINUX_HEADERS)/asm-generic debian/include
+ 	ln -s $(LINUX_HEADERS)/linux debian/include
+
+EOF
+	fi
 }
 if test -f "$REPODIR/stamps/${LIBC_NAME}_1"; then
 	echo "skipping rebuild of $LIBC_NAME stage1"
