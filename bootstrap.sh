@@ -3210,6 +3210,103 @@ EOF
 	drop_privs quilt push -a
 }
 
+patch_audit() {
+	echo "adding nopython profile to audit #840262"
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/control
++++ b/debian/control
+@@ -4,7 +4,7 @@
+ Build-Depends: debhelper (>= 9),
+                dh-autoreconf,
+                dh-systemd (>= 1.4),
+-               dh-python,
++               dh-python <!nopython>,
+ #               dh-golang,
+                dpkg-dev (>= 1.16.1~),
+                intltool,
+@@ -15,8 +15,8 @@
+                libldap2-dev,
+                libprelude-dev,
+                libwrap0-dev,
+-               python-all-dev (>= 2.6.6-3~),
+-               python3-all-dev,
++               python-all-dev (>= 2.6.6-3~) <!nopython>,
++               python3-all-dev <!nopython>,
+                swig
+ Build-Depends-Indep: golang-go
+ Standards-Version: 3.9.8
+@@ -109,6 +109,7 @@
+ Architecture: linux-any
+ Depends: ${misc:Depends}, ${python:Depends}, ${shlibs:Depends}
+ Provides: ${python:Provides}
++Build-Profiles: <!nopython>
+ Description: Python bindings for security auditing
+  The package contains the Python bindings for libaudit and libauparse, which
+  are used to monitor systems for security related events. Python can be used to
+@@ -119,6 +120,7 @@
+ Architecture: linux-any
+ Depends: ${misc:Depends}, ${python3:Depends}, ${shlibs:Depends}
+ Provides: ${python3:Provides}
++Build-Profiles: <!nopython>
+ Description: Python3 bindings for security auditing
+  The package contains the Python3 bindings for libaudit and libauparse, which
+  are used to monitor systems for security related events. Python can be used to
+--- a/debian/rules
++++ b/debian/rules
+@@ -1,14 +1,15 @@
+ #!/usr/bin/make -f
+-include /usr/share/python/python.mk
+ export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+ DPKG_EXPORT_BUILDFLAGS = 1
+ include /usr/share/dpkg/buildflags.mk
+-
+-DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
+-DEB_HOST_ARCH := $(shell dpkg-architecture -qDEB_HOST_ARCH)
++include /usr/share/dpkg/architecture.mk
+ 
+ LDFLAGS += -Wl,--as-needed
++DH_ADDONS = --with autoreconf --with systemd
++CONFIGURE_FLAGS =
+ 
++ifeq ($(filter nopython,$(DEB_BUILD_PROFILES)),)
++include /usr/share/python/python.mk
+ # For building bindings/swig/ and bindings/python/ for all Python version, these directories are cloned and build in addition to the main library
+ PYDEFAULTVER := $(shell pyversions --default --version)                                                                                        
+ PYVERS := $(shell pyversions --requested --version debian/control)                                                                             
+@@ -16,6 +17,11 @@
+ PY3DEFAULTVER := $(shell py3versions --default --version)
+ PY3VERS := $(shell py3versions --requested --version debian/control)
+ PY3VERS := $(filter-out $(PY3DEFAULTVER), $(PY3VERS))
++CONFIGURE_FLAGS += --with-python --with-python3
++DH_ADDONS += --with python2 --with python3
++else
++CONFIGURE_FLAGS += --without-python --without-python3
++endif
+ 
+ ifeq ($(DEB_HOST_ARCH),alpha)
+   EXTRA_ARCH_TABLE := --with-alpha
+@@ -25,7 +31,7 @@
+ endif
+ 
+ %:
+-	dh $@ --builddirectory=debian/build --buildsystem=autoconf --with autoreconf --with python2 --with python3 --with systemd #--with golang
++	dh $@ --builddirectory=debian/build --buildsystem=autoconf $(DH_ADDONS)
+ 
+ override_dh_auto_configure: debian/config-python-stamp $(PYVERS:%=debian/config-python%-stamp) $(PY3VERS:%=debian/config-python3-%-stamp)
+ debian/config-python-stamp:
+@@ -41,8 +47,7 @@
+ 		--with-prelude \
+ 		--with-libwrap \
+ 		--with-libcap-ng \
+-		--with-python \
+-		--with-python3 \
++		$(CONFIGURE_FLAGS) \
+ 		--with-arm --with-aarch64 ${EXTRA_ARCH_TABLE}
+ 	touch $@
+ debian/config-python%-stamp: debian/config-python-stamp
+EOF
+}
+
 add_automatic autogen
 add_automatic base-files
 
@@ -5571,6 +5668,26 @@ mark_built libprelude
 # needed by audit, dbus
 
 automatically_cross_build_packages
+
+if test -f "$REPODIR/stamps/audit_1"; then
+	echo "skipping stage1 rebuild of audit"
+else
+	cross_build_setup audit audit_1
+	assert_built "libcap-ng krb5 openldap libprelude tcp-wrappers"
+	apt_get_build_dep "-a$HOST_ARCH" --arch-only -Pnopython ./
+	check_binNMU
+	drop_privs dpkg-buildpackage "-a$HOST_ARCH" -B -uc -us -Pnopython
+	cd ..
+	ls -l
+	pickup_packages *.changes
+	touch "$REPODIR/stamps/audit_1"
+	compare_native ./*.deb
+	cd ..
+	drop_privs rm -Rf audit_1
+fi
+progress_mark "audit stage1 cross build"
+mark_built audit
+# needed by libsemanage
 fi # $HOST_ARCH matches linux-any
 
 assert_built "$need_packages"
