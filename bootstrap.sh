@@ -2174,20 +2174,6 @@ EOF
  armeb-*-netbsdelf*)	targ_emul=armelfb_nbsd;
 EOF
 	fi
-	echo "patching binutils to allow building cross binutils again"
-	drop_privs patch -p1 <<'EOF'
---- a/debian/rules
-+++ b/debian/rules
-@@ -432,6 +432,8 @@
- ifneq (,$(TARGET))
- 	sed "s/@dpkg_dev@/$(DPKG_DEV)/;/^$$/ q" < debian/control.in > debian/control
- 	sed -e "s/@target@/$$(echo -n $(TARGET) | sed s/_/-/g)/" \
-+		-e "s/@host_archs@/any/" \
-+		-e 's/@binutils_alt_triplet@//' \
- 		< debian/control.cross.in >> debian/control
- else
- 	sed -e 's/@dpkg_dev@/$(DPKG_DEV)/' \
-EOF
 	echo "patching binutils to benefit from the new cross method"
 	drop_privs patch -p1 <<'EOF'
 --- a/debian/rules
