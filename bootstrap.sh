@@ -2732,24 +2732,6 @@ EOF
 
 EOF
 	fi
-	if test "$ENABLE_MULTIARCH_GCC" != yes; then
-		echo "patching glibc to find linux headers again"
-		drop_privs patch -p1 <<'EOF'
---- a/debian/sysdeps/linux.mk
-+++ b/debian/sysdeps/linux.mk
-@@ -36,7 +35,9 @@ $(stamp)mkincludedir:
- 	# Kernel and library headers
- 	for h in arch asm asm-generic libaudit.h linux selinux sys/capability.h ; do \
- 	    mkdir -p debian/include/$$(dirname $$h) ; \
--	    if [ -e "/usr/include/$(DEB_HOST_MULTIARCH)/$$h" ]; then \
-+	    if [ -e "$(LINUX_HEADERS)/$$h" ]; then \
-+	        ln -s $(LINUX_HEADERS)/$$h debian/include/$$h ; \
-+	    elif [ -e "/usr/include/$(DEB_HOST_MULTIARCH)/$$h" ]; then \
- 	        ln -s /usr/include/$(DEB_HOST_MULTIARCH)/$$h debian/include/$$h ; \
- 	    elif [ -e "/usr/include/$$h" ]; then \
- 	        ln -s /usr/include/$$h debian/include/$$h ; \
-EOF
-	fi
 }
 if test -f "$REPODIR/stamps/${LIBC_NAME}_1"; then
 	echo "skipping rebuild of $LIBC_NAME stage1"
