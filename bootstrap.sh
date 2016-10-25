@@ -2225,6 +2225,7 @@ if test -f "$REPODIR/stamps/cross-binutils"; then
 	echo "skipping rebuild of binutils-target"
 else
 	cross_build_setup binutils
+	check_binNMU
 	apt_get_build_dep ./
 	drop_privs TARGET=$HOST_ARCH dpkg-buildpackage --target=stamps/control
 	drop_privs TARGET=$HOST_ARCH dpkg-buildpackage -B -uc -us
@@ -2245,6 +2246,7 @@ progress_mark "cross binutils"
 
 if test "$HOST_ARCH" = hppa && ! test -f "$REPODIR/stamps/cross-binutils-hppa64"; then
 	cross_build_setup binutils binutils-hppa64
+	check_binNMU
 	apt_get_build_dep ./
 	drop_privs TARGET=hppa64-linux-gnu dpkg-buildpackage --target=stamps/control
 	drop_privs TARGET=hppa64-linux-gnu dpkg-buildpackage -B -uc -us
