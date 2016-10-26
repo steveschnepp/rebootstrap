@@ -5397,35 +5397,15 @@ patch_cyrus_sasl2() {
 diff -Nru cyrus-sasl2-2.1.26.dfsg1/debian/patches/cross.patch cyrus-sasl2-2.1.26.dfsg1/debian/patches/cross.patch
 --- cyrus-sasl2-2.1.26.dfsg1/debian/patches/cross.patch
 +++ cyrus-sasl2-2.1.26.dfsg1/debian/patches/cross.patch
-@@ -0,0 +1,37 @@
+@@ -0,0 +1,17 @@
 +Description: fix cross compialtion
 +Author: Helmut Grohne <helmut@subdivi.de>
 +
-+ * makemd5 needs to be built with the build arch compiler, because it is run
-+   during build and not installed.
 + * Remove SASL_DB_LIB as it expands to -ldb and make fails to find a build arch
 +   -ldb.
 +
-+Index: cyrus-sasl2-2.1.26.dfsg1/include/Makefile.am
-+===================================================================
-+--- cyrus-sasl2-2.1.26.dfsg1.orig/include/Makefile.am
-++++ cyrus-sasl2-2.1.26.dfsg1/include/Makefile.am
-+@@ -51,6 +51,11 @@
-+ 
-+ makemd5_SOURCES = makemd5.c
-+ 
-++$(makemd5_OBJECTS): CC=cc
-++$(makemd5_OBJECTS): CFLAGS=$(CFLAGS_FOR_BUILD)
-++$(makemd5_OBJECTS): CPPFLAGS=$(CPPFLAGS_FOR_BUILD)
-++makemd5_LINK = cc -o $@
-++
-+ md5global.h: makemd5
-+ 	-rm -f md5global.h
-+ 	./makemd5 md5global.h
-+Index: cyrus-sasl2-2.1.26.dfsg1/sasldb/Makefile.am
-+===================================================================
-+--- cyrus-sasl2-2.1.26.dfsg1.orig/sasldb/Makefile.am
-++++ cyrus-sasl2-2.1.26.dfsg1/sasldb/Makefile.am
++--- a/sasldb/Makefile.am
+++++ b/sasldb/Makefile.am
 +@@ -55,7 +55,7 @@
 + 
 + libsasldb_la_SOURCES = allockey.c sasldb.h
@@ -5438,15 +5418,13 @@ diff -Nru cyrus-sasl2-2.1.26.dfsg1/debian/patches/cross.patch cyrus-sasl2-2.1.26
 diff -Nru cyrus-sasl2-2.1.26.dfsg1/debian/rules cyrus-sasl2-2.1.26.dfsg1/debian/rules
 --- cyrus-sasl2-2.1.26.dfsg1/debian/rules
 +++ cyrus-sasl2-2.1.26.dfsg1/debian/rules
-@@ -25,6 +25,10 @@
- include /usr/share/dpkg/buildflags.mk
+@@ -25,4 +25,8 @@
+ include /usr/share/dpkg/default.mk
  
- DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
-+DEB_HOST_GNU_TYPE ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
 +ifeq ($(origin CC),default)
 +export CC=$(DEB_HOST_GNU_TYPE)-gcc
 +endif
- 
++
  # Save Berkeley DB used for building the package
  BDB_VERSION ?= $(shell LC_ALL=C dpkg-query -l 'libdb[45].[0-9]-dev' | grep ^ii | sed -e 's|.*\s\libdb\([45]\.[0-9]\)-dev\s.*|\1|')
 diff -Nru cyrus-sasl2-2.1.26.dfsg1/debian/sample/Makefile cyrus-sasl2-2.1.26.dfsg1/debian/sample/Makefile
@@ -5456,12 +5434,12 @@ diff -Nru cyrus-sasl2-2.1.26.dfsg1/debian/sample/Makefile cyrus-sasl2-2.1.26.dfs
  all: sample-server sample-client
  
  sample-server: sample-server.c
--	gcc -g -o sample-server sample-server.c -I. -I$(T) -I$(INCDIR1) -I$(INCDIR2) -L$(LIBDIR) -lsasl2
-+	$(CC) -g -o sample-server sample-server.c -I. -I$(T) -I$(INCDIR1) -I$(INCDIR2) -L$(LIBDIR) -lsasl2
+-	gcc $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) -g -o sample-server sample-server.c -I. -I$(T) -I$(INCDIR1) -I$(INCDIR2) -L$(LIBDIR) -lsasl2
++	$(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) -g -o sample-server sample-server.c -I. -I$(T) -I$(INCDIR1) -I$(INCDIR2) -L$(LIBDIR) -lsasl2
  
  sample-client: sample-client.c
--	gcc -g -o sample-client sample-client.c -I. -I$(T) -I$(INCDIR1) -I$(INCDIR2) -L$(LIBDIR) -lsasl2
-+	$(CC) -g -o sample-client sample-client.c -I. -I$(T) -I$(INCDIR1) -I$(INCDIR2) -L$(LIBDIR) -lsasl2
+-	gcc $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) -g -o sample-client sample-client.c -I. -I$(T) -I$(INCDIR1) -I$(INCDIR2) -L$(LIBDIR) -lsasl2
++	$(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) -g -o sample-client sample-client.c -I. -I$(T) -I$(INCDIR1) -I$(INCDIR2) -L$(LIBDIR) -lsasl2
 EOF
 	echo cross.patch | drop_privs tee -a debian/patches/series >/dev/null
 	drop_privs quilt push -a
