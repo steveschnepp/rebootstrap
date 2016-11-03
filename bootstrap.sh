@@ -5043,6 +5043,53 @@ EOF
  # Explicitly describe dependencies.
  # You can recreate this with `gcc -I. -MM *.c'
 EOF
+	if dpkg-architecture "-a$HOST_ARCH" -ihurd-any; then
+		echo "fixing flex ftbfs for hurd-any #838133"
+		drop_privs patch -p1 <<'EOF'
+--- a/src/main.c
++++ b/src/main.c
+@@ -358,8 +358,8 @@
+ 			if (!path) {
+ 				m4 = M4;
+ 			} else {
++				int m4_length = strlen(m4);
+ 				do {
+-					char m4_path[PATH_MAX];
+ 					int length = strlen(path);
+ 					struct stat sbuf;
+ 
+@@ -367,19 +367,17 @@
+ 					if (!endOfDir)
+ 						endOfDir = path+length;
+ 
+-					if ((endOfDir-path+2) >= sizeof(m4_path)) {
+-					    path = endOfDir+1;
+-						continue;
+-					}
++					{
++						char m4_path[endOfDir-path + 1 + m4_length + 1];
+ 
+-					strncpy(m4_path, path, sizeof(m4_path));
+-					m4_path[endOfDir-path] = '/';
+-					m4_path[endOfDir-path+1] = '\0';
+-					strncat(m4_path, m4, sizeof(m4_path));
+-					if (stat(m4_path, &sbuf) == 0 &&
+-						(S_ISREG(sbuf.st_mode)) && sbuf.st_mode & S_IXUSR) {
+-						m4 = strdup(m4_path);
+-						break;
++						memcpy(m4_path, path, endOfDir-path);
++						m4_path[endOfDir-path] = '/';
++						memcpy(m4_path + (endOfDir-path) + 1, m4, m4_length + 1);
++						if (stat(m4_path, &sbuf) == 0 &&
++							(S_ISREG(sbuf.st_mode)) && sbuf.st_mode & S_IXUSR) {
++							m4 = strdup(m4_path);
++							break;
++						}
+ 					}
+ 					path = endOfDir+1;
+ 				} while (path[0]);
+EOF
+	fi
 }
 cross_build flex
 mark_built flex
