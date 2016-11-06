@@ -5488,7 +5488,7 @@ mark_built openldap
 
 automatically_cross_build_packages
 
-if test "$HOST_ARCH" = i386 || test "$HOST_ARCH" = amd64; then
+if apt-cache showsrc systemd | grep -q "^Build-Depends:.*gnu-efi[^,]*[[ ]$HOST_ARCH[] ]"; then
 cross_build gnu-efi
 mark_built gnu-efi
 # needed by systemd
