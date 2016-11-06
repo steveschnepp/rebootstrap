@@ -4472,9 +4472,10 @@ add_automatic xz-utils
 $APT_GET install dose-builddebcheck dctrl-tools
 
 call_dose_builddebcheck() {
-	local package_list source_list errcode
+	local package_list source_list triplettable errcode
 	package_list=`mktemp packages.XXXXXXXXXX`
 	source_list=`mktemp sources.XXXXXXXXXX`
+	triplettable=$(mktemp triplettable.XXXXXXXXXX)
 	cat /var/lib/apt/lists/*_Packages - > "$package_list" <<EOF
 Package: crossbuild-essential-$HOST_ARCH
 Version: 0
@@ -4487,13 +4488,14 @@ EOF
 	sed -i -e '/^Conflicts:.* libc[0-9][^ ]*-dev\(,\|$\)/d' "$package_list" # also make dose ignore the glibc conflict
 	apt-cache show "gcc-${GCC_VER}-base=installed" libgcc1=installed libstdc++6=installed libatomic1=installed >> "$package_list" # helps when pulling gcc from experimental
 	cat /var/lib/apt/lists/*_Sources > "$source_list"
+	sed 's/^base-/-/;s/^\([^-]*\)-\([^-]*\)-/\2\1-/' /usr/share/dpkg/tupletable > "$triplettable" # work around dose #843409
 	errcode=0
-	dose-builddebcheck --deb-triplettable=/usr/share/dpkg/triplettable --deb-cputable=/usr/share/dpkg/cputable "--deb-native-arch=$(dpkg --print-architecture)" "--deb-host-arch=$HOST_ARCH" "$@" "$package_list" "$source_list" || errcode=$?
+	dose-builddebcheck "--deb-triplettable=$triplettable" --deb-cputable=/usr/share/dpkg/cputable "--deb-native-arch=$(dpkg --print-architecture)" "--deb-host-arch=$HOST_ARCH" "$@" "$package_list" "$source_list" || errcode=$?
 	if test "$errcode" -gt 1; then
 		echo "dose-builddebcheck failed with error code $errcode" 1>&2
 		exit 1
 	fi
-	rm -f "$package_list" "$source_list"
+	rm -f "$package_list" "$source_list" "$triplettable"
 }
 
 # determine whether a given binary package refers to an arch:all package
