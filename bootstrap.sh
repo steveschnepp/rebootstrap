@@ -704,6 +704,7 @@ pickup_additional_packages() {
 		if test "${f%.deb}" != "$f"; then
 			reprepro includedeb rebootstrap "$f"
 		elif test "${f%.changes}" != "$f"; then
+			sed -i -e '/^ .* .* .*_.*_.*\.buildinfo/d' "$f" # work around #843402
 			reprepro include rebootstrap "$f"
 		else
 			echo "cannot pick up package $f"
@@ -2095,6 +2096,7 @@ else
 		drop_privs changestool ./*.changes dumbremove libasan*.deb libmpx*.deb lib*"-${GCC_VER}-"*.deb
 		drop_privs rm -fv libasan*.deb libmpx*.deb lib*"-${GCC_VER}-"*.deb
 	fi
+	sed -i -e '/^ .* .* .*_.*_.*\.buildinfo/d' ./*.changes # work around #843402
 	reprepro include rebootstrap-native ./*.changes
 	drop_privs rm -fv ./*-plugin-dev_*.deb ./*-dbg_*.deb
 	dpkg -i *.deb
