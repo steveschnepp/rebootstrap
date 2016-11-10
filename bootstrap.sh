@@ -3057,20 +3057,6 @@ add_automatic() { automatic_packages=`set_add "$automatic_packages" "$1"`; }
 
 add_automatic acl
 add_automatic apt
-patch_apt() {
-	echo "patching apt to work around cmake deficiencies #833789"
-	drop_privs patch -p1 <<'EOF'
---- a/debian/rules
-+++ b/debian/rules
-@@ -31,5 +31,5 @@
- override_dh_auto_configure-arch: flags=-DWITH_DOC=OFF
- override_dh_auto_configure-indep: flags=-DWITH_DOC=ON
- override_dh_auto_configure-arch override_dh_auto_configure-indep:
--	dh_auto_configure -- $(flags)
-+	dh_auto_configure -- $(flags) -DPKG_CONFIG_EXECUTABLE=/usr/bin/$(DEB_HOST_GNU_TYPE)-pkg-config -DCMAKE_INSTALL_LIBDIR=lib/$(DEB_HOST_MULTIARCH)
-
-EOF
-}
 
 add_automatic attr
 patch_attr() {
