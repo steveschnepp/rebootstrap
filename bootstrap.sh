@@ -3626,8 +3626,6 @@ add_automatic libassuan
 
 add_automatic libatomic-ops
 patch_libatomic_ops() {
-	local need_autoreconf
-	need_autoreconf=
 	if test "$HOST_ARCH" = nios2; then
 		echo "cherry-picking https://github.com/ivmai/libatomic_ops/commit/4b005ee56898309e8afba9b3c48cf94f0f5f78e4"
 		drop_privs patch -p1 <<'EOF'
@@ -3673,32 +3671,6 @@ patch_libatomic_ops() {
 +#include "generic.h"
 +
 +#define AO_T_IS_INT
-EOF
-		need_autoreconf=yes
-	fi
-	if test "$need_autoreconf" = yes; then
-		echo "patching libatomic-ops to run autoreconf #821068"
-		drop_privs patch -p1 <<'EOF'
---- a/debian/control
-+++ b/debian/control
-@@ -6,6 +6,7 @@
- Build-Depends: cdbs (>= 0.4.27),
-  autotools-dev,
-  debhelper,
-+ dh-autoreconf,
-  dh-buildinfo,
-  quilt,
-  patchutils (>= 0.2.25), quilt
---- a/debian/rules
-+++ b/debian/rules
-@@ -1,6 +1,7 @@
- #!/usr/bin/make -f
-
- include /usr/share/cdbs/1/rules/debhelper.mk
-+include /usr/share/cdbs/1/rules/autoreconf.mk
- include /usr/share/cdbs/1/class/autotools.mk
- include /usr/share/dpkg/architecture.mk
- include /usr/share/cdbs/1/rules/patchsys-quilt.mk
 EOF
 	fi
 }
