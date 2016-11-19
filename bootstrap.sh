@@ -1809,7 +1809,7 @@ patch_gcc_6() {
  
 -	dh_strip -p$(p_l) --dbg-package=$(p_d)
 +	$(cross_strip) dh_strip -p$(p_l) --dbg-package=$(p_d)
- 	$(cross_makeshlibs) dh_makeshlibs $(ldconfig_arg) -p$(p_l)
+ 	$(cross_makeshlibs) dh_makeshlibs $(ldconfig_arg) -p$(p_l) || echo XXXXXXXXXXXXXX ERROR $(p_l)
  	$(call cross_mangle_shlibs,$(p_l))
  	$(ignshld)DIRNAME=$(subst n,,$(2)) $(cross_shlibdeps) dh_shlibdeps -p$(p_l) \
 --- a/debian/rules.d/binary-libatomic.mk
@@ -1917,9 +1917,9 @@ patch_gcc_6() {
  
 -	dh_strip -p$(p_l) --dbg-package=$(p_d)
 +	$(cross_strip) dh_strip -p$(p_l) --dbg-package=$(p_d)
- 	$(cross_makeshlibs) dh_makeshlibs $(ldconfig_arg) -p$(p_l) -Xlibobjc_gc.so
- 	$(call cross_mangle_shlibs,$(p_l))
- 	$(ignshld)DIRNAME=$(subst n,,$(2)) $(cross_shlibdeps) dh_shlibdeps -p$(p_l) \
+ 	ln -sf libobjc.symbols debian/$(p_l).symbols
+ 	$(cross_makeshlibs) dh_makeshlibs $(ldconfig_arg) -p$(p_l) \
+ 		-- -a$(call mlib_to_arch,$(2)) || echo XXXXXXXXXXXXXX ERROR $(p_l)
 --- a/debian/rules.d/binary-libquadmath.mk
 +++ b/debian/rules.d/binary-libquadmath.mk
 @@ -30,7 +30,7 @@
