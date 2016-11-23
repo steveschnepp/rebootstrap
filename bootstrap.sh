@@ -1917,9 +1917,9 @@ patch_gcc_6() {
  
 -	dh_strip -p$(p_l) --dbg-package=$(p_d)
 +	$(cross_strip) dh_strip -p$(p_l) --dbg-package=$(p_d)
- 	ln -sf libobjc.symbols debian/$(p_l).symbols
- 	$(cross_makeshlibs) dh_makeshlibs $(ldconfig_arg) -p$(p_l) \
- 		-- -a$(call mlib_to_arch,$(2)) || echo XXXXXXXXXXXXXX ERROR $(p_l)
+ 	$(if $(2),
+ 	  ln -sf libobjc.symbols debian/$(p_l).symbols ,
+ 	  fgrep -v libobjc.symbols.gc debian/libobjc.symbols > debian/$(p_l).symbols
 --- a/debian/rules.d/binary-libquadmath.mk
 +++ b/debian/rules.d/binary-libquadmath.mk
 @@ -30,7 +30,7 @@
