@@ -608,22 +608,6 @@ else
 fi # already repacked
 fi # is glibc
 
-# make flex Multi-Arch again
-if test -f "$REPODIR/pool/main/f/flex/flex"_*_"$(dpkg --print-architecture).deb"; then
-	dpkg -i "$REPODIR/pool/main/f/flex"_*_"$(dpkg --print-architecture).deb" "$REPODIR/pool/main/f/libfl-dev"_*_"$(dpkg --print-architecture).deb"
-else
-	cd /tmp/buildd
-	apt-get download flex
-	dpkg-deb -R ./flex_*.deb x
-	sed -i '/^Depends:/s/, *libfl-dev[^,]*,/,/;/^Package:/aMulti-Arch: foreign' x/DEBIAN/control
-	dpkg-deb -b x ./flex_*.deb
-	reprepro includedeb rebootstrap-native ./flex_*.deb
-	apt_get_install m4
-	dpkg -i ./flex_*.deb
-	$APT_GET update
-	rm -Rf ./flex_*.deb x
-fi
-
 chdist_native() {
 	local command
 	command="$1"
