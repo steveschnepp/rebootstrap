@@ -2048,27 +2048,6 @@ EOF
    p_xbase = gcc$(pkg_ver)-base
 EOF
 	fi
-	echo "cherry-picking patch from cross-toolchain-base 14"
-	drop_privs patch -p1 <<'EOF'
---- a/debian/rules.patch
-+++ b/debian/rules.patch
-@@ -151,6 +151,7 @@
- debian_patches += ada-kfreebsd
- debian_patches += ada-revert-pr63225
- 
-+ifeq (,$(DEB_STAGE))
- # there should be no harm to always apply these, except for new GCC versions
- #ifeq ($(with_ada),yes)
-   debian_patches += \
-@@ -187,6 +188,7 @@ debian_patches += ada-revert-pr63225
- 
-   debian_patches += ada-link-shlib
- #endif
-+endif # DEB_STAGE
- 
- 
- ifeq ($(with_d),yes)
-EOF
 	patch_gcc_rtlibs_base_dep
 	patch_gcc_rtlibs_libatomic
 	patch_gcc_include_multiarch
