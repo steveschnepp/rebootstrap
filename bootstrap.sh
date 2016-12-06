@@ -4467,6 +4467,185 @@ buildenv_tk8_6() {
 	export tcl_cv_strtod_buggy=ok
 }
 
+patch_unbound() {
+	echo "patching unbound to add a pkg.unbound.libonly build profile #847130"
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/control
++++ b/debian/control
+@@ -9,26 +9,26 @@
+  autotools-dev,
+  bison,
+  debhelper (>= 9~),
+- dh-apparmor,
++ dh-apparmor <!pkg.unbound.libonly>,
+  dh-autoreconf,
+- dh-python,
+- dh-systemd,
++ dh-python <!pkg.unbound.libonly>,
++ dh-systemd <!pkg.unbound.libonly>,
+  dpkg-dev (>= 1.16.1~),
+  flex,
+  libevent-dev,
+  libexpat1-dev,
+- libfstrm-dev,
+- libprotobuf-c-dev,
+- libssl-dev,
++ libfstrm-dev <!pkg.unbound.libonly>,
++ libprotobuf-c-dev <!pkg.unbound.libonly>,
++ libssl-dev <!pkg.unbound.libonly>,
+  libtool,
+  nettle-dev,
+  pkg-config,
+- protobuf-c-compiler,
+- python-all-dev:any (>= 2.6.6-3~),
+- libpython-all-dev (>= 2.6.6-3~),
+- python3-all-dev:any,
+- libpython3-all-dev,
+- swig,
++ protobuf-c-compiler <!pkg.unbound.libonly>,
++ python-all-dev:any (>= 2.6.6-3~) <!pkg.unbound.libonly>,
++ libpython-all-dev (>= 2.6.6-3~) <!pkg.unbound.libonly>,
++ python3-all-dev:any <!pkg.unbound.libonly>,
++ libpython3-all-dev <!pkg.unbound.libonly>,
++ swig <!pkg.unbound.libonly>,
+ Standards-Version: 3.9.8
+ Homepage: https://www.unbound.net/
+ Vcs-Browser: https://anonscm.debian.org/cgit/pkg-dns/unbound.git
+@@ -69,6 +69,7 @@
+  ${misc:Depends},
+  ${python:Depends},
+  ${shlibs:Depends},
++Build-Profiles: <!pkg.unbound.libonly>
+ Description: library implementing DNS resolution and validation (Python bindings)
+  Python extension module for libunbound.
+  .
+@@ -83,6 +84,7 @@
+  ${misc:Depends},
+  ${python3:Depends},
+  ${shlibs:Depends},
++Build-Profiles: <!pkg.unbound.libonly>
+ Description: library implementing DNS resolution and validation (Python3 bindings)
+  Python3 extension module for libunbound.
+  .
+@@ -102,6 +104,7 @@
+ Enhances:
+  munin-node,
+ Suggests: apparmor
++Build-Profiles: <!pkg.unbound.libonly>
+ Description: validating, recursive, caching DNS resolver
+  Unbound is a recursive-only caching DNS server which can perform DNSSEC
+  validation of results. It implements only a minimal amount of authoritative
+@@ -120,6 +123,7 @@
+  unbound (<< 1.4.13-1),
+ Breaks:
+  unbound (<< 1.4.13-1),
++Build-Profiles: <!pkg.unbound.libonly>
+ Description: utility to securely fetch the root DNS trust anchor
+  unbound-anchor is a utility which securely fetches or updates the root DNS
+  zone trust anchor. A copy of the current root anchor and root update
+@@ -131,6 +135,7 @@
+ Depends:
+  ${misc:Depends},
+  ${shlibs:Depends},
++Build-Profiles: <!pkg.unbound.libonly>
+ Description: reimplementation of the 'host' command
+  This package provides the 'unbound-host' program that is bundled with the
+  Unbound domain name server. This version differs from the one provided in the
+--- a/debian/libunbound-dev.install
++++ b/debian/libunbound-dev.install
+@@ -1,2 +1,2 @@
+-usr/include/unbound.h usr/include
+-usr/share/man/man3/libunbound.3 usr/share/man/man3
++debian/tmp-lib/usr/include/unbound.h usr/include
++debian/tmp-lib/usr/share/man/man3/libunbound.3 usr/share/man/man3
+--- a/debian/rules
++++ b/debian/rules
+@@ -8,6 +8,7 @@
+ endif
+ 
+ LIBRARY = libunbound2
++DOPACKAGES = $(shell dh_listpackages)
+ 
+ export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+ DPKG_EXPORT_BUILDFLAGS = 1
+@@ -27,6 +28,7 @@
+ 	dh_autoreconf
+ 	dh_autotools-dev_updateconfig
+ 
++ifneq (,$(filter unbound unbound-anchor unbound-host,$(DOPACKAGES)))
+ 	# first build -- build unbound daemon
+ 	PYTHON_VERSION="$(shell py3versions -vd)" \
+ 	CFLAGS="$(CFLAGS)" CPPFLAGS="$(CPPFLAGS)" LDFLAGS="-Wl,--as-needed $(LDFLAGS)" \
+@@ -43,6 +45,7 @@
+ 	$(MAKE)
+ 	$(MAKE) install DESTDIR="$(CURDIR)/debian/tmp"
+ 	$(MAKE) clean
++endif
+ 
+ 	# second build -- build libunbound only, against nettle
+ 	CFLAGS="$(CFLAGS)" CPPFLAGS="$(CPPFLAGS)" LDFLAGS="-Wl,--as-needed $(LDFLAGS)" \
+@@ -61,6 +64,7 @@
+ 		$(CURDIR)/debian/libunbound-dev/usr/lib/$(DEB_HOST_MULTIARCH)/pkgconfig/libunbound.pc
+ 	$(MAKE) clean
+ 
++ifneq (,$(filter python-unbound,$(DOPACKAGES)))
+ 	# third build - pyunbound for Python 2
+ 	PYTHON_VERSION="$(shell pyversions -vd)" \
+ 	CFLAGS="$(CFLAGS)" CPPFLAGS="$(CPPFLAGS)" LDFLAGS="-Wl,--as-needed $(LDFLAGS)" \
+@@ -77,7 +81,9 @@
+ 		libunbound/python/unbound.py \
+ 		debian/python-unbound/usr/lib/$(shell pyversions -d)/dist-packages
+ 	$(MAKE) clean
++endif
+ 
++ifneq (,$(filter python3-unbound,$(DOPACKAGES)))
+ 	# fourth build - pyunbound for Python 3
+ 	PYTHON_VERSION="$(shell py3versions -vd)" \
+ 	CFLAGS="$(CFLAGS)" CPPFLAGS="$(CPPFLAGS)" LDFLAGS="-Wl,--as-needed $(LDFLAGS)" \
+@@ -94,9 +100,11 @@
+ 		libunbound/python/unbound.py \
+ 		debian/python3-unbound/usr/lib/$(shell py3versions -d)/dist-packages
+ 	$(MAKE) clean
++endif
+ 
+ 	dh_installdirs
+ 
++ifneq (,$(filter unbound unbound-anchor unbound-host,$(DOPACKAGES)))
+ 	dh_systemd_enable -p unbound
+ 	dh_systemd_enable -p unbound --name=unbound-resolvconf
+ 	dh_systemd_start -p unbound unbound.service
+@@ -109,6 +117,7 @@
+ 	install -m 0644 doc/example.conf debian/unbound/usr/share/doc/unbound/examples/unbound.conf
+ 	install -m 0644 contrib/update-anchor.sh debian/unbound/usr/share/doc/unbound/contrib
+ 	install -D -m 0755 contrib/unbound_munin_ debian/unbound/usr/share/munin/plugins/unbound_munin_
++endif
+ 
+ 	mkdir -p debian/libunbound-dev/usr/lib/$(DEB_HOST_MULTIARCH)
+ 	mv \
+@@ -126,14 +135,20 @@
+ 	dh_installchangelogs
+ 	dh_installdocs
+ 	dh_installman
++ifneq (,$(filter python-unbound,$(DOPACKAGES)))
+ 	dh_python2 --no-guessing-versions
++endif
++ifneq (,$(filter python3-unbound,$(DOPACKAGES)))
+ 	dh_python3
++endif
+ 	dh_strip
+ 	dh_compress -Xusr/share/doc/unbound/examples/unbound.conf
+ 
++ifneq (,$(filter unbound unbound-anchor unbound-host,$(DOPACKAGES)))
+ 	mkdir -p debian/unbound/etc/apparmor.d
+ 	cp debian/apparmor-profile debian/unbound/etc/apparmor.d/usr.sbin.unbound
+ 	dh_apparmor --profile-name=usr.sbin.unbound -punbound
++endif
+ 
+ 	dh_fixperms
+ 	dh_makeshlibs
+EOF
+}
+
 add_automatic ustr
 add_automatic xft
 add_automatic xz-utils
@@ -5467,6 +5646,27 @@ fi
 progress_mark "cyrus-sasl2 stage1 cross build"
 mark_built cyrus-sasl2
 # needed by openldap
+
+automatically_cross_build_packages
+
+if test -f "$REPODIR/stamps/unbound_1"; then
+	echo "skipping stage1 rebuild of unbound"
+else
+	cross_build_setup unbound unbound_1
+	apt_get_build_dep "-a$HOST_ARCH" --arch-only -P pkg.unbound.libonly ./
+	check_binNMU
+	drop_privs dpkg-buildpackage "-a$HOST_ARCH" -B -uc -us -Ppkg.unbound.libonly
+	cd ..
+	ls -l
+	pickup_packages *.changes
+	touch "$REPODIR/stamps/unbound_1"
+	compare_native ./*.deb
+	cd ..
+	drop_privs rm -Rf unbound_1
+fi
+progress_mark "unbound stage1 cross build"
+mark_built unbound
+# needed by gnutls28
 
 automatically_cross_build_packages
 
