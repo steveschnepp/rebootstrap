@@ -4753,6 +4753,7 @@ add_need libx11 # by dbus
 add_need libxau # by libxcb
 add_need libxdmcp # by libxcb
 add_need libxrender # by cairo
+add_need lz4 # by systemd
 add_need make-dfsg # for build-essential
 add_need man-db # for debhelper
 add_need mawk # for base-files (alternatively: gawk)
