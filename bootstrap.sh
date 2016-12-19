@@ -3503,21 +3503,7 @@ EOF
 
 add_automatic grep
 add_automatic groff
-
 add_automatic guile-2.0
-builddep_guile_2_0() {
-	assert_built "gmp libffi libgc libtool libunistring ncurses readline"
-	apt_get_build_dep "-a$HOST_ARCH" --arch-only -P cross ./
-	if test "$HOST_ARCH" = nios2; then
-		sed -i 's/"sh4"/& "nios2"/' /usr/share/guile/2.0/system/base/target.scm
-	fi
-}
-patch_guile_2_0() {
-	if test "$HOST_ARCH" = nios2; then
-		echo "Patching guile nios2 support http://debbugs.gnu.org/cgi/bugreport.cgi?bug=22480"
-		drop_privs sed -i 's/"sh4"/& "nios2"/' module/system/base/target.scm
-	fi
-}
 
 add_automatic gzip
 buildenv_gzip() {
