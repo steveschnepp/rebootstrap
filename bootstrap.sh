@@ -5671,6 +5671,35 @@ mark_built audit
 # needed by libsemanage
 fi # $HOST_ARCH matches linux-any
 
+automatically_cross_build_packages
+
+builddep_libsemanage() {
+	assert_built "audit bzip2 libselinux libsepol ustr"
+	# stuff lacks stage1 profile
+	apt_get_install bison debhelper file flex "libaudit-dev:$1" "libbz2-dev:$1" "libselinux1-dev:$1" "libsepol1-dev:$1" "libustr-dev:$1" pkg-config
+}
+if test -f "$REPODIR/stamps/libsemanage_1"; then
+	echo "skipping stage1 rebuild of libsemanage"
+else
+	cross_build_setup libsemanage libsemanage_1
+	builddep_libsemanage "$HOST_ARCH"
+	check_binNMU
+	dpkg-checkbuilddeps -B "-a$HOST_ARCH" || : # tell unmet build depends
+	drop_privs DEB_STAGE=stage1 CC="$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_GNU_TYPE)-gcc" dpkg-buildpackage -d "-a$HOST_ARCH" -B -uc -us
+	cd ..
+	ls -l
+	pickup_packages *.changes
+	touch "$REPODIR/stamps/libsemanage_1"
+	compare_native ./*.deb
+	cd ..
+	drop_privs rm -Rf libsemanage_1
+fi
+progress_mark "libsemanage stage1 cross build"
+mark_built libsemanage
+# needed by shadow
+
+automatically_cross_build_packages
+
 assert_built "$need_packages"
 
 echo "checking installability of build-essential with dose"
