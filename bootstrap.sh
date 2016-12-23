@@ -580,12 +580,6 @@ cat >/etc/dpkg/dpkg.cfg.d/bug-825146 <<'EOF'
 path-exclude=/usr/share/doc/libxdmcp-dev/xdmcp.txt.gz
 EOF
 
-# Work around Multi-Arch: same file conflict in libldap-2.4-2. #330695
-apt_get_install libldap-2.4-2 # install /etc/ldap/ldap.conf, preserved on removal
-cat >/etc/dpkg/dpkg.cfg.d/bug-330695 <<'EOF'
-path-exclude=/etc/ldap/ldap.conf
-EOF
-
 # removing libc*-dev conflict with each other
 LIBC_DEV_PKG=$(apt-cache showpkg libc-dev | sed '1,/^Reverse Provides:/d;s/ .*//;q')
 if test "$(apt-cache show "$LIBC_DEV_PKG" | sed -n 's/^Source: //;T;p;q')" = glibc; then
