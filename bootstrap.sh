@@ -4414,22 +4414,28 @@ patch_nss() {
 EOF
 		drop_privs quilt push -a
 	fi
-	echo "disable -Werror for nss #811575"
-	drop_privs patch -p1 <<'EOF'
---- a/debian/rules
-+++ b/debian/rules
-@@ -108,6 +108,7 @@
- 		NSPR_LIB_DIR=/usr/lib/$(DEB_HOST_MULTIARCH) \
- 		BUILD_OPT=1 \
- 		NS_USE_GCC=1 \
-+		NSS_ENABLE_WERROR=0 \
- 		OPTIMIZER="$(CFLAGS) $(CPPFLAGS)" \
- 		LDFLAGS='$(LDFLAGS) $$(ARCHFLAG) $$(ZDEFS_FLAG)' \
- 		DSO_LDOPTS='-shared $$(LDFLAGS)' \
-EOF
 }
 
 add_automatic openssl
+patch_openssl() {
+	if test "$HOST_ARCH" = tilegx; then
+		echo "patching openssl to support tilegx #848957"
+		drop_privs patch -p1 <<'EOF'
+--- a/Configurations/20-debian.conf
++++ b/Configurations/20-debian.conf
+@@ -127,6 +127,9 @@
+ 	        cflags => add("-m64 -mcpu=ultrasparc -DB_ENDIAN"),
+ 		bn_ops => "BN_LLONG RC4_CHAR",
+ 	},
++	"debian-tilegx" => {
++		inherit_from => [ "linux-generic64", "debian" ],
++	},
+ 	"debian-x32" => {
+ 		inherit_from => [ "linux-x32", "debian" ],
+ 	},
+EOF
+	fi
+}
 
 add_automatic p11-kit
 builddep_p11_kit() {
