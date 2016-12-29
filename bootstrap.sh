@@ -5004,10 +5004,6 @@ mark_built bsdmainutils
 
 automatically_cross_build_packages
 
-builddep_flex() {
-	$APT_GET build-dep "-a$1" --arch-only flex
-	$APT_GET install flex # needs Build-Depends: flex <cross> #762180
-}
 patch_flex() {
 	echo "patching flex to not run tests under DEB_BUILD_OPTIONS=nocheck #812659"
 	drop_privs patch -p1 <<'EOF'
