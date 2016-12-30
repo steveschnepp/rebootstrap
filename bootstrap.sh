@@ -4569,6 +4569,7 @@ add_need libatomic-ops # by gcc-4.9
 add_need libbsd # by bsdmainutils
 dpkg-architecture "-a$HOST_ARCH" -ilinux-any && add_need libcap2 # by systemd
 add_need libdebian-installer # by cdebconf
+add_need libevent # by unbound
 add_need libgcrypt20 # by libprelude, cryptsetup
 add_need libpthread-stubs # by libxcb
 if apt-cache showsrc systemd | grep -q "^Build-Depends:.*libseccomp-dev[^,]*[[ ]$HOST_ARCH[] ]"; then
@@ -4586,6 +4587,7 @@ add_need man-db # for debhelper
 add_need mawk # for base-files (alternatively: gawk)
 add_need mpclib3 # by gcc-4.9
 add_need mpfr4 # by gcc-4.9
+add_need nettle # by unbound
 add_need nghttp2 # by curl
 add_need nss # by curl
 add_need openssl # by curl
@@ -5476,6 +5478,7 @@ automatically_cross_build_packages
 if test -f "$REPODIR/stamps/unbound_1"; then
 	echo "skipping stage1 rebuild of unbound"
 else
+	assert_built "libevent expat nettle"
 	cross_build_setup unbound unbound_1
 	apt_get_build_dep "-a$HOST_ARCH" --arch-only -P pkg.unbound.libonly ./
 	check_binNMU
