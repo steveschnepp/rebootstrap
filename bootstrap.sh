@@ -3277,6 +3277,7 @@ builddep_build_essential() {
 }
 
 add_automatic bzip2
+add_automatic c-ares
 
 add_automatic cloog
 builddep_cloog() {
