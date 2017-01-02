@@ -3387,6 +3387,7 @@ builddep_elfutils() {
 	apt_get_install debhelper autotools-dev autoconf automake bzip2 "zlib1g-dev:$1" zlib1g-dev "libbz2-dev:$1" "liblzma-dev:$1" m4 gettext gawk dpkg-dev flex libfl-dev bison
 }
 
+add_automatic file
 add_automatic findutils
 
 add_automatic fontconfig
@@ -4556,6 +4557,7 @@ add_need autogen # by gcc-5, gnutls28
 add_need bzip2 # by dpkg, perl
 add_need cloog # by gcc-4.9
 add_need db-defaults # by apt, perl, python2.7
+add_need file # by gcc-6, for debhelper
 dpkg-architecture "-a$HOST_ARCH" -ikfreebsd-any && add_need freebsd-glue # by freebsd-libs
 add_need fuse # by e2fsprogs
 add_need gdbm # by perl, python2.7
@@ -4967,32 +4969,6 @@ fi
 progress_mark "util-linux stage1 cross build"
 mark_built util-linux
 # essential, needed by e2fsprogs
-
-automatically_cross_build_packages
-
-builddep_file() {
-	assert_built "zlib"
-	# python-all lacks build profile annotation #709623
-	$APT_GET install debhelper dh-autoreconf "zlib1g-dev:$HOST_ARCH"
-}
-if test -f "$REPODIR/stamps/file_1"; then
-	echo "skipping stage1 rebuild of file"
-else
-	builddep_file
-	cross_build_setup file file_1
-	dpkg-checkbuilddeps "-a$HOST_ARCH" || : # tell unmet build depends
-	drop_privs dpkg-buildpackage "-a$HOST_ARCH" -B -d -uc -us -Pstage1
-	cd ..
-	ls -l
-	pickup_packages *.changes
-	touch "$REPODIR/stamps/file_1"
-	compare_native ./*.deb
-	cd ..
-	drop_privs rm -Rf file_1
-fi
-progress_mark "file stage1 cross build"
-mark_built file
-# needed by gcc-4.9, needed for debhelper
 
 automatically_cross_build_packages
 
