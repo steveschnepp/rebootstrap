@@ -3412,6 +3412,8 @@ patch_gmp() {
 	fi
 	echo "patching gmp symbols for nios2 #814671"
 	sed -i 's/!mips /!nios2 &/' debian/libgmp10.symbols
+	echo "patching gmp symbols for tilegx #850010"
+	sed -i '/^ /s/!m68k /!tilegx &/' debian/libgmp10.symbols
 }
 
 builddep_gnu_efi() {
