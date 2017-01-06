@@ -4451,7 +4451,39 @@ add_automatic patch
 add_automatic pcre3
 add_automatic readline5
 add_automatic rtmpdump
+
 add_automatic sed
+patch_sed() {
+	echo "patching sed to fix FTCBFS #850321"
+	drop_privs patch -p1 <<'EOF'
+--- a/configure.ac
++++ b/configure.ac
+@@ -28,6 +28,7 @@
+ 
+ AC_PROG_CC_STDC
+ AM_PROG_CC_C_O
++AM_CONDITIONAL([cross_compiling],[test x$cross_compiling = xyes])
+ gl_EARLY
+ gl_INIT
+ gl_DISABLE_THREADS
+--- a/doc/local.mk
++++ b/doc/local.mk
+@@ -22,6 +22,7 @@
+ 
+ AM_MAKEINFOHTMLFLAGS = --no-split
+ 
++if !cross_compiling
+ doc/sed.1: sed/sed$(EXEEXT) .version $(srcdir)/doc/sed.x
+ 	$(AM_V_GEN)$(MKDIR_P) doc
+ 	$(AM_V_at)rm -rf $@ $@-t
+@@ -31,3 +32,4 @@
+ 	    -o $@-t $(SEDBIN)						\
+ 	  && chmod a-w $@-t						\
+ 	  && mv $@-t $@
++endif
+EOF
+}
+
 add_automatic slang2
 add_automatic spdylay
 add_automatic sqlite3
