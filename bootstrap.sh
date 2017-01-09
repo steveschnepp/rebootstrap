@@ -368,12 +368,15 @@ check_arch() {
 			fi
 		;;
 		*", Renesas SH, version "*)
-			if test sh4 != `dpkg-architecture -a$2 -qDEB_HOST_ARCH_CPU`; then
-				echo "cpu mismatch"
-				echo "expected $2"
-				echo "got $FILE_RES"
-				return 1
-			fi
+			case "$(dpkg-architecture "-a$2" -qDEB_HOST_ARCH_CPU)" in
+				sh3|sh4) ;;
+				*)
+					echo "cpu mismatch"
+					echo "expected $2"
+					echo "got $FILE_RES"
+					return 1
+				;;
+			esac
 		;;
 		*", Altera Nios II, version"*)
 			if test nios2 != "$(dpkg-architecture "-a$2" -qDEB_HOST_ARCH_CPU)"; then
