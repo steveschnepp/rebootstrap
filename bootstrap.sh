@@ -4465,6 +4465,10 @@ buildenv_tar() {
 		echo "struct dirent contains working d_ino on glibc systems"
 		export gl_cv_struct_dirent_d_ino=yes
 	;; esac
+	if ! dpkg-architecture "-a$HOST_ARCH" -ilinux-any; then
+		echo "forcing broken posix acl check to fail on non-linux #850668"
+		export gl_cv_getxattr_with_posix_acls=no
+	fi
 }
 
 add_automatic tcl8.6
