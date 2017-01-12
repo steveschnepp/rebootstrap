@@ -4104,6 +4104,33 @@ patch_nspr() {
  #if defined(__GNUC__)
  /* Use GCC built-in functions */
 EOF
+	if test "$HOST_ARCH" = tilegx; then
+		echo "patching nspr for tilegx #850496"
+		drop_privs patch -p1 <<'EOF'
+--- a/nspr/pr/include/md/_linux.cfg
++++ b/nspr/pr/include/md/_linux.cfg
+@@ -240,7 +240,7 @@
+ #define PR_BYTES_PER_WORD_LOG2  3
+ #define PR_BYTES_PER_DWORD_LOG2 3
+ 
+-#elif defined(__x86_64__)
++#elif defined(__x86_64__) || defined(__tilegx__)
+ 
+ #define IS_LITTLE_ENDIAN 1
+ #undef  IS_BIG_ENDIAN
+--- a/nspr/pr/include/md/_linux.h
++++ b/nspr/pr/include/md/_linux.h
+@@ -75,6 +75,8 @@
+ #define _PR_SI_ARCHITECTURE "arm"
+ #elif defined(__hppa__)
+ #define _PR_SI_ARCHITECTURE "hppa"
++#elif defined(__tilegx__)
++#define _PR_SI_ARCHITECTURE "tilegx"
+ #elif defined(__s390x__)
+ #define _PR_SI_ARCHITECTURE "s390x"
+ #elif defined(__s390__)
+EOF
+	fi
 }
 
 add_automatic nss
