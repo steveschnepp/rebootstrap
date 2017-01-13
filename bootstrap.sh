@@ -4486,6 +4486,41 @@ add_automatic slang2
 add_automatic spdylay
 add_automatic sqlite3
 
+patch_systemd() {
+	echo "reverting 943053a2c2fd8b153545eb410101e0e3616d4de9 #851253"
+	drop_privs patch -R -p1 <<'EOF'
+From 943053a2c2fd8b153545eb410101e0e3616d4de9 Mon Sep 17 00:00:00 2001
+From: Michael Biebl <biebl@debian.org>
+Date: Mon, 19 Dec 2016 08:58:52 +0100
+Subject: Remove no longer needed fallback
+
+Gbp-Dch: Ignore
+---
+ debian/rules | 6 +-----
+ 1 file changed, 1 insertion(+), 5 deletions(-)
+
+diff --git a/debian/rules b/debian/rules
+index af5dd4f..7918f8c 100755
+--- a/debian/rules
++++ b/debian/rules
+@@ -303,11 +303,7 @@ endif
+ 	done
+ 
+ 	# ship test-udev, so that we have it for autopkgtests
+-	if [ -e build-deb/.libs/test-udev ]; then \
+-		install -D build-deb/.libs/test-udev debian/libudev-dev/usr/lib/$(DEB_HOST_MULTIARCH)/udev/test-udev; \
+-	else \
+-		install -D build-deb/test-udev debian/libudev-dev/usr/lib/$(DEB_HOST_MULTIARCH)/udev/test-udev; \
+-	fi
++	install -D build-deb/.libs/test-udev debian/libudev-dev/usr/lib/$(DEB_HOST_MULTIARCH)/udev/test-udev
+ 
+ 	# Ubuntu specific files
+ ifeq ($(DEB_VENDOR),Ubuntu)
+-- 
+cgit v0.12
+EOF
+}
+
 add_automatic tar
 buildenv_tar() {
 	case $(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_GNU_SYSTEM) in *gnu*)
