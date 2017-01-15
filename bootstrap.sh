@@ -2267,6 +2267,7 @@ patch_linux() {
 			kernel_arch=defines-only
 		;;
 		powerpcel) kernel_arch=powerpc; ;;
+		sh3) kernel_arch=sh; ;; #850732
 		*-linux-*)
 			if ! test -d "debian/config/$HOST_ARCH"; then
 				kernel_arch=$(sed 's/^kernel-arch: //;t;d' < "debian/config/${HOST_ARCH#*-linux-}/defines")
