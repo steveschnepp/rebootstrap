@@ -3544,7 +3544,7 @@ buildenv_jemalloc() {
 			echo "setting je_cv_static_page_shift=13"
 			export je_cv_static_page_shift=13
 		;;
-		mips64el|mipsel|nios2)
+		mips64el|mipsel|nios2|tilegx)
 			echo "setting je_cv_static_page_shift=14"
 			export je_cv_static_page_shift=14
 		;;
