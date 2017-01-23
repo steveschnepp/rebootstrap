@@ -1126,6 +1126,33 @@ patch_gcc_multilib_deps() {
  	    debian/$(1).substvars; \
 EOF
 }
+patch_gcc_sh3_multiarch() {
+	test "$HOST_ARCH" = sh3 || return
+	echo "fixing gcc-multiarch.diff for sh3 #851869"
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/patches/gcc-multiarch.diff
++++ b/debian/patches/gcc-multiarch.diff
+@@ -19,12 +19,17 @@
+ ===================================================================
+ --- a/src/gcc/config/sh/t-linux
+ +++ b/src/gcc/config/sh/t-linux
+-@@ -1,2 +1,5 @@
++@@ -1,2 +1,10 @@
+  MULTILIB_DIRNAMES= 
+  MULTILIB_MATCHES = 
+ +
+++ifneq (,$(findstring sh4,$(target)))
+ +MULTILIB_OSDIRNAMES = .:sh4-linux-gnu sh4_nofpu-linux-gnu:sh4-linux-gnu
+ +MULTIARCH_DIRNAME = $(call if_multiarch,sh4-linux-gnu)
+++else
+++MULTILIB_OSDIRNAMES = .:sh3-linux-gnu sh3_nofpu-linux-gnu:sh3-linux-gnu
+++MULTIARCH_DIRNAME = $(call if_multiarch,sh3-linux-gnu)
+++endif
+ Index: b/src/gcc/config/sparc/t-linux64
+ ===================================================================
+ --- a/src/gcc/config/sparc/t-linux64
+EOF
+}
 patch_gcc_wdotap() {
 	if test "$ENABLE_MULTIARCH_GCC" = yes; then
 		echo "applying patches for with_deps_on_target_arch_pkgs"
@@ -2057,6 +2084,7 @@ EOF
 	patch_gcc_powerpcel
 	patch_gcc_nonglibc
 	patch_gcc_multilib_deps
+	patch_gcc_sh3_multiarch
 	patch_gcc_wdotap
 }
 # choosing libatomic1 arbitrarily here, cause it never bumped soname
