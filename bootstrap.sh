@@ -1127,7 +1127,7 @@ patch_gcc_multilib_deps() {
 EOF
 }
 patch_gcc_sh3_multiarch() {
-	test "$HOST_ARCH" = sh3 || return
+	test "$HOST_ARCH" = sh3 || return 0
 	echo "fixing gcc-multiarch.diff for sh3 #851869"
 	drop_privs patch -p1 <<'EOF'
 --- a/debian/patches/gcc-multiarch.diff
