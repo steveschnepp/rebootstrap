@@ -4824,91 +4824,11 @@ assert_built() {
 
 automatically_cross_build_packages
 
-patch_zlib() {
-	echo "patching zlib to support nobiarch build profile #709623"
-	drop_privs patch -p1 <<EOF
-diff -Nru zlib-1.2.8.dfsg/debian/control zlib-1.2.8.dfsg/debian/control
---- zlib-1.2.8.dfsg/debian/control
-+++ zlib-1.2.8.dfsg/debian/control
-@@ -4,7 +4,7 @@
- Maintainer: Mark Brown <broonie@debian.org>
- Standards-Version: 3.9.4
- Homepage: http://zlib.net/
--Build-Depends: debhelper (>= 8.1.3~), binutils (>= 2.18.1~cvs20080103-2) [mips mipsel], gcc-multilib [amd64 i386 kfreebsd-amd64 mips mipsel powerpc ppc64 s390 sparc s390x], dpkg-dev (>= 1.16.1)
-+Build-Depends: debhelper (>= 8.1.3~), binutils (>= 2.18.1~cvs20080103-2) [mips mipsel], gcc-multilib [amd64 i386 kfreebsd-amd64 mips mipsel powerpc ppc64 s390 sparc s390x] <!nobiarch>, dpkg-dev (>= 1.16.1)
- 
- Package: zlib1g
- Architecture: any
-@@ -65,6 +65,7 @@
- Architecture: sparc s390 i386 powerpc mips mipsel
- Depends: \${shlibs:Depends}, \${misc:Depends}
- Replaces: amd64-libs (<< 1.4)
-+Build-Profiles: <!nobiarch>
- Description: compression library - 64 bit runtime
-  zlib is a library implementing the deflate compression method found
-  in gzip and PKZIP.  This package includes a 64 bit version of the
-@@ -76,6 +77,7 @@
- Depends: lib64z1 (= \${binary:Version}), zlib1g-dev (= \${binary:Version}), lib64c-dev, \${misc:Depends}
- Replaces: amd64-libs-dev (<< 1.4)
- Provides: lib64z-dev
-+Build-Profiles: <!nobiarch>
- Description: compression library - 64 bit development
-  zlib is a library implementing the deflate compression method found
-  in gzip and PKZIP.  This package includes the development support
-@@ -86,6 +88,7 @@
- Conflicts: libc6-i386 (<= 2.9-18)
- Depends: \${shlibs:Depends}, \${misc:Depends}
- Replaces: ia32-libs (<< 1.5)
-+Build-Profiles: <!nobiarch>
- Description: compression library - 32 bit runtime
-  zlib is a library implementing the deflate compression method found
-  in gzip and PKZIP.  This package includes a 32 bit version of the
-@@ -98,6 +101,7 @@
- Depends: lib32z1 (= \${binary:Version}), zlib1g-dev (= \${binary:Version}), lib32c-dev, \${misc:Depends}
- Provides: lib32z-dev
- Replaces: ia32-libs-dev (<< 1.5)
-+Build-Profiles: <!nobiarch>
- Description: compression library - 32 bit development
-  zlib is a library implementing the deflate compression method found
-  in gzip and PKZIP.  This package includes the development support
-@@ -106,6 +110,7 @@
- Package: libn32z1
- Architecture: mips mipsel
- Depends: \${shlibs:Depends}, \${misc:Depends}
-+Build-Profiles: <!nobiarch>
- Description: compression library - n32 runtime
-  zlib is a library implementing the deflate compression method found
-  in gzip and PKZIP.  This package includes a n32 version of the shared
-@@ -116,6 +121,7 @@
- Architecture: mips mipsel
- Depends: libn32z1 (= \${binary:Version}), zlib1g-dev (= \${binary:Version}), libn32c-dev, \${misc:Depends}
- Provides: libn32z-dev
-+Build-Profiles: <!nobiarch>
- Description: compression library - n32 development
-  zlib is a library implementing the deflate compression method found
-  in gzip and PKZIP.  This package includes the development support
-diff -Nru zlib-1.2.8.dfsg/debian/rules zlib-1.2.8.dfsg/debian/rules
---- zlib-1.2.8.dfsg/debian/rules
-+++ zlib-1.2.8.dfsg/debian/rules
-@@ -69,6 +69,11 @@
- mn32=-mabi=n32
- endif
- 
-+ifneq (,\$(findstring nobiarch,\$(DEB_BUILD_PROFILES)))
-+override EXTRA_BUILD=
-+override EXTRA_INSTALL=
-+endif
-+
- UNALIGNED_ARCHS=i386 amd64 kfreebsd-i386 kfreebsd-amd64 hurd-i386 lpia
- ifneq (,\$(findstring \$(DEB_HOST_ARCH), \$(UNALIGNED_ARCHS)))
- CFLAGS+=-DUNALIGNED_OK
-EOF
-}
 builddep_zlib() {
 	# gcc-multilib dependency unsatisfiable
 	$APT_GET install debhelper binutils dpkg-dev
 }
-cross_build zlib
+cross_build zlib "$(if test "$ENABLE_MULTILIB" != yes; then echo stage1; fi)"
 mark_built zlib
 # needed by dpkg, file, gnutls28, libpng, libtool, libxml2, perl, slang2, tcl8.6, util-linux
 
