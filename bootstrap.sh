@@ -4960,6 +4960,7 @@ mark_built readline
 
 automatically_cross_build_packages
 
+if dpkg-architecture "-a$HOST_ARCH" -ilinux-any; then
 builddep_libselinux() {
 	assert_built "libsepol pcre3"
 	# gem2deb dependency lacks profile annotation
