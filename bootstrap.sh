@@ -4063,12 +4063,7 @@ buildenv_libprelude() {
 
 add_automatic libpthread-stubs
 add_automatic libseccomp
-
-builddep_libsepol() {
-	# flex dependency satisfied from host arch
-	apt_get_install debhelper dpkg-dev file flex
-}
-
+add_automatic libsepol
 add_automatic libsm
 add_automatic libssh2
 add_automatic libtasn1-6
@@ -4710,6 +4705,7 @@ add_need libpthread-stubs # by libxcb
 if apt-cache showsrc systemd | grep -q "^Build-Depends:.*libseccomp-dev[^,]*[[ ]$HOST_ARCH[] ]"; then
 	add_need libseccomp # by systemd
 fi
+dpkg-architecture "-a$HOST_ARCH" -ilinux-any && add_need libsepol # by libselinux
 add_need libssh2 # by curl
 add_need libtextwrap # by cdebconf
 add_need libx11 # by dbus
@@ -4961,13 +4957,6 @@ builddep_readline() {
 cross_build readline
 mark_built readline
 # needed by gnupg, guile-2.0, libxml2
-
-automatically_cross_build_packages
-
-if dpkg-architecture "-a$HOST_ARCH" -ilinux-any; then
-cross_build libsepol
-mark_built libsepol
-# needed by libselinux
 
 automatically_cross_build_packages
 
