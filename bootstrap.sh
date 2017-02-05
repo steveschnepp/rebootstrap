@@ -1153,6 +1153,22 @@ patch_gcc_sh3_multiarch() {
  --- a/src/gcc/config/sparc/t-linux64
 EOF
 }
+patch_gcc_disable_libmpx() {
+	dpkg-architecture "-a$HOST_ARCH" -iany-amd64 || dpkg-architecture "-a$HOST_ARCH" -iany-i386 || return 0
+	echo "patching gcc to disable libmpx in stage1 #854159"
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/rules2
++++ b/debian/rules2
+@@ -221,6 +221,7 @@
+ 	--disable-decimal-float \
+ 	--disable-libatomic  \
+ 	--disable-libgomp  \
++	--disable-libmpx \
+ 	--disable-libssp \
+ 	--disable-libquadmath \
+ 	--disable-libsanitizer \
+EOF
+}
 patch_gcc_wdotap() {
 	if test "$ENABLE_MULTIARCH_GCC" = yes; then
 		echo "applying patches for with_deps_on_target_arch_pkgs"
@@ -2085,6 +2101,7 @@ EOF
 	patch_gcc_nonglibc
 	patch_gcc_multilib_deps
 	patch_gcc_sh3_multiarch
+	patch_gcc_disable_libmpx
 	patch_gcc_wdotap
 }
 # choosing libatomic1 arbitrarily here, cause it never bumped soname
