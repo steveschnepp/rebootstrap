@@ -3965,6 +3965,55 @@ patch_libgc() {
      && !defined(NO_GETCONTEXT)
 EOF
 	fi
+	if test "$HOST_ARCH" = tilegx; then
+		echo "patching libgc for tilegx #854174"
+		drop_privs patch -p1 <<'EOF'
+--- a/include/private/gcconfig.h
++++ b/include/private/gcconfig.h
+@@ -460,6 +460,10 @@
+ #     define  mach_type_known
+ #    endif 
+ # endif
++# if defined(__tilegx__) && defined(LINUX)
++#  define TILEGX
++#  define mach_type_known
++# endif
+ 
+ /* Feel free to add more clauses here */
+ 
+@@ -2086,6 +2097,28 @@
+ #   endif
+ # endif
+ 
++# ifdef TILEGX
++#  define CPP_WORDSZ (__SIZEOF_POINTER__ * 8)
++#  define MACH_TYPE "TILE-Gx"
++#  define ALIGNMENT __SIZEOF_POINTER__
++#  if CPP_WORDSZ < 64
++#   define ALIGN_DOUBLE /* Guarantee 64-bit alignment for allocations. */
++    /* Take advantage of 64-bit stores. */
++#   define CLEAR_DOUBLE(x) ((*(long long *)(x)) = 0)
++#  endif
++#  define PREFETCH(x) __insn_prefetch_l1(x)
++#  include <arch/chip.h>
++#  define CACHE_LINE_SIZE CHIP_L2_LINE_SIZE()
++#  define USE_GENERIC_PUSH_REGS
++#  ifdef LINUX
++#   define OS_TYPE "LINUX"
++    extern int __data_start[];
++#   define DATASTART (ptr_t)(__data_start)
++#   define LINUX_STACKBOTTOM
++#   define DYNAMIC_LOADING
++#  endif
++# endif
++
+ #if defined(LINUX) && defined(USE_MMAP)
+     /* The kernel may do a somewhat better job merging mappings etc.	*/
+     /* with anonymous mappings.						*/
+EOF
+		echo "updating libgc symbols for tilegx #??????"
+		sed -i -e '/^ /s/=\(!\?\)arm64 /&\1tilegx /' debian/libgc1c2.symbols
+	fi
 }
 
 add_automatic libgcrypt20
