@@ -1126,33 +1126,6 @@ patch_gcc_multilib_deps() {
  	    debian/$(1).substvars; \
 EOF
 }
-patch_gcc_sh3_multiarch() {
-	test "$HOST_ARCH" = sh3 || return 0
-	echo "fixing gcc-multiarch.diff for sh3 #851869"
-	drop_privs patch -p1 <<'EOF'
---- a/debian/patches/gcc-multiarch.diff
-+++ b/debian/patches/gcc-multiarch.diff
-@@ -19,12 +19,17 @@
- ===================================================================
- --- a/src/gcc/config/sh/t-linux
- +++ b/src/gcc/config/sh/t-linux
--@@ -1,2 +1,5 @@
-+@@ -1,2 +1,10 @@
-  MULTILIB_DIRNAMES= 
-  MULTILIB_MATCHES = 
- +
-++ifneq (,$(findstring sh4,$(target)))
- +MULTILIB_OSDIRNAMES = .:sh4-linux-gnu sh4_nofpu-linux-gnu:sh4-linux-gnu
- +MULTIARCH_DIRNAME = $(call if_multiarch,sh4-linux-gnu)
-++else
-++MULTILIB_OSDIRNAMES = .:sh3-linux-gnu sh3_nofpu-linux-gnu:sh3-linux-gnu
-++MULTIARCH_DIRNAME = $(call if_multiarch,sh3-linux-gnu)
-++endif
- Index: b/src/gcc/config/sparc/t-linux64
- ===================================================================
- --- a/src/gcc/config/sparc/t-linux64
-EOF
-}
 patch_gcc_disable_libmpx() {
 	dpkg-architecture "-a$HOST_ARCH" -iany-amd64 || dpkg-architecture "-a$HOST_ARCH" -iany-i386 || return 0
 	echo "patching gcc to disable libmpx in stage1 #854159"
@@ -2100,7 +2073,6 @@ EOF
 	patch_gcc_powerpcel
 	patch_gcc_nonglibc
 	patch_gcc_multilib_deps
-	patch_gcc_sh3_multiarch
 	patch_gcc_disable_libmpx
 	patch_gcc_wdotap
 }
