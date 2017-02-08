@@ -4642,6 +4642,92 @@ buildenv_tk8_6() {
 	export tcl_cv_strtod_buggy=ok
 }
 
+patch_unbound() {
+	if ! dpkg-architecture -a"$HOST_ARCH" -ilinux-any; then
+		echo "fixing unbound FTBFS on !linux-any #853751"
+		drop_privs patch -p1 <<'EOF'
+--- a/configure.ac
++++ b/configure.ac
+@@ -674,6 +674,14 @@ if grep VERSION_TEXT $ssldir/include/openssl/opensslv.h | grep "LibreSSL" >/dev/
+ 	AC_CHECK_DECLS([strlcpy,strlcat,arc4random,arc4random_uniform,reallocarray])
+ else
+ 	AC_MSG_RESULT([no])
++
++	# Otherwise see if libbsd can provide these functions
++	AC_CHECK_DECLS([strlcpy,strlcat], [], [], [
++#include <string.h>
++])
++	AC_CHECK_DECLS([arc4random,arc4random_uniform,reallocarray], [], [], [
++#include <stdlib.h>
++])
+ fi
+ AC_CHECK_HEADERS([openssl/conf.h openssl/engine.h openssl/bn.h openssl/dh.h openssl/dsa.h openssl/rsa.h],,, [AC_INCLUDES_DEFAULT])
+ AC_CHECK_FUNCS([OPENSSL_config EVP_sha1 EVP_sha256 EVP_sha512 FIPS_mode EVP_MD_CTX_new OpenSSL_add_all_digests OPENSSL_init_crypto EVP_cleanup ERR_load_crypto_strings CRYPTO_cleanup_all_ex_data ERR_free_strings RAND_cleanup DSA_SIG_set0 EVP_dss1])
+--- a/debian/control
++++ b/debian/control
+@@ -15,6 +15,7 @@ Build-Depends:
+  dh-systemd <!pkg.unbound.libonly>,
+  dpkg-dev (>= 1.16.1~),
+  flex,
++ libbsd-dev (>= 0.8.1~) [!linux-any],
+  libevent-dev,
+  libexpat1-dev,
+  libfstrm-dev <!pkg.unbound.libonly>,
+--- a/debian/rules
++++ b/debian/rules
+@@ -14,6 +14,12 @@ export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+ DPKG_EXPORT_BUILDFLAGS = 1
+ include /usr/share/dpkg/buildflags.mk
+ 
++ifneq ($(DEB_HOST_ARCH_OS), linux)
++# libbsd can provide strlcpy, strlcat, arc4random*, reallocarray
++CFLAGS += $(shell $(DEB_HOST_GNU_TYPE)-pkg-config --cflags libbsd-overlay)
++LDFLAGS += $(shell $(DEB_HOST_GNU_TYPE)-pkg-config --libs libbsd-overlay)
++endif
++
+ clean:
+ 	dh_autotools-dev_restoreconfig
+ 	dh_autoreconf_clean
+@@ -31,7 +37,7 @@ binary-arch: build
+ ifneq (,$(filter unbound unbound-anchor unbound-host,$(DOPACKAGES)))
+ 	# first build -- build unbound daemon
+ 	PYTHON_VERSION="$(shell py3versions -vd)" \
+-	CFLAGS="$(CFLAGS)" CPPFLAGS="$(CPPFLAGS)" LDFLAGS="-Wl,--as-needed $(LDFLAGS)" \
++	CFLAGS="$(CFLAGS)" CPPFLAGS="$(CPPFLAGS)" LDFLAGS="$(LDFLAGS) -Wl,--as-needed" \
+ 		dh_auto_configure -- \
+ 		--disable-rpath \
+ 		--with-pidfile=/run/unbound.pid \
+@@ -48,7 +54,7 @@ ifneq (,$(filter unbound unbound-anchor unbound-host,$(DOPACKAGES)))
+ endif
+ 
+ 	# second build -- build libunbound only, against nettle
+-	CFLAGS="$(CFLAGS)" CPPFLAGS="$(CPPFLAGS)" LDFLAGS="-Wl,--as-needed $(LDFLAGS)" \
++	CFLAGS="$(CFLAGS)" CPPFLAGS="$(CPPFLAGS)" LDFLAGS="$(LDFLAGS) -Wl,--as-needed" \
+ 		dh_auto_configure -- \
+ 		--disable-rpath \
+ 		--with-libunbound-only \
+@@ -67,7 +73,7 @@ endif
+ ifneq (,$(filter python-unbound,$(DOPACKAGES)))
+ 	# third build - pyunbound for Python 2
+ 	PYTHON_VERSION="$(shell pyversions -vd)" \
+-	CFLAGS="$(CFLAGS)" CPPFLAGS="$(CPPFLAGS)" LDFLAGS="-Wl,--as-needed $(LDFLAGS)" \
++	CFLAGS="$(CFLAGS)" CPPFLAGS="$(CPPFLAGS)" LDFLAGS="$(LDFLAGS) -Wl,--as-needed" \
+ 		dh_auto_configure -- \
+ 		--disable-rpath \
+ 		--with-pythonmodule \
+@@ -86,7 +92,7 @@ endif
+ ifneq (,$(filter python3-unbound,$(DOPACKAGES)))
+ 	# fourth build - pyunbound for Python 3
+ 	PYTHON_VERSION="$(shell py3versions -vd)" \
+-	CFLAGS="$(CFLAGS)" CPPFLAGS="$(CPPFLAGS)" LDFLAGS="-Wl,--as-needed $(LDFLAGS)" \
++	CFLAGS="$(CFLAGS)" CPPFLAGS="$(CPPFLAGS)" LDFLAGS="$(LDFLAGS) -Wl,--as-needed" \
+ 		dh_auto_configure -- \
+ 		--disable-rpath \
+ 		--with-pythonmodule \
+EOF
+	fi
+}
+
 add_automatic ustr
 add_automatic xft
 add_automatic xz-utils
@@ -5453,6 +5539,7 @@ if test -f "$REPODIR/stamps/unbound_1"; then
 	echo "skipping stage1 rebuild of unbound"
 else
 	assert_built "libevent expat nettle"
+	dpkg-architecture "-a$HOST_ARCH" -ilinux-any || assert_built libbsd
 	cross_build_setup unbound unbound_1
 	apt_get_build_dep "-a$HOST_ARCH" --arch-only -P pkg.unbound.libonly ./
 	check_binNMU
