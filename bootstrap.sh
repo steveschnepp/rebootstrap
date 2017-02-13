@@ -4110,6 +4110,13 @@ buildenv_libgcrypt20() {
 }
 
 add_automatic libgpg-error
+patch_libgpg_error() {
+	if test "$HOST_ARCH" = sh3 -a ! -f src/syscfg/lock-obj-pub.sh3-unknown-linux-gnu.h; then
+		echo "cherry-picking libgpg-error commit 67e51f9957f875ca854f25f4a9a63aeb831c55c4"
+		drop_privs cp -nv src/syscfg/lock-obj-pub.sh4-unknown-linux-gnu.h src/syscfg/lock-obj-pub.sh3-unknown-linux-gnu.h
+	fi
+}
+
 add_automatic libice
 add_automatic libksba
 add_automatic libonig
