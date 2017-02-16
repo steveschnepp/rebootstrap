@@ -3650,26 +3650,6 @@ EOF
 }
 
 add_automatic keyutils
-patch_keyutils() {
-	if test "$LIBC_NAME" = musl; then
-		echo "patching keyutils to avoid build failure with musl #798157"
-		drop_privs tee -a debian/patches/fix-musl-build.patch >/dev/null <<'EOF'
---- a/key.dns_resolver.c
-+++ b/key.dns_resolver.c
-@@ -56,6 +56,7 @@
- #include <stdlib.h>
- #include <unistd.h>
- #include <time.h>
-+#include <limits.h>
-
- static const char *DNS_PARSE_VERSION = "1.0";
- static const char prog[] = "key.dns_resolver";
-EOF
-		echo fix-musl-build.patch >> debian/patches/series
-		drop_privs quilt push -a
-	fi
-}
-
 add_automatic kmod
 
 add_automatic krb5
