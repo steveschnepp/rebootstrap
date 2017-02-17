@@ -465,7 +465,14 @@ if test "$ENABLE_MULTIARCH_GCC" = yes; then
 fi
 
 obtain_source_package() {
-	if test "$1" = gcc-6; then
+	local use_experimental
+	use_experimental=
+	case "$1" in
+		gcc-[0-9]*)
+			test -n "$(apt-cache showsrc "$1")" || use_experimental=yes
+		;;
+	esac
+	if test "$use_experimental" = yes; then
 		echo "deb-src $MIRROR experimental main" > /etc/apt/sources.list.d/tmp-experimental.list
 		$APT_GET update
 	fi
