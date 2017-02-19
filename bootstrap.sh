@@ -3596,7 +3596,62 @@ EOF
 
 add_automatic grep
 add_automatic groff
+
 add_automatic guile-2.0
+builddep_guile_2_0() {
+	apt_get_build_dep "-a$HOST_ARCH" --arch-only -P cross ./
+	if test "$HOST_ARCH" = tilegx; then
+		patch /usr/share/guile/2.0/system/base/target.scm <<'EOF'
+--- a/module/system/base/target.scm
++++ b/module/system/base/target.scm
+@@ -65,7 +65,7 @@
+       (cond ((string-match "^i[0-9]86$" cpu)
+              (endianness little))
+             ((member cpu '("x86_64" "ia64"
+-                           "powerpcle" "powerpc64le" "mipsel" "mips64el" "nios2" "sh4" "alpha"))
++                           "powerpcle" "powerpc64le" "mipsel" "mips64el" "nios2" "sh4" "alpha" "tilegx"))
+              (endianness little))
+             ((member cpu '("sparc" "sparc64" "powerpc" "powerpc64" "spu"
+                            "mips" "mips64" "m68k" "s390x"))
+@@ -105,7 +105,7 @@
+           ((string-match "64$" cpu) 8)
+           ((string-match "64_?[lbe][lbe]$" cpu) 8)
+           ((member cpu '("sparc" "powerpc" "mips" "mipsel" "nios2" "m68k" "sh4")) 4)
+-          ((member cpu '("s390x" "alpha")) 8)
++          ((member cpu '("s390x" "alpha" "tilegx")) 8)
+           ((string-match "^arm.*" cpu) 4)
+           (else (error "unknown CPU word size" cpu)))))
+ 
+EOF
+	fi
+}
+patch_guile_2_0() {
+	if test "$HOST_ARCH" = tilegx; then
+		echo "patching guile tilegx support #855191"
+		drop_privs patch -p1 <<'EOF'
+--- a/module/system/base/target.scm
++++ b/module/system/base/target.scm
+@@ -65,7 +65,7 @@
+       (cond ((string-match "^i[0-9]86$" cpu)
+              (endianness little))
+             ((member cpu '("x86_64" "ia64"
+-                           "powerpcle" "powerpc64le" "mipsel" "mips64el" "nios2" "sh4" "alpha"))
++                           "powerpcle" "powerpc64le" "mipsel" "mips64el" "nios2" "sh4" "alpha" "tilegx"))
+              (endianness little))
+             ((member cpu '("sparc" "sparc64" "powerpc" "powerpc64" "spu"
+                            "mips" "mips64" "m68k" "s390x"))
+@@ -105,7 +105,7 @@
+           ((string-match "64$" cpu) 8)
+           ((string-match "64_?[lbe][lbe]$" cpu) 8)
+           ((member cpu '("sparc" "powerpc" "mips" "mipsel" "nios2" "m68k" "sh4")) 4)
+-          ((member cpu '("s390x" "alpha")) 8)
++          ((member cpu '("s390x" "alpha" "tilegx")) 8)
+           ((string-match "^arm.*" cpu) 4)
+           (else (error "unknown CPU word size" cpu)))))
+ 
+EOF
+	fi
+}
 
 add_automatic gzip
 buildenv_gzip() {
