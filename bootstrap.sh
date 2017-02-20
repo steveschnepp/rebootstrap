@@ -2066,6 +2066,85 @@ EOF
 	patch_gcc_multilib_deps
 	patch_gcc_wdotap
 }
+patch_gcc_7() {
+	echo "fixing cross-install-location.diff #855565"
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/patches/cross-install-location.diff
++++ b/debian/patches/cross-install-location.diff
+@@ -61,7 +61,7 @@
+ @@ -255,7 +255,7 @@ with_libiberty = @with_libiberty@
+  ACLOCAL_AMFLAGS = -I .. -I ../config
+  AUTOMAKE_OPTIONS = no-dependencies
+- gcc_version := $(shell cat $(top_srcdir)/../gcc/BASE-VER)
++ gcc_version := $(shell @get_gcc_base_ver@ $(top_srcdir)/../gcc/BASE-VER)
+ -libexecsubdir := $(libexecdir)/gcc/$(real_target_noncanonical)/$(gcc_version)$(accel_dir_suffix)
+ +libexecsubdir := $(libexecdir)/gcc-cross/$(real_target_noncanonical)/$(gcc_version)$(accel_dir_suffix)
+  AM_CPPFLAGS = -I$(top_srcdir)/../include $(DEFS)
+@@ -167,9 +167,9 @@
+ -  -DSTANDARD_LIBEXEC_PREFIX=\"$(libexecdir)/gcc/\" \
+ +  -DSTANDARD_EXEC_PREFIX=\"$(libdir)/gcc-cross/\" \
+ +  -DSTANDARD_LIBEXEC_PREFIX=\"$(libexecdir)/gcc-cross/\" \
+-   -DDEFAULT_TARGET_VERSION=\"$(BASEVER_c)\" \
+-   -DDEFAULT_TARGET_FULL_VERSION=\"$(FULLVER_c)\" \
++   -DDEFAULT_TARGET_VERSION=\"$(version)\" \
+    -DDEFAULT_REAL_TARGET_MACHINE=\"$(real_target_noncanonical)\" \
++   -DDEFAULT_TARGET_MACHINE=\"$(target_noncanonical)\" \
+ @@ -2671,7 +2671,7 @@ PREPROCESSOR_DEFINES = \
+    -DTOOL_INCLUDE_DIR=\"$(gcc_tooldir)/include\" \
+    -DNATIVE_SYSTEM_HEADER_DIR=\"$(NATIVE_SYSTEM_HEADER_DIR)\" \
+@@ -251,7 +251,7 @@
+ @@ -68,7 +68,7 @@ GCC_DIR=$(MULTIBUILDTOP)../../$(host_sub
+  
+  target_noncanonical:=@target_noncanonical@
+- version := $(shell cat $(srcdir)/../gcc/BASE-VER)
++ version := $(shell @get_gcc_base_ver@ $(srcdir)/../gcc/BASE-VER)
+ -libsubdir := $(libdir)/gcc/$(target_noncanonical)/$(version)$(MULTISUBDIR)
+ +libsubdir := $(libdir)/gcc-cross/$(target_noncanonical)/$(version)$(MULTISUBDIR)
+  ADA_RTS_DIR=$(GCC_DIR)/ada/rts$(subst /,_,$(MULTISUBDIR))
+@@ -265,9 +265,9 @@
+  search_path = $(addprefix $(top_srcdir)/config/, $(config_path)) $(top_srcdir) \
+  	      $(top_srcdir)/../include
+  
+--fincludedir = $(libdir)/gcc/$(target_alias)/$(gcc_version)/finclude
++-fincludedir = $(libdir)/gcc/$(target_alias)/$(gcc_version)$(MULTISUBDIR)/finclude
+ -libsubincludedir = $(libdir)/gcc/$(target_alias)/$(gcc_version)/include
+-+fincludedir = $(libdir)/gcc-cross/$(target_alias)/$(gcc_version)/finclude
+++fincludedir = $(libdir)/gcc-cross/$(target_alias)/$(gcc_version)$(MULTISUBDIR)/finclude
+ +libsubincludedir = $(libdir)/gcc-cross/$(target_alias)/$(gcc_version)/include
+  AM_CPPFLAGS = $(addprefix -I, $(search_path))
+  AM_CFLAGS = $(XCFLAGS)
+@@ -280,9 +280,9 @@
+  search_path = $(addprefix $(top_srcdir)/config/, $(config_path)) $(top_srcdir) \
+  	      $(top_srcdir)/../include
+  
+--fincludedir = $(libdir)/gcc/$(target_alias)/$(gcc_version)/finclude
++-fincludedir = $(libdir)/gcc/$(target_alias)/$(gcc_version)$(MULTISUBDIR)/finclude
+ -libsubincludedir = $(libdir)/gcc/$(target_alias)/$(gcc_version)/include
+-+fincludedir = $(libdir)/gcc-cross/$(target_alias)/$(gcc_version)/finclude
+++fincludedir = $(libdir)/gcc-cross/$(target_alias)/$(gcc_version)$(MULTISUBDIR)/finclude
+ +libsubincludedir = $(libdir)/gcc-cross/$(target_alias)/$(gcc_version)/include
+  
+  vpath % $(strip $(search_path))
+@@ -307,7 +307,7 @@
+ @@ -8,6 +8,6 @@ EXTRA_DIST=ffi.h.in
+  
+  # Where generated headers like ffitarget.h get installed.
+- gcc_version   := $(shell cat $(top_srcdir)/../gcc/BASE-VER)
++ gcc_version   := $(shell @get_gcc_base_ver@ $(top_srcdir)/../gcc/BASE-VER)
+ -toollibffidir := $(libdir)/gcc/$(target_alias)/$(gcc_version)/include
+ +toollibffidir := $(libdir)/gcc-cross/$(target_alias)/$(gcc_version)/include
+  
+@@ -319,7 +319,7 @@
+ @@ -251,7 +251,7 @@ EXTRA_DIST = ffi.h.in
+  
+  # Where generated headers like ffitarget.h get installed.
+- gcc_version := $(shell cat $(top_srcdir)/../gcc/BASE-VER)
++ gcc_version := $(shell @get_gcc_base_ver@ $(top_srcdir)/../gcc/BASE-VER)
+ -toollibffidir := $(libdir)/gcc/$(target_alias)/$(gcc_version)/include
+ +toollibffidir := $(libdir)/gcc-cross/$(target_alias)/$(gcc_version)/include
+  toollibffi_HEADERS = ffi.h ffitarget.h
+EOF
+}
 # choosing libatomic1 arbitrarily here, cause it never bumped soname
 BUILD_GCC_MULTIARCH_VER=`apt-cache show --no-all-versions libatomic1 | sed 's/^Source: gcc-\([0-9.]*\)$/\1/;t;d'`
 if test "$GCC_VER" != "$BUILD_GCC_MULTIARCH_VER"; then
