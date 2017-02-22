@@ -3588,6 +3588,10 @@ patch_gmp() {
 	sed -i 's/!mips /!nios2 &/' debian/libgmp10.symbols
 	echo "patching gmp symbols for tilegx #850010"
 	sed -i '/^ /s/!m68k /!tilegx &/' debian/libgmp10.symbols
+	if test "$HOST_ARCH" = sh3; then
+		echo "patching gmp symbols for sh3 #851895"
+		sed -i 's/!sh4/!sh3 !sh4/g' debian/libgmp10.symbols
+	fi
 }
 
 builddep_gnu_efi() {
