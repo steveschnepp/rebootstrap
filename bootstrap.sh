@@ -2144,6 +2144,7 @@ patch_gcc_7() {
  +toollibffidir := $(libdir)/gcc-cross/$(target_alias)/$(gcc_version)/include
   toollibffi_HEADERS = ffi.h ffitarget.h
 EOF
+	patch_gcc_wdotap
 }
 # choosing libatomic1 arbitrarily here, cause it never bumped soname
 BUILD_GCC_MULTIARCH_VER=`apt-cache show --no-all-versions libatomic1 | sed 's/^Source: gcc-\([0-9.]*\)$/\1/;t;d'`
