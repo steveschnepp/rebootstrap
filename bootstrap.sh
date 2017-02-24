@@ -4897,21 +4897,81 @@ patch_unbound() {
 		drop_privs patch -p1 <<'EOF'
 --- a/configure.ac
 +++ b/configure.ac
-@@ -674,6 +674,14 @@ if grep VERSION_TEXT $ssldir/include/openssl/opensslv.h | grep "LibreSSL" >/dev/
- 	AC_CHECK_DECLS([strlcpy,strlcat,arc4random,arc4random_uniform,reallocarray])
- else
- 	AC_MSG_RESULT([no])
-+
-+	# Otherwise see if libbsd can provide these functions
-+	AC_CHECK_DECLS([strlcpy,strlcat], [], [], [
-+#include <string.h>
-+])
-+	AC_CHECK_DECLS([arc4random,arc4random_uniform,reallocarray], [], [], [
-+#include <stdlib.h>
-+])
+@@ -707,6 +707,19 @@ AC_INCLUDES_DEFAULT
  fi
- AC_CHECK_HEADERS([openssl/conf.h openssl/engine.h openssl/bn.h openssl/dh.h openssl/dsa.h openssl/rsa.h],,, [AC_INCLUDES_DEFAULT])
- AC_CHECK_FUNCS([OPENSSL_config EVP_sha1 EVP_sha256 EVP_sha512 FIPS_mode EVP_MD_CTX_new OpenSSL_add_all_digests OPENSSL_init_crypto EVP_cleanup ERR_load_crypto_strings CRYPTO_cleanup_all_ex_data ERR_free_strings RAND_cleanup DSA_SIG_set0 EVP_dss1])
+ AC_SUBST(SSLLIB)
+ 
++# libbsd
++AC_ARG_WITH([libbsd], AC_HELP_STRING([--with-libbsd], [Use portable libbsd functions]), [
++	AC_CHECK_HEADERS([bsd/string.h bsd/stdlib.h],,, [AC_INCLUDES_DEFAULT])
++	if test "x$ac_cv_header_bsd_string_h" = xyes -a "x$ac_cv_header_bsd_stdlib_h" = xyes; then
++		for func in strlcpy strlcat arc4random arc4random_uniform reallocarray; do
++			AC_SEARCH_LIBS([$func], [bsd], [
++				AC_DEFINE(HAVE_LIBBSD, 1, [Use portable libbsd functions])
++				PC_LIBBSD_DEPENDENCY=libbsd
++				AC_SUBST(PC_LIBBSD_DEPENDENCY)
++			])
++		done
++	fi
++])
+ 
+ AC_ARG_ENABLE(sha2, AC_HELP_STRING([--disable-sha2], [Disable SHA256 and SHA512 RRSIG support]))
+ case "$enable_sha2" in
+@@ -1469,6 +1482,11 @@ struct tm;
+ char *strptime(const char *s, const char *format, struct tm *tm);
+ #endif
+ 
++#ifdef HAVE_LIBBSD
++#include <bsd/string.h>
++#include <bsd/stdlib.h>
++#endif
++
+ #ifdef HAVE_LIBRESSL
+ #  if !HAVE_DECL_STRLCPY
+ size_t strlcpy(char *dst, const char *src, size_t siz);
+--- a/contrib/libunbound.pc.in
++++ b/contrib/libunbound.pc.in
+@@ -8,6 +8,7 @@ Description: Library with validating, recursive, and caching DNS resolver
+ URL: http://www.unbound.net
+ Version: @PACKAGE_VERSION@
+ Requires: libcrypto libssl @PC_LIBEVENT_DEPENDENCY@ @PC_PY_DEPENDENCY@
++Requires.private: @PC_LIBBSD_DEPENDENCY@
+ Libs: -L${libdir} -lunbound
+ Libs.private: @SSLLIB@ @LIBS@
+ Cflags: -I${includedir} 
+--- a/util/random.c
++++ b/util/random.c
+@@ -78,7 +78,7 @@
+  */
+ #define MAX_VALUE 0x7fffffff
+ 
+-#if defined(HAVE_SSL)
++#if defined(HAVE_SSL) || defined(HAVE_LIBBSD)
+ void
+ ub_systemseed(unsigned int ATTR_UNUSED(seed))
+ {
+@@ -208,10 +208,10 @@ long int ub_random(struct ub_randstate* s)
+ 	}
+ 	return x & MAX_VALUE;
+ }
+-#endif /* HAVE_SSL or HAVE_NSS or HAVE_NETTLE */
++#endif /* HAVE_SSL or HAVE_LIBBSD or HAVE_NSS or HAVE_NETTLE */
+ 
+ 
+-#if defined(HAVE_NSS) || defined(HAVE_NETTLE)
++#if defined(HAVE_NSS) || defined(HAVE_NETTLE) && !defined(HAVE_LIBBSD)
+ long int
+ ub_random_max(struct ub_randstate* state, long int x)
+ {
+@@ -223,7 +223,7 @@ ub_random_max(struct ub_randstate* state, long int x)
+ 		v = ub_random(state);
+ 	return (v % x);
+ }
+-#endif /* HAVE_NSS or HAVE_NETTLE */
++#endif /* HAVE_NSS or HAVE_NETTLE and !HAVE_LIBBSD */
+ 
+ void 
+ ub_randfree(struct ub_randstate* s)
 --- a/debian/control
 +++ b/debian/control
 @@ -15,6 +15,7 @@ Build-Depends:
@@ -4924,55 +4984,17 @@ patch_unbound() {
   libfstrm-dev <!pkg.unbound.libonly>,
 --- a/debian/rules
 +++ b/debian/rules
-@@ -14,6 +14,12 @@ export DEB_BUILD_MAINT_OPTIONS = hardening=+all
- DPKG_EXPORT_BUILDFLAGS = 1
- include /usr/share/dpkg/buildflags.mk
- 
-+ifneq ($(DEB_HOST_ARCH_OS), linux)
-+# libbsd can provide strlcpy, strlcat, arc4random*, reallocarray
-+CFLAGS += $(shell $(DEB_HOST_GNU_TYPE)-pkg-config --cflags libbsd-overlay)
-+LDFLAGS += $(shell $(DEB_HOST_GNU_TYPE)-pkg-config --libs libbsd-overlay)
-+endif
-+
- clean:
- 	dh_autotools-dev_restoreconfig
- 	dh_autoreconf_clean
-@@ -31,7 +37,7 @@ binary-arch: build
- ifneq (,$(filter unbound unbound-anchor unbound-host,$(DOPACKAGES)))
- 	# first build -- build unbound daemon
- 	PYTHON_VERSION="$(shell py3versions -vd)" \
--	CFLAGS="$(CFLAGS)" CPPFLAGS="$(CPPFLAGS)" LDFLAGS="-Wl,--as-needed $(LDFLAGS)" \
-+	CFLAGS="$(CFLAGS)" CPPFLAGS="$(CPPFLAGS)" LDFLAGS="$(LDFLAGS) -Wl,--as-needed" \
- 		dh_auto_configure -- \
- 		--disable-rpath \
- 		--with-pidfile=/run/unbound.pid \
-@@ -48,7 +54,7 @@ ifneq (,$(filter unbound unbound-anchor unbound-host,$(DOPACKAGES)))
+@@ -7,6 +7,10 @@ ifneq ($(DEB_HOST_ARCH), amd64)
+ CONFIGURE_ARGS = --disable-flto
  endif
  
- 	# second build -- build libunbound only, against nettle
--	CFLAGS="$(CFLAGS)" CPPFLAGS="$(CPPFLAGS)" LDFLAGS="-Wl,--as-needed $(LDFLAGS)" \
-+	CFLAGS="$(CFLAGS)" CPPFLAGS="$(CPPFLAGS)" LDFLAGS="$(LDFLAGS) -Wl,--as-needed" \
- 		dh_auto_configure -- \
- 		--disable-rpath \
- 		--with-libunbound-only \
-@@ -67,7 +73,7 @@ endif
- ifneq (,$(filter python-unbound,$(DOPACKAGES)))
- 	# third build - pyunbound for Python 2
- 	PYTHON_VERSION="$(shell pyversions -vd)" \
--	CFLAGS="$(CFLAGS)" CPPFLAGS="$(CPPFLAGS)" LDFLAGS="-Wl,--as-needed $(LDFLAGS)" \
-+	CFLAGS="$(CFLAGS)" CPPFLAGS="$(CPPFLAGS)" LDFLAGS="$(LDFLAGS) -Wl,--as-needed" \
- 		dh_auto_configure -- \
- 		--disable-rpath \
- 		--with-pythonmodule \
-@@ -86,7 +92,7 @@ endif
- ifneq (,$(filter python3-unbound,$(DOPACKAGES)))
- 	# fourth build - pyunbound for Python 3
- 	PYTHON_VERSION="$(shell py3versions -vd)" \
--	CFLAGS="$(CFLAGS)" CPPFLAGS="$(CPPFLAGS)" LDFLAGS="-Wl,--as-needed $(LDFLAGS)" \
-+	CFLAGS="$(CFLAGS)" CPPFLAGS="$(CPPFLAGS)" LDFLAGS="$(LDFLAGS) -Wl,--as-needed" \
- 		dh_auto_configure -- \
- 		--disable-rpath \
- 		--with-pythonmodule \
++ifneq ($(DEB_HOST_ARCH_OS), linux)
++CONFIGURE_ARGS = --with-libbsd
++endif
++
+ LIBRARY = libunbound2
+ DOPACKAGES = $(shell dh_listpackages)
+ 
 EOF
 	fi
 }
