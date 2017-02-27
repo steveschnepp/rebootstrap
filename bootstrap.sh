@@ -5159,6 +5159,25 @@ add_automatic slang2
 add_automatic spdylay
 add_automatic sqlite3
 
+patch_systemd() {
+	if test "$HOST_ARCH" = tilegx; then
+		echo "adding tilegx support to systemd #856306"
+		drop_privs patch -p1 <<'EOF'
+--- a/src/basic/architecture.h
++++ b/src/basic/architecture.h
+@@ -186,7 +186,7 @@ int uname_architecture(void);
+ #  define LIB_ARCH_TUPLE "m68k-linux-gnu"
+ #elif defined(__tilegx__)
+ #  define native_architecture() ARCHITECTURE_TILEGX
+-#  error "Missing LIB_ARCH_TUPLE for TILEGX"
++#  define LIB_ARCH_TUPLE "tilegx-linux-gnu"
+ #elif defined(__cris__)
+ #  define native_architecture() ARCHITECTURE_CRIS
+ #  error "Missing LIB_ARCH_TUPLE for CRIS"
+EOF
+	fi
+}
+
 add_automatic tar
 buildenv_tar() {
 	case $(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_GNU_SYSTEM) in *gnu*)
