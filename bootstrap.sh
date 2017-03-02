@@ -17,7 +17,7 @@ APT_GET="apt-get --no-install-recommends -y -o Debug::pkgProblemResolver=true -o
 DEFAULT_PROFILES="cross nocheck"
 LIBC_NAME=glibc
 DROP_PRIVS=buildd
-GCC_NOLANG=ada,d,go,java,jit,hppa64,objc,obj-c++
+GCC_NOLANG=ada,brig,d,go,java,jit,hppa64,objc,obj-c++
 ENABLE_DIFFOSCOPE=no
 
 if df -t tmpfs /var/cache/apt/archives >/dev/null 2>&1; then
@@ -1132,6 +1132,23 @@ patch_gcc_multilib_deps() {
  	    $(if $(filter armhf,$(DEB_TARGET_ARCH)),-e 's/:armel/-armel-cross/g') \
  	    debian/$(1).substvars; \
 EOF
+}
+patch_gcc_nobrig() {
+	case "$HOST_ARCH" in amd64|i386|x32)
+		echo "allow disabling brig in gcc #856452"
+		drop_privs patch -p1 <<'EOF'
+--- a/debian/rules.defs
++++ a/debian/rules.defs
+@@ -843,6 +843,7 @@
+   with_brigdev := yes
+   with_libhsailrt := yes
+ endif
++with_brig := $(call envfilt, brig, , , $(with_brig))
+
+ ifeq ($(with_brig),yes)
+   enabled_languages += brig
+EOF
+	;; esac
 }
 patch_gcc_wdotap() {
 	if test "$ENABLE_MULTIARCH_GCC" = yes; then
@@ -2437,6 +2454,7 @@ EOF
  
  printarch:
 EOF
+	patch_gcc_nobrig
 	patch_gcc_wdotap
 }
 # choosing libatomic1 arbitrarily here, cause it never bumped soname
