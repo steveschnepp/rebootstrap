@@ -4664,13 +4664,7 @@ add_automatic libsepol
 add_automatic libsm
 add_automatic libssh2
 add_automatic libtasn1-6
-
 add_automatic libtextwrap
-patch_libtextwrap() {
-	echo "fixing libtextwrap bzip2 compressor ftbfs #833250"
-	drop_privs sed -i -e 's/ -Zbzip2 / /' debian/rules
-}
-
 add_automatic libunistring
 add_automatic libusb
 add_automatic libusb-1.0
