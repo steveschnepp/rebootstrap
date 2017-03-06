@@ -440,6 +440,11 @@ $APT_GET update
 $APT_GET dist-upgrade # we need upgrade later, so make sure the system is clean
 $APT_GET install build-essential debhelper reprepro quilt
 
+if dpkg-architecture "-a$HOST_ARCH" -ikfreebsd-any; then
+	echo "correcting debhelper's CMAKE_SYSTEM_NAME for kfreebsd-any #856688"
+	sed -i -e "s/'FreeBSD'/'kFreeBSD'/" /usr/share/perl5/Debian/Debhelper/Buildsystem/cmake.pm
+fi
+
 if test -z "$DROP_PRIVS"; then
 	drop_privs_exec() {
 		exec env -- "$@"
