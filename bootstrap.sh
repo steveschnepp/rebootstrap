@@ -965,6 +965,23 @@ patch_gcc_musl_arm() {
        with_arm_fpu = vfp
 EOF
 }
+patch_gcc_rtlibs_non_cross_base() {
+	test "$ENABLE_MULTIARCH_GCC" != yes || return 0
+	echo "fixing gcc rtlibs to build the non-cross base #857074"
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/rules2
++++ b/debian/rules2
+@@ -1822,7 +1822,7 @@
+   pkg_ver := -$(BASE_VERSION)
+ endif
+
+-ifneq ($(DEB_CROSS),yes)
++ifeq ($(if $(filter yes,$(DEB_CROSS)),$(if $(filter rtlibs,$(DEB_STAGE)),native,cross),native),native)
+   p_base = gcc$(pkg_ver)-base
+   p_lbase = $(p_base)
+   p_xbase = gcc$(pkg_ver)-base
+EOF
+}
 patch_gcc_rtlibs_base_dep() {
 	test "$ENABLE_MULTIARCH_GCC" != yes || return 0
 	echo "patching gcc rtlibs to emit deps on gcc-VER-base"
@@ -2047,22 +2064,7 @@ EOF
  # Directory for prefix to system directories, for
  # each of $(system_prefix)/usr/include, $(system_prefix)/usr/lib, etc.
 EOF
-	if test "$ENABLE_MULTIARCH_GCC" != yes; then
-		echo "fixing gcc rtlibs to build the non-cross base"
-		drop_privs patch -p1 <<'EOF'
---- a/debian/rules2
-+++ b/debian/rules2
-@@ -1822,7 +1822,7 @@
-   pkg_ver := -$(BASE_VERSION)
- endif
- 
--ifneq ($(DEB_CROSS),yes)
-+ifeq ($(if $(filter yes,$(DEB_CROSS)),$(if $(filter rtlibs,$(DEB_STAGE)),native,cross),native),native)
-   p_base = gcc$(pkg_ver)-base
-   p_lbase = $(p_base)
-   p_xbase = gcc$(pkg_ver)-base
-EOF
-	fi
+	patch_gcc_rtlibs_non_cross_base
 	patch_gcc_rtlibs_base_dep
 	patch_gcc_rtlibs_libatomic
 	patch_gcc_include_multiarch
@@ -2442,6 +2444,7 @@ EOF
  
  printarch:
 EOF
+	patch_gcc_rtlibs_non_cross_base
 	patch_gcc_wdotap
 }
 # choosing libatomic1 arbitrarily here, cause it never bumped soname
