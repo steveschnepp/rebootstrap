@@ -490,9 +490,7 @@ obtain_source_package() {
 
 echo "adding arm64ilp32 to dpkg's cputable #824742"
 cat <<EOF >> /usr/share/dpkg/cputable
-arm64be       	aarch64_be	aarch64_be		64	big
-arm64ilp32	aarch64		aarch64_ilp32		32	little
-arm64ilp32be	aarch64_be	aarch64_be_ilp32       	32	big
+arm64ilp32	aarch64_ilp32	aarch64_ilp32		32	little
 EOF
 
 if test -z "$HOST_ARCH" || ! dpkg-architecture "-a$HOST_ARCH"; then
