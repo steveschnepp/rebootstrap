@@ -2596,6 +2596,23 @@ EOF
  		$(D_CROSS)/$(PF)/share/locale
  
 EOF
+	if test "$HOST_ARCH" = hppa; then
+		echo "patching binutils to discard hppa64 ldscripts"
+		# They cause file conflicts with binutils and the in-archive
+		# cross binutils discard ldscripts as well.
+		drop_privs patch -p1 <<'EOF'
+--- a/debian/rules
++++ b/debian/rules
+@@ -1233,6 +1233,7 @@
+ 		$(d_hppa64)/$(PF)/lib/$(DEB_HOST_MULTIARCH)/.
+
+ 	: # Now get rid of just about everything in binutils-hppa64
++	rm -rf $(d_hppa64)/$(PF)/lib/ldscripts
+ 	rm -rf $(d_hppa64)/$(PF)/man
+ 	rm -rf $(d_hppa64)/$(PF)/info
+ 	rm -rf $(d_hppa64)/$(PF)/include
+EOF
+	fi
 }
 if test -f "$REPODIR/stamps/cross-binutils"; then
 	echo "skipping rebuild of binutils-target"
