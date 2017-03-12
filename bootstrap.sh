@@ -963,6 +963,40 @@ patch_gcc_musl_arm() {
        with_arm_fpu = vfp
 EOF
 }
+patch_gcc_limits_h_test() {
+	echo "patching gcc to always detect the availability of glibc's limits.h even in multiarch locations"
+	drop_privs sed -i -e '/^series_stamp =/idebian_patches += multiarch-limits-h' debian/rules.patch
+	drop_privs tee debian/patches/multiarch-limits-h.diff >/dev/null <<'EOF'
+--- a/src/gcc/Makefile.in
++++ b/src/gcc/Makefile.in
+@@ -494,7 +494,7 @@
+ STMP_FIXINC = @STMP_FIXINC@
+
+ # Test to see whether <limits.h> exists in the system header files.
+-LIMITS_H_TEST = [ -f $(SYSTEM_HEADER_DIR)/limits.h ]
++LIMITS_H_TEST = :
+
+ # Directory for prefix to system directories, for
+ # each of $(system_prefix)/usr/include, $(system_prefix)/usr/lib, etc.
+EOF
+}
+patch_gcc_7_limits_h_test() {
+	grep -q LIMITS_H_TEST debian/patches/gcc-multiarch.diff && return 0
+	echo "patching gcc to always detect the availability of glibc's limits.h even in multiarch locations #857535"
+	drop_privs tee -a debian/patches/gcc-multiarch.diff >/dev/null <<'EOF'
+--- a/src/gcc/Makefile.in
++++ b/src/gcc/Makefile.in
+@@ -494,7 +494,7 @@
+ STMP_FIXINC = @STMP_FIXINC@
+
+ # Test to see whether <limits.h> exists in the system header files.
+-LIMITS_H_TEST = [ -f $(BUILD_SYSTEM_HEADER_DIR)/limits.h ]
++LIMITS_H_TEST = [ -f $(BUILD_SYSTEM_HEADER_DIR)/limits.h -o -f $(BUILD_SYSTEM_HEADER_DIR)/$(MULTIARCH_DIRNAME)/limits.h ]
+
+ # Directory for prefix to system directories, for
+ # each of $(system_prefix)/usr/include, $(system_prefix)/usr/lib, etc.
+EOF
+}
 patch_gcc_rtlibs_non_cross_base() {
 	test "$ENABLE_MULTIARCH_GCC" != yes || return 0
 	echo "fixing gcc rtlibs to build the non-cross base #857074"
@@ -1512,34 +1546,7 @@ diff -u gcc-5-5.2.1/debian/rules.defs gcc-5-5.2.1/debian/rules.defs
  
  printarch:
 EOF
-	echo "patching gcc to always detect the availability of glibc's limits.h even in multiarch locations"
-	drop_privs patch -p1 <<'EOF'
---- a/debian/rules.patch
-+++ b/debian/rules.patch
-@@ -91,6 +91,8 @@
- 	pr67590 \
- 	pr67736 \
- 
-+debian_patches += multiarch-limits-h
-+
- # this is still needed on powerpc, e.g. firefox and insighttoolkit4 will ftbfs.
- ifneq (,$(filter $(DEB_TARGET_ARCH),powerpc))
-   debian_patches += pr65913-workaround
---- /dev/null
-+++ b/debian/patches/multiarch-limits-h.diff
-@@ -0,0 +1,11 @@
-+--- a/src/gcc/Makefile.in
-++++ b/src/gcc/Makefile.in
-+@@ -494,7 +494,7 @@
-+ STMP_FIXINC = @STMP_FIXINC@
-+ 
-+ # Test to see whether <limits.h> exists in the system header files.
-+-LIMITS_H_TEST = [ -f $(SYSTEM_HEADER_DIR)/limits.h ]
-++LIMITS_H_TEST = :
-+ 
-+ # Directory for prefix to system directories, for
-+ # each of $(system_prefix)/usr/include, $(system_prefix)/usr/lib, etc.
-EOF
+	patch_gcc_limits_h_test
 	echo "fixing gcc stage2 control file to contain libgcc4 for hppa"
 	drop_privs patch -p1 <<'EOF'
 --- a/debian/rules.conf
@@ -2047,21 +2054,7 @@ patch_gcc_6() {
  
  printarch:
 EOF
-	echo "patching gcc to always detect the availability of glibc's limits.h even in multiarch locations"
-	drop_privs sed -i -e '/^series_stamp =/idebian_patches += multiarch-limits-h' debian/rules.patch
-	drop_privs tee debian/patches/multiarch-limits-h.diff >/dev/null <<'EOF'
---- a/src/gcc/Makefile.in
-+++ b/src/gcc/Makefile.in
-@@ -494,7 +494,7 @@
- STMP_FIXINC = @STMP_FIXINC@
- 
- # Test to see whether <limits.h> exists in the system header files.
--LIMITS_H_TEST = [ -f $(SYSTEM_HEADER_DIR)/limits.h ]
-+LIMITS_H_TEST = :
- 
- # Directory for prefix to system directories, for
- # each of $(system_prefix)/usr/include, $(system_prefix)/usr/lib, etc.
-EOF
+	patch_gcc_limits_h_test
 	patch_gcc_rtlibs_non_cross_base
 	patch_gcc_rtlibs_base_dep
 	patch_gcc_rtlibs_libatomic
@@ -2443,6 +2436,7 @@ EOF
  printarch:
 EOF
 	patch_gcc_rtlibs_non_cross_base
+	patch_gcc_7_limits_h_test
 	patch_gcc_wdotap
 }
 # choosing libatomic1 arbitrarily here, cause it never bumped soname
