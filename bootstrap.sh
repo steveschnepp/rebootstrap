@@ -2358,7 +2358,6 @@ patch_gcc_7() {
  
  printarch:
 EOF
-	patch_gcc_rtlibs_non_cross_base
 	patch_gcc_7_limits_h_test
 	patch_gcc_wdotap
 }
