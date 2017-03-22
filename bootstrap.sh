@@ -3130,8 +3130,10 @@ else
 	)
 	cd ..
 	ls -l
-	drop_privs changestool ./*.changes dumbremove "gcc-${GCC_VER}-base_"*"_$(dpkg --print-architecture).deb"
-	drop_privs rm "gcc-${GCC_VER}-base_"*"_$(dpkg --print-architecture).deb"
+	if test "$ENABLE_MULTIARCH_GCC" = yes; then
+		drop_privs changestool ./*.changes dumbremove "gcc-${GCC_VER}-base_"*"_$(dpkg --print-architecture).deb"
+		drop_privs rm "gcc-${GCC_VER}-base_"*"_$(dpkg --print-architecture).deb"
+	fi
 	pickup_packages *.changes
 	drop_privs rm -vf ./*multilib*.deb
 	dpkg -i *.deb
@@ -3267,8 +3269,10 @@ else
 	)
 	cd ..
 	ls -l
-	drop_privs changestool ./*.changes dumbremove "gcc-${GCC_VER}-base_"*"_$(dpkg --print-architecture).deb"
-	drop_privs rm "gcc-${GCC_VER}-base_"*"_$(dpkg --print-architecture).deb"
+	if test "$ENABLE_MULTIARCH_GCC" = yes; then
+		drop_privs changestool ./*.changes dumbremove "gcc-${GCC_VER}-base_"*"_$(dpkg --print-architecture).deb"
+		drop_privs rm "gcc-${GCC_VER}-base_"*"_$(dpkg --print-architecture).deb"
+	fi
 	pickup_packages *.changes
 	# avoid file conflicts between differently staged M-A:same packages
 	apt_get_remove "gcc-$GCC_VER-base:$HOST_ARCH"
