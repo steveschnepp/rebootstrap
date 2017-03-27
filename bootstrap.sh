@@ -4684,6 +4684,23 @@ buildenv_libprelude() {
 	;; esac
 }
 
+patch_libpsl() {
+	echo "fixing FTCBFS #856477"
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/control
++++ b/debian/control
+@@ -13,7 +13,7 @@
+  libunistring-dev,
+  pkg-config,
+  publicsuffix (>= 20150507),
+- python,
++ python:native,
+ Standards-Version: 3.9.8
+ Section: libs
+ Homepage: https://github.com/rockdaboot/libpsl
+EOF
+}
+
 add_automatic libpthread-stubs
 add_automatic libseccomp
 add_automatic libsepol
@@ -5992,9 +6009,15 @@ mark_built libidn2-0
 
 automatically_cross_build_packages
 
+cross_build libpsl
+mark_built libpsl
+# needed by curl
+
+automatically_cross_build_packages
+
 builddep_curl() {
-	assert_built "gnutls28 libidn2-0 krb5 openldap nss rtmpdump libssh2 openssl zlib nghttp2"
-	apt_get_install debhelper autoconf automake ca-certificates groff-base "libgnutls28-dev:$1" "libidn2-0-dev:$1" "libkrb5-dev:$1" "libldap2-dev:$1" "libnss3-dev:$1" "librtmp-dev:$1" "libssh2-1-dev:$1" "libssl-dev:$1" libtool python quilt "zlib1g-dev:$1" "libnghttp2-dev:$1" dh-exec
+	assert_built "gnutls28 libidn2-0 krb5 openldap nss libpsl rtmpdump libssh2 openssl zlib nghttp2"
+	apt_get_install debhelper autoconf automake ca-certificates groff-base "libgnutls28-dev:$1" "libidn2-0-dev:$1" "libkrb5-dev:$1" "libldap2-dev:$1" "libnss3-dev:$1" "libpsl-dev:$1" "librtmp-dev:$1" "libssh2-1-dev:$1" "libssl-dev:$1" libtool python quilt "zlib1g-dev:$1" "libnghttp2-dev:$1" dh-exec
 }
 patch_curl() {
 	echo "patching curl to not install absent zsh completions #812965"
