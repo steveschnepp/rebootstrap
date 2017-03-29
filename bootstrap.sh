@@ -4706,6 +4706,7 @@ add_automatic libseccomp
 add_automatic libsepol
 add_automatic libsm
 add_automatic libssh2
+add_automatic libsystemd-dummy
 add_automatic libtasn1-6
 add_automatic libtextwrap
 
@@ -5206,6 +5207,9 @@ if apt-cache showsrc systemd | grep -q "^Build-Depends:.*libseccomp-dev[^,]*[[ ]
 fi
 dpkg-architecture "-a$HOST_ARCH" -ilinux-any && add_need libsepol # by libselinux
 add_need libssh2 # by curl
+if dpkg-architecture "-a$HOST_ARCH" -ihurd-any || dpkg-architecture "-a$HOST_ARCH" -ikfreebsd-any; then
+	add_need libsystemd-dummy # by nghttp2
+fi
 add_need libtextwrap # by cdebconf
 add_need libx11 # by dbus
 add_need libxau # by libxcb
