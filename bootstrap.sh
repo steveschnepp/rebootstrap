@@ -1015,7 +1015,7 @@ EOF
 }
 patch_gcc_rtlibs_base_dep() {
 	test "$ENABLE_MULTIARCH_GCC" != yes || return 0
-	echo "patching gcc rtlibs to emit deps on gcc-VER-base"
+	echo "patching gcc rtlibs to emit deps on gcc-VER-base #859938"
 	drop_privs patch -p1 <<'EOF'
 --- a/debian/control.m4
 +++ b/debian/control.m4
@@ -2358,6 +2358,7 @@ patch_gcc_7() {
  printarch:
 EOF
 	patch_gcc_7_limits_h_test
+	patch_gcc_rtlibs_base_dep
 	patch_gcc_wdotap
 }
 # choosing libatomic1 arbitrarily here, cause it never bumped soname
