@@ -979,23 +979,6 @@ patch_gcc_limits_h_test() {
  # each of $(system_prefix)/usr/include, $(system_prefix)/usr/lib, etc.
 EOF
 }
-patch_gcc_7_limits_h_test() {
-	grep -q LIMITS_H_TEST debian/patches/gcc-multiarch.diff && return 0
-	echo "patching gcc to always detect the availability of glibc's limits.h even in multiarch locations #857535"
-	drop_privs tee -a debian/patches/gcc-multiarch.diff >/dev/null <<'EOF'
---- a/src/gcc/Makefile.in
-+++ b/src/gcc/Makefile.in
-@@ -494,7 +494,7 @@
- STMP_FIXINC = @STMP_FIXINC@
-
- # Test to see whether <limits.h> exists in the system header files.
--LIMITS_H_TEST = [ -f $(BUILD_SYSTEM_HEADER_DIR)/limits.h ]
-+LIMITS_H_TEST = [ -f $(BUILD_SYSTEM_HEADER_DIR)/limits.h -o -f $(BUILD_SYSTEM_HEADER_DIR)/$(MULTIARCH_DIRNAME)/limits.h ]
-
- # Directory for prefix to system directories, for
- # each of $(system_prefix)/usr/include, $(system_prefix)/usr/lib, etc.
-EOF
-}
 patch_gcc_rtlibs_non_cross_base() {
 	test "$ENABLE_MULTIARCH_GCC" != yes || return 0
 	echo "fixing gcc rtlibs to build the non-cross base #857074"
@@ -2357,7 +2340,6 @@ patch_gcc_7() {
  
  printarch:
 EOF
-	patch_gcc_7_limits_h_test
 	patch_gcc_rtlibs_base_dep
 	patch_gcc_wdotap
 }
