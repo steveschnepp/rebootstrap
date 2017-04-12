@@ -488,10 +488,39 @@ obtain_source_package() {
 	fi
 }
 
-echo "adding arm64ilp32 to dpkg's cputable #824742"
-cat <<EOF >> /usr/share/dpkg/cputable
-arm64ilp32	aarch64_ilp32	aarch64_ilp32		32	little
+if test "$HOST_ARCH" = arm64ilp32; then
+	echo "adding arm64ilp32 to dpkg #824742"
+	patch -d/ -p0 <<'EOF'
+--- /usr/share/dpkg/abitable
++++ /usr/share/dpkg/abitable
+@@ -10,4 +10,5 @@
+ #
+ # <Debian name>	<Bits>
+ abin32		32
++ilp32		32
+ x32		32
+--- /usr/share/dpkg/ostable
++++ /usr/share/dpkg/ostable
+@@ -24,6 +24,7 @@
+ abi64-gnu-linux		linux-gnuabi64		linux[^-]*-gnuabi64
+ spe-gnu-linux		linux-gnuspe		linux[^-]*-gnuspe
+ x32-gnu-linux		linux-gnux32		linux[^-]*-gnux32
++ilp32-gnu-linux		linux-gnu_ilp32		linux[^-]*-gnu_ilp32
+ base-gnu-linux		linux-gnu		linux[^-]*(-gnu.*)?
+ eabihf-gnu-kfreebsd	kfreebsd-gnueabihf	kfreebsd[^-]*-gnueabihf
+ base-gnu-kfreebsd	kfreebsd-gnu		kfreebsd[^-]*(-gnu.*)?
+--- /usr/share/dpkg/tupletable
++++ /usr/share/dpkg/tupletable
+@@ -9,6 +9,7 @@
+ base-uclibc-linux-<cpu>		uclibc-linux-<cpu>
+ eabihf-musl-linux-arm		musl-linux-armhf
+ base-musl-linux-<cpu>		musl-linux-<cpu>
++ilp32-gnu-linux-arm64		arm64ilp32
+ eabihf-gnu-linux-arm		armhf
+ eabi-gnu-linux-arm		armel
+ abin32-gnu-linux-mips64r6el	mipsn32r6el
 EOF
+fi
 
 if test -z "$HOST_ARCH" || ! dpkg-architecture "-a$HOST_ARCH"; then
 	echo "architecture $HOST_ARCH unknown to dpkg"
