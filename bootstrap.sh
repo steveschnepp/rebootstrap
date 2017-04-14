@@ -3609,6 +3609,21 @@ EOF
 	drop_privs quilt push -a
 }
 
+add_automatic curl
+patch_curl() {
+	echo "patching curl to not install absent zsh completions #812965"
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/curl.install
++++ b/debian/curl.install
+@@ -1,2 +1,3 @@
++#!/usr/bin/dh-exec
+ usr/bin/curl
+-usr/share/zsh/*
++<!cross> usr/share/zsh/*
+EOF
+	chmod +x debian/curl.install
+}
+
 add_automatic dash
 add_automatic datefudge
 add_automatic db-defaults
@@ -5109,12 +5124,12 @@ dpkg-architecture "-a$HOST_ARCH" -ikfreebsd-any && add_need freebsd-glue # by fr
 add_need fuse # by e2fsprogs
 add_need gdbm # by perl, python2.7
 add_need gnupg2 # for apt
-add_need gnutls28 # by curl
+add_need gnutls28 # by libprelude, openldap
 test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = linux && add_need gpm # by ncurses
 add_need groff # for man-db
 test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = linux && add_need kmod # by systemd
 add_need icu # by libxml2
-add_need krb5 # by curl
+add_need krb5 # by audit
 add_need libatomic-ops # by gcc-4.9
 add_need libbsd # by bsdmainutils
 dpkg-architecture "-a$HOST_ARCH" -ilinux-any && add_need libcap2 # by systemd
@@ -5126,7 +5141,6 @@ if apt-cache showsrc systemd | grep -q "^Build-Depends:.*libseccomp-dev[^,]*[[ ]
 	add_need libseccomp # by systemd
 fi
 dpkg-architecture "-a$HOST_ARCH" -ilinux-any && add_need libsepol # by libselinux
-add_need libssh2 # by curl
 if dpkg-architecture "-a$HOST_ARCH" -ihurd-any || dpkg-architecture "-a$HOST_ARCH" -ikfreebsd-any; then
 	add_need libsystemd-dummy # by nghttp2
 fi
@@ -5142,13 +5156,10 @@ add_need mawk # for base-files (alternatively: gawk)
 add_need mpclib3 # by gcc-4.9
 add_need mpfr4 # by gcc-4.9
 add_need nettle # by unbound
-add_need nghttp2 # by curl
-add_need nss # by curl
-add_need openssl # by curl
+add_need openssl # by cyrus-sasl2
 add_need patch # for dpkg-dev
 add_need pcre3 # by libselinux
 add_need readline5 # by lvm2
-add_need rtmpdump # by curl
 add_need slang2 # by cdebconf, newt
 add_need sqlite3 # by python2.7
 add_need tcl8.6 # by newt
@@ -5936,29 +5947,6 @@ automatically_cross_build_packages
 cross_build libpsl
 mark_built libpsl
 # needed by curl
-
-automatically_cross_build_packages
-
-builddep_curl() {
-	assert_built "gnutls28 libidn2-0 krb5 openldap nss libpsl rtmpdump libssh2 openssl zlib nghttp2"
-	apt_get_install debhelper autoconf automake ca-certificates groff-base "libgnutls28-dev:$1" "libidn2-0-dev:$1" "libkrb5-dev:$1" "libldap2-dev:$1" "libnss3-dev:$1" "libpsl-dev:$1" "librtmp-dev:$1" "libssh2-1-dev:$1" "libssl-dev:$1" libtool python quilt "zlib1g-dev:$1" "libnghttp2-dev:$1" dh-exec
-}
-patch_curl() {
-	echo "patching curl to not install absent zsh completions #812965"
-	drop_privs patch -p1 <<'EOF'
---- a/debian/curl.install
-+++ b/debian/curl.install
-@@ -1,2 +1,3 @@
-+#!/usr/bin/dh-exec
- usr/bin/curl
--usr/share/zsh/*
-+<!cross> usr/share/zsh/*
-EOF
-	chmod +x debian/curl.install
-}
-cross_build curl
-mark_built curl
-# needed by apt, gnupg
 
 automatically_cross_build_packages
 
