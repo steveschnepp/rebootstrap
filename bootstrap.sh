@@ -4862,6 +4862,7 @@ EOF
 
 add_automatic nss
 add_automatic openssl
+add_automatic openssl1.0
 
 add_automatic p11-kit
 builddep_p11_kit() {
