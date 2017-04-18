@@ -3726,7 +3726,13 @@ builddep_expat() {
 }
 
 add_automatic file
+
 add_automatic findutils
+patch_findutils() {
+       echo "work around findutils FTBFS with gcc-7 #853401"
+       # disable gcc-7-specific code until it is unbroken
+       sed -i -e 's/^\(#define _GL_HAS_BUILTIN_OVERFLOW_WITH_NULL \).*/\1 0/' gl/lib/intprops.h
+}
 
 add_automatic fontconfig
 builddep_fontconfig() {
