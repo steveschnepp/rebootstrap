@@ -5467,24 +5467,6 @@ mark_built bsdmainutils
 automatically_cross_build_packages
 
 patch_flex() {
-	echo "patching flex to not run tests under DEB_BUILD_OPTIONS=nocheck #812659"
-	drop_privs patch -p1 <<'EOF'
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -53,9 +53,11 @@
-	doc \
-	examples \
-	po \
--	tests \
-	tools
- 
-+check:
-+	$(MAKE) -C tests
-+
- # Create the ChangeLog, but only if we're inside a git working directory
-
- ChangeLog: $(srcdir)/tools/git2cl
-EOF
 	echo "patching flex to fix FTCBFS #833146"
 	drop_privs patch -p1 <<'EOF'
 --- flex-2.6.1/configure.ac
