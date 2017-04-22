@@ -3643,6 +3643,10 @@ builddep_elfutils() {
 	# gcc-multilib dependency lacks nocheck profile
 	apt_get_install debhelper autotools-dev autoconf automake bzip2 "zlib1g-dev:$1" zlib1g-dev "libbz2-dev:$1" "liblzma-dev:$1" m4 gettext gawk dpkg-dev flex libfl-dev bison
 }
+patch_elfutils() {
+	echo "work around FTBFS with gcc-7 #853387"
+	sed -i -e 's/-Werror//' config/eu.am
+}
 
 patch_expat() {
 	echo "patching expat to add nobiarch build profile #779459"
