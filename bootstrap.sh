@@ -5624,6 +5624,11 @@ mark_built libsemanage
 
 automatically_cross_build_packages
 
+cross_build util-linux # stageless
+# essential
+
+automatically_cross_build_packages
+
 assert_built "$need_packages"
 
 echo "checking installability of build-essential with dose"
