@@ -1258,6 +1258,53 @@ patch_gcc_nonglibc() {
 ++MULTILIB_OSDIRNAMES := $(subst -linux-gnu,-linux-uclibc,$(MULTILIB_OSDIRNAMES))
 EOF
 }
+patch_gcc_7_nonglibc() {
+	grep -q musl debian/patches/gcc-multiarch.diff && return 0
+	dpkg-architecture "-a$HOST_ARCH" -iany-gnu-any-any && return 0
+	echo "patching gcc to fix multiarch locations for non-glibc #861588"
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/patches/gcc-multiarch.diff
++++ b/debian/patches/gcc-multiarch.diff
+@@ -145,6 +145,23 @@ Index: b/src/gcc/config.gcc
+  		mips64*-*-linux* | mipsisa64*-*-linux*)
+  			default_mips_abi=n32
+  			enable_mips_multilibs="yes"
++@@ -3002,6 +3011,16 @@
++ 	tm_file="${tm_file} rs6000/option-defaults.h"
++ esac
++
+++# non-glibc systems
+++case ${target} in
+++*-linux-musl*)
+++	tmake_file="${tmake_file} t-musl"
+++	;;
+++*-linux-uclibc*)
+++	tmake_file="${tmake_file} t-uclibc"
+++	;;
+++esac
+++
++ # Build mkoffload tool
++ case ${target} in
++ *-intelmic-* | *-intelmicemul-*)
+ @@ -4507,7 +4516,7 @@ case ${target} in
+  	i[34567]86-*-darwin* | x86_64-*-darwin*)
+  		;;
+@@ -214,3 +231,13 @@ Index: b/src/gcc/config/tilegx/t-tilegx
+
+  # Directory for prefix to system directories, for
+  # each of $(system_prefix)/usr/include, $(system_prefix)/usr/lib, etc.
++--- /dev/null
+++++ b/src/gcc/config/t-musl
++@@ -0,0 +1,2 @@
+++MULTIARCH_DIRNAME := $(subst -linux-gnu,-linux-musl,$(MULTIARCH_DIRNAME))
+++MULTILIB_OSDIRNAMES := $(subst -linux-gnu,-linux-musl,$(MULTILIB_OSDIRNAMES))
++--- /dev/null
+++++ b/src/gcc/config/t-uclibc
++@@ -0,0 +1,2 @@
+++MULTIARCH_DIRNAME := $(subst -linux-gnu,-linux-uclibc,$(MULTIARCH_DIRNAME))
+++MULTILIB_OSDIRNAMES := $(subst -linux-gnu,-linux-uclibc,$(MULTILIB_OSDIRNAMES))
+EOF
+}
 patch_gcc_multilib_deps() {
 		test "$ENABLE_MULTIARCH_GCC" != yes || return 0
 		echo "fixing multilib libc dependencies"
@@ -1917,6 +1964,7 @@ patch_gcc_7() {
  printarch:
 EOF
 	patch_gcc_rtlibs_base_dep
+	patch_gcc_7_nonglibc
 	patch_gcc_wdotap
 }
 # choosing libatomic1 arbitrarily here, cause it never bumped soname
