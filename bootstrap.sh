@@ -3472,6 +3472,10 @@ builddep_guile_2_0() {
  
 EOF
 	fi
+	if test "$HOST_ARCH" = sh3; then
+		echo "adding sh3 support to guile-2.0 http://git.savannah.gnu.org/cgit/guile.git/commit/?id=92222727f81b2a03cde124b88d7e6224ecb29199"
+		sed -i -e 's/"sh4"/"sh3" &/' /usr/share/guile/2.0/system/base/target.scm
+	fi
 }
 patch_guile_2_0() {
 	if test "$HOST_ARCH" = tilegx; then
@@ -3498,6 +3502,10 @@ patch_guile_2_0() {
            (else (error "unknown CPU word size" cpu)))))
  
 EOF
+	fi
+	if test "$HOST_ARCH" = sh3; then
+		echo "adding sh3 support to guile-2.0 http://git.savannah.gnu.org/cgit/guile.git/commit/?id=92222727f81b2a03cde124b88d7e6224ecb29199"
+		sed -i -e 's/"sh4"/"sh3" &/' module/system/base/target.scm
 	fi
 }
 
