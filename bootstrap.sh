@@ -3329,6 +3329,86 @@ patch_findutils() {
        sed -i -e 's/^\(#define _GL_HAS_BUILTIN_OVERFLOW_WITH_NULL \).*/\1 0/' gl/lib/intprops.h
 }
 
+add_automatic flex
+patch_flex() {
+	echo "patching flex to fix FTCBFS #833146"
+	drop_privs patch -p1 <<'EOF'
+--- flex-2.6.1/configure.ac
++++ flex-2.6.1/configure.ac
+@@ -70,6 +70,7 @@
+ FLEXexe='$(top_builddir)/src/flex$(EXEEXT)'
+ fi
+ AC_SUBST(FLEXexe)
++AM_CONDITIONAL([CROSS_COMPILING],[test "$cross_compiling" = yes])
+ 
+ # Check for a m4 that supports -P
+ 
+--- flex-2.6.1/src/Makefile.am
++++ flex-2.6.1/src/Makefile.am
+@@ -89,8 +89,13 @@
+ stage1scan.l: scan.l
+ 	cp $(srcdir)/scan.l $(srcdir)/stage1scan.l
+ 
++if CROSS_COMPILING
++stage1scan.c: stage1scan.l
++	$(FLEXexe) -o $@ $<
++else
+ stage1scan.c: stage1scan.l stage1flex$(EXEEXT)
+ 	$(top_builddir)/src/stage1flex$(EXEEXT) -o $@ $<
++endif
+ 
+ # Explicitly describe dependencies.
+ # You can recreate this with `gcc -I. -MM *.c'
+EOF
+	if dpkg-architecture "-a$HOST_ARCH" -ihurd-any; then
+		echo "fixing flex ftbfs for hurd-any #838133"
+		drop_privs patch -p1 <<'EOF'
+--- a/src/main.c
++++ b/src/main.c
+@@ -358,8 +358,8 @@
+ 			if (!path) {
+ 				m4 = M4;
+ 			} else {
++				int m4_length = strlen(m4);
+ 				do {
+-					char m4_path[PATH_MAX];
+ 					int length = strlen(path);
+ 					struct stat sbuf;
+ 
+@@ -367,19 +367,17 @@
+ 					if (!endOfDir)
+ 						endOfDir = path+length;
+ 
+-					if ((endOfDir-path+2) >= sizeof(m4_path)) {
+-					    path = endOfDir+1;
+-						continue;
+-					}
++					{
++						char m4_path[endOfDir-path + 1 + m4_length + 1];
+ 
+-					strncpy(m4_path, path, sizeof(m4_path));
+-					m4_path[endOfDir-path] = '/';
+-					m4_path[endOfDir-path+1] = '\0';
+-					strncat(m4_path, m4, sizeof(m4_path));
+-					if (stat(m4_path, &sbuf) == 0 &&
+-						(S_ISREG(sbuf.st_mode)) && sbuf.st_mode & S_IXUSR) {
+-						m4 = strdup(m4_path);
+-						break;
++						memcpy(m4_path, path, endOfDir-path);
++						m4_path[endOfDir-path] = '/';
++						memcpy(m4_path + (endOfDir-path) + 1, m4, m4_length + 1);
++						if (stat(m4_path, &sbuf) == 0 &&
++							(S_ISREG(sbuf.st_mode)) && sbuf.st_mode & S_IXUSR) {
++							m4 = strdup(m4_path);
++							break;
++						}
+ 					}
+ 					path = endOfDir+1;
+ 				} while (path[0]);
+EOF
+	fi
+}
+
 add_automatic fontconfig
 builddep_fontconfig() {
 	# help apt with finding a solution
@@ -4768,6 +4848,7 @@ add_need bzip2 # by dpkg, perl
 add_need cloog # by gcc-VER
 add_need db-defaults # by apt, perl, python2.7
 add_need file # by gcc-6, for debhelper
+add_need flex # by libsemanage, pam
 dpkg-architecture "-a$HOST_ARCH" -ikfreebsd-any && add_need freebsd-glue # by freebsd-libs
 add_need fuse # by e2fsprogs
 add_need gdbm # by perl, python2.7
@@ -5104,90 +5185,6 @@ builddep_bsdmainutils() {
 cross_build bsdmainutils
 mark_built bsdmainutils
 # needed for man-db
-
-automatically_cross_build_packages
-
-patch_flex() {
-	echo "patching flex to fix FTCBFS #833146"
-	drop_privs patch -p1 <<'EOF'
---- flex-2.6.1/configure.ac
-+++ flex-2.6.1/configure.ac
-@@ -70,6 +70,7 @@
- FLEXexe='$(top_builddir)/src/flex$(EXEEXT)'
- fi
- AC_SUBST(FLEXexe)
-+AM_CONDITIONAL([CROSS_COMPILING],[test "$cross_compiling" = yes])
- 
- # Check for a m4 that supports -P
- 
---- flex-2.6.1/src/Makefile.am
-+++ flex-2.6.1/src/Makefile.am
-@@ -89,8 +89,13 @@
- stage1scan.l: scan.l
- 	cp $(srcdir)/scan.l $(srcdir)/stage1scan.l
- 
-+if CROSS_COMPILING
-+stage1scan.c: stage1scan.l
-+	$(FLEXexe) -o $@ $<
-+else
- stage1scan.c: stage1scan.l stage1flex$(EXEEXT)
- 	$(top_builddir)/src/stage1flex$(EXEEXT) -o $@ $<
-+endif
- 
- # Explicitly describe dependencies.
- # You can recreate this with `gcc -I. -MM *.c'
-EOF
-	if dpkg-architecture "-a$HOST_ARCH" -ihurd-any; then
-		echo "fixing flex ftbfs for hurd-any #838133"
-		drop_privs patch -p1 <<'EOF'
---- a/src/main.c
-+++ b/src/main.c
-@@ -358,8 +358,8 @@
- 			if (!path) {
- 				m4 = M4;
- 			} else {
-+				int m4_length = strlen(m4);
- 				do {
--					char m4_path[PATH_MAX];
- 					int length = strlen(path);
- 					struct stat sbuf;
- 
-@@ -367,19 +367,17 @@
- 					if (!endOfDir)
- 						endOfDir = path+length;
- 
--					if ((endOfDir-path+2) >= sizeof(m4_path)) {
--					    path = endOfDir+1;
--						continue;
--					}
-+					{
-+						char m4_path[endOfDir-path + 1 + m4_length + 1];
- 
--					strncpy(m4_path, path, sizeof(m4_path));
--					m4_path[endOfDir-path] = '/';
--					m4_path[endOfDir-path+1] = '\0';
--					strncat(m4_path, m4, sizeof(m4_path));
--					if (stat(m4_path, &sbuf) == 0 &&
--						(S_ISREG(sbuf.st_mode)) && sbuf.st_mode & S_IXUSR) {
--						m4 = strdup(m4_path);
--						break;
-+						memcpy(m4_path, path, endOfDir-path);
-+						m4_path[endOfDir-path] = '/';
-+						memcpy(m4_path + (endOfDir-path) + 1, m4, m4_length + 1);
-+						if (stat(m4_path, &sbuf) == 0 &&
-+							(S_ISREG(sbuf.st_mode)) && sbuf.st_mode & S_IXUSR) {
-+							m4 = strdup(m4_path);
-+							break;
-+						}
- 					}
- 					path = endOfDir+1;
- 				} while (path[0]);
-EOF
-	fi
-}
-cross_build flex
-mark_built flex
-# needed by pam
 
 automatically_cross_build_packages
 
