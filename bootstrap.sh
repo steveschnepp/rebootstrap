@@ -3421,6 +3421,14 @@ add_automatic freetype
 add_automatic fuse
 add_automatic gdbm
 
+add_automatic glib2.0
+buildenv_glib2_0() {
+	export glib_cv_stack_grows=no
+	export glib_cv_uscore=no
+	export ac_cv_func_posix_getgrgid_r=yes
+	export ac_cv_func_posix_getpwuid_r=yes
+}
+
 add_automatic gmp
 patch_gmp() {
 	if test "$LIBC_NAME" = musl; then
@@ -5223,25 +5231,6 @@ automatically_cross_build_packages
 cross_build elfutils
 mark_built elfutils
 # needed by glib2.0, systemtap
-
-automatically_cross_build_packages
-
-builddep_glib2_0() {
-	dpkg-architecture "-a$1" -ilinux-any && assert_built "libselinux util-linux"
-	assert_built "elfutils libffi pcre3 zlib" # also linux-libc-dev
-	# python3-dbus dependency unsatisifable
-	dpkg-architecture "-a$1" -ilinux-any && apt_get_install "libmount-dev:$1" "libselinux1-dev:$1" "linux-libc-dev:$1"
-	apt_get_install debhelper cdbs dh-autoreconf pkg-config gettext autotools-dev gnome-pkg-tools dpkg-dev "libelf-dev:$1" "libpcre3-dev:$1" desktop-file-utils gtk-doc-tools "zlib1g-dev:$1" dbus dbus-x11 shared-mime-info xterm python3 python3-dbus python3-gi libxml2-utils "libffi-dev:$1"
-}
-buildenv_glib2_0() {
-	export glib_cv_stack_grows=no
-	export glib_cv_uscore=no
-	export ac_cv_func_posix_getgrgid_r=yes
-	export ac_cv_func_posix_getpwuid_r=yes
-}
-cross_build glib2.0
-mark_built glib2.0
-# needed by pkg-config, dbus, systemd, libxt
 
 automatically_cross_build_packages
 
