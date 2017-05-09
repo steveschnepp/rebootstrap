@@ -1965,6 +1965,8 @@ patch_gcc_7() {
 EOF
 	patch_gcc_rtlibs_base_dep
 	patch_gcc_7_nonglibc
+	echo "fix LIMITS_H_TEST again https://gcc.gnu.org/bugzilla/show_bug.cgi?id=80677"
+	sed -i -e 's,^\(+LIMITS_H_TEST = \).*,\1:,' debian/patches/gcc-multiarch.diff
 	patch_gcc_wdotap
 }
 # choosing libatomic1 arbitrarily here, cause it never bumped soname
