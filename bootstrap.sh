@@ -1661,7 +1661,6 @@ patch_gcc_6() {
 EOF
 	patch_gcc_limits_h_test
 	patch_gcc_rtlibs_non_cross_base
-	patch_gcc_rtlibs_base_dep
 	patch_gcc_rtlibs_libatomic
 	patch_gcc_include_multiarch
 	patch_gcc_powerpcel
