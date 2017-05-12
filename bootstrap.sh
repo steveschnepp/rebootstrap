@@ -1119,25 +1119,6 @@ patch_gcc_rtlibs_non_cross_base() {
    p_xbase = gcc$(pkg_ver)-base
 EOF
 }
-patch_gcc_rtlibs_base_dep() {
-	test "$ENABLE_MULTIARCH_GCC" != yes || return 0
-	echo "patching gcc rtlibs to emit deps on gcc-VER-base #859938"
-	drop_privs patch -p1 <<'EOF'
---- a/debian/control.m4
-+++ b/debian/control.m4
-@@ -123,8 +123,8 @@
- define(`SOFTBASEDEP', `gcc`'PV`'TS-base (>= ${gcc:SoftVersion})')
- 
- ifdef(`TARGET',`
--define(`BASELDEP', `gcc`'PV-cross-base`'GCC_PORTS_BUILD (= ${gcc:Version})')
--define(`SOFTBASELDEP', `gcc`'PV-cross-base`'GCC_PORTS_BUILD (>= ${gcc:SoftVersion})')
-+define(`BASELDEP', `gcc`'PV`'ifelse(CROSS_ARCH,`all',`-cross')-base`'GCC_PORTS_BUILD (= ${gcc:Version})')
-+define(`SOFTBASELDEP', `gcc`'PV`'ifelse(CROSS_ARCH, `all',`-cross')-base`'GCC_PORTS_BUILD (>= ${gcc:SoftVersion})')
- ',`dnl
- define(`BASELDEP', `BASEDEP')
- define(`SOFTBASELDEP', `SOFTBASEDEP')
-EOF
-}
 patch_gcc_rtlibs_libatomic() {
 	test "$ENABLE_MULTIARCH_GCC" != yes || return 0
 	echo "patching gcc to build libatomic with rtlibs"
@@ -1962,7 +1943,6 @@ patch_gcc_7() {
  
  printarch:
 EOF
-	patch_gcc_rtlibs_base_dep
 	patch_gcc_7_nonglibc
 	echo "fix LIMITS_H_TEST again https://gcc.gnu.org/bugzilla/show_bug.cgi?id=80677"
 	sed -i -e 's,^\(+LIMITS_H_TEST = \).*,\1:,' debian/patches/gcc-multiarch.diff
