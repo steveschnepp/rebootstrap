@@ -522,6 +522,13 @@ if test "$HOST_ARCH" = arm64ilp32; then
 EOF
 fi
 
+if test "$HOST_ARCH" = riscv64; then
+	echo "adding riscv64 to dpkg's cputable #822914"
+	cat <<EOF >> /usr/share/dpkg/cputable
+riscv64		riscv64		riscv64		64	little
+EOF
+fi
+
 if test -z "$HOST_ARCH" || ! dpkg-architecture "-a$HOST_ARCH"; then
 	echo "architecture $HOST_ARCH unknown to dpkg"
 	exit 1
