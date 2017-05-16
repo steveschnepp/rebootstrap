@@ -1294,9 +1294,9 @@ patch_gcc_7_nonglibc() {
 EOF
 }
 patch_gcc_multilib_deps() {
-		test "$ENABLE_MULTIARCH_GCC" != yes || return 0
-		echo "fixing multilib libc dependencies"
-		drop_privs patch -p1 <<'EOF'
+	test "$ENABLE_MULTIARCH_GCC" != yes || return 0
+	echo "fixing multilib libc dependencies #862756"
+	drop_privs patch -p1 <<'EOF'
 --- a/debian/rules.defs
 +++ b/debian/rules.defs
 @@ -1960,7 +1960,7 @@
@@ -1951,6 +1951,7 @@ patch_gcc_7() {
  printarch:
 EOF
 	patch_gcc_7_nonglibc
+	patch_gcc_multilib_deps
 	echo "fix LIMITS_H_TEST again https://gcc.gnu.org/bugzilla/show_bug.cgi?id=80677"
 	sed -i -e 's,^\(+LIMITS_H_TEST = \).*,\1:,' debian/patches/gcc-multiarch.diff
 	patch_gcc_wdotap
