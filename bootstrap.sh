@@ -316,6 +316,17 @@ check_arch() {
 				;;
 			esac
 		;;
+		*", UCB RISC-V, version "*)
+			case "$(dpkg-architecture "-a$2" -qDEB_HOST_ARCH_CPU)" in
+				riscv*) ;;
+				*)
+					echo "cpu mismatch"
+					echo "expected $2"
+					echo "got $FILE_RES"
+					return 1
+				;;
+			esac
+		;;
 		*", IBM S/390, version "*)
 			case "`dpkg-architecture -a$2 -qDEB_HOST_ARCH_CPU`" in
 				s390|s390x) ;;
