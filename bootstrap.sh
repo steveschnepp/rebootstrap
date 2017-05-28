@@ -3581,6 +3581,22 @@ patch_jemalloc() {
  endif
  
 EOF
+	if test "$HOST_ARCH" = sh3; then
+		echo "adding sh3 support to jemalloc #863424"
+		drop_privs patch -p1 <<'EOF'
+--- a/debian/rules
++++ b/debian/rules
+@@ -6,7 +6,7 @@
+ DEB_HOST_ARCH := $(shell dpkg-architecture -qDEB_HOST_ARCH)
+ DEB_HOST_ARCH_OS := $(shell dpkg-architecture -qDEB_HOST_ARCH_OS)
+
+-ifneq (,$(findstring $(DEB_HOST_ARCH),sparc sparc64))
++ifneq (,$(findstring $(DEB_HOST_ARCH),sh3 sparc sparc64))
+   DEB_CPPFLAGS_MAINT_APPEND += -DLG_QUANTUM=4
+ endif
+
+EOF
+	fi
 }
 
 add_automatic keyutils
