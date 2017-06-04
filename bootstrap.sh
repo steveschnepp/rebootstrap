@@ -2074,6 +2074,7 @@ patch_linux() {
 		arm|nios2)
 			kernel_arch=$HOST_ARCH
 		;;
+		arm64ilp32) kernel_arch=arm64; ;;
 		mipsr6|mipsr6el|mipsn32r6|mipsn32r6el|mips64r6|mips64r6el)
 			kernel_arch=defines-only
 		;;
