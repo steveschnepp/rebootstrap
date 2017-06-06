@@ -4759,11 +4759,11 @@ for pkg in $(discover_essential); do
 done
 add_need acl # by coreutils, systemd
 add_need apt # almost essential
-add_need attr # by coreutils, libcap-ng, libcap2
+add_need attr # by coreutils, libcap-ng
 add_need autogen # by gcc-VER, gnutls28
-add_need bzip2 # by dpkg, perl
+add_need bzip2 # by perl
 add_need cloog # by gcc-VER
-add_need db-defaults # by apt, perl, python2.7
+add_need db-defaults # by perl, python2.7, python3.5
 add_need file # by gcc-6, for debhelper
 add_need flex # by libsemanage, pam
 dpkg-architecture "-a$HOST_ARCH" -ikfreebsd-any && add_need freebsd-glue # by freebsd-libs
@@ -4813,7 +4813,7 @@ add_need tcltk-defaults # by python2.7
 dpkg-architecture "-a$HOST_ARCH" -ilinux-any && add_need tcp-wrappers # by audit
 add_need tk8.6 # by blt
 add_need ustr # by libsemanage
-add_need xz-utils # by dpkg, libxml2
+add_need xz-utils # by libxml2
 
 automatically_cross_build_packages() {
 	local need_packages_comma_sep dosetmp profiles buildable new_needed line pkg missing source
@@ -4908,7 +4908,7 @@ builddep_zlib() {
 }
 cross_build zlib "$(if test "$ENABLE_MULTILIB" != yes; then echo stage1; fi)"
 mark_built zlib
-# needed by dpkg, file, gnutls28, libpng, libtool, libxml2, perl, slang2, tcl8.6, util-linux
+# needed by dpkg, file, gnutls28, libpng1.6, libtool, libxml2, perl, slang2, tcl8.6, util-linux
 
 automatically_cross_build_packages
 
@@ -4921,7 +4921,7 @@ builddep_libtool() {
 }
 cross_build libtool
 mark_built libtool
-# needed by guile-2.0
+# needed by guile-2.0, libffi
 
 automatically_cross_build_packages
 
@@ -5036,7 +5036,7 @@ builddep_readline() {
 }
 cross_build readline
 mark_built readline
-# needed by gnupg, guile-2.0, libxml2
+# needed by gnupg2, guile-2.0, libxml2
 
 automatically_cross_build_packages
 
@@ -5127,7 +5127,7 @@ else
 fi
 progress_mark "db5.3 stage1 cross build"
 mark_built db5.3
-# needed by perl, python2.7, needed for db-defaults
+# needed by perl, python2.7, needed for db-defaults and thus by freebsd-glue
 
 automatically_cross_build_packages
 
