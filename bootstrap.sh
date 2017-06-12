@@ -5272,7 +5272,7 @@ builddep_libxml2() {
 	apt_get_remove python2.7
 }
 patch_libxml2() {
-	echo "patching libxml2 to drop python in stage1 #738080"
+	echo "patching libxml2 to drop python in stage1 #862867"
 	drop_privs patch -p1 <<'EOF'
 diff -urN libxml2-2.9.1+dfsg1.old/debian/rules libxml2-2.9.1+dfsg1/debian/rules
 --- libxml2-2.9.1+dfsg1.old/debian/rules
