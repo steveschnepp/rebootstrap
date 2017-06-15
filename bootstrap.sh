@@ -1727,6 +1727,10 @@ EOF
 	patch_gcc_multilib_deps
 	echo "fix LIMITS_H_TEST again https://gcc.gnu.org/bugzilla/show_bug.cgi?id=80677"
 	sed -i -e 's,^\(+LIMITS_H_TEST = \).*,\1:,' debian/patches/gcc-multiarch.diff
+	echo "fixing gcc-7 symbols #864835"
+	sed -i -e '/__sanitizer_print_memory_profile/s/([^)]*)/(arch=base-any-linux-amd64 base-any-linux-arm64 any-linux-mips64 any-linux-mips64el)/' debian/libasan.symbols.64
+	sed -i -e '/internal_sigreturn/s/([^)]*)/(arch=base-any-any-amd64 any-mips any-mipsel)/' debian/libasan4.symbols
+	sed -i -e '/internal_sigreturn/s/([^)]*)/(arch=base-any-any-amd64 any-mips any-mipsel)/' debian/libubsan0.symbols
 	patch_gcc_wdotap
 }
 # choosing libatomic1 arbitrarily here, cause it never bumped soname
