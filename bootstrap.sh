@@ -1428,6 +1428,8 @@ EOF
 	patch_gcc_powerpcel
 	patch_gcc_nonglibc
 	patch_gcc_multilib_deps
+	echo "build common libraries again, not a bug"
+	sed -i -e '/^with_common_/s/=.*/= yes/' debian/rules.defs
 	patch_gcc_wdotap
 }
 patch_gcc_7() {
