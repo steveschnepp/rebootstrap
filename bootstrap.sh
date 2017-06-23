@@ -5431,6 +5431,12 @@ mark_built unbound
 
 automatically_cross_build_packages
 
+cross_build libidn2-0
+mark_built libidn2-0
+# needed by curl, gnutls28
+
+automatically_cross_build_packages
+
 if test -f "$REPODIR/stamps/openldap_1"; then
 	echo "skipping stage1 rebuild of openldap"
 else
@@ -5498,12 +5504,6 @@ builddep_e2fsprogs() {
 cross_build e2fsprogs
 mark_built e2fsprogs
 # essential
-
-automatically_cross_build_packages
-
-cross_build libidn2-0
-mark_built libidn2-0
-# needed by curl
 
 automatically_cross_build_packages
 
