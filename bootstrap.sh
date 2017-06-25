@@ -1749,7 +1749,7 @@ else
 	# dependencies for common libs no longer declared
 	$APT_GET install doxygen graphviz ghostscript texlive-latex-base xsltproc docbook-xsl-ns
 	cross_build_setup "gcc-$GCC_VER" gcc0
-	drop_privs gcc_cv_libc_provides_ssp=yes DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=biarch,fortran,$GCC_NOLANG" dpkg-buildpackage -B -uc -us
+	drop_privs gcc_cv_libc_provides_ssp=yes DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=biarch,$GCC_NOLANG" dpkg-buildpackage -B -uc -us
 	cd ..
 	ls -l
 	reprepro include rebootstrap-native ./*.changes
