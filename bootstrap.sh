@@ -510,10 +510,13 @@ if test -z "$HOST_ARCH" || ! dpkg-architecture "-a$HOST_ARCH"; then
 	echo "architecture $HOST_ARCH unknown to dpkg"
 	exit 1
 fi
-for f in /etc/apt/sources.list /etc/apt/sources.list.d/*.list; do
+
+# ensure that the rebootstrap list comes first
+test -f /etc/apt/sources.list && mv -v /etc/apt/sources.list /etc/apt/sources.list.d/local.list
+for f in /etc/apt/sources.list.d/*.list; do
 	test -f "$f" && sed -i "s/^deb \(\[.*\] \)*/deb [ arch-=$HOST_ARCH ] /" $f
 done
-grep -q '^deb-src ' /etc/apt/sources.list || echo "deb-src $MIRROR sid main" >> /etc/apt/sources.list
+grep -q '^deb-src .*sid' /etc/apt/sources.list.d/*.list || echo "deb-src $MIRROR sid main" >> /etc/apt/sources.list.d/sid-source.list
 
 dpkg --add-architecture $HOST_ARCH
 $APT_GET update
@@ -567,8 +570,8 @@ ignore wrongdistribution
 EOF
 export REPREPRO_BASE_DIR="$REPODIR"
 reprepro export
-echo "deb [ arch=`dpkg --print-architecture`,$HOST_ARCH trusted=yes ] file://$REPODIR rebootstrap main" >/etc/apt/sources.list.d/rebootstrap.list
-echo "deb [ arch=`dpkg --print-architecture` trusted=yes ] file://$REPODIR rebootstrap-native main" >/etc/apt/sources.list.d/rebootstrap-native.list
+echo "deb [ arch=$(dpkg --print-architecture),$HOST_ARCH trusted=yes ] file://$REPODIR rebootstrap main" >/etc/apt/sources.list.d/000_rebootstrap.list
+echo "deb [ arch=$(dpkg --print-architecture) trusted=yes ] file://$REPODIR rebootstrap-native main" >/etc/apt/sources.list.d/001_rebootstrap-native.list
 cat >/etc/apt/preferences.d/rebootstrap.pref <<EOF
 Explanation: prefer our own rebootstrap (native) packages over everything
 Package: *
