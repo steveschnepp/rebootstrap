@@ -1614,9 +1614,9 @@ patch_gcc_7() {
  
 -	dh_strip -p$(p_l) --dbg-package=$(p_d)
 +	$(cross_strip) dh_strip -p$(p_l) --dbg-package=$(p_d)
+ 	rm -f debian/$(p_l).symbols
  	$(if $(2),
  	  ln -sf libobjc.symbols debian/$(p_l).symbols ,
- 	  fgrep -v libobjc.symbols.gc debian/libobjc.symbols > debian/$(p_l).symbols
 --- a/debian/rules.d/binary-libquadmath.mk
 +++ b/debian/rules.d/binary-libquadmath.mk
 @@ -30,7 +30,7 @@
