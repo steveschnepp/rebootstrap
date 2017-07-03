@@ -4290,57 +4290,6 @@ add_automatic libtasn1-6
 add_automatic libtextwrap
 
 add_automatic libunistring
-patch_libunistring() {
-	echo "fixing misbuild with multiarched libc #857708"
-	drop_privs patch -p1 <<'EOF'
---- a/lib/Makefile.am
-+++ b/lib/Makefile.am
-@@ -98,28 +98,13 @@
- 	  echo '#if __GLIBC__ >= 2'; \
- 	  echo '#include <stdint.h>'; \
- 	  echo '#else'; \
--	  if test -f /usr/include/stdint.h; then \
--	    HAVE_STDINT_H='1'; \
--	  else \
--	    HAVE_STDINT_H='defined __MINGW32__ || defined __HAIKU__'; \
--	  fi; \
--	  if test -f /usr/include/inttypes.h; then \
--	    HAVE_INTTYPES_H='1'; \
--	  else \
--	    HAVE_INTTYPES_H='defined __MINGW32__ || defined __HAIKU__'; \
--	  fi; \
--	  if test -f /usr/include/sys/inttypes.h; then \
--	    HAVE_SYS_INTTYPES_H='1'; \
--	  else \
--	    HAVE_SYS_INTTYPES_H='0'; \
--	  fi; \
--	  sed -e 's/@''HAVE_STDINT_H''@/'"$$HAVE_STDINT_H"'/g' \
-+	  sed -e 's/@''HAVE_STDINT_H''@/$(or @HAVE_STDINT_H@,0)/g' \
- 	      -e 's|@''INCLUDE_NEXT''@|include|g' \
- 	      -e 's|@''PRAGMA_SYSTEM_HEADER''@||g' \
- 	      -e 's|@''NEXT_STDINT_H''@|<stdint.h>|g' \
- 	      -e 's/@''HAVE_SYS_TYPES_H''@/1/g' \
--	      -e 's/@''HAVE_INTTYPES_H''@/'"$$HAVE_INTTYPES_H"'/g' \
--	      -e 's/@''HAVE_SYS_INTTYPES_H''@/'"$$HAVE_SYS_INTTYPES_H"'/g' \
-+	      -e 's/@''HAVE_INTTYPES_H''@/$(or @HAVE_INTTYPES_H@,0)/g' \
-+	      -e 's/@''HAVE_SYS_INTTYPES_H''@/$(or @HAVE_SYS_INTTYPES_H@,0)/g' \
- 	      -e 's/@''HAVE_SYS_BITYPES_H''@/0/g' \
- 	      < $(srcdir)/stdint.mini.h; \
- 	  echo '#endif'; \
---- a/configure.ac
-+++ b/configure.ac
-@@ -136,6 +136,8 @@
- HEXVERSION=0x`$AWK 'BEGIN { printf("%02d%02d"',"$version_major","$version_minor"') }'`
- AC_SUBST([HEXVERSION])
-
-+AC_CHECK_HEADERS_ONCE(stdint.h inttypes.h sys/inttypes.h)
-+
- dnl Check for tools needed for formatting the documentation.
- ac_aux_dir_abs=`cd $ac_aux_dir && pwd`
- AC_PATH_PROG([TEXI2DVI], [texi2dvi], [$ac_aux_dir_abs/missing texi2dvi])
-EOF
-}
-
 add_automatic libusb
 add_automatic libusb-1.0
 add_automatic libverto
