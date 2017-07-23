@@ -3145,7 +3145,7 @@ patch_expat() {
 @@ -5,7 +5,7 @@
  Build-Depends: debhelper (>= 9), docbook-to-man, dh-autoreconf,
   dpkg-dev (>= 1.16.0),
-  libbsd-dev [kfreebsd-amd64 kfreebsd-i386],
+  libbsd-dev [kfreebsd-amd64 kfreebsd-i386 hurd-i386],
 - gcc-multilib [i386 powerpc sparc s390]
 + gcc-multilib [i386 powerpc sparc s390] <!nobiarch>
  Homepage: http://expat.sourceforge.net
