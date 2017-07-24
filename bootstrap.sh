@@ -5171,37 +5171,13 @@ mark_built libidn
 
 automatically_cross_build_packages
 
-builddep_libxml2() {
-	assert_built "icu xz-utils zlib"
-	# python-all-dev dependency lacks profile annotation
-	apt_get_install debhelper dh-autoreconf autotools-dev pkg-config "zlib1g-dev:$1" "liblzma-dev:$1" "libicu-dev:$1"
-	# autodetects python2.7
-	apt_get_remove python2.7
-}
-patch_libxml2() {
-	echo "patching libxml2 to drop python in stage1 #862867"
-	drop_privs patch -p1 <<'EOF'
-diff -urN libxml2-2.9.1+dfsg1.old/debian/rules libxml2-2.9.1+dfsg1/debian/rules
---- libxml2-2.9.1+dfsg1.old/debian/rules
-+++ libxml2-2.9.1+dfsg1/debian/rules
-@@ -28,6 +28,7 @@
- ifeq ($(DEB_BUILD_PROFILE),stage1)
- DH_OPTIONS += -Npython-libxml2 -Npython-libxml2-dbg
- export DH_OPTIONS
-+TARGETS=main
- endif
- 
- CONFIGURE_FLAGS := --disable-silent-rules --with-history CC="$(CC)" CFLAGS="$(CFLAGS)" CPPFLAGS="$(CPPFLAGS)" LDFLAGS="$(LDFLAGS)" --cache-file="$(CURDIR)/builddir/config.cache"
-EOF
-}
 if test -f "$REPODIR/stamps/libxml2_1"; then
-	echo "skipping rebuild of libxml2 stage1"
+	echo "skipping rebuild of libxml2 nopython"
 else
-	builddep_libxml2 "$HOST_ARCH"
 	cross_build_setup libxml2 libxml2_1
+	apt_get_build_dep "-a$HOST_ARCH" --arch-only -Pnopython ./
 	check_binNMU
-	dpkg-checkbuilddeps -B "-a$HOST_ARCH" || : # tell unmet build depends
-	drop_privs DEB_BUILD_PROFILE=stage1 CC="`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_GNU_TYPE`-gcc" dpkg-buildpackage "-a$HOST_ARCH" -B -d -uc -us
+	drop_privs dpkg-buildpackage "-a$HOST_ARCH" -B -Pnopython -uc -us
 	cd ..
 	ls -l
 	pickup_packages *.changes
@@ -5210,7 +5186,7 @@ else
 	cd ..
 	drop_privs rm -Rf libxml2_1
 fi
-progress_mark "libxml2 stage1 cross build"
+progress_mark "libxml2 nopython cross build"
 mark_built libxml2
 # needed by autogen
 
