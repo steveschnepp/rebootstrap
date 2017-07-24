@@ -3266,6 +3266,10 @@ builddep_fontconfig() {
 	apt_get_remove "libfreetype6-dev:$(dpkg --print-architecture)"
 	apt_get_build_dep "-a$1" ./
 }
+patch_fontconfig() {
+	echo "fixing fontconfig ftbfs with newer gperf #869584"
+	echo src/fcobjshash.h | drop_privs tee -a debian/clean >/dev/null
+}
 
 add_automatic freebsd-glue
 add_automatic freetype
