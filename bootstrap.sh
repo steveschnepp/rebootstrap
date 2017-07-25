@@ -2524,6 +2524,31 @@ EOF
 EOF
 	echo "patching glibc for sh3 #851867"
 	drop_privs cp -nv debian/sysdeps/sh4.mk debian/sysdeps/sh3.mk
+	echo "fix glibc FTBFS with binutils 2.29 #869717"
+	drop_privs patch -p1 <<'EOF'
+--- a/misc/regexp.c
++++ b/misc/regexp.c
+@@ -29,14 +29,15 @@
+ 
+ #if SHLIB_COMPAT (libc, GLIBC_2_0, GLIBC_2_23)
+ 
+-/* Define the variables used for the interface.  */
+-char *loc1;
+-char *loc2;
++/* Define the variables used for the interface.  Avoid .symver on common
++   symbol, which just creates a new common symbol, not an alias.  */
++char *loc1 __attribute__ ((nocommon));
++char *loc2 __attribute__ ((nocommon));
+ compat_symbol (libc, loc1, loc1, GLIBC_2_0);
+ compat_symbol (libc, loc2, loc2, GLIBC_2_0);
+ 
+ /* Although we do not support the use we define this variable as well.  */
+-char *locs;
++char *locs __attribute__ ((nocommon));
+ compat_symbol (libc, locs, locs, GLIBC_2_0);
+ 
+ 
+EOF
 }
 if test -f "$REPODIR/stamps/${LIBC_NAME}_1"; then
 	echo "skipping rebuild of $LIBC_NAME stage1"
