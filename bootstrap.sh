@@ -3821,6 +3821,25 @@ EOF
 }
 
 add_automatic libcap2
+patch_libcap2() {
+	echo "fixing libcap2 ftbfs with gperf 3.1 #869588"
+	drop_privs quilt pop -a
+	drop_privs patch -p1 <<'EOF'
+--- libcap2-2.25/debian/patches/Hide-private-symbols.patch
++++ libcap2-2.25/debian/patches/Hide-private-symbols.patch
+@@ -22,7 +26,7 @@
+  
+  $(GPERF_OUTPUT): cap_names.list.h
+ -	perl -e 'print "struct __cap_token_s { const char *name; int index; };\n%{\nconst struct __cap_token_s *__cap_lookup_name(const char *, unsigned int);\n%}\n%%\n"; while ($$l = <>) { $$l =~ s/[\{\"]//g; $$l =~ s/\}.*// ; print $$l; }' < $< | gperf --ignore-case --language=ANSI-C --readonly --null-strings --global-table --hash-function-name=__cap_hash_name --lookup-function-name="__cap_lookup_name" -c -t -m20 $(INDENT) > $@
+-+	perl -e 'print "struct __cap_token_s { const char *name; int index; };\n%{\nstatic const struct __cap_token_s *__cap_lookup_name(const char *, unsigned int);\n%}\n%%\n"; while ($$l = <>) { $$l =~ s/[\{\"]//g; $$l =~ s/\}.*// ; print $$l; }' < $< | gperf --ignore-case --language=ANSI-C --readonly --null-strings --global-table --hash-function-name=__cap_hash_name --lookup-function-name="__cap_lookup_name" -c -t -m20 $(INDENT) > $@
+++	perl -e 'print "struct __cap_token_s { const char *name; int index; };\n%{\n#include <stdlib.h>\nstatic const struct __cap_token_s *__cap_lookup_name(const char *, size_t);\n%}\n%%\n"; while ($$l = <>) { $$l =~ s/[\{\"]//g; $$l =~ s/\}.*// ; print $$l; }' < $< | gperf --includes --ignore-case --language=ANSI-C --readonly --null-strings --global-table --hash-function-name=__cap_hash_name --lookup-function-name="__cap_lookup_name" -c -t -m20 $(INDENT) > $@
+  
+  cap_names.list.h: Makefile $(KERNEL_HEADERS)/linux/capability.h
+  	@echo "=> making $@ from $(KERNEL_HEADERS)/linux/capability.h"
+EOF
+	drop_privs quilt push -a
+}
+
 add_automatic libdebian-installer
 add_automatic libev
 add_automatic libevent
