@@ -5322,7 +5322,6 @@ if test -f "$REPODIR/stamps/openldap_1"; then
 	echo "skipping stage1 rebuild of openldap"
 else
 	assert_built "gnutls28 cyrus-sasl2"
-	apt_get_remove libgnutls-deb0-28 libgnutls30 # work around multiarch desync #805863
 	$APT_GET build-dep "-a$HOST_ARCH" --arch-only -P stage1 openldap
 	cross_build_setup openldap openldap_1
 	check_binNMU
