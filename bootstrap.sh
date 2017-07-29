@@ -4475,6 +4475,12 @@ add_automatic slang2
 add_automatic spdylay
 add_automatic sqlite3
 
+builddep_systemd() {
+	# meson dependency unsatisfiable #859177
+	apt-cache showsrc systemd | grep -q "^Build-Depends:.*gnu-efi[^,]*[[ ]$1[] ]" && apt_get_install gnu-efi
+	apt-cache showsrc systemd | grep -q "^Build-Depends:.*libseccomp-dev[^,]*[[ ]$1[] ]" && apt_get_install "libseccomp-dev:$1"
+	apt_get_install debhelper pkg-config xsltproc docbook-xsl docbook-xml m4 meson intltool gperf "libcap-dev:$1" "libpam0g-dev:$1" "libselinux1-dev:$1" "libacl1-dev:$1" "liblzma-dev:$1" "liblz4-dev:$1" "libgcrypt20-dev:$1" "libkmod-dev:$1" "libblkid-dev:$1" "libmount-dev:$1" python3 python3-lxml
+}
 patch_systemd() {
 	if test "$HOST_ARCH" = tilegx; then
 		echo "adding tilegx support to systemd #856306"
@@ -5358,9 +5364,9 @@ else
 	if grep -q "^Build-Depends:.*libseccomp-dev[^,]*[[ ]$HOST_ARCH[] ]" debian/control; then
 		assert_built libseccomp
 	fi
-	apt_get_build_dep "-a$HOST_ARCH" --arch-only -P nocheck,noudeb,stage1 ./
+	builddep_systemd "$HOST_ARCH" "nocheck noudeb stage1"
 	check_binNMU
-	drop_privs ac_cv_func_malloc_0_nonnull=yes dpkg-buildpackage "-a$HOST_ARCH" -B -uc -us -Pnocheck,noudeb,stage1
+	drop_privs ac_cv_func_malloc_0_nonnull=yes dpkg-buildpackage "-a$HOST_ARCH" -B -uc -us -Pnocheck,noudeb,stage1 -d
 	cd ..
 	ls -l
 	pickup_packages *.changes
