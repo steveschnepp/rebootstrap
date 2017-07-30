@@ -4498,6 +4498,83 @@ patch_systemd() {
  #  error "Missing LIB_ARCH_TUPLE for CRIS"
 EOF
 	fi
+	echo "fix meson usage #859177"
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/debcrossgen.py
++++ b/debian/debcrossgen.py
+@@ -0,0 +1,48 @@
++#!/usr/bin/env python3
++
++# Copyright 2017 Jussi Pakkanen
++
++# Licensed under the Apache License, Version 2.0 (the "License");
++# you may not use this file except in compliance with the License.
++# You may obtain a copy of the License at
++
++#     http://www.apache.org/licenses/LICENSE-2.0
++
++# Unless required by applicable law or agreed to in writing, software
++# distributed under the License is distributed on an "AS IS" BASIS,
++# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++# See the License for the specific language governing permissions and
++# limitations under the License.
++
++import sys, os, subprocess
++
++def run():
++    output = subprocess.check_output(['dpkg-architecture'], universal_newlines=True)
++    data = {}
++    for line in output.split('\n'):
++        line = line.strip()
++        if line == '':
++            continue
++        k, v = line.split('=', 1)
++        data[k] = v
++    host_arch = data['DEB_HOST_GNU_TYPE']
++    host_os = data['DEB_HOST_ARCH_OS']
++    host_cpu_family = data['DEB_HOST_GNU_CPU']
++    host_cpu = data['DEB_HOST_ARCH'] # Not really correct, should be arm7hlf etc but it is not exposed.
++    host_endian = data['DEB_HOST_ARCH_ENDIAN']
++    ofile = sys.stdout
++    ofile.write('[binaries]\n')
++    ofile.write("c = '/usr/bin/%s-gcc'\n" % host_arch)
++    ofile.write("cpp = '/usr/bin/%s-g++'\n" % host_arch)
++    ofile.write("ar = '/usr/bin/%s-ar'\n" % host_arch)
++    ofile.write("strip = '/usr/bin/%s-strip'\n" % host_arch)
++    ofile.write("pkgconfig = '/usr/bin/%s-pkg-config'\n" % host_arch)
++    ofile.write('\n[properties]\n')
++    ofile.write('\n[host_machine]\n')
++    ofile.write("system = '%s'\n" % host_os)
++    ofile.write("cpu_family = '%s'\n" % host_cpu_family)
++    ofile.write("cpu = '%s'\n" % host_cpu)
++    ofile.write("endian = '%s'\n" % host_endian)
++
++if __name__ == '__main__':
++    run()
+--- a/debian/rules
++++ b/debian/rules
+@@ -64,6 +64,10 @@
+ 	-Dnobody-user=nobody \
+ 	-Dnobody-group=nogroup
+ 
++ifneq ($(DEB_BUILD_ARCH),$(DEB_HOST_ARCH))
++CONFFLAGS += --cross-file ../crossfile.txt
++endif
++
+ # resolved's DNSSEC support is still not mature enough, don't enable it by
+ # default on stable Debian or any Ubuntu releases
+ CONFFLAGS += $(shell grep -qE 'stretch|ubuntu' /etc/os-release && echo -Ddefault-dnssec=no)
+@@ -145,6 +149,9 @@
+ 	-Dsysusers=false
+ 
+ override_dh_auto_configure:
++ifneq ($(DEB_BUILD_ARCH),$(DEB_HOST_ARCH))
++	python3 debian/debcrossgen.py > crossfile.txt
++endif
+ 	dh_auto_configure --builddirectory=build-deb \
+ 		-- $(CONFFLAGS) $(CONFFLAGS_deb)
+ ifeq (, $(filter noudeb, $(DEB_BUILD_PROFILES)))
+EOF
 }
 
 add_automatic tar
