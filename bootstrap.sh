@@ -3656,52 +3656,6 @@ patch_libbsd() {
 EOF
 	fi
 	if dpkg-architecture "-a$HOST_ARCH" -imusl-linux-any; then
-		echo "cherry picking https://cgit.freedesktop.org/libbsd/commit/?id=db7470b048a14bdc69a34fbd192ec626e1786411"
-		drop_privs patch -p1 <<'EOF'
---- a/include/bsd/sys/cdefs.h
-+++ b/include/bsd/sys/cdefs.h
-@@ -24,15 +24,40 @@
-  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-  */
-
-+#ifndef __has_include
-+#define __has_include 1
-+#endif
-+#ifndef __has_include_next
-+#define __has_include_next 1
-+#endif
-+
- #ifdef LIBBSD_OVERLAY
-+/*
-+ * Some libc implementations do not have a <sys/cdefs.h>, in particular
-+ * musl, try to handle this gracefully.
-+ */
-+#if __has_include_next(<sys/cdefs.h>)
- #include_next <sys/cdefs.h>
-+#endif
- #else
-+#if __has_include(<sys/cdefs.h>)
- #include <sys/cdefs.h>
- #endif
-+#endif
-
- #ifndef LIBBSD_SYS_CDEFS_H
- #define LIBBSD_SYS_CDEFS_H
-
-+#ifndef __BEGIN_DECLS
-+#ifdef __cplusplus
-+#define __BEGIN_DECLS	extern "C" {
-+#define __END_DECLS	}
-+#else
-+#define __BEGIN_DECLS
-+#define __END_DECLS
-+#endif
-+#endif
-+
- /*
-  * Some kFreeBSD headers expect those macros to be set for sanity checks.
-  */
-EOF
 		echo "cherry picking https://cgit.freedesktop.org/libbsd/commit/?id=d6c35f618c4f3ca20a43a5a28e08cde3540e6b7c"
 		drop_privs patch -p1 <<'EOF'
 --- a/configure.ac
