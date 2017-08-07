@@ -3519,20 +3519,6 @@ buildenv_jemalloc() {
 	esac
 }
 patch_jemalloc() {
-	echo "Patching jemalloc nios2 support #816236"
-	drop_privs patch -p1 <<'EOF'
---- a/debian/rules
-+++ b/debian/rules
-@@ -10,7 +10,7 @@
-   DEB_CPPFLAGS_MAINT_APPEND += -DLG_QUANTUM=4
- endif
- 
--ifneq (,$(findstring $(DEB_HOST_ARCH),m68k or1k))
-+ifneq (,$(findstring $(DEB_HOST_ARCH),m68k nios2 or1k))
-   DEB_CPPFLAGS_MAINT_APPEND += -DLG_QUANTUM=3
- endif
- 
-EOF
 	if test "$HOST_ARCH" = sh3; then
 		echo "adding sh3 support to jemalloc #863424"
 		drop_privs patch -p1 <<'EOF'
