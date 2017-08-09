@@ -3635,26 +3635,6 @@ EOF
 
 add_automatic libbsd
 patch_libbsd() {
-	if test "$HOST_ARCH" = tilegx; then
-		echo "adding tilegx support to libbsd #847560"
-		drop_privs patch -p1 <<'EOF'
---- a/src/local-elf.h
-+++ b/src/local-elf.h
-@@ -185,6 +185,12 @@
- #endif
- #define ELF_TARG_DATA	ELFDATA2MSB
-
-+#elif defined(__tilegx__)
-+
-+#define ELF_TARG_MACH	EM_TILEGX
-+#define ELF_TARG_CLASS	ELFCLASS64
-+#define ELF_TARG_DATA	ELFDATA2LSB
-+
- #elif defined(__or1k__)
-
- #define ELF_TARG_MACH	EM_OPENRISC
-EOF
-	fi
 	if dpkg-architecture "-a$HOST_ARCH" -imusl-linux-any; then
 		echo "cherry picking https://cgit.freedesktop.org/libbsd/commit/?id=d6c35f618c4f3ca20a43a5a28e08cde3540e6b7c"
 		drop_privs patch -p1 <<'EOF'
