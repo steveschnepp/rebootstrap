@@ -3915,23 +3915,7 @@ buildenv_libprelude() {
 	;; esac
 }
 
-patch_libpsl() {
-	echo "fixing FTCBFS #856477"
-	drop_privs patch -p1 <<'EOF'
---- a/debian/control
-+++ b/debian/control
-@@ -13,7 +13,7 @@
-  libunistring-dev,
-  pkg-config,
-  publicsuffix (>= 20150507),
-- python,
-+ python:native,
- Standards-Version: 3.9.8
- Section: libs
- Homepage: https://github.com/rockdaboot/libpsl
-EOF
-}
-
+add_automatic libpsl
 add_automatic libpthread-stubs
 add_automatic libseccomp
 add_automatic libsepol
@@ -5166,12 +5150,6 @@ builddep_e2fsprogs() {
 cross_build e2fsprogs
 mark_built e2fsprogs
 # essential
-
-automatically_cross_build_packages
-
-cross_build libpsl
-mark_built libpsl
-# needed by curl
 
 automatically_cross_build_packages
 
