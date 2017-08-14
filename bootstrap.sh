@@ -3505,45 +3505,6 @@ EOF
 }
 
 add_automatic libbsd
-patch_libbsd() {
-	if dpkg-architecture "-a$HOST_ARCH" -imusl-linux-any; then
-		echo "cherry picking https://cgit.freedesktop.org/libbsd/commit/?id=d6c35f618c4f3ca20a43a5a28e08cde3540e6b7c"
-		drop_privs patch -p1 <<'EOF'
---- a/configure.ac
-+++ b/configure.ac
-@@ -51,7 +51,11 @@ AS_CASE([$host_os],
-     AC_SEARCH_LIBS([clock_gettime], [rt], [CLOCK_GETTIME_LIBS="-lrt"])
-     AC_SUBST([CLOCK_GETTIME_LIBS])
-     LIBS="$saved_LIBS"
--  ]
-+  ],
-+  [*-musl*], [
-+    # Upstream refuses to define this, we will do it ourselves then.
-+    AC_DEFINE([__MUSL__], [1], [Define to 1 if we are building for musl])
-+  ],
- )
-
- # Checks for header files.
---- a/src/funopen.c
-+++ b/src/funopen.c
-@@ -137,6 +137,12 @@ funopen(const void *cookie,
-
- 	return fopencookie(cookiewrap, mode, funcswrap);
- }
-+#elif defined(__MUSL__)
-+/*
-+ * This is unimplementable on musl based systems, and upstream has stated
-+ * they will not add the needed support to implement it. Just ignore this
-+ * interface there, as it has never been provided anyway.
-+ */
- #else
--#error "Function funopen() needs to be ported."
-+#error "Function funopen() needs to be ported or disabled."
- #endif
-EOF
-		sed -i -e 's/dh_autotools-dev_updateconfig/dh_autoreconf/' -e 's/dh_autotools-dev_restoreconfig/dh_autoreconf_clean/' debian/rules
-fi
-}
 
 patch_libcap_ng() {
 	echo "patching libcap-ng for nopython profile #831362"
