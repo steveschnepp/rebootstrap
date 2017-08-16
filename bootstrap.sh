@@ -4126,22 +4126,6 @@ builddep_systemd() {
 	apt_get_install debhelper pkg-config xsltproc docbook-xsl docbook-xml m4 meson intltool gperf "libcap-dev:$1" "libpam0g-dev:$1" "libselinux1-dev:$1" "libacl1-dev:$1" "liblzma-dev:$1" "liblz4-dev:$1" "libgcrypt20-dev:$1" "libkmod-dev:$1" "libblkid-dev:$1" "libmount-dev:$1" python3 python3-lxml
 }
 patch_systemd() {
-	if test "$HOST_ARCH" = tilegx; then
-		echo "adding tilegx support to systemd #856306"
-		drop_privs patch -p1 <<'EOF'
---- a/src/basic/architecture.h
-+++ b/src/basic/architecture.h
-@@ -186,7 +186,7 @@ int uname_architecture(void);
- #  define LIB_ARCH_TUPLE "m68k-linux-gnu"
- #elif defined(__tilegx__)
- #  define native_architecture() ARCHITECTURE_TILEGX
--#  error "Missing LIB_ARCH_TUPLE for TILEGX"
-+#  define LIB_ARCH_TUPLE "tilegx-linux-gnu"
- #elif defined(__cris__)
- #  define native_architecture() ARCHITECTURE_CRIS
- #  error "Missing LIB_ARCH_TUPLE for CRIS"
-EOF
-	fi
 	echo "fix meson usage #859177"
 	drop_privs patch -p1 <<'EOF'
 --- a/debian/debcrossgen.py
