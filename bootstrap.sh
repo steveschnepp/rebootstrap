@@ -3877,6 +3877,10 @@ builddep_libidn2_0() {
 	echo "working around gengetopt not being M-A:foreign #856908"
 	apt_get_install debhelper dh-autoreconf pkg-config texinfo texlive help2man gengetopt "libunistring-dev:$1" libunistring-dev autoconf-archive
 }
+patch_libidn2_0() {
+	echo "fixing architecture of libidn2-0-dev #872567"
+	drop_privs sed -i -e '/^Package: libidn2-0-dev/,/^$/s/Architecture: all/Architecture: any/' debian/control
+}
 
 add_automatic libksba
 add_automatic libonig
