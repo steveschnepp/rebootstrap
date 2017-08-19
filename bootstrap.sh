@@ -2751,7 +2751,10 @@ patch_adns() {
 EOF
 }
 
-add_automatic apt
+builddep_apt() {
+	# g++ dependency needs toolchain translation
+	apt_get_install cmake debhelper dh-systemd docbook-xml docbook-xsl dpkg-dev gettext "libbz2-dev:$1" "libcurl4-gnutls-dev:$1" "libdb-dev:$1" "libgnutls28-dev:$1" "liblz4-dev:$1" "liblzma-dev:$1" pkg-config po4a xsltproc "zlib1g-dev:$1"
+}
 
 add_automatic attr
 patch_attr() {
@@ -4430,7 +4433,6 @@ for pkg in $(discover_essential); do
 	fi
 done
 add_need acl # by coreutils, systemd
-add_need apt # almost essential
 add_need attr # by coreutils, libcap-ng
 add_need autogen # by gcc-VER, gnutls28
 add_need bzip2 # by perl
@@ -5218,6 +5220,12 @@ automatically_cross_build_packages
 
 cross_build util-linux # stageless
 # essential
+
+automatically_cross_build_packages
+
+cross_build apt
+mark_built apt
+# almost essential
 
 automatically_cross_build_packages
 
