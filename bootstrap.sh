@@ -1806,7 +1806,7 @@ EOF
    arm-*-elf | arm*-*-freebsd* | arm*-*-linux-* | arm*-*-conix* | \
 -  arm*-*-uclinux* | arm-*-kfreebsd*-gnu | \
 +  arm*-*-uclinux* | arm-*-kfreebsd*-gnu* | \
-   arm*-*-eabi* )
+   arm*-*-eabi* | arm-*-rtems*)
      targ_defvec=arm_elf32_le_vec
      targ_selvecs=arm_elf32_be_vec
 --- a/gas/configure.tgt
