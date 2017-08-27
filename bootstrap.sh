@@ -1897,6 +1897,8 @@ EOF
  	rm -rf $(d_hppa64)/$(PF)/include
 EOF
 	fi
+	echo "fixing typo in binutils #873387"
+	drop_privs sed -i -e 's#s/@dpkg_dev/#s/@dpkg_dev@/#' debian/rules
 }
 if test -f "$REPODIR/stamps/cross-binutils"; then
 	echo "skipping rebuild of binutils-target"
