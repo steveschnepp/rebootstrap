@@ -4149,6 +4149,7 @@ add_automatic sqlite3
 
 builddep_systemd() {
 	# meson dependency unsatisfiable #859177
+	# gcc-6 dependency unsatisfiable #871514
 	apt-cache showsrc systemd | grep -q "^Build-Depends:.*gnu-efi[^,]*[[ ]$1[] ]" && apt_get_install gnu-efi
 	apt-cache showsrc systemd | grep -q "^Build-Depends:.*libseccomp-dev[^,]*[[ ]$1[] ]" && apt_get_install "libseccomp-dev:$1"
 	apt_get_install debhelper pkg-config xsltproc docbook-xsl docbook-xml m4 meson intltool gperf "libcap-dev:$1" "libpam0g-dev:$1" "libselinux1-dev:$1" "libacl1-dev:$1" "liblzma-dev:$1" "liblz4-dev:$1" "libgcrypt20-dev:$1" "libkmod-dev:$1" "libblkid-dev:$1" "libmount-dev:$1" python3 python3-lxml
@@ -4231,6 +4232,8 @@ patch_systemd() {
  		-- $(CONFFLAGS) $(CONFFLAGS_deb)
  ifeq (, $(filter noudeb, $(DEB_BUILD_PROFILES)))
 EOF
+	echo "reverting gcc-6 switch #871514"
+	drop_privs sed -i -e '/g..-6/d' debian/rules
 }
 
 add_automatic tar
