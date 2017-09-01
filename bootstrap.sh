@@ -3897,6 +3897,10 @@ add_automatic libonig
 add_automatic libpipeline
 add_automatic libpng1.6
 
+patch_libprelude() {
+	echo "removing the unsatisfiable g++ build dependency"
+	drop_privs sed -i -e '/^\s\+g++/d' debian/control
+}
 buildenv_libprelude() {
 	case $(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_GNU_SYSTEM) in *gnu*)
 		echo "glibc does not return NULL for malloc(0)"
