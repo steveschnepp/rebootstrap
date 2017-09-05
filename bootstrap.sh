@@ -4736,7 +4736,8 @@ if test -f "$REPODIR/stamps/libxml2_1"; then
 	echo "skipping rebuild of libxml2 nopython"
 else
 	cross_build_setup libxml2 libxml2_1
-	apt_get_build_dep "-a$HOST_ARCH" --arch-only -Pnopython ./
+	# rename dependency unsatisfiable #872315
+	apt_get_install debhelper "libicu-dev:$HOST_ARCH" "liblzma-dev:$HOST_ARCH" pkg-config rename "zlib1g-dev:$HOST_ARCH"
 	check_binNMU
 	drop_privs dpkg-buildpackage "-a$HOST_ARCH" -B -Pnopython -uc -us
 	cd ..
