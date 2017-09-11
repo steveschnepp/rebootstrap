@@ -1092,6 +1092,89 @@ patch_gcc_multilib_deps() {
  	    debian/$(1).substvars; \
 EOF
 }
+patch_gcc_arm64ilp32() {
+	test "$HOST_ARCH" = arm64ilp32 || return 0
+	echo "add support for arm64ilp32 #874583"
+	drop_privs tee debian/patches/arm64-ilp32-default.diff >/dev/null <<'EOF'
+--- a/src/gcc/config.gcc
++++ b/src/gcc/config.gcc
+@@ -515,12 +515,15 @@
+ 	tm_p_file="${tm_p_file} arm/aarch-common-protos.h"
+ 	case ${with_abi} in
+ 	"")
+-		if test "x$with_multilib_list" = xilp32; then
++		case ${target} in
++		aarch64*-*-*_ilp32)
+ 			tm_file="aarch64/biarchilp32.h ${tm_file}"
+-		else
++			;;
++		*)
+ 			tm_file="aarch64/biarchlp64.h ${tm_file}"
+-		fi
+-		;;
++			;;
++		esac
++		;;
+ 	ilp32)
+ 		tm_file="aarch64/biarchilp32.h ${tm_file}"
+ 		;;
+@@ -965,9 +965,16 @@
+ 	esac
+ 	aarch64_multilibs="${with_multilib_list}"
+ 	if test "$aarch64_multilibs" = "default"; then
+-		# TODO: turn on ILP32 multilib build after its support is mature.
+-		# aarch64_multilibs="lp64,ilp32"
+-		aarch64_multilibs="lp64"
++		case $target in
++		aarch64*_ilp32*)
++			aarch64_multilibs="ilp32"
++			;;
++		aarch64*)
++			# TODO: turn on ILP32 multilib build after its support is mature.
++			# aarch64_multilibs="lp64,ilp32"
++			aarch64_multilibs="lp64"
++			;;
++		esac
+ 	fi
+ 	aarch64_multilibs=`echo $aarch64_multilibs | sed -e 's/,/ /g'`
+ 	for aarch64_multilib in ${aarch64_multilibs}; do
+EOF
+	if ! grep -q arm64-ilp32-default debian/rules.patch; then
+		echo "debian_patches += arm64-ilp32-default" | drop_privs tee -a debian/rules.patch >/dev/null
+	fi
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/patches/gcc-multiarch.diff
++++ b/debian/patches/gcc-multiarch.diff
+@@ -163,17 +163,21 @@
+ ===================================================================
+ --- a/src/gcc/config/aarch64/t-aarch64-linux
+ +++ b/src/gcc/config/aarch64/t-aarch64-linux
+-@@ -22,7 +22,7 @@ LIB1ASMSRC   = aarch64/lib1funcs.asm
++@@ -22,7 +22,12 @@ LIB1ASMSRC   = aarch64/lib1funcs.asm
+  LIB1ASMFUNCS = _aarch64_sync_cache_range
+  
+  AARCH_BE = $(if $(findstring TARGET_BIG_ENDIAN_DEFAULT=1, $(tm_defines)),_be)
+--MULTILIB_OSDIRNAMES = mabi.lp64=../lib64$(call if_multiarch,:aarch64$(AARCH_BE)-linux-gnu)
+--MULTIARCH_DIRNAME = $(call if_multiarch,aarch64$(AARCH_BE)-linux-gnu)
+++ifneq (,$(findstring _ilp32,$(target)))
++ MULTILIB_OSDIRNAMES = mabi.lp64=../lib64$(call if_multiarch,:aarch64$(AARCH_BE)-linux-gnu)
+++MULTILIB_OSDIRNAMES += mabi.ilp32=../lib$(call if_multiarch,:aarch64$(AARCH_BE)-linux-gnu_ilp32)
+++MULTIARCH_DIRNAME = $(call if_multiarch,aarch64$(AARCH_BE)-linux-gnu_ilp32)
+++else
+ +MULTILIB_OSDIRNAMES = mabi.lp64=../lib$(call if_multiarch,:aarch64$(AARCH_BE)-linux-gnu)
+-+MULTILIB_OSDIRNAMES += mabi.ilp32=../libilp32$(call if_multiarch,:aarch64$(AARCH_BE)_ilp32-linux-gnu)
+- 
+++MULTILIB_OSDIRNAMES += mabi.ilp32=../libilp32$(call if_multiarch,:aarch64$(AARCH_BE)-linux-gnu_ilp32)
++ MULTIARCH_DIRNAME = $(call if_multiarch,aarch64$(AARCH_BE)-linux-gnu)
++-
+ -MULTILIB_OSDIRNAMES += mabi.ilp32=../libilp32
+-+MULTIARCH_DIRNAME = $(call if_multiarch,aarch64$(AARCH_BE)-linux-gnu)
+++endif
+ Index: b/src/gcc/config/mips/mips.h
+ ===================================================================
+ --- a/src/gcc/config/mips/mips.h
+EOF
+}
 patch_gcc_wdotap() {
 	if test "$ENABLE_MULTIARCH_GCC" = yes; then
 		echo "applying patches for with_deps_on_target_arch_pkgs"
@@ -1737,6 +1820,7 @@ EOF
 	patch_gcc_multilib_deps
 	echo "fix LIMITS_H_TEST again https://gcc.gnu.org/bugzilla/show_bug.cgi?id=80677"
 	sed -i -e 's,^\(+LIMITS_H_TEST = \).*,\1:,' debian/patches/gcc-multiarch.diff
+	patch_gcc_arm64ilp32
 	patch_gcc_wdotap
 }
 # choosing libatomic1 arbitrarily here, cause it never bumped soname
