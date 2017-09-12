@@ -3852,6 +3852,33 @@ buildenv_libprelude() {
 add_automatic libpsl
 add_automatic libpthread-stubs
 add_automatic libseccomp
+
+patch_libselinux() {
+	echo "fixing libselinux FTCBFS #875507"
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/rules
++++ b/debian/rules
+@@ -8,7 +8,8 @@
+ DEB_HOST_GNU_CPU	:= $(shell dpkg-architecture -qDEB_HOST_GNU_CPU)
+ DEB_HOST_GNU_TYPE	:= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
+ DEB_HOST_MULTIARCH	:= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
+-LIBDIR_LIBSEPOL		:= $(shell pkg-config --variable=libdir libsepol)
++PKG_CONFIG              ?= $(DEB_HOST_GNU_TYPE)-pkg-config
++LIBDIR_LIBSEPOL		:= $(shell $(PKG_CONFIG) --variable=libdir libsepol)
+
+ PREFIX = /usr
+
+@@ -52,6 +53,7 @@
+ extra_make_args  = LIBSEPOLA=$(LIBDIR_LIBSEPOL)/libsepol.a
+ extra_make_args += ARCH=$(DEB_HOST_GNU_CPU)
+ extra_make_args += CC=$(DEB_HOST_GNU_TYPE)-gcc
++extra_make_args += PKG_CONFIG=$(PKG_CONFIG)
+ override_dh_auto_build: FORCE
+ 	+$(MAKE) PREFIX="$(PREFIX)" LIBBASE="lib/${DEB_HOST_MULTIARCH}" $(extra_make_args) all
+
+EOF
+}
+
 add_automatic libsepol
 add_automatic libsm
 add_automatic libssh2
@@ -4670,19 +4697,14 @@ mark_built readline
 automatically_cross_build_packages
 
 if dpkg-architecture "-a$HOST_ARCH" -ilinux-any; then
-builddep_libselinux() {
-	assert_built "libsepol pcre3"
-	# gem2deb dependency lacks profile annotation
-	$APT_GET install debhelper file "libsepol1-dev:$1" "libpcre3-dev:$1" pkg-config
-}
 if test -f "$REPODIR/stamps/libselinux_1"; then
 	echo "skipping rebuild of libselinux stage1"
 else
-	builddep_libselinux "$HOST_ARCH"
 	cross_build_setup libselinux libselinux1
+	assert_built "libsepol pcre3"
+	apt_get_build_dep "-a$HOST_ARCH" --arch-only -P stage1 ./
 	check_binNMU
-	dpkg-checkbuilddeps -B "-a$HOST_ARCH" || : # tell unmet build depends
-	drop_privs DEB_STAGE=stage1 dpkg-buildpackage -d -B -uc -us "-a$HOST_ARCH"
+	drop_privs dpkg-buildpackage -B -uc -us "-a$HOST_ARCH" -Pstage1
 	cd ..
 	ls -l
 	pickup_packages *.changes
