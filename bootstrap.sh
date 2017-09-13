@@ -3824,6 +3824,110 @@ patch_libgpg_error() {
 
 add_automatic libice
 
+patch_libidn() {
+	echo "moving gcj-jdk to Build-Depends-Indep #870669"
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/control
++++ b/debian/control
+@@ -4,7 +4,8 @@
+ Maintainer: Debian Libidn Team <help-libidn@gnu.org>
+ Uploaders: Anibal Monsalve Salazar <anibal@debian.org>, Simon Josefsson <simon@josefsson.org>, Ondřej Surý <ondrej@debian.org>
+ Standards-Version: 3.9.8
+-Build-Depends: debhelper (>= 9), gcj-jdk [!arm !hppa !hurd-i386 !mips64el], fastjar [!arm !hppa !hurd-i386 !mips64el], dh-autoreconf, autopoint (>= 0.19.3), help2man, texinfo
++Build-Depends: debhelper (>= 9), dh-autoreconf, autopoint (>= 0.19.3), help2man, texinfo
++Build-Depends-Indep: gcj-jdk, fastjar
+ Homepage: https://www.gnu.org/software/libidn/
+ Vcs-Browser: https://anonscm.debian.org/cgit/collab-maint/libidn.git
+ Vcs-Git: https://anonscm.debian.org/git/collab-maint/libidn.git
+--- a/debian/rules
++++ b/debian/rules
+@@ -4,16 +4,12 @@
+
+ export DEB_BUILD_MAINT_OPTIONS=hardening=+all
+
+-# Don't build libidn11-java on platforms that doesn't have gcj.
+-NO_JAVA_ARCHES := arm hppa hurd-i386 mips64el or1k
+-DEB_HOST_ARCH  ?= $(shell dpkg-architecture -qDEB_HOST_ARCH)
+-ifneq (,$(filter stage1,$(DEB_BUILD_PROFILES)))
+-  # Or when bootstrapping, because libidn is needed before gcj, see #738147.
+-  export DH_OPTIONS=-Nlibidn11-java
+-else ifeq (,$(filter $(DEB_HOST_ARCH),$(NO_JAVA_ARCHES)))
+-  ENABLE_JAVA := --enable-java
++DOPACKAGES = $(shell dh_listpackages)
++CONFIGURE_FLAGS :=
++ifneq ($(filter libidn11-java,$(DOPACKAGES)),)
++CONFIGURE_FLAGS += --enable-java
+ else
+-  export DH_OPTIONS=-Nlibidn11-java
++CONFIGURE_FLAGS += --disable-java
+ endif
+
+ %:
+@@ -26,7 +22,7 @@
+ 		--with-packager-version=$(CFG_VERS) \
+ 		--with-packager-bug-reports=https://bugs.debian.org/ \
+ 		--disable-silent-rules \
+-		 $(ENABLE_JAVA)
++		$(CONFIGURE_FLAGS)
+
+ override_dh_auto_install:
+ 	dh_auto_install
+EOF
+	echo "fixing help2man FTCBFS #875684"
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/rules
++++ b/debian/rules
+@@ -1,28 +1,39 @@
+ #!/usr/bin/make -f
+ 
++include /usr/share/dpkg/architecture.mk
++
+ export DH_VERBOSE=1
+ 
+ export DEB_BUILD_MAINT_OPTIONS=hardening=+all
+ 
++CFG_VERS = `dpkg-parsechangelog | grep ^Version: | cut -d\  -f2`
++
+ DOPACKAGES = $(shell dh_listpackages)
+-CONFIGURE_FLAGS :=
++CONFIGURE_FLAGS := \
++	--with-packager=Debian \
++	--with-packager-version=$(CFG_VERS) \
++	--with-packager-bug-reports=https://bugs.debian.org/ \
++	--disable-silent-rules
+ ifneq ($(filter libidn11-java,$(DOPACKAGES)),)
+ CONFIGURE_FLAGS += --enable-java
+ else
+ CONFIGURE_FLAGS += --disable-java
+ endif
++NATIVE = eval $$(dpkg-architecture -f -a$(DEB_BUILD_ARCH) -s);
+
+ %:
+ 	dh $@ --parallel --builddirectory=build --with autoreconf
+
+-CFG_VERS = `dpkg-parsechangelog | grep ^Version: | cut -d\  -f2`
+-
+ override_dh_auto_configure:
+-	dh_auto_configure -- --with-packager=Debian \
+-		--with-packager-version=$(CFG_VERS) \
+-		--with-packager-bug-reports=https://bugs.debian.org/ \
+-		--disable-silent-rules \
+-		$(CONFIGURE_FLAGS)
++ifneq ($(DEB_BUILD_ARCH),$(DEB_HOST_ARCH))
++	$(NATIVE) dh_auto_configure -- $(CONFIGURE_FLAGS)
++	$(NATIVE) dh_auto_build
++	$(NATIVE) dh_auto_clean
++	test -f doc/idn.1
++	dh_auto_configure -- $(CONFIGURE_FLAGS) HELP2MAN=true
++else
++	dh_auto_configure -- $(CONFIGURE_FLAGS)
++endif
+
+ override_dh_auto_install:
+ 	dh_auto_install
+EOF
+}
+
 builddep_libidn2_0() {
 	echo "working around gengetopt not being M-A:foreign #856908"
 	apt_get_install debhelper dh-autoreconf pkg-config texinfo texlive help2man gengetopt "libunistring-dev:$1" libunistring-dev autoconf-archive
@@ -4806,27 +4910,7 @@ mark_built libxcb
 
 automatically_cross_build_packages
 
-builddep_libidn() {
-	# gcj-jdk dependency lacks build profile annotation
-	$APT_GET install debhelper
-}
-if test -f "$REPODIR/stamps/libidn_1"; then
-	echo "skipping rebuild of libidn stage1"
-else
-	builddep_libidn "$HOST_ARCH"
-	cross_build_setup libidn libidn_1
-	check_binNMU
-	dpkg-checkbuilddeps -B "-a$HOST_ARCH" || : # tell unmet build depends
-	drop_privs dpkg-buildpackage "-a$HOST_ARCH" -B -d -uc -us -Pstage1
-	cd ..
-	ls -l
-	pickup_packages *.changes
-	touch "$REPODIR/stamps/libidn_1"
-	compare_native ./*.deb
-	cd ..
-	drop_privs rm -Rf libidn_1
-fi
-progress_mark "libidn stage1 cross build"
+cross_build libidn
 mark_built libidn
 # needed by gnutls28
 
