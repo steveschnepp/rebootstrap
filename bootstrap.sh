@@ -5255,7 +5255,7 @@ automatically_cross_build_packages
 
 builddep_libsemanage() {
 	assert_built "audit bzip2 libselinux libsepol ustr"
-	# stuff lacks stage1 profile
+	# libcunit1-dev lacks nocheck profile #875558
 	apt_get_install bison debhelper file flex "libaudit-dev:$1" "libbz2-dev:$1" "libselinux1-dev:$1" "libsepol1-dev:$1" "libustr-dev:$1" pkg-config
 }
 if test -f "$REPODIR/stamps/libsemanage_1"; then
@@ -5264,8 +5264,9 @@ else
 	cross_build_setup libsemanage libsemanage_1
 	builddep_libsemanage "$HOST_ARCH"
 	check_binNMU
-	dpkg-checkbuilddeps -B "-a$HOST_ARCH" || : # tell unmet build depends
-	drop_privs DEB_STAGE=stage1 CC="$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_GNU_TYPE)-gcc" dpkg-buildpackage -d "-a$HOST_ARCH" -B -uc -us
+	dpkg-checkbuilddeps -B "-a$HOST_ARCH" -Pstage1 || : # tell unmet build depends
+	# passing CC fixes FTCBFS #875559
+	drop_privs CC="$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_GNU_TYPE)-gcc" dpkg-buildpackage -d "-a$HOST_ARCH" -B -uc -us -Pstage1
 	cd ..
 	ls -l
 	pickup_packages *.changes
