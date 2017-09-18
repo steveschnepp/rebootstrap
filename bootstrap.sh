@@ -3960,32 +3960,6 @@ add_automatic libpsl
 add_automatic libpthread-stubs
 add_automatic libseccomp
 
-patch_libselinux() {
-	echo "fixing libselinux FTCBFS #875507"
-	drop_privs patch -p1 <<'EOF'
---- a/debian/rules
-+++ b/debian/rules
-@@ -8,7 +8,8 @@
- DEB_HOST_GNU_CPU	:= $(shell dpkg-architecture -qDEB_HOST_GNU_CPU)
- DEB_HOST_GNU_TYPE	:= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
- DEB_HOST_MULTIARCH	:= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
--LIBDIR_LIBSEPOL		:= $(shell pkg-config --variable=libdir libsepol)
-+PKG_CONFIG              ?= $(DEB_HOST_GNU_TYPE)-pkg-config
-+LIBDIR_LIBSEPOL		:= $(shell $(PKG_CONFIG) --variable=libdir libsepol)
-
- PREFIX = /usr
-
-@@ -52,6 +53,7 @@
- extra_make_args  = LIBSEPOLA=$(LIBDIR_LIBSEPOL)/libsepol.a
- extra_make_args += ARCH=$(DEB_HOST_GNU_CPU)
- extra_make_args += CC=$(DEB_HOST_GNU_TYPE)-gcc
-+extra_make_args += PKG_CONFIG=$(PKG_CONFIG)
- override_dh_auto_build: FORCE
- 	+$(MAKE) PREFIX="$(PREFIX)" LIBBASE="lib/${DEB_HOST_MULTIARCH}" $(extra_make_args) all
-
-EOF
-}
-
 add_automatic libsepol
 add_automatic libsm
 add_automatic libssh2
@@ -4809,9 +4783,9 @@ if test -f "$REPODIR/stamps/libselinux_1"; then
 else
 	cross_build_setup libselinux libselinux1
 	assert_built "libsepol pcre3"
-	apt_get_build_dep "-a$HOST_ARCH" --arch-only -P stage1 ./
+	apt_get_build_dep "-a$HOST_ARCH" --arch-only -P nopython,noruby ./
 	check_binNMU
-	drop_privs dpkg-buildpackage -B -uc -us "-a$HOST_ARCH" -Pstage1
+	drop_privs dpkg-buildpackage -B -uc -us "-a$HOST_ARCH" -Pnopython,noruby
 	cd ..
 	ls -l
 	pickup_packages *.changes
