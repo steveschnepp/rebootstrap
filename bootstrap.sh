@@ -4003,11 +4003,6 @@ add_automatic libxt
 buildenv_libxt() {
 	export xorg_cv_malloc0_returns_null=no
 }
-builddep_libxt() {
-	# help apt with finding a solution
-	apt_get_remove "libglib2.0-dev:$(dpkg --print-architecture)"
-	apt_get_build_dep "-a$1" ./
-}
 
 add_automatic lz4
 
