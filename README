@@ -20,3 +20,161 @@ others is not prohibited):
  * REPODIR: A directory where built packages should be placed.
  * ENABLE_DIFFOSCOPE=yes: Compare cross built packages against natively
    built packages from the archive.
+ * GCC_VER: The gcc version (currently 6 or 7) to be used for building
+   the toolchain. If GCC_VER is not set, bootstrap.sh uses the default
+   gcc version in unstable. If the given gcc version is not available in
+   unstable, bootstrap.sh tries to fetch it from the experimental suite.
+
+
+Technical information about the bootstrap process
+=================================================
+
+Notice: this text uses GNU-style cross-build terminology, i.e.
+
+- build-arch: the architecture on which bootstrap.sh runs
+
+- host-arch: the architecture to be bootstrapped
+
+
+Package repositories
+--------------------
+
+Bootstrap.sh uses reprepro to setup two local package repositories
+in ${REPODIR}:
+
+- "rebootstrap" for the host-arch packages
+
+- "rebootstrap-native" for the build-arch cross-toolchain
+  packages that are built from source as a prerequisite of
+  the bootstrapping process
+
+These local repositories are given higher preference than the official
+Debian repositories by applying appropriate Pin-Priorities, so that the
+bootstrap process uses the locally-built packages instead of binary
+packages from the Debian archive in case a package exists in both the
+local and the official Debian repository.
+
+Every time a package has been built, it is added to the corresponding
+repository and a "stamp" file "${REPODIR}/stamps/${PACKAGE_NAME}" is
+created.  For packages that require being built in several stages
+during the bootstrap phase (such as gcc, a C library and the kernel),
+the number of the stage is appended to the stamp name, e.g.
+${REPODIR}/stamps/{gcc_1,gcc_2,gcc_3,glibc_1,glibc_2,linux_1}.
+
+
+Patches
+-------
+
+For a number of packages, patches are necessary to make crossbuilding
+possible.  These patches are carried inside bootstrap.sh in form of a
+function named "patch_${PACKAGE_NAME}()", which usually includes the
+actual patch as a here-document and applies it to the already unpacked
+sources.  For getting a patch included in bootstrap.sh, an attempt at
+upstreaming must be made. That can be one of Debian bug report, an
+upstream bug report or an upstream commit. The patch function must
+record a reference to the effort (e.g. a bug number). An example:
+
+  patch_foo() {
+    echo "fixing foo FTCBFS #123456"
+    drop_privs patch -p1 <<'EOF'
+  [actual patch in here]
+  EOF
+  }
+
+Alternatively, the patch_${PACKAGE_NAME}() function can perform
+modifications to the unpacked sources using any other method available
+in a shell script, e.g. by using "sed" to alter files.  An example:
+
+  patch_elfutils() {
+    echo "work around FTBFS with gcc-7 #853387"
+    sed -i -e 's/-Werror//' config/eu.am
+  }
+
+
+Preseeding the build environment for specific packages
+------------------------------------------------------
+
+Configure scripts sometimes depend on running code on the host-arch to
+determine specific properties, but this is not possible while
+crossbuilding a package.  In those cases it is therefore necessary to
+supply the result of the corresponding autoconf test in advance.  This
+can be done by providing a function named buildenv_${PACKAGE_NAME}()
+which preseeds the build environment like in the following example:
+
+  buildenv_foo() {
+    export ac_cv_func_malloc_0_nonnull=yes
+  }
+
+Using the autoconf cache the cross-config binary package split out of
+dpkg-cross is avoided due to the high number of wrong results, useless
+variables and missing variables.
+
+Changing build-dependencies
+---------------------------
+
+In some cases it can be necessary to manipulate the list of
+build-dependencies during bootstrap. By default, bootstrap.sh
+uses "apt-get build-dep" for satisfying build-dependencies,
+but if a function named builddep_${PACKAGE_NAME}() is defined,
+it gets called instead with the host-arch as $1 and the set of
+build-profiles as $2.
+
+Note that "automatic" packages (see below) cannot have a build
+dependency hook unless the satisfiability of can be determined
+using the original Build-Depends (e.g. adding dh-autoreconf is ok).
+Updating Build-Depends via a patch hook should be preferred (with
+the same limitatios regarding "automatic" packages).
+
+
+Package build mechanism
+-----------------------
+
+The first step of the bootstrap process is creating a cross-toolchain
+(binutils, gcc and glibc or musl) which runs on the build-architecture
+but produces code for the host-architecture.  Once this toolchain is
+available, it is used to build all packages that are part of the
+"essential" (Debian policy section 3.8) and the "build-essential"
+(Debian policy section 4.2) sets.
+
+Building a package inside bootstrap.sh can happen by different means:
+
+- By explicitly performing all necessary steps "manually".
+
+- By using the cross_build() function, which allows to easily
+  cross-build a single package.  This works only if all build-
+  dependencies of the package in question are already available
+  in the local "rebootstrap" package repository.  cross_build() gets
+  passed the package to build as $1 and optionally a set of
+  build-profiles as $2.
+
+- By using the automatically_cross_build_packages() function, which
+  works on a list of packages and recursively tries to resolve their
+  build-dependencies, so that it can build the packages and their
+  dependencies in the right order.
+
+automatically_cross_build_packages() is the workhorse of the
+bootstrapping process, but it cannot cover all cases.  In particular,
+it cannot automatically handle packages that require staged builds with
+different build-profiles.
+
+Every time automatically_cross_build_packages() is executed, it
+iterates over the current contents of ${need_packages} and recursively
+determines the build-dependencies of all packages in the list.  Each of
+the build-dependencies that hasn't yet been built gets added to
+${need_packages} for further processing.  Once all build-dependencies
+for a package in ${need_packages} are available, this package gets
+built automatically (by executing cross_build()).  Afterwards, the
+package is added to the local package repository and the package name
+is removed from ${need_packages} and added to ${built_packages}.
+
+At the beginning of the bootstrap process, ${need_packages} gets
+initialized with a list of the "essential" packages. Further packages
+can be added by using the add_need() function.
+
+Both the initialization of ${need_packages} from the "essential" set
+as well as the automatic addition of build-dependencies to
+${need_packages} in automatically_cross_build_packages() is limited
+to packages that are also listed in ${automatic_packages}, i.e.
+${automatic_packages} acts as an upper bounds to the list of packages
+that are automatically added to ${need_packages}. To add a package to
+${automatic_packages}, use the add_automatic() function.
