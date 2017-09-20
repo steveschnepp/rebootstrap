@@ -3933,6 +3933,7 @@ EOF
 
 builddep_libidn2_0() {
 	echo "working around gengetopt not being M-A:foreign #856908"
+	assert_built libunistring
 	apt_get_install debhelper dh-autoreconf pkg-config texinfo texlive help2man gengetopt "libunistring-dev:$1" libunistring-dev autoconf-archive
 }
 patch_libidn2_0() {
@@ -4523,6 +4524,7 @@ if dpkg-architecture "-a$HOST_ARCH" -ihurd-any || dpkg-architecture "-a$HOST_ARC
 	add_need libsystemd-dummy # by nghttp2
 fi
 add_need libtextwrap # by cdebconf
+add_need libunistring # by libidn2-0
 add_need libx11 # by dbus
 add_need libxau # by libxcb
 add_need libxdmcp # by libxcb
