@@ -1926,37 +1926,6 @@ EOF
  armeb-*-netbsdelf*)	targ_emul=armelfb_nbsd;
 EOF
 	fi
-	echo "patching binutils to benefit from the new cross method"
-	drop_privs patch -p1 <<'EOF'
---- a/debian/rules
-+++ b/debian/rules
-@@ -816,7 +816,11 @@
-   ifneq (,$(findstring static-cross,$(DEB_BUILD_OPTIONS)))
-        build_stamps = stamps/build-static-cross
-   else
--       build_stamps = stamps/build-cross
-+       ifeq ($(TARGET),hppa64-linux-gnu)
-+         build_stamps = stamps/build-hppa64
-+       else
-+         build_stamps = stamps/build.$(DEB_TARGET_ARCH)
-+       endif
-   endif
- endif
- ifeq ($(BACKPORT),true)
-@@ -848,7 +848,11 @@
-   ifneq (,$(findstring static-cross,$(DEB_BUILD_OPTIONS)))
-         install_stamps = stamps/install-static-cross
-   else
--        install_stamp = stamps/install-cross
-+        ifeq ($(TARGET),hppa64-linux-gnu)
-+          install_stamp = stamps/install-hppa64
-+        else
-+          install_stamp = stamps/install.$(DEB_TARGET_ARCH)
-+        endif
-   endif
- else
-         install_stamp = stamps/install
-EOF
 	echo "patching binutils to discard ldscripts"
 	# They cause file conflicts with binutils and the in-archive cross
 	# binutils discard ldscripts as well.
@@ -1991,6 +1960,8 @@ EOF
 	fi
 	echo "fixing typo in binutils #873387"
 	drop_privs sed -i -e 's#s/@dpkg_dev/#s/@dpkg_dev@/#' debian/rules
+	echo "fixing TARGET= builds #876677"
+	drop_privs sed -i -e '/^p_bld =/ap_cross = $(p_bin)-$(subst _,-,$(TARGET))\n' -e '/^d_bld =/ad_cross = debian/$(p_cross)' debian/rules
 }
 if test -f "$REPODIR/stamps/cross-binutils"; then
 	echo "skipping rebuild of binutils-target"
