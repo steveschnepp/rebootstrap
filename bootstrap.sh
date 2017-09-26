@@ -3958,6 +3958,45 @@ buildenv_libxext() {
 	export xorg_cv_malloc0_returns_null=no
 }
 
+patch_libxml2() {
+	echo "fix libxml2 FTBFS with strict debhelper #876717"
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/rules
++++ b/debian/rules
+@@ -32,7 +32,6 @@
+ TARGETS += udeb
+ else
+ $(if $(shell grep -q libxml2-udeb debian/control && echo yes),$(shell sed -i /libxml2-udeb/,\$$d debian/control))
+-export DH_OPTIONS = -Nlibxml2-udeb
+ endif
+ 
+ CONFIGURE_FLAGS := --disable-silent-rules --with-history --cache-file="$(CURDIR)/builddir/config.cache"
+@@ -117,18 +116,20 @@
+ 	dh_installchangelogs -k NEWS
+ 
+ override_dh_install-arch:
+-	dh_install -Npython-libxml2-dbg -Npython3-libxml2-dbg -Nlibxml2-udeb
++	dh_install -Npython-libxml2-dbg -Npython3-libxml2-dbg $(if $(WITH_UDEB),-Nlibxml2-udeb)
+ ifneq (,$(filter python-libxml2-dbg,$(DOPACKAGES)))
+ 	dh_install -ppython-libxml2-dbg --sourcedir=debian/tmp-dbg
+ endif
+ ifneq (,$(filter python3-libxml2-dbg,$(DOPACKAGES)))
+ 	dh_install -ppython3-libxml2-dbg --sourcedir=debian/tmp-dbg
+ endif
++ifneq ($(WITH_UDEB),)
+ 	dh_install -plibxml2-udeb --sourcedir=debian/tmp-udeb
++endif
+ 	sed -i -e 's,/lib/$(DEB_HOST_MULTIARCH),/lib,' debian/libxml2-dev/usr/bin/xml2-config
+ 
+ override_dh_strip:
+-	dh_strip -a --dbg-package=libxml2-dbg -Nlibxml2-udeb -Nlibxml2-utils -Nlibxml2-utils-dbg -Npython-libxml2 -Npython-libxml2-dbg -Npython3-libxml2 -Npython3-libxml2-dbg
++	dh_strip -a --dbg-package=libxml2-dbg $(if $(WITH_UDEB),-Nlibxml2-udeb) -Nlibxml2-utils -Npython-libxml2 -Npython-libxml2-dbg -Npython3-libxml2 -Npython3-libxml2-dbg
+ ifneq (,$(filter python-libxml2 python-libxml2-dbg,$(DOPACKAGES)))
+ 	dh_strip -ppython-libxml2 --dbg-package=python-libxml2-dbg
+ endif
+EOF
+}
+
 add_automatic libxmu
 add_automatic libxpm
 
