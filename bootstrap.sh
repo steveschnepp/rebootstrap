@@ -3066,6 +3066,11 @@ patch_diffutils() {
 
 add_automatic dpkg
 
+patch_e2fsprogs() {
+	echo "fix e2fsprogs FTBFS with strict debhelper #876551"
+	drop_privs sed -i -e 's/ -Nlibblkid1-udeb//' -e 's/ -Nlibuuid1-udeb//' -e 's/ -Nuuid-dev//' debian/rules
+}
+
 builddep_elfutils() {
 	assert_built "bzip2 xz-utils zlib"
 	# gcc-multilib dependency lacks nocheck profile
