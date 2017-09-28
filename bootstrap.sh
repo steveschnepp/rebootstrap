@@ -4561,7 +4561,6 @@ add_need tcl8.6 # by newt
 add_need tcltk-defaults # by python2.7
 dpkg-architecture "-a$HOST_ARCH" -ilinux-any && add_need tcp-wrappers # by audit
 add_need tk8.6 # by blt
-add_need ustr # by libsemanage
 add_need xz-utils # by libxml2
 
 automatically_cross_build_packages() {
@@ -5242,20 +5241,14 @@ fi # $HOST_ARCH matches linux-any
 
 automatically_cross_build_packages
 
-builddep_libsemanage() {
-	assert_built "audit bzip2 libselinux libsepol ustr"
-	# libcunit1-dev lacks nocheck profile #875558
-	apt_get_install bison debhelper file flex "libaudit-dev:$1" "libbz2-dev:$1" "libselinux1-dev:$1" "libsepol1-dev:$1" "libustr-dev:$1" pkg-config
-}
 if test -f "$REPODIR/stamps/libsemanage_1"; then
 	echo "skipping stage1 rebuild of libsemanage"
 else
 	cross_build_setup libsemanage libsemanage_1
-	builddep_libsemanage "$HOST_ARCH"
+	assert_built "audit bzip2 libselinux libsepol"
+	apt_get_build_dep "-a$HOST_ARCH" --arch-only -Pnocheck,nopython,noruby ./
 	check_binNMU
-	dpkg-checkbuilddeps -B "-a$HOST_ARCH" -Pstage1 || : # tell unmet build depends
-	# passing CC fixes FTCBFS #875559
-	drop_privs CC="$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_GNU_TYPE)-gcc" dpkg-buildpackage -d "-a$HOST_ARCH" -B -uc -us -Pstage1
+	drop_privs dpkg-buildpackage "-a$HOST_ARCH" -B -uc -us -Pnocheck,nopython,noruby
 	cd ..
 	ls -l
 	pickup_packages *.changes
