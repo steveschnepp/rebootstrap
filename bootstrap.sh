@@ -3674,6 +3674,28 @@ EOF
 }
 
 add_automatic libdebian-installer
+patch_libdebian_installer() {
+	if dpkg-architecture "-a$HOST_ARCH" -imusl-linux-any; then
+		echo "fixing libdebian-installer includes #861598"
+		drop_privs patch -p1 <<'EOF'
+--- a/src/exec.c
++++ b/src/exec.c
+@@ -25,10 +25,10 @@
+ 
+ #include <errno.h>
+ #include <fcntl.h>
++#include <poll.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
+-#include <sys/poll.h>
+ #include <sys/stat.h>
+ #include <sys/types.h>
+ #include <sys/wait.h>
+EOF
+	fi
+}
+
 add_automatic libev
 add_automatic libevent
 add_automatic libffi
