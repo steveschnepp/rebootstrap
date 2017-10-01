@@ -5299,9 +5299,14 @@ automatically_cross_build_packages
 assert_built "$need_packages"
 
 echo "checking installability of build-essential with dose"
+# work around botch being uninstallable #871469 https://caml.inria.fr/mantis/view.php?id=7642
 $APT_GET update
-apt_get_install botch
+(
+	cd /tmp
+	$APT_GET download botch
+	dpkg-deb -x botch_*.deb botch
+)
 package_list=$(mktemp -t packages.XXXXXXXXXX)
 grep-dctrl --exact --field Architecture '(' "$HOST_ARCH" --or all ')' /var/lib/apt/lists/*_Packages > "$package_list"
-botch-distcheck-more-problems "--deb-native-arch=$HOST_ARCH" --successes --failures --explain --checkonly "build-essential:$HOST_ARCH" "--bg=deb://$package_list" "--fg=deb://$package_list" || :
+/tmp/botch/usr/bin/botch-distcheck-more-problems "--deb-native-arch=$HOST_ARCH" --successes --failures --explain --checkonly "build-essential:$HOST_ARCH" "--bg=deb://$package_list" "--fg=deb://$package_list" || :
 rm -f "$package_list"
