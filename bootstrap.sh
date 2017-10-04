@@ -4850,6 +4850,7 @@ if test -f "$REPODIR/stamps/util-linux_1"; then
 else
 	builddep_util_linux "$HOST_ARCH" stage1
 	cross_build_setup util-linux util-linux_1
+	check_binNMU
 	drop_privs scanf_cv_type_modifier=ms dpkg-buildpackage -B -uc -us "-a$HOST_ARCH" -Pstage1
 	cd ..
 	ls -l
