@@ -1968,6 +1968,28 @@ EOF
 	drop_privs sed -i -e 's#s/@dpkg_dev/#s/@dpkg_dev@/#' debian/rules
 	echo "fixing TARGET= builds #876677"
 	drop_privs sed -i -e '/^p_bld =/ap_cross = $(p_bin)-$(subst _,-,$(TARGET))\n' -e '/^d_bld =/ad_cross = debian/$(p_cross)' debian/rules
+	if dpkg-architecture "-a$HOST_ARCH" -iany-i386; then
+		echo "fixing cross binutils for i386 #877791"
+		drop_privs patch -p1 <<'EOF'
+--- a/debian/rules
++++ b/debian/rules
+@@ -864,14 +864,6 @@
+ 	  ln -sf ../../bin/$(CROSS_GNU_TYPE)-$$(basename $$i) $$i; \
+ 	done
+ 
+-# temporary i586-* symlinks for stretch/sid
+-	compat=$$(echo $(CROSS_GNU_TYPE) | sed 's/i686/i586/'); \
+-	case "$(CROSS_GNU_TYPE)" in i686-*) \
+-	  for i in $(programs); do \
+-	    ln -sf $(CROSS_GNU_TYPE)-$$i $(D_CROSS)/$(PF)/bin/$$compat-$$i; \
+-	    ln -sf $(CROSS_GNU_TYPE)-$$i.1.gz $(D_CROSS)/$(PF)/share/man/man1/$$compat-$$i.1.gz; \
+-	  done; \
+-	esac
+ 	touch $@
+ 
+ ###############################################################################
+EOF
+	fi
 }
 if test -f "$REPODIR/stamps/cross-binutils"; then
 	echo "skipping rebuild of binutils-target"
