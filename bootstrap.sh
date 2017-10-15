@@ -1832,6 +1832,9 @@ EOF
 	patch_gcc_strict_debhelper_p
 	patch_gcc_wdotap
 }
+patch_gcc_8() {
+	patch_gcc_wdotap
+}
 # choosing libatomic1 arbitrarily here, cause it never bumped soname
 BUILD_GCC_MULTIARCH_VER=`apt-cache show --no-all-versions libatomic1 | sed 's/^Source: gcc-\([0-9.]*\)$/\1/;t;d'`
 if test "$GCC_VER" != "$BUILD_GCC_MULTIARCH_VER"; then
