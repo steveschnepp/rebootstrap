@@ -1833,6 +1833,299 @@ EOF
 	patch_gcc_wdotap
 }
 patch_gcc_8() {
+	echo "patching gcc-8 to support building without binutils-multiarch #804190"
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/rules.d/binary-ada.mk
++++ b/debian/rules.d/binary-ada.mk
+@@ -126,7 +126,7 @@
+ 		$(d_lgnat)/usr/share/lintian/overrides/$(p_lgnat)
+ endif
+ 
+-	dh_strip -p$(p_lgnat) --dbg-package=$(p_lgnat_dbg)
++	$(cross_strip) dh_strip -p$(p_lgnat) --dbg-package=$(p_lgnat_dbg)
+ 	$(cross_shlibdeps) dh_shlibdeps -p$(p_lgnat) \
+ 		$(call shlibdirs_to_search, \
+ 			$(subst gnat-$(GNAT_SONAME),gcc$(GCC_SONAME),$(p_lgnat)) \
+@@ -347,7 +347,7 @@
+ 
+ 	debian/dh_rmemptydirs -p$(p_gnat)
+ 
+-	dh_strip -p$(p_gnat)
++	$(cross_strip) dh_strip -p$(p_gnat)
+ 	find $(d_gnat) -name '*.ali' | xargs chmod 444
+ 	$(cross_shlibdeps) dh_shlibdeps -p$(p_gnat) \
+ 		$(call shlibdirs_to_search, \
+@@ -356,7 +356,7 @@
+ 	echo $(p_gnat) >> debian/arch_binaries
+ 
+ ifeq ($(with_gnatsjlj),yes)
+-	dh_strip -p$(p_gnatsjlj)
++	$(cross_strip) dh_strip -p$(p_gnatsjlj)
+ 	find $(d_gnatsjlj) -name '*.ali' | xargs chmod 444
+ 	$(cross_makeshlibs) dh_shlibdeps -p$(p_gnatsjlj)
+ 	echo $(p_gnatsjlj) >> debian/arch_binaries
+--- a/debian/rules.d/binary-fortran.mk
++++ b/debian/rules.d/binary-fortran.mk
+@@ -97,7 +97,7 @@
+ 		cp debian/$(p_l).overrides debian/$(p_l)/usr/share/lintian/overrides/$(p_l); \
+ 	fi
+ 
+-	dh_strip -p$(p_l) --dbg-package=$(p_d)
++	$(cross_strip) dh_strip -p$(p_l) --dbg-package=$(p_d)
+ 	ln -sf libgfortran.symbols debian/$(p_l).symbols
+ 	$(cross_makeshlibs) dh_makeshlibs -p$(p_l)
+ 	$(call cross_mangle_shlibs,$(p_l))
+@@ -130,7 +130,7 @@
+ 	debian/dh_doclink -p$(p_l) $(p_lbase)
+ 	debian/dh_rmemptydirs -p$(p_l)
+ 
+-	dh_strip -p$(p_l)
++	$(cross_strip) dh_strip -p$(p_l)
+ 	$(cross_shlibdeps) dh_shlibdeps -p$(p_l)
+ 	$(call cross_mangle_substvars,$(p_l))
+ 	echo $(p_l) >> debian/$(lib_binaries)
+--- a/debian/rules.d/binary-go.mk
++++ b/debian/rules.d/binary-go.mk
+@@ -120,7 +120,7 @@
+ 	  >> debian/$(p_l)/usr/share/lintian/overrides/$(p_l)
+ 
+ 	: # don't strip: https://gcc.gnu.org/ml/gcc-patches/2015-02/msg01722.html
+-	: # dh_strip -p$(p_l) --dbg-package=$(p_d)
++	: # $(cross_strip) dh_strip -p$(p_l) --dbg-package=$(p_d)
+ 	$(cross_makeshlibs) dh_makeshlibs $(ldconfig_arg) -p$(p_l)
+ 	$(call cross_mangle_shlibs,$(p_l))
+ 	$(ignshld)DIRNAME=$(subst n,,$(2)) $(cross_shlibdeps) dh_shlibdeps -p$(p_l) \
+--- a/debian/rules.d/binary-libasan.mk
++++ b/debian/rules.d/binary-libasan.mk
+@@ -35,7 +35,7 @@
+ 		cp debian/$(p_l).overrides debian/$(p_l)/usr/share/lintian/overrides/$(p_l); \
+ 	fi
+ 
+-	dh_strip -p$(p_l) --dbg-package=$(p_d)
++	$(cross_strip) dh_strip -p$(p_l) --dbg-package=$(p_d)
+ 	$(cross_makeshlibs) dh_makeshlibs $(ldconfig_arg) -p$(p_l)
+ 	$(call cross_mangle_shlibs,$(p_l))
+ 	$(ignshld)DIRNAME=$(subst n,,$(2)) $(cross_shlibdeps) dh_shlibdeps -p$(p_l) \
+--- a/debian/rules.d/binary-libatomic.mk
++++ b/debian/rules.d/binary-libatomic.mk
+@@ -30,7 +30,7 @@
+ 	debian/dh_doclink -p$(p_l) $(p_lbase)
+ 	debian/dh_doclink -p$(p_d) $(p_lbase)
+ 
+-	dh_strip -p$(p_l) --dbg-package=$(p_d)
++	$(cross_strip) dh_strip -p$(p_l) --dbg-package=$(p_d)
+ 	ln -sf libatomic.symbols debian/$(p_l).symbols
+ 	$(cross_makeshlibs) dh_makeshlibs $(ldconfig_arg) -p$(p_l)
+ 	$(call cross_mangle_shlibs,$(p_l))
+--- a/debian/rules.d/binary-libcilkrts.mk
++++ b/debian/rules.d/binary-libcilkrts.mk
+@@ -35,7 +35,7 @@
+ 		cp debian/$(p_l).overrides debian/$(p_l)/usr/share/lintian/overrides/$(p_l); \
+ 	fi
+ 
+-	dh_strip -p$(p_l) --dbg-package=$(p_d)
++	$(cross_strip) dh_strip -p$(p_l) --dbg-package=$(p_d)
+ 	ln -sf libcilkrts.symbols debian/$(p_l).symbols
+ 	$(cross_makeshlibs) dh_makeshlibs -p$(p_l)
+ 	$(call cross_mangle_shlibs,$(p_l))
+--- a/debian/rules.d/binary-libgcc.mk
++++ b/debian/rules.d/binary-libgcc.mk
+@@ -161,7 +161,7 @@
+ 	debian/dh_doclink -p$(2) $(p_lbase)
+ 	debian/dh_rmemptydirs -p$(2)
+ 
+-	dh_strip -p$(2)
++	$(cross_strip) dh_strip -p$(2)
+ 	$(cross_shlibdeps) dh_shlibdeps -p$(2)
+ 	$(call cross_mangle_substvars,$(2))
+ 	echo $(2) >> debian/$(lib_binaries)
+@@ -289,7 +289,7 @@
+ 	debian/dh_doclink -p$(p_d) $(if $(3),$(3),$(p_lbase))
+ 	debian/dh_rmemptydirs -p$(p_l)
+ 	debian/dh_rmemptydirs -p$(p_d)
+-	dh_strip -p$(p_l) --dbg-package=$(p_d)
++	$(cross_strip) dh_strip -p$(p_l) --dbg-package=$(p_d)
+ 
+ 	# see Debian #533843 for the __aeabi symbol handling; this construct is
+ 	# just to include the symbols for dpkg versions older than 1.15.3 which
+--- a/debian/rules.d/binary-libgccjit.mk
++++ b/debian/rules.d/binary-libgccjit.mk
+@@ -42,7 +42,7 @@
+ 	debian/dh_doclink -p$(p_jitdev) $(p_base)
+ 	debian/dh_doclink -p$(p_jitdbg) $(p_base)
+ 
+-	dh_strip -p$(p_jitlib) --dbg-package=$(p_jitdbg)
++	$(cross_strip) dh_strip -p$(p_jitlib) --dbg-package=$(p_jitdbg)
+ 	$(cross_makeshlibs) dh_makeshlibs -p$(p_jitlib)
+ 	$(call cross_mangle_shlibs,$(p_jitlib))
+ 	$(ignshld)$(cross_shlibdeps) dh_shlibdeps -p$(p_jitlib)
+--- a/debian/rules.d/binary-libgomp.mk
++++ b/debian/rules.d/binary-libgomp.mk
+@@ -30,7 +30,7 @@
+ 	debian/dh_doclink -p$(p_l) $(p_lbase)
+ 	debian/dh_doclink -p$(p_d) $(p_lbase)
+ 
+-	dh_strip -p$(p_l) --dbg-package=$(p_d)
++	$(cross_strip) dh_strip -p$(p_l) --dbg-package=$(p_d)
+ 	ln -sf libgomp.symbols debian/$(p_l).symbols
+ 	$(cross_makeshlibs) dh_makeshlibs -p$(p_l)
+ 	$(call cross_mangle_shlibs,$(p_l))
+--- a/debian/rules.d/binary-libitm.mk
++++ b/debian/rules.d/binary-libitm.mk
+@@ -30,7 +30,7 @@
+ 	debian/dh_doclink -p$(p_l) $(p_lbase)
+ 	debian/dh_doclink -p$(p_d) $(p_lbase)
+ 
+-	dh_strip -p$(p_l) --dbg-package=$(p_d)
++	$(cross_strip) dh_strip -p$(p_l) --dbg-package=$(p_d)
+ 	ln -sf libitm.symbols debian/$(p_l).symbols
+ 	$(cross_makeshlibs) dh_makeshlibs -p$(p_l)
+ 	$(call cross_mangle_shlibs,$(p_l))
+--- a/debian/rules.d/binary-liblsan.mk
++++ b/debian/rules.d/binary-liblsan.mk
+@@ -35,7 +35,7 @@
+ 		cp debian/$(p_l).overrides debian/$(p_l)/usr/share/lintian/overrides/$(p_l); \
+ 	fi
+ 
+-	dh_strip -p$(p_l) --dbg-package=$(p_d)
++	$(cross_strip) dh_strip -p$(p_l) --dbg-package=$(p_d)
+ 	$(cross_makeshlibs) dh_makeshlibs $(ldconfig_arg) -p$(p_l)
+ 	$(call cross_mangle_shlibs,$(p_l))
+ 	$(ignshld)DIRNAME=$(subst n,,$(2)) $(cross_shlibdeps) dh_shlibdeps -p$(p_l) \
+--- a/debian/rules.d/binary-libmpx.mk
++++ b/debian/rules.d/binary-libmpx.mk
+@@ -37,7 +37,7 @@
+ 		cp debian/$(p_l).overrides debian/$(p_l)/usr/share/lintian/overrides/$(p_l); \
+ 	fi
+ 
+-	dh_strip -p$(p_l) --dbg-package=$(p_d)
++	$(cross_strip) dh_strip -p$(p_l) --dbg-package=$(p_d)
+ 	ln -sf libmpx.symbols debian/$(p_l).symbols
+ 	$(cross_makeshlibs) dh_makeshlibs -p$(p_l)
+ 	$(call cross_mangle_shlibs,$(p_l))
+--- a/debian/rules.d/binary-libobjc.mk
++++ b/debian/rules.d/binary-libobjc.mk
+@@ -65,7 +65,7 @@
+ 	debian/dh_doclink -p$(p_l) $(p_lbase)
+ 	debian/dh_doclink -p$(p_d) $(p_lbase)
+ 
+-	dh_strip -p$(p_l) --dbg-package=$(p_d)
++	$(cross_strip) dh_strip -p$(p_l) --dbg-package=$(p_d)
+ 	rm -f debian/$(p_l).symbols
+ 	$(if $(2),
+ 	  ln -sf libobjc.symbols debian/$(p_l).symbols ,
+--- a/debian/rules.d/binary-libquadmath.mk
++++ b/debian/rules.d/binary-libquadmath.mk
+@@ -30,7 +30,7 @@
+ 	debian/dh_doclink -p$(p_l) $(p_lbase)
+ 	debian/dh_doclink -p$(p_d) $(p_lbase)
+ 
+-	dh_strip -p$(p_l) --dbg-package=$(p_d)
++	$(cross_strip) dh_strip -p$(p_l) --dbg-package=$(p_d)
+ 	ln -sf libquadmath.symbols debian/$(p_l).symbols
+ 	$(cross_makeshlibs) dh_makeshlibs -p$(p_l)
+ 	$(call cross_mangle_shlibs,$(p_l))
+--- a/debian/rules.d/binary-libstdcxx.mk
++++ b/debian/rules.d/binary-libstdcxx.mk
+@@ -207,7 +207,7 @@
+ 	debian/dh_doclink -p$(p_l) $(p_lbase)
+ 	debian/dh_rmemptydirs -p$(p_l)
+ 
+-	dh_strip -p$(p_l) $(if $(filter rtlibs,$(DEB_STAGE)),,--dbg-package=$(1)-$(BASE_VERSION)-dbg$(cross_lib_arch))
++	$(cross_strip) dh_strip -p$(p_l) $(if $(filter rtlibs,$(DEB_STAGE)),,--dbg-package=$(1)-$(BASE_VERSION)-dbg$(cross_lib_arch))
+ 
+ 	$(if $(filter $(DEB_TARGET_ARCH), armel hppa sparc64), \
+ 	  -$(cross_makeshlibs) dh_makeshlibs -p$(p_l) \
+@@ -237,7 +237,7 @@
+ 	$(if $(filter yes,$(with_lib$(2)cxx)),
+ 		cp -a $(d)/$(usr_lib$(2))/libstdc++.so.*[0-9] \
+ 			$(d_d)/$(usr_lib$(2))/.;
+-		dh_strip -p$(p_d) --keep-debug;
++		$(cross_strip) dh_strip -p$(p_d) --keep-debug;
+ 		$(if $(filter yes,$(with_common_libs)),, # if !with_common_libs
+ 			# remove the debug symbols for libstdc++
+ 			# built by a newer version of GCC
+@@ -283,7 +283,7 @@
+ 
+ 	debian/dh_doclink -p$(p_l) $(p_lbase)
+ 	debian/dh_rmemptydirs -p$(p_l)
+-	dh_strip -p$(p_l)
++	$(cross_strip) dh_strip -p$(p_l)
+ 	dh_shlibdeps -p$(p_l) \
+ 		$(call shlibdirs_to_search,$(subst stdc++$(CXX_SONAME),gcc$(GCC_SONAME),$(p_l)),$(2))
+ 	echo $(p_l) >> debian/$(lib_binaries)
+@@ -430,16 +430,16 @@
+ ifeq ($(with_libcxx),yes)
+ 	cp -a $(d)/$(usr_lib)/libstdc++.so.*[0-9] \
+ 		$(d_dbg)/$(usr_lib)/
+-	dh_strip -p$(p_dbg) --keep-debug
++	$(cross_strip) dh_strip -p$(p_dbg) --keep-debug
+ 	rm -f $(d_dbg)/$(usr_lib)/libstdc++.so.*[0-9]
+ endif
+ 
+-	dh_strip -p$(p_dev) --dbg-package=$(p_dbg)
++	$(cross_strip) dh_strip -p$(p_dev) --dbg-package=$(p_dbg)
+ ifneq ($(with_common_libs),yes)
+ 	: # remove the debug symbols for libstdc++ built by a newer version of GCC
+ 	rm -rf $(d_dbg)/usr/lib/debug/$(PF)
+ endif
+-	dh_strip -p$(p_pic)
++	$(cross_strip) dh_strip -p$(p_pic)
+ 
+ ifeq ($(with_cxxdev),yes)
+ 	debian/dh_rmemptydirs -p$(p_dev)
+--- a/debian/rules.d/binary-libtsan.mk
++++ b/debian/rules.d/binary-libtsan.mk
+@@ -37,7 +37,7 @@
+ 		cp debian/$(p_l).overrides debian/$(p_l)/usr/share/lintian/overrides/$(p_l); \
+ 	fi
+ 
+-	dh_strip -p$(p_l) --dbg-package=$(p_d)
++	$(cross_strip) dh_strip -p$(p_l) --dbg-package=$(p_d)
+ 	$(cross_makeshlibs) dh_makeshlibs $(ldconfig_arg) -p$(p_l)
+ 	$(call cross_mangle_shlibs,$(p_l))
+ 	$(ignshld)DIRNAME=$(subst n,,$(2)) $(cross_shlibdeps) dh_shlibdeps -p$(p_l) \
+--- a/debian/rules.d/binary-libubsan.mk
++++ b/debian/rules.d/binary-libubsan.mk
+@@ -35,7 +35,7 @@
+ 		cp debian/$(p_l).overrides debian/$(p_l)/usr/share/lintian/overrides/$(p_l); \
+ 	fi
+ 
+-	dh_strip -p$(p_l) --dbg-package=$(p_d)
++	$(cross_strip) dh_strip -p$(p_l) --dbg-package=$(p_d)
+ 	$(cross_makeshlibs) dh_makeshlibs $(ldconfig_arg) -p$(p_l)
+ 	$(call cross_mangle_shlibs,$(p_l))
+ 	$(ignshld)DIRNAME=$(subst n,,$(2)) $(cross_shlibdeps) dh_shlibdeps -p$(p_l) \
+--- a/debian/rules.d/binary-libvtv.mk
++++ b/debian/rules.d/binary-libvtv.mk
+@@ -35,7 +35,7 @@
+ 		cp debian/$(p_l).overrides debian/$(p_l)/usr/share/lintian/overrides/$(p_l); \
+ 	fi
+ 
+-	dh_strip -p$(p_l) --dbg-package=$(p_d)
++	$(cross_strip) dh_strip -p$(p_l) --dbg-package=$(p_d)
+ 	$(cross_makeshlibs) dh_makeshlibs $(ldconfig_arg) -p$(p_l)
+ 	$(call cross_mangle_shlibs,$(p_l))
+ 	$(ignshld)DIRNAME=$(subst n,,$(2)) $(cross_shlibdeps) dh_shlibdeps -p$(p_l) \
+--- a/debian/rules.defs
++++ b/debian/rules.defs
+@@ -212,6 +212,7 @@
+   cross_gencontrol = DEB_HOST_ARCH=$(TARGET)
+   cross_makeshlibs = DEB_HOST_ARCH=$(TARGET)
+   cross_clean = DEB_HOST_ARCH=$(TARGET)
++  cross_strip = dpkg-architecture -f -a$(TARGET) -c
+ else
+   TARGET_ALIAS := $(DEB_TARGET_GNU_TYPE)
+ 
+@@ -240,6 +241,7 @@
+   cross_gencontrol :=
+   cross_makeshlibs :=
+   cross_clean :=
++  cross_strip :=
+ endif
+ 
+ printarch:
+EOF
 	patch_gcc_wdotap
 }
 # choosing libatomic1 arbitrarily here, cause it never bumped soname
