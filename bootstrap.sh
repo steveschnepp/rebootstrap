@@ -1183,6 +1183,104 @@ patch_gcc_strict_debhelper_p() {
 	echo "patching gcc to work with debhelper's -p validation #877589"
 	drop_privs sed -i -e 's/ -N$(p_hppa64)//' debian/rules2
 }
+patch_gcc_debhelper_skip_profile() {
+	echo "fixing gcc to not let debhelper skip packages #879054"
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/rules.d/binary-fortran.mk
++++ b/debian/rules.d/binary-fortran.mk
+@@ -86,8 +86,8 @@
+ 	mv $(install_stamp) $(install_stamp)-tmp
+
+ 	rm -rf $(d_l) $(d_d)
+-	dh_installdirs -p$(p_l) $(usr_lib$(2))
+-	$(dh_compat2) dh_movefiles -p$(p_l) $(usr_lib$(2))/libgfortran.so.*
++	$(for_target) dh_installdirs -p$(p_l) $(usr_lib$(2))
++	$(for_target) $(dh_compat2) dh_movefiles -p$(p_l) $(usr_lib$(2))/libgfortran.so.*
+
+ 	debian/dh_doclink -p$(p_l) $(p_lbase)
+ 	debian/dh_doclink -p$(p_d) $(p_lbase)
+--- a/debian/rules.d/binary-libgcc.mk
++++ b/debian/rules.d/binary-libgcc.mk
+@@ -281,7 +281,7 @@
+
+ 	rm -rf $(d_l) $(d_d)
+
+-	dh_installdirs -p$(p_l) \
++	$(for_target) dh_installdirs -p$(p_l) \
+ 		$(docdir)/$(p_l) \
+ 		$(libgcc_dir$(2))
+
+--- a/debian/rules.d/binary-libgomp.mk
++++ b/debian/rules.d/binary-libgomp.mk
+@@ -24,8 +24,8 @@
+ 	mv $(install_stamp) $(install_stamp)-tmp
+
+ 	rm -rf $(d_l) $(d_d)
+-	dh_installdirs -p$(p_l) $(usr_lib$(2))
+-	$(dh_compat2) dh_movefiles -p$(p_l) $(usr_lib$(2))/libgomp.so.*
++	$(for_target) dh_installdirs -p$(p_l) $(usr_lib$(2))
++	$(for_target) $(dh_compat2) dh_movefiles -p$(p_l) $(usr_lib$(2))/libgomp.so.*
+
+ 	debian/dh_doclink -p$(p_l) $(p_lbase)
+ 	debian/dh_doclink -p$(p_d) $(p_lbase)
+--- a/debian/rules.d/binary-libstdcxx.mk
++++ b/debian/rules.d/binary-libstdcxx.mk
+@@ -185,7 +185,7 @@
+
+ 	rm -rf $(d_l)
+
+-	dh_installdirs -p$(p_l) \
++	$(for_target) dh_installdirs -p$(p_l) \
+ 		$(docdir) \
+ 		$(usr_lib$(2)) \
+ 		$(PF)/share/gdb/auto-load/$(usr_lib$(2))
+--- a/debian/rules.defs
++++ b/debian/rules.defs
+@@ -239,6 +239,7 @@
+   TARGET_ALIAS := $(DEB_TARGET_ALIAS)
+
+   lib_binaries := indep_binaries
++  for_target = env `dpkg-architecture -f -a$(DEB_TARGET_ARCH)`
+   cross_shlibdeps =  DEB_HOST_ARCH=$(TARGET) ARCH=$(DEB_TARGET_ARCH) MAKEFLAGS="CC=something"
+   cross_gencontrol = DEB_HOST_ARCH=$(TARGET)
+   cross_makeshlibs = DEB_HOST_ARCH=$(TARGET)
+@@ -273,6 +274,7 @@
+   #TARGET_ALIAS := $(subst linux-gnu,linux,$(TARGET_ALIAS))
+
+   lib_binaries := arch_binaries
++  for_target :=
+   cross_shlibdeps :=
+   cross_gencontrol :=
+   cross_makeshlibs :=
+--- a/debian/rules2
++++ b/debian/rules2
+@@ -2434,9 +2434,9 @@
+ 	cat debian/indep_binaries debian/indep_binaries.epoch > debian/indep_binaries.all
+
+ binary-indep: debian/indep_binaries.all
+-	dh_compress $(foreach p,$(shell echo `cat debian/indep_binaries.all`),-p$(p)) \
++	$(for_target) dh_compress $(foreach p,$(shell echo `cat debian/indep_binaries.all`),-p$(p)) \
+ 	  -X.log.xz -X.sum.xz -X.c -X.txt -X.tag -X.map -XREADME.Bugs
+-	dh_fixperms $(foreach p,$(shell echo `cat debian/indep_binaries.all`),-p$(p))
++	$(for_target) dh_fixperms $(foreach p,$(shell echo `cat debian/indep_binaries.all`),-p$(p))
+ 	: # the export should be harmless for the binary indep packages of a native build
+ 	export DEB_HOST_ARCH=$(TARGET); \
+ 	dh_gencontrol $(foreach p,$(shell echo `cat debian/indep_binaries`),-p$(p)) \
+@@ -2459,9 +2459,9 @@
+ 	done
+ endif
+
+-	dh_installdeb $(foreach p,$(shell echo `cat debian/indep_binaries.all`),-p$(p))
+-	dh_md5sums $(foreach p,$(shell echo `cat debian/indep_binaries.all`),-p$(p))
+-	dh_builddeb $(foreach p,$(shell echo `cat debian/indep_binaries.all`),-p$(p))
++	$(for_target) dh_installdeb $(foreach p,$(shell echo `cat debian/indep_binaries.all`),-p$(p))
++	$(for_target) dh_md5sums $(foreach p,$(shell echo `cat debian/indep_binaries.all`),-p$(p))
++	$(for_target) dh_builddeb $(foreach p,$(shell echo `cat debian/indep_binaries.all`),-p$(p))
+
+ 	@echo XXXXX `date -R`
+
+EOF
+}
 patch_gcc_wdotap() {
 	if test "$ENABLE_MULTIARCH_GCC" = yes; then
 		echo "applying patches for with_deps_on_target_arch_pkgs"
@@ -1830,6 +1928,7 @@ EOF
 	sed -i -e 's,^\(+LIMITS_H_TEST = \).*,\1:,' debian/patches/gcc-multiarch.diff
 	patch_gcc_arm64ilp32
 	patch_gcc_strict_debhelper_p
+	patch_gcc_debhelper_skip_profile
 	patch_gcc_wdotap
 }
 patch_gcc_8() {
@@ -2126,6 +2225,7 @@ patch_gcc_8() {
  
  printarch:
 EOF
+	patch_gcc_debhelper_skip_profile
 	patch_gcc_wdotap
 }
 # choosing libatomic1 arbitrarily here, cause it never bumped soname
