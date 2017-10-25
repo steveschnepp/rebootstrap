@@ -1201,6 +1201,39 @@ patch_gcc_debhelper_skip_profile() {
  	debian/dh_doclink -p$(p_d) $(p_lbase)
 --- a/debian/rules.d/binary-libgcc.mk
 +++ b/debian/rules.d/binary-libgcc.mk
+@@ -158,8 +158,8 @@
+
+ 	test -n "$(2)"
+ 	rm -rf debian/$(2)
+-	dh_installdirs -p$(2) $(docdir) #TODO
+-	dh_installdirs -p$(2) $(3)
++	$(for_target) dh_installdirs -p$(2) $(docdir) #TODO
++	$(for_target) dh_installdirs -p$(2) $(3)
+
+ 	$(call __do_gcc_devels2,$(1),$(2),$(3),$(4))
+
+@@ -182,17 +182,17 @@
+ 		set -e; \
+ 		if [ -h $(4)/libgcc_s.so ]; then \
+ 		  rm -f $(4)/libgcc_s.so; \
+-		  dh_link -p$(2) /$(libgcc_dir$(1))/libgcc_s.so.$(GCC_SONAME) \
++		  $(for_target) dh_link -p$(2) /$(libgcc_dir$(1))/libgcc_s.so.$(GCC_SONAME) \
+ 		    /$(3)/libgcc_s.so; \
+ 		else \
+ 		  mv $(4)/libgcc_s.so $(d)/$(3)/libgcc_s.so; \
+-		  dh_link -p$(2) /$(libgcc_dir$(1))/libgcc_s.so.$(GCC_SONAME) \
++		  $(for_target) dh_link -p$(2) /$(libgcc_dir$(1))/libgcc_s.so.$(GCC_SONAME) \
+ 		    /$(3)/libgcc_s.so.$(GCC_SONAME); \
+ 		fi; \
+-		$(if $(1), dh_link -p$(2) /$(3)/libgcc_s.so \
++		$(if $(1), $(for_target) dh_link -p$(2) /$(3)/libgcc_s.so \
+ 		    /$(gcc_lib_dir)/libgcc_s_$(1).so;)
+ 	)
+-	$(dh_compat2) dh_movefiles -p$(2) \
++	$(for_target) $(dh_compat2) dh_movefiles -p$(2) \
+ 		$(3)/{libgcc*,libgcov.a,*.o} \
+ 		$(if $(1),,$(header_files)) # Only move headers for the "main" package
+
 @@ -281,7 +281,7 @@
 
  	rm -rf $(d_l) $(d_d)
