@@ -4024,7 +4024,6 @@ patch_libcap2() {
  	# Remove unwanted/unused files (because of --fail-missing)
  	rm -f debian/tmp/lib/$(DEB_HOST_MULTIARCH)/*.so
 EOF
-	drop_privs quilt push -a
 }
 
 add_automatic libdebian-installer
