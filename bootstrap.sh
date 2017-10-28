@@ -1199,6 +1199,31 @@ patch_gcc_debhelper_skip_profile() {
 
  	debian/dh_doclink -p$(p_l) $(p_lbase)
  	debian/dh_doclink -p$(p_d) $(p_lbase)
+@@ -122,9 +122,9 @@
+ 	mv $(install_stamp) $(install_stamp)-tmp
+
+ 	rm -rf $(d_l)
+-	dh_installdirs -p$(p_l) $(gcc_lib_dir$(2))
++	$(for_target) dh_installdirs -p$(p_l) $(gcc_lib_dir$(2))
+
+-	$(dh_compat2) dh_movefiles -p$(p_l) \
++	$(for_target) $(dh_compat2) dh_movefiles -p$(p_l) \
+ 		$(gcc_lib_dir$(2))/libcaf_single.a
+ 	$(call install_gcc_lib,libgfortran,$(FORTRAN_SONAME),$(2),$(p_l))
+
+--- a/debian/rules.d/binary-libatomic.mk
++++ b/debian/rules.d/binary-libatomic.mk
+@@ -24,8 +24,8 @@
+ 	mv $(install_stamp) $(install_stamp)-tmp
+
+ 	rm -rf $(d_l) $(d_d)
+-	dh_installdirs -p$(p_l) $(usr_lib$(2))
+-	$(dh_compat2) dh_movefiles -p$(p_l) $(usr_lib$(2))/libatomic.so.*
++	$(for_target) dh_installdirs -p$(p_l) $(usr_lib$(2))
++	$(for_target) $(dh_compat2) dh_movefiles -p$(p_l) $(usr_lib$(2))/libatomic.so.*
+
+ 	debian/dh_doclink -p$(p_l) $(p_lbase)
+ 	debian/dh_doclink -p$(p_d) $(p_lbase)
 --- a/debian/rules.d/binary-libgcc.mk
 +++ b/debian/rules.d/binary-libgcc.mk
 @@ -158,8 +158,8 @@
@@ -1267,6 +1292,43 @@ patch_gcc_debhelper_skip_profile() {
  		$(docdir) \
  		$(usr_lib$(2)) \
  		$(PF)/share/gdb/auto-load/$(usr_lib$(2))
+@@ -369,9 +369,9 @@
+ 	mv $(install_stamp) $(install_stamp)-tmp
+
+ 	rm -rf $(d_dev) $(d_pic)
+-	dh_installdirs -p$(p_dev) $(dirs_dev)
+-	dh_installdirs -p$(p_pic) $(dirs_pic)
+-	dh_installdirs -p$(p_dbg) $(dirs_dbg)
++	$(for_target) dh_installdirs -p$(p_dev) $(dirs_dev)
++	$(for_target) dh_installdirs -p$(p_pic) $(dirs_pic)
++	$(for_target) dh_installdirs -p$(p_dbg) $(dirs_dbg)
+
+ 	: # - correct libstdc++-v3 file locations
+ 	mv $(d)/$(usr_lib)/libsupc++.a $(d)/$(gcc_lib_dir)/
+@@ -391,18 +391,18 @@
+ 	  if [ -d $$i ]; then mv $$i $$i-gnu; fi; \
+ 	done
+ 
+-	$(dh_compat2) dh_movefiles -p$(p_dev) $(files_dev)
+-	$(dh_compat2) dh_movefiles -p$(p_pic) $(files_pic)
++	$(for_target) $(dh_compat2) dh_movefiles -p$(p_dev) $(files_dev)
++	$(for_target) $(dh_compat2) dh_movefiles -p$(p_pic) $(files_pic)
+ ifeq ($(with_cxx_debug),yes)
+-	$(dh_compat2) dh_movefiles -p$(p_dbg) $(files_dbg)
++	$(for_target) $(dh_compat2) dh_movefiles -p$(p_dbg) $(files_dbg)
+ endif
+ 
+-	dh_link -p$(p_dev) \
++	$(for_target) dh_link -p$(p_dev) \
+ 		/$(usr_lib)/libstdc++.so.$(CXX_SONAME) \
+ 		/$(gcc_lib_dir)/libstdc++.so \
+ 		/$(PFL)/include/c++/$(BASE_VERSION) /$(PFL)/include/c++/$(GCC_VERSION)
+ ifeq ($(with_multiarch_cxxheaders),yes)
+-	dh_link -p$(p_dev) \
++	$(for_target) dh_link -p$(p_dev) \
+ 		/$(PFL)/include/$(DEB_TARGET_MULTIARCH)/c++/$(BASE_VERSION) \
+ 		/$(PFL)/include/$(DEB_TARGET_MULTIARCH)/c++/$(GCC_VERSION)
+ endif
 --- a/debian/rules.defs
 +++ b/debian/rules.defs
 @@ -239,6 +239,7 @@
@@ -1287,6 +1349,15 @@ patch_gcc_debhelper_skip_profile() {
    cross_makeshlibs :=
 --- a/debian/rules2
 +++ b/debian/rules2
+@@ -935,7 +935,7 @@
+ define install_gcc_lib
+ 	mv $(d)/$(usr_lib$(3))/$(1)*.a debian/$(4)/$(gcc_lib_dir$(3))/
+ 	rm -f $(d)/$(usr_lib$(3))/$(1)*.{la,so}
+-	dh_link -p$(4) \
++	$(for_target) dh_link -p$(4) \
+ 	  /$(usr_lib$(3))/$(1).so.$(2) /$(gcc_lib_dir$(3))/$(1).so
+
+ endef
 @@ -2434,9 +2434,9 @@
  	cat debian/indep_binaries debian/indep_binaries.epoch > debian/indep_binaries.all
 
