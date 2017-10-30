@@ -1292,6 +1292,27 @@ patch_gcc_debhelper_skip_profile() {
  		$(docdir) \
  		$(usr_lib$(2)) \
  		$(PF)/share/gdb/auto-load/$(usr_lib$(2))
+@@ -231,7 +231,7 @@
+ 	mv $(install_stamp) $(install_stamp)-tmp
+
+ 	rm -rf $(d_d)
+-	dh_installdirs -p$(p_d) \
++	$(for_target) dh_installdirs -p$(p_d) \
+ 		$(PF)/lib/debug/$(usr_lib$(2)) \
+ 		$(usr_lib$(2))
+
+@@ -274,9 +274,9 @@
+ 		$(d)/$(gcc_lib_dir$(2))/
+
+ 	rm -rf $(d_l)
+-	dh_installdirs -p$(p_l) $(gcc_lib_dir$(2))
++	$(for_target) dh_installdirs -p$(p_l) $(gcc_lib_dir$(2))
+
+-	$(dh_compat2) dh_movefiles -p$(p_l) \
++	$(for_target) $(dh_compat2) dh_movefiles -p$(p_l) \
+ 		$(gcc_lib_dir$(2))/libstdc++.a \
+ 		$(gcc_lib_dir$(2))/libstdc++fs.a \
+ 		$(gcc_lib_dir$(2))/libsupc++.a \
 @@ -369,9 +369,9 @@
  	mv $(install_stamp) $(install_stamp)-tmp
 
