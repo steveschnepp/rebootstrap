@@ -1281,6 +1281,19 @@ patch_gcc_debhelper_skip_profile() {
 
  	debian/dh_doclink -p$(p_l) $(p_lbase)
  	debian/dh_doclink -p$(p_d) $(p_lbase)
+--- a/debian/rules.d/binary-libquadmath.mk
++++ b/debian/rules.d/binary-libquadmath.mk
+@@ -24,8 +24,8 @@
+ 	mv $(install_stamp) $(install_stamp)-tmp
+
+ 	rm -rf $(d_l) $(d_d)
+-	dh_installdirs -p$(p_l) $(usr_lib$(2))
+-	$(dh_compat2) dh_movefiles -p$(p_l) $(usr_lib$(2))/libquadmath.so.*
++	$(for_target) dh_installdirs -p$(p_l) $(usr_lib$(2))
++	$(for_target) $(dh_compat2) dh_movefiles -p$(p_l) $(usr_lib$(2))/libquadmath.so.*
+
+ 	debian/dh_doclink -p$(p_l) $(p_lbase)
+ 	debian/dh_doclink -p$(p_d) $(p_lbase)
 --- a/debian/rules.d/binary-libstdcxx.mk
 +++ b/debian/rules.d/binary-libstdcxx.mk
 @@ -185,7 +185,7 @@
