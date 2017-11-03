@@ -2498,8 +2498,6 @@ EOF
  	rm -rf $(d_hppa64)/$(PF)/include
 EOF
 	fi
-	echo "fixing typo in binutils #873387"
-	drop_privs sed -i -e 's#s/@dpkg_dev/#s/@dpkg_dev@/#' debian/rules
 	echo "fixing TARGET= builds #876677"
 	drop_privs sed -i -e '/^p_bld =/ap_cross = $(p_bin)-$(subst _,-,$(TARGET))\n' -e '/^d_bld =/ad_cross = debian/$(p_cross)' debian/rules
 }
