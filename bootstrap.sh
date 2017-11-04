@@ -3698,6 +3698,9 @@ EOF
 builddep_expat() {
 	# gcc-multilib lacks nobiarch profile #779459
 	apt_get_install debhelper docbook-to-man dh-autoreconf dpkg-dev
+	if dpkg-architecture "-a$1" -ikfreebsd-any; then
+		apt_get_install "libbsd-dev:$1"
+	fi
 }
 
 add_automatic file
@@ -4964,7 +4967,7 @@ test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = linux && add_nee
 add_need icu # by libxml2
 add_need krb5 # by audit
 add_need libatomic-ops # by gcc-VER
-add_need libbsd # by bsdmainutils
+add_need libbsd # by bsdmainutils, expat [kfreebsd-any]
 dpkg-architecture "-a$HOST_ARCH" -ilinux-any && add_need libcap2 # by systemd
 add_need libdebian-installer # by cdebconf
 add_need libevent # by unbound
