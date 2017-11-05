@@ -478,6 +478,10 @@ if test "$ENABLE_MULTIARCH_GCC" = yes; then
 	$APT_GET install cross-gcc-dev
 	echo "removing unused unstripped_exe patch"
 	sed -i '/made-unstripped_exe-setting-overridable/d' /usr/share/cross-gcc/patches/gcc-*/series
+	if test "$GCC_VER" = 8; then
+		echo "fixing patch application #880917"
+		sed -i -e '/^+@@ -223,7 +235,45 @@/s/45/16/' /usr/share/cross-gcc/patches/gcc-8/0008-g-include-directories-functional-again.patch
+	fi
 fi
 
 obtain_source_package() {
