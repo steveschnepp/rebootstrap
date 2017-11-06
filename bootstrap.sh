@@ -3600,12 +3600,6 @@ add_automatic db-defaults
 add_automatic debianutils
 
 add_automatic diffutils
-patch_diffutils() {
-	echo "work around diffutils FTBFS with gcc-7 #853373"
-	# disable gcc-7-specific code until it is unbroken
-	sed -i -e 's/^\(#define _GL_HAS_BUILTIN_OVERFLOW_WITH_NULL \).*/\1 0/' lib/intprops.h
-}
-
 add_automatic dpkg
 
 patch_e2fsprogs() {
