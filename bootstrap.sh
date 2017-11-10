@@ -2088,9 +2088,9 @@ patch_gcc_8() {
  		$(call shlibdirs_to_search, \
  			$(subst gnat-$(GNAT_SONAME),gcc$(GCC_SONAME),$(p_lgnat)) \
 @@ -347,7 +347,7 @@
- 
- 	debian/dh_rmemptydirs -p$(p_gnat)
- 
+ 	dwz \
+ 	  $(d_gnat)/$(gcc_lexec_dir)/gnat1
+ endif
 -	dh_strip -p$(p_gnat)
 +	$(cross_strip) dh_strip -p$(p_gnat)
  	find $(d_gnat) -name '*.ali' | xargs chmod 444
