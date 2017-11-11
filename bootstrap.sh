@@ -3000,8 +3000,6 @@ EOF
  		--without-selinux \
  		--enable-stackguard-randomization \
 EOF
-	echo "patching glibc for sh3 #851867"
-	drop_privs cp -nv debian/sysdeps/sh4.mk debian/sysdeps/sh3.mk
 }
 if test -f "$REPODIR/stamps/${LIBC_NAME}_1"; then
 	echo "skipping rebuild of $LIBC_NAME stage1"
