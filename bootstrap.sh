@@ -5521,9 +5521,7 @@ mark_built libcap-ng
 # needed by audit, dbus
 
 automatically_cross_build_packages
-fi # $HOST_ARCH matches linux-any
 
-if dpkg-architecture "-a$HOST_ARCH" -ilinux-any; then
 if test -f "$REPODIR/stamps/libprelude_1"; then
 	echo "skipping rebuild of libprelude stage1"
 else
@@ -5568,7 +5566,6 @@ fi
 progress_mark "audit stage1 cross build"
 mark_built audit
 # needed by libsemanage
-fi # $HOST_ARCH matches linux-any
 
 automatically_cross_build_packages
 
@@ -5593,6 +5590,7 @@ mark_built libsemanage
 # needed by shadow
 
 automatically_cross_build_packages
+fi # $HOST_ARCH matches linux-any
 
 cross_build util-linux # stageless
 # essential
