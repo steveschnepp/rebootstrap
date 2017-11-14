@@ -1215,6 +1215,43 @@ patch_gcc_debhelper_skip_profile() {
 
  ifeq ($(derivative),Ubuntu)
    ifeq (,$(filter $(distrelease),dapper lucid))
+--- a/debian/rules2
++++ b/debian/rules2
+@@ -2396,10 +2396,12 @@
+ 	cat debian/arch_binaries debian/arch_binaries.epoch > debian/arch_binaries.all
+
+ binary-arch: debian/arch_binaries.all
++	test ! -s debian/arch_binaries.all || \
+ 	dh_compress $(foreach p,$(shell echo `cat debian/arch_binaries.all`),-p$(p)) \
+ 	  -X.log.xz -X.sum.xz -X.c -X.txt -X.tag -X.map -XREADME.Bugs
+ ifeq ($(i586_symlinks),yes)
+ 	cd debian; \
++	test ! -s arch_binaries || \
+ 	for x in $$(find `cat arch_binaries` -type l -name 'i686-*'); do \
+ 	  link=$$(echo $$x | sed 's/i686-/i586-/'); \
+ 	  tgt=$$(basename $$x); \
+@@ -2407,7 +2409,9 @@
+ 	  rm -f $$link; cp -a $$x $$link; \
+ 	done
+ endif
++	test ! -s debian/arch_binaries.all || \
+ 	dh_fixperms $(foreach p,$(shell echo `cat debian/arch_binaries.all`),-p$(p))
++	test ! -s debian/arch_binaries || \
+ 	dh_gencontrol $(foreach p,$(shell echo `cat debian/arch_binaries`),-p$(p)) \
+ 	  -- -v$(DEB_VERSION) $(common_substvars)
+ 	@set -e; \
+@@ -2416,8 +2420,11 @@
+ 	  echo dh_gencontrol $$pkgs -- -v$(DEB_EVERSION) $(common_substvars); \
+ 	  dh_gencontrol $$pkgs -- -v$(DEB_EVERSION) $(common_substvars); \
+ 	fi
++	test ! -s debian/arch_binaries.all || \
+ 	dh_installdeb $(foreach p,$(shell echo `cat debian/arch_binaries.all`),-p$(p))
++	test ! -s debian/arch_binaries.all || \
+ 	dh_md5sums $(foreach p,$(shell echo `cat debian/arch_binaries.all`),-p$(p))
++	test ! -s debian/arch_binaries.all || \
+ 	dh_builddeb $(foreach p,$(shell echo `cat debian/arch_binaries.all`),-p$(p))
+ ifeq ($(with_check),yes)
+ 	@echo Done
 EOF
 	drop_privs sed -i -e '/^Package: .*`'"'"'LS$/aTARGET_PACKAGE`'"'dnl" debian/control.m4
 }
