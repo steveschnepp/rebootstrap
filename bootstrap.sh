@@ -4216,12 +4216,12 @@ EOF
 EOF
 }
 
-builddep_libidn2_0() {
+builddep_libidn2() {
 	echo "working around gengetopt not being M-A:foreign #856908"
 	assert_built libunistring
 	apt_get_install debhelper dh-autoreconf pkg-config texinfo texlive help2man gengetopt "libunistring-dev:$1" libunistring-dev autoconf-archive
 }
-patch_libidn2_0() {
+patch_libidn2() {
 	echo "fixing architecture of libidn2-0-dev #872567"
 	drop_privs sed -i -e '/^Package: libidn2-0-dev/,/^$/s/Architecture: all/Architecture: any/' debian/control
 }
@@ -4701,7 +4701,7 @@ if dpkg-architecture "-a$HOST_ARCH" -ihurd-any || dpkg-architecture "-a$HOST_ARC
 	add_need libsystemd-dummy # by nghttp2
 fi
 add_need libtextwrap # by cdebconf
-add_need libunistring # by libidn2-0
+add_need libunistring # by libidn2
 add_need libx11 # by dbus
 add_need libxau # by libxcb
 add_need libxdmcp # by libxcb
@@ -5256,8 +5256,8 @@ mark_built unbound
 
 automatically_cross_build_packages
 
-cross_build libidn2-0
-mark_built libidn2-0
+cross_build libidn2
+mark_built libidn2
 # needed by curl, gnutls28
 
 automatically_cross_build_packages
