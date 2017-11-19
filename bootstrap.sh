@@ -2564,28 +2564,6 @@ fi
 
 # libc
 patch_glibc() {
-	echo "patching glibc to select the correct packages in stage1"
-	drop_privs patch -p1 <<EOF
-diff -Nru glibc-2.19/debian/rules glibc-2.19/debian/rules
---- glibc-2.19/debian/rules
-+++ glibc-2.19/debian/rules
-@@ -196,6 +196,15 @@
-   endif
- endif
- 
-+ifneq (\$(filter stage1,\$(DEB_BUILD_PROFILES)),)
-+ifneq (\$(filter nobiarch,\$(DEB_BUILD_PROFILES)),)
-+override GLIBC_PASSES = libc
-+override DEB_ARCH_REGULAR_PACKAGES = \$(libc)-dev
-+else
-+override DEB_ARCH_REGULAR_PACKAGES := \$(foreach p,\$(DEB_ARCH_REGULAR_PACKAGES),\$(if \$(findstring -dev,\$(p)),\$(if \$(findstring -bin,\$(p)),,\$(p))))
-+endif
-+endif
-+
- # And now the rules...
- include debian/rules.d/*.mk
- 
-EOF
 	echo "patching eglibc to avoid dependency on libc6 from libc6-dev in stage1"
 	drop_privs sed -i '/^Depends:/s/\(\(libc[0-9.]\+-[^d]\|@libc@\)[^,]*\)\(,\|$\)/\1 <!stage1>\3/g' debian/control.in/*
 	echo "patching glibc to pass -l to dh_shlibdeps for multilib"
