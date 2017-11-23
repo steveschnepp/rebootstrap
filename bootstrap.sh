@@ -2596,9 +2596,9 @@ diff -Nru glibc-2.19/debian/sysdeps/linux.mk glibc-2.19/debian/sysdeps/linux.mk
    else
      LINUX_HEADERS := /usr/$(DEB_HOST_GNU_TYPE)/include
 EOF
-	if ! grep -q '^libc[0-9_]\+_archs *:=.*\<'"$HOST_ARCH"'\>' debian/rules.d/control.mk; then
+	if ! sed -n '/^libc6_archs *:=/,/[^\\]$/p' debian/rules.d/control.mk | grep -qw "$HOST_ARCH"; then
 		echo "adding $HOST_ARCH to libc6_archs"
-		drop_privs sed -i -e "s/^libc6_archs *:=.*/& $HOST_ARCH/" debian/rules.d/control.mk
+		drop_privs sed -i -e "s/^libc6_archs *:= /&$HOST_ARCH /" debian/rules.d/control.mk
 		drop_privs ./debian/rules debian/control
 	fi
 	echo "patching glibc to drop dev package conflict"
