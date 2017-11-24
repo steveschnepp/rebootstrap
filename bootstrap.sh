@@ -1990,17 +1990,6 @@ patch_gcc_8() {
  	ln -sf libatomic.symbols debian/$(p_l).symbols
  	$(cross_makeshlibs) dh_makeshlibs $(ldconfig_arg) -p$(p_l)
  	$(call cross_mangle_shlibs,$(p_l))
---- a/debian/rules.d/binary-libcilkrts.mk
-+++ b/debian/rules.d/binary-libcilkrts.mk
-@@ -35,7 +35,7 @@
- 		cp debian/$(p_l).overrides debian/$(p_l)/usr/share/lintian/overrides/$(p_l); \
- 	fi
- 
--	dh_strip -p$(p_l) --dbg-package=$(p_d)
-+	$(cross_strip) dh_strip -p$(p_l) --dbg-package=$(p_d)
- 	ln -sf libcilkrts.symbols debian/$(p_l).symbols
- 	$(cross_makeshlibs) dh_makeshlibs -p$(p_l)
- 	$(call cross_mangle_shlibs,$(p_l))
 --- a/debian/rules.d/binary-libgcc.mk
 +++ b/debian/rules.d/binary-libgcc.mk
 @@ -161,7 +161,7 @@
