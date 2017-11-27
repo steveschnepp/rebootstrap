@@ -3908,25 +3908,7 @@ EOF
 }
 
 add_automatic libbsd
-
 add_automatic libcap2
-patch_libcap2() {
-	echo "fixing misbuilt libcap.pc #871714"
-	drop_privs patch -p1 <<'EOF'
---- a/debian/rules
-+++ b/debian/rules
-@@ -46,6 +46,8 @@
- 	cd debian/tmp/usr/lib/$(DEB_HOST_MULTIARCH) && \
- 		mv    ../../../lib/$(DEB_HOST_MULTIARCH)/*.a . && \
- 		ln -s ../../../lib/$(DEB_HOST_MULTIARCH)/libcap.so.*.* libcap.so
-+	sed -i -e 's#^libdir=.*#libdir=/usr/lib/$(DEB_HOST_MULTIARCH)#' \
-+		debian/tmp/usr/lib/$(DEB_HOST_MULTIARCH)/pkgconfig/libcap.pc
-
- 	# Remove unwanted/unused files (because of --fail-missing)
- 	rm -f debian/tmp/lib/$(DEB_HOST_MULTIARCH)/*.so
-EOF
-}
-
 add_automatic libdebian-installer
 add_automatic libev
 add_automatic libevent
