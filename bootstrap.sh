@@ -2189,6 +2189,7 @@ patch_gcc_8() {
  printarch:
 EOF
 	patch_gcc_debhelper_skip_profile
+	patch_gcc_arm64ilp32
 	patch_gcc_wdotap
 }
 # choosing libatomic1 arbitrarily here, cause it never bumped soname
