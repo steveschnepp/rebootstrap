@@ -3378,20 +3378,6 @@ EOF
 }
 
 add_automatic curl
-patch_curl() {
-	echo "patching curl to not install absent zsh completions #812965"
-	drop_privs patch -p1 <<'EOF'
---- a/debian/curl.install
-+++ b/debian/curl.install
-@@ -1,2 +1,3 @@
-+#!/usr/bin/dh-exec
- usr/bin/curl
--usr/share/zsh/*
-+<!cross> usr/share/zsh/*
-EOF
-	chmod +x debian/curl.install
-}
-
 add_automatic dash
 add_automatic datefudge
 add_automatic db-defaults
