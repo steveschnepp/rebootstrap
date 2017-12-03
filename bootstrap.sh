@@ -3136,25 +3136,7 @@ automatic_packages=
 add_automatic() { automatic_packages=`set_add "$automatic_packages" "$1"`; }
 
 add_automatic acl
-
 add_automatic adns
-patch_adns() {
-	echo "patching adns to support DEB_BUILD_OPTIONS=nocheck #812229"
-	drop_privs patch -p1 <<'EOF'
---- a/debian/rules
-+++ b/debian/rules
-@@ -15,7 +15,9 @@
- 	dh build --before configure
- 	dh_auto_configure
- 	dh_auto_build
-+ifeq ($(filter nocheck,$(DEB_BUILD_OPTIONS)),)
- 	make -C regress check
-+endif
- 	dh build --after test
- 	touch $@
- 
-EOF
-}
 
 builddep_apt() {
 	# g++ dependency needs toolchain translation
