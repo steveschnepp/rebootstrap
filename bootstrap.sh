@@ -4169,6 +4169,13 @@ add_automatic libtasn1-6
 add_automatic libtextwrap
 
 add_automatic libunistring
+buildenv_libunistring() {
+	if dpkg-architecture "-a$HOST_ARCH" -ignu-any-any; then
+		echo "glibc does not prefer rwlock writers to readers"
+		export gl_cv_pthread_rwlock_rdlock_prefer_writer=no
+	fi
+}
+
 add_automatic libusb
 add_automatic libusb-1.0
 add_automatic libverto
