@@ -2324,8 +2324,6 @@ EOF
  	rm -rf $(d_hppa64)/$(PF)/include
 EOF
 	fi
-	echo "fixing TARGET= builds #876677"
-	drop_privs sed -i -e '/^p_bld =/ap_cross = $(p_bin)-$(subst _,-,$(TARGET))\n' -e '/^d_bld =/ad_cross = debian/$(p_cross)' debian/rules
 }
 if test -f "$REPODIR/stamps/cross-binutils"; then
 	echo "skipping rebuild of binutils-target"
