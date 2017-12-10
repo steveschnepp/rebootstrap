@@ -479,8 +479,49 @@ if test "$ENABLE_MULTIARCH_GCC" = yes; then
 	echo "removing unused unstripped_exe patch"
 	sed -i '/made-unstripped_exe-setting-overridable/d' /usr/share/cross-gcc/patches/gcc-*/series
 	if test "$GCC_VER" = 8; then
-		echo "fixing patch application #880917"
-		sed -i -e '/^+@@ -223,7 +235,45 @@/s/45/16/' /usr/share/cross-gcc/patches/gcc-8/0008-g-include-directories-functional-again.patch
+		echo "fixing cross-gcc-dev for cilkrts removal #884051"
+		patch /usr/share/cross-gcc/patches/gcc-8/0004-added-multi-arch-specific-install-location-patch.patch <<'EOF'
+--- 0004-added-multi-arch-specific-install-location-patch.patch
++++ 0004-added-multi-arch-specific-install-location-patch.patch
+@@ -16,7 +16,7 @@
+ index 0000000..97117d6
+ --- /dev/null
+ +++ b/debian/patches/cross-ma-install-location.diff
+-@@ -0,0 +1,379 @@
++@@ -0,0 +1,357 @@
+ +Index: b/src/libada/configure.ac
+ +===================================================================
+ +--- a/src/libada/configure.ac
+@@ -340,28 +340,6 @@
+ +     toolexeclibdir='$(toolexecdir)/$(gcc_version)$(MULTISUBDIR)'
+ +     ;;
+ +   no)
+-+-    if test -n "$with_cross_host" &&
+-+-       test x"$with_cross_host" != x"no"; then
+-+-      # Install a library built with a cross compiler in tooldir, not libdir.
+-+-      toolexecdir='$(exec_prefix)/$(target_alias)'
+-+-      toolexeclibdir='$(toolexecdir)/lib'
+-+-    else
+-+-      toolexecdir='$(libdir)/gcc-lib/$(target_alias)'
+-+-      toolexeclibdir='$(libdir)'
+-+-    fi
+-++    toolexecdir='$(libdir)/gcc-lib/$(target_alias)'
+-++    toolexeclibdir='$(libdir)'
+-+     multi_os_directory=`$CC -print-multi-os-directory`
+-+     case $multi_os_directory in
+-+       .) ;; # Avoid trailing /.
+-+Index: b/src/libcilkrts/configure.ac
+-+===================================================================
+-+--- a/src/libcilkrts/configure.ac
+-++++ b/src/libcilkrts/configure.ac
+-+@@ -103,15 +103,8 @@
+-+     toolexeclibdir='$(toolexecdir)/$(gcc_version)$(MULTISUBDIR)'
+-+     ;;
+-+   no)
+ +-    if test -n "$with_cross_host" &&
+ +-       test x"$with_cross_host" != x"no"; then
+ +-      # Install a library built with a cross compiler in tooldir, not libdir.
+EOF
 	fi
 fi
 
