@@ -3294,6 +3294,7 @@ EOF
 add_automatic autogen
 add_automatic base-files
 add_automatic bash
+add_automatic bsdmainutils
 
 builddep_build_essential() {
 	# g++ dependency needs cross translation
@@ -4628,6 +4629,7 @@ done
 add_need acl # by coreutils, systemd
 add_need attr # by coreutils, libcap-ng
 add_need autogen # by gcc-VER, gnutls28
+add_need bsdmainutils # for man-db
 add_need bzip2 # by perl
 add_need cloog # by gcc-VER
 add_need db-defaults # by perl, python2.7, python3.5
@@ -4644,7 +4646,7 @@ test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = linux && add_nee
 add_need icu # by libxml2
 add_need krb5 # by audit
 add_need libatomic-ops # by gcc-VER
-add_need libbsd # by bsdmainutils, expat [kfreebsd-any]
+dpkg-architecture "-a$HOST_ARCH" -ikfreebsd-any && add_need libbsd # by expat [kfreebsd-any]
 dpkg-architecture "-a$HOST_ARCH" -ilinux-any && add_need libcap2 # by systemd
 add_need libdebian-installer # by cdebconf
 add_need libevent # by unbound
@@ -4954,17 +4956,6 @@ fi
 progress_mark "util-linux stage1 cross build"
 mark_built util-linux
 # essential, needed by e2fsprogs
-
-automatically_cross_build_packages
-
-builddep_bsdmainutils() {
-	assert_built "ncurses libbsd"
-	# python-hdate dependency unsatisfiable #792867
-	apt_get_install debhelper "libncurses5-dev:$1" quilt python python-hdate "libbsd-dev:$1"
-}
-cross_build bsdmainutils
-mark_built bsdmainutils
-# needed for man-db
 
 automatically_cross_build_packages
 
