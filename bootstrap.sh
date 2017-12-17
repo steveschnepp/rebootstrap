@@ -17,7 +17,7 @@ APT_GET="apt-get --no-install-recommends -y -o Debug::pkgProblemResolver=true -o
 DEFAULT_PROFILES="cross nocheck"
 LIBC_NAME=glibc
 DROP_PRIVS=buildd
-GCC_NOLANG=ada,brig,d,go,java,jit,hppa64,objc,obj-c++
+GCC_NOLANG="ada brig d go java jit hppa64 objc obj-c++"
 ENABLE_DIFFOSCOPE=no
 
 if df -t tmpfs /var/cache/apt/archives >/dev/null 2>&1; then
@@ -101,6 +101,18 @@ set_union() {
 	result=$1
 	for word in $2; do
 		result=`set_add "$result" "$word"`
+	done
+	echo "$result"
+}
+
+# join the words the arguments starting with $2 with separator $1
+join_words() {
+	local separator word result
+	separator=$1
+	shift
+	result=
+	for word in "$@"; do
+		result="${result:+$result$separator}$word"
 	done
 	echo "$result"
 }
@@ -2251,7 +2263,12 @@ else
 	# dependencies for common libs no longer declared
 	$APT_GET install doxygen graphviz ghostscript texlive-latex-base xsltproc docbook-xsl-ns
 	cross_build_setup "gcc-$GCC_VER" gcc0
-	drop_privs gcc_cv_libc_provides_ssp=yes DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=biarch,$GCC_NOLANG" dpkg-buildpackage -B -uc -us
+	(
+		export gcc_cv_libc_provides_ssp=yes
+		nolang=$(set_add "${GCC_NOLANG:-}" biarch)
+		export DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=$(join_words , $nolang)"
+		drop_privs_exec dpkg-buildpackage -B -uc -us
+	)
 	cd ..
 	ls -l
 	reprepro include rebootstrap-native ./*.changes
@@ -2515,15 +2532,15 @@ else
 	cross_build_setup "gcc-$GCC_VER" gcc1
 	dpkg-checkbuilddeps || : # tell unmet build depends
 	echo "$HOST_ARCH" > debian/target
-	if test "$ENABLE_MULTILIB" = yes; then
-		drop_privs DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=$GCC_NOLANG" DEB_STAGE=stage1 dpkg-buildpackage -d -T control
+	(
+		nolang=${GCC_NOLANG:-}
+		test "$ENABLE_MULTILIB" = yes || nolang=$(set_add "$nolang" biarch)
+		export DEB_STAGE=stage1
+		export DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS${nolang:+ nolang=$(join_words , $nolang)}"
+		drop_privs dpkg-buildpackage -d -T control
 		dpkg-checkbuilddeps || : # tell unmet build depends again after rewriting control
-		drop_privs DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=$GCC_NOLANG" DEB_STAGE=stage1 dpkg-buildpackage -d -b -uc -us
-	else
-		drop_privs DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=$GCC_NOLANG" DEB_CROSS_NO_BIARCH=yes DEB_STAGE=stage1 dpkg-buildpackage -d -T control
-		dpkg-checkbuilddeps || : # tell unmet build depends again after rewriting control
-		drop_privs DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=$GCC_NOLANG" DEB_CROSS_NO_BIARCH=yes DEB_STAGE=stage1 dpkg-buildpackage -d -b -uc -us
-	fi
+		drop_privs_exec dpkg-buildpackage -d -b -uc -us
+	)
 	cd ..
 	ls -l
 	pickup_packages *.changes
@@ -2926,12 +2943,9 @@ else
 	echo "$HOST_ARCH" > debian/target
 	(
 		export DEB_STAGE=stage2
-		if test "$ENABLE_MULTILIB" = yes; then
-			nolang="${GCC_NOLANG:+nolang=$GCC_NOLANG}"
-		else
-			nolang="nolang=${GCC_NOLANG:+$GCC_NOLANG,}biarch"
-		fi
-		export DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS${nolang:+ $nolang}"
+		nolang=${GCC_NOLANG:-}
+		test "$ENABLE_MULTILIB" = yes || nolang=$(set_add "$nolang" biarch)
+		export DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS${nolang:+ nolang=$(join_words , $nolang)}"
 		if test "$ENABLE_MULTIARCH_GCC" = yes; then
 			export with_deps_on_target_arch_pkgs=yes
 		fi
@@ -3063,12 +3077,9 @@ else
 	dpkg-checkbuilddeps -a$HOST_ARCH || : # tell unmet build depends
 	echo "$HOST_ARCH" > debian/target
 	(
-		if test "$ENABLE_MULTILIB" = yes; then
-			nolang="${GCC_NOLANG:+nolang=$GCC_NOLANG}"
-		else
-			nolang="nolang=${GCC_NOLANG:+$GCC_NOLANG,}biarch"
-		fi
-		export DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS${nolang:+ $nolang}"
+		nolang=${GCC_NOLANG:-}
+		test "$ENABLE_MULTILIB" = yes || nolang=$(set_add "$nolang" biarch)
+		export DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS${nolang:+ nolang=$(join_words , $nolang)}"
 		if test "$ENABLE_MULTIARCH_GCC" = yes; then
 			export with_deps_on_target_arch_pkgs=yes
 		else
@@ -3124,19 +3135,17 @@ else
 	cross_build_setup "gcc-$GCC_VER" gcc_f1
 	dpkg-checkbuilddeps || : # tell unmet build depends
 	echo "$HOST_ARCH" > debian/target
-	export WITH_SYSROOT=/
-	if test "$ENABLE_MULTILIB" = yes; then
-		drop_privs DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=$GCC_NOLANG" DEB_STAGE=rtlibs dpkg-buildpackage -d -T control
+	(
+		export DEB_STAGE=rtlibs
+		nolang=${GCC_NOLANG:-}
+		test "$ENABLE_MULTILIB" = yes || nolang=$(set_add "$nolang" biarch)
+		export DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS${nolang:+ nolang=$(join_words , $nolang)}"
+		export WITH_SYSROOT=/
+		drop_privs dpkg-buildpackage -d -T control
 		cat debian/control
 		dpkg-checkbuilddeps || : # tell unmet build depends again after rewriting control
-		drop_privs DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=$GCC_NOLANG" DEB_STAGE=rtlibs dpkg-buildpackage -d -b -uc -us
-	else
-		drop_privs DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=$GCC_NOLANG,biarch" DEB_STAGE=rtlibs dpkg-buildpackage -d -T control
-		cat debian/control
-		dpkg-checkbuilddeps || : # tell unmet build depends again after rewriting control
-		drop_privs DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=$GCC_NOLANG,biarch" DEB_STAGE=rtlibs dpkg-buildpackage -d -b -uc -us
-	fi
-	unset WITH_SYSROOT
+		drop_privs_exec dpkg-buildpackage -d -b -uc -us
+	)
 	cd ..
 	ls -l
 	rm -vf "gcc-$GCC_VER-base_"*"_$(dpkg --print-architecture).deb"
