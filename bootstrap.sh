@@ -3383,90 +3383,7 @@ builddep_elfutils() {
 	apt_get_install debhelper autotools-dev autoconf automake bzip2 "zlib1g-dev:$1" zlib1g-dev "libbz2-dev:$1" "liblzma-dev:$1" m4 gettext gawk dpkg-dev flex libfl-dev bison
 }
 
-patch_expat() {
-	echo "patching expat to add nobiarch build profile #779459"
-	drop_privs patch -p1 <<'EOF'
---- a/debian/control
-+++ b/debian/control
-@@ -5,7 +5,7 @@
- Build-Depends: debhelper (>= 9), docbook-to-man, dh-autoreconf,
-  dpkg-dev (>= 1.16.0),
-  libbsd-dev [kfreebsd-amd64 kfreebsd-i386 hurd-i386],
-- gcc-multilib [i386 powerpc sparc s390]
-+ gcc-multilib [i386 powerpc sparc s390] <!nobiarch>
- Homepage: http://expat.sourceforge.net
- Vcs-Browser: http://svn.debian.org/wsvn/debian-xml-sgml/packages/expat/trunk/
- Vcs-Svn: svn://svn.debian.org/svn/debian-xml-sgml/packages/expat/trunk/
-@@ -14,6 +14,7 @@
- Section: libdevel
- Architecture: i386 powerpc sparc s390
- Depends: ${misc:Depends}, lib64expat1 (= ${binary:Version}), libexpat1-dev, gcc-multilib
-+Build-Profiles: <!nobiarch>
- Description: XML parsing C library - development kit (64bit)
-  This package contains the header file and development libraries of
-  expat, the C library for parsing XML.  Expat is a stream oriented XML
-@@ -30,6 +31,7 @@
- Section: libs
- Architecture: i386 powerpc sparc s390
- Depends: ${shlibs:Depends}, ${misc:Depends}
-+Build-Profiles: <!nobiarch>
- Description: XML parsing C library - runtime library (64bit)
-  This package contains the runtime, shared library of expat, the C
-  library for parsing XML. Expat is a stream-oriented parser in
---- a/debian/rules
-+++ b/debian/rules
-@@ -11,7 +11,9 @@
- DEB_HOST_ARCH      ?= $(shell dpkg-architecture -qDEB_HOST_ARCH)
- DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
- 
-+ifeq ($(filter nobiarch,$(DEB_BUILD_PROFILES)),)
- BUILD64 = $(filter $(DEB_HOST_ARCH), i386 powerpc sparc s390)
-+endif
- 
- ifeq ($(DEB_BUILD_GNU_TYPE), $(DEB_HOST_GNU_TYPE))
- 	CONFFLAGS = --build=$(DEB_HOST_GNU_TYPE)
-EOF
-	echo "patching expat to use the cross compiler for multilib builds #775942"
-	drop_privs patch -p1 <<'EOF'
---- a/debian/rules
-+++ b/debian/rules
-@@ -32,6 +32,10 @@
- 	HOST64FLAG = --host=s390x-linux-gnu
- endif
- 
-+ifeq ($(origin CC),default)
-+CC = $(DEB_HOST_GNU_TYPE)-gcc
-+endif
-+
- # -pthread -D_REENTRANT #551079
- CFLAGS  = `dpkg-buildflags --get CFLAGS`
- CFLAGS  += -Wall
-@@ -65,13 +69,13 @@
- 
- build64/config.status: config-common-stamp
- 	dh_testdir
--	(mkdir -p $(@D); cd $(@D); CFLAGS="-m64 $(CFLAGS)" CPPFLAGS="$(CPPFLAGS)"  LDFLAGS="$(LDFLAGS)" \
-+	(mkdir -p $(@D); cd $(@D); CC="$(CC) -m64" CFLAGS="$(CFLAGS)" CPPFLAGS="$(CPPFLAGS)"  LDFLAGS="$(LDFLAGS)" \
- 	 ../configure $(CONFFLAGS) $(HOST64FLAG) --prefix=/usr --mandir=\$${prefix}/share/man \
- 	 --libdir=\$${prefix}/lib64)
- 
- buildw64/config.status: config-common-stamp
- 	dh_testdir
--	(mkdir -p $(@D); cd $(@D); CFLAGS="-m64 $(CFLAGS) -DXML_UNICODE" CPPFLAGS="$(CPPFLAGS)" LDFLAGS="$(LDFLAGS)" \
-+	(mkdir -p $(@D); cd $(@D); CC="$(CC) -m64" CFLAGS="$(CFLAGS) -DXML_UNICODE" CPPFLAGS="$(CPPFLAGS)" LDFLAGS="$(LDFLAGS)" \
- 	 ../configure $(CONFFLAGS) $(HOST64FLAG) --prefix=/usr --mandir=\$${prefix}/share/man \
- 	 --libdir=\$${prefix}/lib64)
- 
-EOF
-}
-builddep_expat() {
-	# gcc-multilib lacks nobiarch profile #779459
-	apt_get_install debhelper docbook-to-man dh-autoreconf dpkg-dev
-	if dpkg-architecture "-a$1" -ikfreebsd-any; then
-		apt_get_install "libbsd-dev:$1"
-	fi
-}
-
+add_automatic expat
 add_automatic file
 add_automatic findutils
 
@@ -4610,7 +4527,6 @@ test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = linux && add_nee
 add_need icu # by libxml2
 add_need krb5 # by audit
 add_need libatomic-ops # by gcc-VER
-dpkg-architecture "-a$HOST_ARCH" -ikfreebsd-any && add_need libbsd # by expat [kfreebsd-any]
 dpkg-architecture "-a$HOST_ARCH" -ilinux-any && add_need libcap2 # by systemd
 add_need libdebian-installer # by cdebconf
 add_need libevent # by unbound
@@ -4946,12 +4862,6 @@ fi
 progress_mark "db5.3 stage1 cross build"
 mark_built db5.3
 # needed by perl, python2.7, needed for db-defaults and thus by freebsd-glue
-
-automatically_cross_build_packages
-
-cross_build expat
-mark_built expat
-# needed by fontconfig, for freebsd-glue and thus by xz-utils
 
 automatically_cross_build_packages
 
