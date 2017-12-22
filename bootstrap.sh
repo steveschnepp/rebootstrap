@@ -4411,6 +4411,7 @@ add_need bsdmainutils # for man-db
 add_need bzip2 # by perl
 add_need cloog # by gcc-VER
 add_need db-defaults # by perl, python2.7, python3.5
+add_need expat # by unbound
 add_need file # by gcc-6, for debhelper
 add_need flex # by libsemanage, pam
 dpkg-architecture "-a$HOST_ARCH" -ikfreebsd-any && add_need freebsd-glue # by freebsd-libs
