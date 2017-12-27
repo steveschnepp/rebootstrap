@@ -3371,11 +3371,7 @@ add_automatic debianutils
 
 add_automatic diffutils
 add_automatic dpkg
-
-patch_e2fsprogs() {
-	echo "fix e2fsprogs FTBFS with strict debhelper #876551"
-	drop_privs sed -i -e 's/ -Nlibblkid1-udeb//' -e 's/ -Nlibuuid1-udeb//' -e 's/ -Nuuid-dev//' debian/rules
-}
+add_automatic e2fsprogs
 
 builddep_elfutils() {
 	assert_built "bzip2 xz-utils zlib"
@@ -4415,7 +4411,6 @@ add_need expat # by unbound
 add_need file # by gcc-6, for debhelper
 add_need flex # by libsemanage, pam
 dpkg-architecture "-a$HOST_ARCH" -ikfreebsd-any && add_need freebsd-glue # by freebsd-libs
-add_need fuse # by e2fsprogs
 add_need gdbm # by perl, python2.7
 add_need gnupg2 # for apt
 add_need gnutls28 # by libprelude, openldap
@@ -5031,17 +5026,6 @@ progress_mark "systemd stage1 cross build"
 mark_built systemd
 fi
 # needed by util-linux
-
-automatically_cross_build_packages
-
-builddep_e2fsprogs() {
-	assert_built "fuse attr util-linux"
-	# dietlibc-dev lacks build profile annotation
-	apt_get_install gettext texinfo pkg-config "libfuse-dev:$1" "libattr1-dev:$1" debhelper "libblkid-dev:$1" "uuid-dev:$1" m4
-}
-cross_build e2fsprogs
-mark_built e2fsprogs
-# essential
 
 automatically_cross_build_packages
 
