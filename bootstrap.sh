@@ -3795,7 +3795,13 @@ EOF
 
 add_automatic libbsd
 add_automatic libcap2
+
 add_automatic libdebian-installer
+patch_libdebian_installer() {
+	echo "discard -Werror breaking gcc-next #885712"
+	drop_privs sed -i -e 's/ -Werror / /' debian/rules
+}
+
 add_automatic libev
 add_automatic libevent
 add_automatic libffi
