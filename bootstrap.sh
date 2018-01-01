@@ -3382,6 +3382,10 @@ builddep_elfutils() {
 	# gcc-multilib dependency lacks nocheck profile
 	apt_get_install debhelper autotools-dev autoconf automake bzip2 "zlib1g-dev:$1" zlib1g-dev "libbz2-dev:$1" "liblzma-dev:$1" m4 gettext gawk dpkg-dev flex libfl-dev bison
 }
+patch_elfutils() {
+	echo "disable -Werror breaking gcc-next #886004"
+	drop_privs sed -i -e 's/-Werror//' config/eu.am
+}
 
 add_automatic expat
 add_automatic file
