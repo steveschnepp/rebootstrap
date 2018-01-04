@@ -911,7 +911,7 @@ cross_build() {
 		(
 			if hook=`get_hook buildenv "$pkg"`; then
 				echo "adding environment variables via buildenv hook for $pkg"
-				"$hook"
+				"$hook" "$arch"
 			fi
 			drop_privs_exec dpkg-buildpackage "-a$HOST_ARCH" -B "-P$profiles" $ignorebd -uc -us
 		) || buildpackage_failed "$?"
