@@ -2608,10 +2608,10 @@ EOF
 	drop_privs patch -p1 <<'EOF'
 --- a/debian/rules.d/build.mk
 +++ b/debian/rules.d/build.mk
-@@ -10,6 +10,20 @@
- define logme
- (exec 3>&1; exit `( ( ( $(2) ) 2>&1 3>&-; echo $$? >&4) | tee $(1) >&3) 4>&1`)
- endef
+@@ -2,6 +2,20 @@
+ # PASS_VAR, we need to call all variables as $(call xx,VAR)
+ # This little bit of magic makes it possible:
+ xx=$(if $($(curpass)_$(1)),$($(curpass)_$(1)),$($(1)))
 +define generic_multilib_extra_pkg_install
 +set -e; \
 +mkdir -p debian/$(1)/usr/include; \
