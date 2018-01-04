@@ -3388,6 +3388,12 @@ add_automatic db-defaults
 add_automatic debianutils
 
 add_automatic diffutils
+buildenv_diffutils() {
+	if dpkg-architecture "-a$1" -ignu-any-any; then
+		export gl_cv_func_getopt_gnu=yes
+	fi
+}
+
 add_automatic dpkg
 
 add_automatic e2fsprogs
