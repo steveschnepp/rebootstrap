@@ -2811,20 +2811,6 @@ EOF
  		--without-selinux \
  		--enable-stackguard-randomization \
 EOF
-	echo "patching glibc to fix up after logme removal #886301"
-	drop_privs patch -p1 <<'EOF'
---- a/debian/rules.d/build.mk
-+++ b/debian/rules.d/build.mk
-@@ -166,7 +166,7 @@
- ifneq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
- 	$(MAKE) -C $(DEB_BUILDDIR) $(NJOBS) \
- 	    cross-compiling=yes install_root=$(CURDIR)/debian/tmp-$(curpass)	\
--	    install-bootstrap-headers=yes install-headers )
-+	    install-bootstrap-headers=yes install-headers
-
- 	install -d $(CURDIR)/debian/tmp-$(curpass)/$(call xx,libdir)
- 	install -m 644 $(DEB_BUILDDIR)/csu/crt[01in].o $(CURDIR)/debian/tmp-$(curpass)/$(call xx,libdir)/.
-EOF
 }
 if test -f "$REPODIR/stamps/${LIBC_NAME}_1"; then
 	echo "skipping rebuild of $LIBC_NAME stage1"
