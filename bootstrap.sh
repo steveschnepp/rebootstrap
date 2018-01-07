@@ -1910,7 +1910,6 @@ EOF
 	sed -i -e 's,^\(+LIMITS_H_TEST = \).*,\1:,' debian/patches/gcc-multiarch.diff
 	patch_gcc_arm64ilp32
 	patch_gcc_strict_debhelper_p
-	patch_gcc_debhelper_skip_profile
 	patch_gcc_wdotap
 }
 patch_gcc_8() {
