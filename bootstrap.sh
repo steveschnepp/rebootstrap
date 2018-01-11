@@ -1195,74 +1195,6 @@ patch_gcc_strict_debhelper_p() {
 	echo "patching gcc to work with debhelper's -p validation #877589"
 	drop_privs sed -i -e 's/ -N$(p_hppa64)//' debian/rules2
 }
-patch_gcc_debhelper_skip_profile() {
-	echo "fixing gcc to not let debhelper skip packages #879054"
-	drop_privs patch -p1 <<'EOF'
---- a/debian/control.m4
-+++ b/debian/control.m4
-@@ -33,6 +33,8 @@
-
- define(`BUILT_USING', ifelse(add_built_using,yes,`Built-Using: ${Built-Using}
- '))
-+define(`TARGET_PACKAGE',`X-DH-Build-For-Type: target
-+')
-
- divert`'dnl
- dnl --------------------------------------------------------------------------
---- a/debian/rules.defs
-+++ b/debian/rules.defs
-@@ -161,6 +161,11 @@
- DEB_TARGET_GNU_TYPE	:= $(call vafilt,$(TARGET_VARS),DEB_HOST_GNU_TYPE)
- DEB_TARGET_GNU_SYSTEM	:= $(call vafilt,$(TARGET_VARS),DEB_HOST_GNU_SYSTEM)
- DEB_TARGET_MULTIARCH	:= $(call vafilt,$(TARGET_VARS),DEB_HOST_MULTIARCH)
-+DEB_TARGET_ARCH_ABI	:= $(call vafilt,$(TARGET_VARS),DEB_HOST_ARCH_ABI)
-+DEB_TARGET_ARCH_BITS	:= $(call vafilt,$(TARGET_VARS),DEB_HOST_ARCH_BITS)
-+DEB_TARGET_ARCH_ENDIAN	:= $(call vafilt,$(TARGET_VARS),DEB_HOST_ARCH_ENDIAN)
-+DEB_TARGET_ARCH_LIBC	:= $(call vafilt,$(TARGET_VARS),DEB_HOST_ARCH_LIBC)
-+export DEB_TARGET_ARCH DEB_TARGET_ARCH_ABI DEB_TARGET_ARCH_BITS DEB_TARGET_ARCH_CPU DEB_TARGET_ARCH_OS DEB_TARGET_ARCH_ENDIAN DEB_TARGET_ARCH_LIBC DEB_TARGET_GNU_CPU DEB_TARGET_GNU_TYPE DEB_TARGET_GNU_SYSTEM DEB_TARGET_MULTIARCH
-
- ifeq ($(derivative),Ubuntu)
-   ifeq (,$(filter $(distrelease),dapper lucid))
---- a/debian/rules2
-+++ b/debian/rules2
-@@ -2396,10 +2396,12 @@
- 	cat debian/arch_binaries debian/arch_binaries.epoch > debian/arch_binaries.all
-
- binary-arch: debian/arch_binaries.all
-+	test ! -s debian/arch_binaries.all || \
- 	dh_compress $(foreach p,$(shell echo `cat debian/arch_binaries.all`),-p$(p)) \
- 	  -X.log.xz -X.sum.xz -X.c -X.txt -X.tag -X.map -XREADME.Bugs
- ifeq ($(i586_symlinks),yes)
- 	cd debian; \
-+	test ! -s arch_binaries || \
- 	for x in $$(find `cat arch_binaries` -type l -name 'i686-*'); do \
- 	  link=$$(echo $$x | sed 's/i686-/i586-/'); \
- 	  tgt=$$(basename $$x); \
-@@ -2407,7 +2409,9 @@
- 	  rm -f $$link; cp -a $$x $$link; \
- 	done
- endif
-+	test ! -s debian/arch_binaries.all || \
- 	dh_fixperms $(foreach p,$(shell echo `cat debian/arch_binaries.all`),-p$(p))
-+	test ! -s debian/arch_binaries || \
- 	dh_gencontrol $(foreach p,$(shell echo `cat debian/arch_binaries`),-p$(p)) \
- 	  -- -v$(DEB_VERSION) $(common_substvars)
- 	@set -e; \
-@@ -2416,8 +2420,11 @@
- 	  echo dh_gencontrol $$pkgs -- -v$(DEB_EVERSION) $(common_substvars); \
- 	  dh_gencontrol $$pkgs -- -v$(DEB_EVERSION) $(common_substvars); \
- 	fi
-+	test ! -s debian/arch_binaries.all || \
- 	dh_installdeb $(foreach p,$(shell echo `cat debian/arch_binaries.all`),-p$(p))
-+	test ! -s debian/arch_binaries.all || \
- 	dh_md5sums $(foreach p,$(shell echo `cat debian/arch_binaries.all`),-p$(p))
-+	test ! -s debian/arch_binaries.all || \
- 	dh_builddeb $(foreach p,$(shell echo `cat debian/arch_binaries.all`),-p$(p))
- ifeq ($(with_check),yes)
- 	@echo Done
-EOF
-	drop_privs sed -i -e '/^Package: .*`'"'"'LS$/aTARGET_PACKAGE`'"'dnl" debian/control.m4
-}
 patch_gcc_wdotap() {
 	if test "$ENABLE_MULTIARCH_GCC" = yes; then
 		echo "applying patches for with_deps_on_target_arch_pkgs"
@@ -2195,7 +2127,6 @@ patch_gcc_8() {
  
  printarch:
 EOF
-	patch_gcc_debhelper_skip_profile
 	patch_gcc_arm64ilp32
 	patch_gcc_wdotap
 }
