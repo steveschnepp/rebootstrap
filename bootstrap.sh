@@ -3435,8 +3435,9 @@ add_automatic gnutls28
 
 add_automatic gpm
 patch_gpm() {
-	echo "patching gpm to support musl #813751"
-	drop_privs patch -p1 <<'EOF'
+	if dpkg-architecture "-a$HOST_ARCH" -imusl-linux-any; then
+		echo "patching gpm to support musl #813751"
+		drop_privs patch -p1 <<'EOF'
 --- a/src/lib/liblow.c
 +++ a/src/lib/liblow.c
 @@ -173,7 +173,7 @@
@@ -3479,33 +3480,26 @@ patch_gpm() {
  /* display resulting data */
 --- a/src/prog/gpm-root.y
 +++ b/src/prog/gpm-root.y
-@@ -1197,11 +1197,10 @@
-                                                         LOG_DAEMON : LOG_USER);
+@@ -1197,6 +1197,9 @@
     /* reap your zombies */
     childaction.sa_handler=reap_children;
--#if defined(__GLIBC__)
--   __sigemptyset(&childaction.sa_mask);
--#else /* __GLIBC__ */
--   childaction.sa_mask=0;
--#endif /* __GLIBC__ */
-+   sigemptyset(&childaction.sa_mask);
+    sigemptyset(&childaction.sa_mask);
 +#ifndef SA_INTERRUPT
 +#define SA_INTERRUPT 0
 +#endif
     childaction.sa_flags=SA_INTERRUPT; /* need to break the select() call */
     sigaction(SIGCHLD,&childaction,NULL);
  
---- a/src/prog/open_console.c
-+++ b/src/prog/open_console.c
-@@ -22,6 +22,7 @@
- #include "headers/message.h"        /* messaging in gpm */
- #include "headers/daemon.h"         /* daemon internals */
- #include <unistd.h>
+--- a/contrib/control/gpm_has_mouse_control.c
++++ a/contrib/control/gpm_has_mouse_control.c
+@@ -1,4 +1,4 @@
+-#include <sys/fcntl.h>
 +#include <fcntl.h>
- 
- int open_console(const int mode)
- {
+ #include <sys/kd.h>
+ #include <stdio.h>
+ #include <stdlib.h>
 EOF
+	fi
 }
 
 add_automatic grep
