@@ -3625,53 +3625,6 @@ add_automatic libassuan
 
 add_automatic libatomic-ops
 patch_libatomic_ops() {
-	if test "$HOST_ARCH" = nios2; then
-		echo "cherry-picking https://github.com/ivmai/libatomic_ops/commit/4b005ee56898309e8afba9b3c48cf94f0f5f78e4"
-		drop_privs patch -p1 <<'EOF'
---- a/src/Makefile.am
-+++ b/src/Makefile.am
-@@ -79,6 +79,7 @@
-           atomic_ops/sysdeps/gcc/ia64.h \
-           atomic_ops/sysdeps/gcc/m68k.h \
-           atomic_ops/sysdeps/gcc/mips.h \
-+          atomic_ops/sysdeps/gcc/nios2.h \
-           atomic_ops/sysdeps/gcc/powerpc.h \
-           atomic_ops/sysdeps/gcc/s390.h \
-           atomic_ops/sysdeps/gcc/sh.h \
---- a/src/atomic_ops.h
-+++ b/src/atomic_ops.h
-@@ -262,6 +262,9 @@
- # if defined(__m68k__)
- #   include "atomic_ops/sysdeps/gcc/m68k.h"
- # endif /* __m68k__ */
-+# if defined(__nios2__)
-+#   include "atomic_ops/sysdeps/gcc/nios2.h"
-+# endif /* __nios2__ */
- # if defined(__powerpc__) || defined(__ppc__) || defined(__PPC__) \
-      || defined(__powerpc64__) || defined(__ppc64__)
- #   include "atomic_ops/sysdeps/gcc/powerpc.h"
---- a/src/atomic_ops/sysdeps/gcc/nios2.h
-+++ b/src/atomic_ops/sysdeps/gcc/nios2.h
-@@ -0,0 +1,17 @@
-+/*
-+ * Copyright (C) 2016 Marek Vasut <marex@denx.de>
-+ *
-+ * THIS MATERIAL IS PROVIDED AS IS, WITH ABSOLUTELY NO WARRANTY EXPRESSED
-+ * OR IMPLIED. ANY USE IS AT YOUR OWN RISK.
-+ *
-+ * Permission is hereby granted to use or copy this program
-+ * for any purpose, provided the above notices are retained on all copies.
-+ * Permission to modify the code and to distribute modified code is granted,
-+ * provided the above notices are retained, and a notice that the code was
-+ * modified is included with the above copyright notice.
-+ */
-+
-+#include "../test_and_set_t_is_ao_t.h"
-+#include "generic.h"
-+
-+#define AO_T_IS_INT
-EOF
-	fi
 	if test "$HOST_ARCH" = tilegx; then
 		echo "adding tilegx support to libatomic-ops #841771"
 		drop_privs tee debian/patches/0001-Basic-support-of-TILE-Gx-and-TILEPro-CPUs.patch > /dev/null <<'EOF'
