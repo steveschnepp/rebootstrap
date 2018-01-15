@@ -632,9 +632,6 @@ if test "$HOST_ARCH" = nios2; then
 	sed -i -e 's/\*os2\*/*-os2*/' /usr/share/libtool/build-aux/ltmain.sh
 fi
 
-# work around gtk-doc-tools requiring the native glib2.0.pc #875975
-apt_get_install libglib2.0-dev
-
 # removing libc*-dev conflict with each other
 LIBC_DEV_PKG=$(apt-cache showpkg libc-dev | sed '1,/^Reverse Provides:/d;s/ .*//;q')
 if test "$(apt-cache show "$LIBC_DEV_PKG" | sed -n 's/^Source: //;T;p;q')" = glibc; then
