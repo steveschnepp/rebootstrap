@@ -3185,11 +3185,7 @@ EOF
 add_automatic autogen
 add_automatic base-files
 add_automatic bash
-
-patch_bsdmainutils() {
-	echo "fixing bsdmainutils ftbfs #885622"
-	sed -i -e '/^Build-Depends:/s/$/, libncurses5-dev/' debian/control
-}
+add_automatic bsdmainutils
 
 builddep_build_essential() {
 	# g++ dependency needs cross translation
@@ -4277,6 +4273,7 @@ done
 add_need acl # by coreutils, systemd
 add_need attr # by coreutils, libcap-ng
 add_need autogen # by gcc-VER, gnutls28
+add_need bsdmainutils # for man-db
 add_need bzip2 # by perl
 add_need cloog # by gcc-VER
 add_need db-defaults # by perl, python2.7, python3.5
@@ -4459,12 +4456,6 @@ builddep_ncurses() {
 cross_build ncurses
 mark_built ncurses
 # needed by bash, bsdmainutils, dpkg, guile-2.0, readline, slang2
-
-automatically_cross_build_packages
-
-cross_build bsdmainutils
-mark_built bsdmainutils
-# needed for man-db
 
 automatically_cross_build_packages
 
