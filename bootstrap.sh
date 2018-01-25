@@ -3063,6 +3063,7 @@ add_automatic adns
 
 builddep_apt() {
 	# g++ dependency needs toolchain translation
+	assert_built "bzip2 curl db-defaults db5.3 gnutls28 lz4 xz-utils zlib"
 	apt_get_install cmake debhelper dh-systemd docbook-xml docbook-xsl dpkg-dev gettext "libbz2-dev:$1" "libcurl4-gnutls-dev:$1" "libdb-dev:$1" "libgnutls28-dev:$1" "liblz4-dev:$1" "liblzma-dev:$1" pkg-config po4a xsltproc "zlib1g-dev:$1"
 }
 
