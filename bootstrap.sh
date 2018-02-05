@@ -3365,6 +3365,11 @@ patch_gdbm() {
  Homepage: https://gnu.org/software/gdbm
 EOF
 }
+buildenv_gdbm() {
+	if dpkg-architecture "-a$1" -ignu-any-any; then
+		export ac_cv_func_mmap_fixed_mapped=yes
+	fi
+}
 
 add_automatic glib2.0
 buildenv_glib2_0() {
@@ -4997,7 +5002,10 @@ else
 	cross_build_setup gdbm gdbm_1
 	check_binNMU
 	apt_get_build_dep "-a$HOST_ARCH" --arch-only -P pkg.gdbm.nodietlibc ./
-	drop_privs dpkg-buildpackage "-a$HOST_ARCH" -B -uc -us -Ppkg.gdbm.nodietlibc
+	(
+		buildenv_gdbm "$HOST_ARCH"
+		drop_privs_exec dpkg-buildpackage "-a$HOST_ARCH" -B -uc -us -Ppkg.gdbm.nodietlibc
+	)
 	cd ..
 	ls -l
 	pickup_packages *.changes
