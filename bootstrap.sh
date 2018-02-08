@@ -1827,6 +1827,22 @@ EOF
 	sed -i -e 's,^\(+LIMITS_H_TEST = \).*,\1:,' debian/patches/gcc-multiarch.diff
 	patch_gcc_arm64ilp32
 	patch_gcc_strict_debhelper_p
+	echo "build common libraries again, not a bug"
+	drop_privs sed -i -e 's/^\s*#\?\(with_common_libs\s*:\?=\).*/\1yes/' debian/rules.defs
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/control.m4
++++ b/debian/control.m4
+@@ -71,8 +71,7 @@
+   zlib1g-dev, SDT_BUILD_DEP
+   bison (>= 1:2.3), flex, coreutils (>= 2.26) | realpath (>= 1.9.12), lsb-release, quilt
+ ',`dnl native
+-Build-Depends: DEBHELPER_BUILD_DEP DPKG_BUILD_DEP
+-  GCC_MULTILIB_BUILD_DEP
++Build-Depends: DEBHELPER_BUILD_DEP DPKG_BUILD_DEP GCC_MULTILIB_BUILD_DEP
+   LIBC_BUILD_DEP, LIBC_BIARCH_BUILD_DEP LIBC_DBG_DEP
+   kfreebsd-kernel-headers (>= 0.84) [kfreebsd-any], linux-libc-dev [m68k],
+   AUTO_BUILD_DEP BASE_BUILD_DEP
+EOF
 	patch_gcc_wdotap
 }
 patch_gcc_8() {
