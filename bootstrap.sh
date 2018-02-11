@@ -3371,22 +3371,7 @@ add_automatic freebsd-glue
 add_automatic freetype
 add_automatic fuse
 
-patch_gdbm() {
-	echo "adding pkg.gdbm.nodietlibc profile #889474"
-	drop_privs patch -p1 <<'EOF'
---- a/debian/control
-+++ b/debian/control
-@@ -5,7 +5,7 @@
- Build-Depends: texinfo,
-                debhelper (>= 10),
-                dh-exec,
--               dietlibc-dev (>= 0.34~cvs20160606-3) [alpha amd64 arm arm64 armeb armel armhf hppa i386 ia64 mips mipsel mips64el powerpc powerpcspe ppc64 ppc64el s390 s390x sparc sparc64 x32],
-+               dietlibc-dev (>= 0.34~cvs20160606-3) [alpha amd64 arm arm64 armeb armel armhf hppa i386 ia64 mips mipsel mips64el powerpc powerpcspe ppc64 ppc64el s390 s390x sparc sparc64 x32] <!pkg.gdbm.nodietlibc>,
-                libreadline-dev
- Standards-Version: 4.1.3
- Homepage: https://gnu.org/software/gdbm
-EOF
-}
+add_automatic gdbm
 buildenv_gdbm() {
 	if dpkg-architecture "-a$1" -ignu-any-any; then
 		export ac_cv_func_mmap_fixed_mapped=yes
@@ -4297,6 +4282,7 @@ add_need expat # by unbound
 add_need file # by gcc-6, for debhelper
 add_need flex # by libsemanage, pam
 dpkg-architecture "-a$HOST_ARCH" -ikfreebsd-any && add_need freebsd-glue # by freebsd-libs
+add_need gdbm # by perl, python2.7
 add_need gnupg2 # for apt
 add_need gnutls28 # by libprelude, openldap
 test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = linux && add_need gpm # by ncurses
@@ -5014,31 +5000,6 @@ automatically_cross_build_packages
 cross_build apt
 mark_built apt
 # almost essential
-
-automatically_cross_build_packages
-
-if test -f "$REPODIR/stamps/gdbm_1"; then
-	echo "skipping rebuild of gdbm stage1"
-else
-	assert_built readline
-	cross_build_setup gdbm gdbm_1
-	check_binNMU
-	apt_get_build_dep "-a$HOST_ARCH" --arch-only -P pkg.gdbm.nodietlibc ./
-	(
-		buildenv_gdbm "$HOST_ARCH"
-		drop_privs_exec dpkg-buildpackage "-a$HOST_ARCH" -B -uc -us -Ppkg.gdbm.nodietlibc
-	)
-	cd ..
-	ls -l
-	pickup_packages *.changes
-	touch "$REPODIR/stamps/gdbm_1"
-	compare_native ./*.deb
-	cd ..
-	drop_privs rm -Rf gdbm_1
-fi
-progress_mark "gdbm stage1 cross build"
-mark_built gdbm
-# needed by perl, python2.7
 
 automatically_cross_build_packages
 
