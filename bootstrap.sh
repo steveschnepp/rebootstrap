@@ -3329,34 +3329,32 @@ add_automatic findutils
 
 add_automatic flex
 patch_flex() {
-	echo "patching flex to fix FTCBFS #833146"
+	echo "fixing FTCBFS #762180"
 	drop_privs patch -p1 <<'EOF'
---- flex-2.6.1/configure.ac
-+++ flex-2.6.1/configure.ac
-@@ -70,6 +70,7 @@
- FLEXexe='$(top_builddir)/src/flex$(EXEEXT)'
- fi
- AC_SUBST(FLEXexe)
-+AM_CONDITIONAL([CROSS_COMPILING],[test "$cross_compiling" = yes])
- 
- # Check for a m4 that supports -P
- 
---- flex-2.6.1/src/Makefile.am
-+++ flex-2.6.1/src/Makefile.am
-@@ -89,8 +89,13 @@
- stage1scan.l: scan.l
- 	cp $(srcdir)/scan.l $(srcdir)/stage1scan.l
- 
-+if CROSS_COMPILING
-+stage1scan.c: stage1scan.l
-+	$(FLEXexe) -o $@ $<
+--- a/configure.ac
++++ b/configure.ac
+@@ -92,6 +92,12 @@
+   AS_IF([test "$HELP2MAN" = "\${top_srcdir}/build-aux/missing help2man"],
+     AC_MSG_WARN(help2man: program not found: building man page will not work)
+   )
++if test "$cross_compiling" = yes; then
++FLEXexe='flex$(EXEEXT)'
 +else
- stage1scan.c: stage1scan.l stage1flex$(EXEEXT)
- 	$(top_builddir)/src/stage1flex$(EXEEXT) -o $@ $<
-+endif
- 
- # Explicitly describe dependencies.
- # You can recreate this with `gcc -I. -MM *.c'
++FLEXexe='$(top_builddir)/src/flex$(EXEEXT)'
++fi
++AC_SUBST(FLEXexe)
+
+ AC_PATH_PROGS([TEXI2DVI], [gtexi2dvi texi2dvi], [\${top_srcdir}/build-aux/missing texi2dvi])
+   AS_IF([test "$TEXI2DVI" = "\${top_srcdir}/build-aux/missing texi2dvi"],
+--- a/doc/Makefile.am
++++ b/doc/Makefile.am
+@@ -10,5 +10,5 @@
+ flex.1: $(top_srcdir)/configure.ac $(top_srcdir)/src/flex.skl $(top_srcdir)/src/options.c $(top_srcdir)/src/options.h | $(FLEX)
+ 	$(HELP2MAN) --name='$(PACKAGE_NAME)' --section=1 \
+ 	--source='The Flex Project' --manual='Programming' \
+-	--output=$@ $(FLEX) \
++	--output=$@ $(FLEXexe) \
+ 	|| rm -f $@
 EOF
 }
 
