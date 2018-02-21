@@ -1175,11 +1175,6 @@ EOF
  --- a/src/gcc/config/mips/mips.h
 EOF
 }
-patch_gcc_strict_debhelper_p() {
-	test "$ENABLE_MULTIARCH_GCC" = yes && return
-	echo "patching gcc to work with debhelper's -p validation #877589"
-	drop_privs sed -i -e 's/ -N$(p_hppa64)//' debian/rules2
-}
 patch_gcc_wdotap() {
 	if test "$ENABLE_MULTIARCH_GCC" = yes; then
 		echo "applying patches for with_deps_on_target_arch_pkgs"
@@ -1826,7 +1821,6 @@ EOF
 	echo "fix LIMITS_H_TEST again https://gcc.gnu.org/bugzilla/show_bug.cgi?id=80677"
 	sed -i -e 's,^\(+LIMITS_H_TEST = \).*,\1:,' debian/patches/gcc-multiarch.diff
 	patch_gcc_arm64ilp32
-	patch_gcc_strict_debhelper_p
 	echo "build common libraries again, not a bug"
 	drop_privs sed -i -e 's/^\s*#\?\(with_common_libs\s*:\?=\).*/\1yes/' debian/rules.defs
 	drop_privs patch -p1 <<'EOF'
