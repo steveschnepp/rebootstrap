@@ -2122,6 +2122,8 @@ patch_gcc_8() {
  
  printarch:
 EOF
+	echo "fix LIMITS_H_TEST again https://gcc.gnu.org/bugzilla/show_bug.cgi?id=80677"
+	drop_privs sed -i -e 's,^\(+LIMITS_H_TEST = \).*,\1:,' debian/patches/gcc-multiarch.diff
 	patch_gcc_arm64ilp32
 	patch_gcc_wdotap
 }
