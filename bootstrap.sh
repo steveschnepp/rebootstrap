@@ -2575,7 +2575,7 @@ EOF
  	# For our biarch libc, add an ld.so.conf.d configuration; this
 --- a/debian/sysdeps/ppc64.mk
 +++ b/debian/sysdeps/ppc64.mk
-@@ -15,19 +15,11 @@
+@@ -15,20 +15,12 @@
 
  define libc6-dev-powerpc_extra_pkg_install
 
@@ -2586,19 +2586,20 @@ EOF
 +$(call generic_multilib_extra_pkg_install,libc6-dev-powerpc)
 
  mkdir -p debian/libc6-dev-powerpc/usr/include/powerpc64-linux-gnu/gnu
- cp -a debian/tmp-powerpc/usr/include/gnu/stubs-32.h \
-         debian/libc6-dev-powerpc/usr/include/powerpc64-linux-gnu/gnu
+ cp -a debian/tmp-powerpc/usr/include/gnu/lib-names-32.h \
+ 	debian/tmp-powerpc/usr/include/gnu/stubs-32.h \
+ 	debian/libc6-dev-powerpc/usr/include/powerpc64-linux-gnu/gnu
 -
 -mkdir -p debian/libc6-dev-powerpc/usr/include/sys
 -for i in `ls debian/tmp-libc/usr/include/powerpc64-linux-gnu/sys` ; do \
--        ln -s ../powerpc64-linux-gnu/sys/$$i debian/libc6-dev-powerpc/usr/include/sys/$$i ; \
+-	ln -s ../powerpc64-linux-gnu/sys/$$i debian/libc6-dev-powerpc/usr/include/sys/$$i ; \
 -done
 
  endef
 
 --- a/debian/sysdeps/mips.mk
 +++ b/debian/sysdeps/mips.mk
-@@ -31,19 +31,11 @@
+@@ -31,20 +31,12 @@
 
  define libc6-dev-mips64_extra_pkg_install
  
@@ -2609,19 +2610,20 @@ EOF
 +$(call generic_multilib_extra_pkg_install,libc6-dev-mips64)
  
  mkdir -p debian/libc6-dev-mips64/usr/include/mips-linux-gnu/gnu
- cp -a debian/tmp-mips64/usr/include/gnu/stubs-n64_hard.h \
-         debian/libc6-dev-mips64/usr/include/mips-linux-gnu/gnu
+ cp -a debian/tmp-mips64/usr/include/gnu/lib-names-n64_hard.h \
+ 	debian/tmp-mips64/usr/include/gnu/stubs-n64_hard.h \
+ 	debian/libc6-dev-mips64/usr/include/mips-linux-gnu/gnu
 -
 -mkdir -p debian/libc6-dev-mips64/usr/include/sys
 -for i in `ls debian/tmp-libc/usr/include/mips-linux-gnu/sys` ; do \
--        ln -sf ../mips-linux-gnu/sys/$$i debian/libc6-dev-mips64/usr/include/sys/$$i ; \
+-	ln -sf ../mips-linux-gnu/sys/$$i debian/libc6-dev-mips64/usr/include/sys/$$i ; \
 -done
  
  endef
  
 --- a/debian/sysdeps/mipsel.mk
 +++ b/debian/sysdeps/mipsel.mk
-@@ -31,19 +31,11 @@
+@@ -31,20 +31,12 @@
 
  define libc6-dev-mips64_extra_pkg_install
 
@@ -2632,19 +2634,20 @@ EOF
 +$(call generic_multilib_extra_pkg_install,libc6-dev-mips64)
 
  mkdir -p debian/libc6-dev-mips64/usr/include/mipsel-linux-gnu/gnu
- cp -a debian/tmp-mips64/usr/include/gnu/stubs-n64_hard.h \
-         debian/libc6-dev-mips64/usr/include/mipsel-linux-gnu/gnu
+ cp -a debian/tmp-mips64/usr/include/gnu/lib-names-n64_hard.h \
+ 	debian/tmp-mips64/usr/include/gnu/stubs-n64_hard.h \
+ 	debian/libc6-dev-mips64/usr/include/mipsel-linux-gnu/gnu
 -
 -mkdir -p debian/libc6-dev-mips64/usr/include/sys
 -for i in `ls debian/tmp-libc/usr/include/mipsel-linux-gnu/sys` ; do \
--        ln -sf ../mipsel-linux-gnu/sys/$$i debian/libc6-dev-mips64/usr/include/sys/$$i ; \
+-	ln -sf ../mipsel-linux-gnu/sys/$$i debian/libc6-dev-mips64/usr/include/sys/$$i ; \
 -done
 
  endef
 
 --- a/debian/sysdeps/powerpc.mk
 +++ b/debian/sysdeps/powerpc.mk
-@@ -15,19 +15,11 @@
+@@ -15,20 +15,12 @@
 
  define libc6-dev-ppc64_extra_pkg_install
 
@@ -2655,19 +2658,20 @@ EOF
 +$(call generic_multilib_extra_pkg_install,libc6-dev-ppc64)
 
  mkdir -p debian/libc6-dev-ppc64/usr/include/powerpc-linux-gnu/gnu
- cp -a debian/tmp-ppc64/usr/include/gnu/stubs-64-v1.h \
-         debian/libc6-dev-ppc64/usr/include/powerpc-linux-gnu/gnu
+ cp -a debian/tmp-ppc64/usr/include/gnu/lib-names-64-v1.h \
+ 	debian/tmp-ppc64/usr/include/gnu/stubs-64-v1.h \
+ 	debian/libc6-dev-ppc64/usr/include/powerpc-linux-gnu/gnu
 -
 -mkdir -p debian/libc6-dev-ppc64/usr/include/sys
 -for i in `ls debian/tmp-libc/usr/include/powerpc-linux-gnu/sys` ; do \
--        ln -s ../powerpc-linux-gnu/sys/$$i debian/libc6-dev-ppc64/usr/include/sys/$$i ; \
+-	ln -s ../powerpc-linux-gnu/sys/$$i debian/libc6-dev-ppc64/usr/include/sys/$$i ; \
 -done
 
  endef
 
 --- a/debian/sysdeps/s390x.mk
 +++ b/debian/sysdeps/s390x.mk
-@@ -14,19 +14,11 @@
+@@ -14,20 +14,12 @@
 
  define libc6-dev-s390_extra_pkg_install
 
@@ -2678,19 +2682,20 @@ EOF
 +$(call generic_multilib_extra_pkg_install,libc6-dev-s390)
 
  mkdir -p debian/libc6-dev-s390/usr/include/s390x-linux-gnu/gnu
- cp -a debian/tmp-s390/usr/include/gnu/stubs-32.h \
-         debian/libc6-dev-s390/usr/include/s390x-linux-gnu/gnu
+ cp -a debian/tmp-s390/usr/include/gnu/lib-names-32.h \
+ 	debian/tmp-s390/usr/include/gnu/stubs-32.h \
+ 	debian/libc6-dev-s390/usr/include/s390x-linux-gnu/gnu
 -
 -mkdir -p debian/libc6-dev-s390/usr/include/sys
 -for i in `ls debian/tmp-libc/usr/include/s390x-linux-gnu/sys` ; do \
--        ln -s ../s390x-linux-gnu/sys/$$i debian/libc6-dev-s390/usr/include/sys/$$i ; \
+-	ln -s ../s390x-linux-gnu/sys/$$i debian/libc6-dev-s390/usr/include/sys/$$i ; \
 -done
 
  endef
 
 --- a/debian/sysdeps/sparc.mk
 +++ b/debian/sysdeps/sparc.mk
-@@ -15,18 +15,10 @@
+@@ -15,19 +15,11 @@
 
  define libc6-dev-sparc64_extra_pkg_install
 
@@ -2701,12 +2706,13 @@ EOF
 +$(call generic_multilib_extra_pkg_install,libc6-dev-sparc64)
 
  mkdir -p debian/libc6-dev-sparc64/usr/include/sparc-linux-gnu/gnu
- cp -a debian/tmp-sparc64/usr/include/gnu/stubs-64.h \
-         debian/libc6-dev-sparc64/usr/include/sparc-linux-gnu/gnu
+ cp -a debian/tmp-sparc64/usr/include/gnu/lib-names-64.h \
+ 	debian/tmp-sparc64/usr/include/gnu/stubs-64.h \
+ 	debian/libc6-dev-sparc64/usr/include/sparc-linux-gnu/gnu
 -
 -mkdir -p debian/libc6-dev-sparc64/usr/include/sys
 -for i in `ls debian/tmp-libc/usr/include/sparc-linux-gnu/sys` ; do \
--        ln -s ../sparc-linux-gnu/sys/$$i debian/libc6-dev-sparc64/usr/include/sys/$$i ; \
+-	ln -s ../sparc-linux-gnu/sys/$$i debian/libc6-dev-sparc64/usr/include/sys/$$i ; \
 -done
 
  endef
