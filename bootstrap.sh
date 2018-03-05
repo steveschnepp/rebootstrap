@@ -2744,6 +2744,8 @@ EOF
  		--without-selinux \
  		--enable-stackguard-randomization \
 EOF
+	echo "patching glibc to avoid installing missing lib-names*.h in stage1 #892126"
+	drop_privs sed -i -e 's#debian/tmp-.*/usr/include/gnu/lib-names.*\.h#$(if $(filter stage1,$(DEB_BUILD_PROFILES)),,&)#' debian/sysdeps/*.mk
 }
 if test -f "$REPODIR/stamps/${LIBC_NAME}_1"; then
 	echo "skipping rebuild of $LIBC_NAME stage1"
