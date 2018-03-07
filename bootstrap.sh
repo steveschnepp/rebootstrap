@@ -17,7 +17,7 @@ APT_GET="apt-get --no-install-recommends -y -o Debug::pkgProblemResolver=true -o
 DEFAULT_PROFILES="cross nocheck"
 LIBC_NAME=glibc
 DROP_PRIVS=buildd
-GCC_NOLANG="ada brig d go java jit hppa64 objc obj-c++"
+GCC_NOLANG="ada asan brig d go java jit hppa64 lsan objc obj-c++ tsan ubsan"
 ENABLE_DIFFOSCOPE=no
 
 if df -t tmpfs /var/cache/apt/archives >/dev/null 2>&1; then
