@@ -3343,7 +3343,6 @@ add_automatic freebsd-glue
 add_automatic freetype
 add_automatic fuse
 
-add_automatic gdbm
 buildenv_gdbm() {
 	if dpkg-architecture "-a$1" -ignu-any-any; then
 		export ac_cv_func_mmap_fixed_mapped=yes
@@ -4344,7 +4343,6 @@ add_need expat # by unbound
 add_need file # by gcc-6, for debhelper
 add_need flex # by libsemanage, pam
 dpkg-architecture "-a$HOST_ARCH" -ikfreebsd-any && add_need freebsd-glue # by freebsd-libs
-add_need gdbm # by perl, python2.7
 add_need gnupg2 # for apt
 add_need gnutls28 # by libprelude, openldap
 test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = linux && add_need gpm # by ncurses
@@ -5070,6 +5068,30 @@ automatically_cross_build_packages
 cross_build bash
 mark_built bash
 # essential
+
+automatically_cross_build_packages
+
+if test -f "$REPODIR/stamps/gdbm_1"; then
+	echo "skipping rebuild of gdbm stage1"
+else
+	cross_build_setup gdbm gdbm_1
+	apt_get_build_dep --arch-only "-a$HOST_ARCH" -P pkg.gdbm.nodietlibc ./
+	check_binNMU
+	(
+		buildenv_gdbm "$HOST_ARCH"
+		drop_privs dpkg-buildpackage "-a$HOST_ARCH" -B -uc -us -Ppkg.gdbm.nodietlibc
+	)
+	cd ..
+	ls -l
+	pickup_packages *.changes
+	touch "$REPODIR/stamps/gdbm_1"
+	compare_native ./*.deb
+	cd ..
+	drop_privs rm -Rf gdbm_1
+fi
+progress_mark "gdbm stage1 cross build"
+mark_built gdbm
+# needed by man-db, perl, python2.7
 
 automatically_cross_build_packages
 
