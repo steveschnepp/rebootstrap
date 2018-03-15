@@ -3558,6 +3558,7 @@ patch_icu() {
 }
 
 add_automatic isl
+add_automatic isl-0.18
 add_automatic jansson
 
 add_automatic jemalloc
