@@ -991,41 +991,6 @@ patch_gcc_include_multiarch() {
 
 EOF
 }
-patch_gcc_powerpcel() {
-	test "$HOST_ARCH" = powerpcel || return 0
-	echo "patching gcc for powerpcel"
-	drop_privs patch -p1 <<'EOF'
---- a/debian/rules.patch
-+++ b/debian/rules.patch
-@@ -233,6 +233,10 @@
-   debian_patches += powerpc_nofprs
- endif
-
-+ifeq ($(DEB_TARGET_ARCH),powerpcel)
-+  debian_patches += powerpcel
-+endif
-+
- #debian_patches += link-libs
-
- # all patches below this line are applied for gcc-snapshot builds as well
---- /dev/null
-+++ b/debian/patches/powerpcel.diff
-@@ -0,0 +1,13 @@
-+--- a/src/gcc/config.gcc
-++++ b/src/gcc/config.gcc
-+@@ -2401,6 +2401,10 @@
-+ 		extra_options="${extra_options} rs6000/linux64.opt"
-+ 		tmake_file="${tmake_file} rs6000/t-linux"
-+ 		;;
-++	    powerpcle-*)
-++		tm_file="${tm_file} rs6000/linux.h glibc-stdint.h"
-++		tmake_file="${tmake_file} rs6000/t-linux"
-++		;;
-+ 	    *)
-+ 		tm_file="${tm_file} rs6000/linux.h glibc-stdint.h"
-+ 		tmake_file="${tmake_file} rs6000/t-ppcos rs6000/t-linux"
-EOF
-}
 patch_gcc_nonglibc() {
 	test "$LIBC_NAME" != glibc || return 0
 	echo "patching gcc to fix multiarch locations for non-glibc"
@@ -1516,7 +1481,6 @@ EOF
 	patch_gcc_rtlibs_non_cross_base
 	patch_gcc_rtlibs_libatomic
 	patch_gcc_include_multiarch
-	patch_gcc_powerpcel
 	patch_gcc_nonglibc
 	patch_gcc_multilib_deps
 	echo "build common libraries again, not a bug"
