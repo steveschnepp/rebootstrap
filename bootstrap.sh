@@ -3225,31 +3225,6 @@ buildenv_glib2_0() {
 	export ac_cv_func_posix_getgrgid_r=yes
 	export ac_cv_func_posix_getpwuid_r=yes
 }
-patch_glib2_0() {
-	echo "fix FTCBFS #870346"
-	drop_privs patch -p1 <<'EOF'
---- a/debian/rules
-+++ b/debian/rules
-@@ -28,15 +28,15 @@
- 	dh_auto_configure \
- 		--builddirectory=debian/build/deb \
- 		-- \
--		$(DEB_CONFIGURE_EXTRA_FLAGS) \
- 		$(DEB_CONFIGURE_FLAGS_deb) \
-+		$(DEB_CONFIGURE_EXTRA_FLAGS) \
- 		$(NULL)
- ifneq ($(filter %-udeb,$(binaries)),)
- 	dh_auto_configure \
- 		--builddirectory=debian/build/udeb \
- 		-- \
--		$(DEB_CONFIGURE_EXTRA_FLAGS) \
- 		$(DEB_CONFIGURE_FLAGS_udeb) \
-+		$(DEB_CONFIGURE_EXTRA_FLAGS) \
- 		$(NULL)
- endif
-
-EOF
-}
 
 add_automatic gmp
 patch_gmp() {
