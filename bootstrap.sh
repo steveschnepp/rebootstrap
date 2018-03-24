@@ -1140,6 +1140,25 @@ EOF
  --- a/src/gcc/config/mips/mips.h
 EOF
 }
+patch_gcc_default_pie_everywhere()
+{
+	echo "enabling pie everywhere #892281"
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/rules.defs
++++ a/debian/rules.defs
+@@ -1250,9 +1250,7 @@
+     pie_archs += armhf arm64 i386
+   endif
+ endif
+-ifneq (,$(filter $(DEB_TARGET_ARCH),$(pie_archs)))
+-  with_pie := yes
+-endif
++with_pie := yes
+ ifeq ($(trunk_build),yes)
+   with_pie := disabled for trunk builds
+ endif
+EOF
+}
 patch_gcc_wdotap() {
 	if test "$ENABLE_MULTIARCH_GCC" = yes; then
 		echo "applying patches for with_deps_on_target_arch_pkgs"
@@ -1801,6 +1820,7 @@ EOF
    kfreebsd-kernel-headers (>= 0.84) [kfreebsd-any], linux-libc-dev [m68k],
    AUTO_BUILD_DEP BASE_BUILD_DEP
 EOF
+	patch_gcc_default_pie_everywhere
 	patch_gcc_wdotap
 }
 patch_gcc_8() {
@@ -2089,6 +2109,7 @@ EOF
 	echo "fix LIMITS_H_TEST again https://gcc.gnu.org/bugzilla/show_bug.cgi?id=80677"
 	drop_privs sed -i -e 's,^\(+LIMITS_H_TEST = \).*,\1:,' debian/patches/gcc-multiarch.diff
 	patch_gcc_arm64ilp32
+	patch_gcc_default_pie_everywhere
 	patch_gcc_wdotap
 }
 # choosing libatomic1 arbitrarily here, cause it never bumped soname
