@@ -3445,44 +3445,7 @@ buildenv_krb5() {
 }
 
 add_automatic libassuan
-
 add_automatic libatomic-ops
-patch_libatomic_ops() {
-	if test "$HOST_ARCH" = tilegx; then
-		echo "adding tilegx support to libatomic-ops #841771"
-		drop_privs tee debian/patches/0001-Basic-support-of-TILE-Gx-and-TILEPro-CPUs.patch > /dev/null <<'EOF'
---- a/src/Makefile.am
-+++ b/src/Makefile.am
-@@ -84,6 +84,7 @@
-           atomic_ops/sysdeps/gcc/s390.h \
-           atomic_ops/sysdeps/gcc/sh.h \
-           atomic_ops/sysdeps/gcc/sparc.h \
-+          atomic_ops/sysdeps/gcc/tile.h \
-           atomic_ops/sysdeps/gcc/x86.h \
-         \
-           atomic_ops/sysdeps/hpc/hppa.h \
---- a/src/atomic_ops.h
-+++ b/src/atomic_ops.h
-@@ -294,6 +294,9 @@
- # if defined(__hexagon__)
- #   include "atomic_ops/sysdeps/gcc/hexagon.h"
- # endif
-+# if defined(__tile__)
-+#   include "atomic_ops/sysdeps/gcc/tile.h"
-+# endif
- #endif /* __GNUC__ && !AO_USE_PTHREAD_DEFS */
- 
- #if (defined(__IB
---- /dev/null
-+++ b/src/atomic_ops/sysdeps/gcc/tile.h
-@@ -0,0 +1,3 @@
-+#include "../test_and_set_t_is_ao_t.h"
-+#include "generic.h"
-+#define AO_T_IS_INT
-EOF
-	fi
-}
-
 add_automatic libbsd
 add_automatic libcap2
 add_automatic libdebian-installer
