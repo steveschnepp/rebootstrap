@@ -485,6 +485,31 @@ if test "$ENABLE_MULTIARCH_GCC" = yes; then
 	$APT_GET install cross-gcc-dev
 	echo "removing unused unstripped_exe patch"
 	sed -i '/made-unstripped_exe-setting-overridable/d' /usr/share/cross-gcc/patches/gcc-*/series
+	echo "fixing patches for FORCE_CROSS_LAYOUT #894745"
+	patch /usr/share/cross-gcc/patches/gcc-$GCC_VER/*-setting-all-the-various-paths*.patch <<'EOF'
+--- a
++++ b
+@@ -83,11 +83,18 @@
+ index caa8b5e..e9eaf0f 100644
+ --- a/debian/rules.defs
+ +++ b/debian/rules.defs
+-@@ -209,6 +209,9 @@ else
++@@ -209,10 +209,16 @@
+      # cross compiler, sets WITH_SYSROOT on it's own
+      DEB_CROSS = yes
+      build_type = build-cross
+ +    ifeq ($(with_deps_on_target_arch_pkgs),yes)
+++      with_sysroot = /
+++    endif
++   else ifeq ($(FORCE_CROSS_LAYOUT),yes)
++     # a native build with a cross layout
++     DEB_CROSS = yes
++     build_type = build-cross
+++    ifeq ($(with_deps_on_target_arch_pkgs),yes)
+ +      with_sysroot = /
+ +    endif
+    else
+EOF
 fi
 
 obtain_source_package() {
