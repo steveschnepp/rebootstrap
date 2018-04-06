@@ -3266,10 +3266,6 @@ patch_gmp() {
 		# musl does not implement GNU obstack
 		sed -i -r 's/^ (.*_obstack_)/ (arch=!musl-linux-any !musleabihf-linux-any)\1/' debian/libgmp10.symbols
 	fi
-	if test "$HOST_ARCH" = sh3; then
-		echo "patching gmp symbols for sh3 #851895"
-		sed -i 's/!sh4/!sh3 !sh4/g' debian/libgmp10.symbols
-	fi
 }
 
 builddep_gnu_efi() {
