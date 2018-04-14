@@ -409,14 +409,6 @@ check_arch() {
 				return 1
 			fi
 		;;
-		*", Tilera TILE-Gx, version"*)
-			if test tilegx != "$(dpkg-architecture "-a$2" -qDEB_HOST_ARCH_CPU)"; then
-				echo "cpu mismatch"
-				echo "expected $2"
-				echo "got $FILE_RES"
-				return 1
-			fi
-		;;
 		*)
 			echo "unknown ELF cpu"
 			echo "got $FILE_RES"
@@ -3326,61 +3318,12 @@ add_automatic groff
 add_automatic guile-2.0
 builddep_guile_2_0() {
 	apt_get_build_dep "-a$HOST_ARCH" --arch-only -P cross ./
-	if test "$HOST_ARCH" = tilegx; then
-		patch /usr/share/guile/2.0/system/base/target.scm <<'EOF'
---- a/module/system/base/target.scm
-+++ b/module/system/base/target.scm
-@@ -65,7 +65,7 @@
-       (cond ((string-match "^i[0-9]86$" cpu)
-              (endianness little))
-             ((member cpu '("x86_64" "ia64"
--                           "powerpcle" "powerpc64le" "mipsel" "mips64el" "nios2" "sh4" "alpha"))
-+                           "powerpcle" "powerpc64le" "mipsel" "mips64el" "nios2" "sh4" "alpha" "tilegx"))
-              (endianness little))
-             ((member cpu '("sparc" "sparc64" "powerpc" "powerpc64" "spu"
-                            "mips" "mips64" "m68k" "s390x"))
-@@ -105,7 +105,7 @@
-           ((string-match "64$" cpu) 8)
-           ((string-match "64_?[lbe][lbe]$" cpu) 8)
-           ((member cpu '("sparc" "powerpc" "mips" "mipsel" "nios2" "m68k" "sh4")) 4)
--          ((member cpu '("s390x" "alpha")) 8)
-+          ((member cpu '("s390x" "alpha" "tilegx")) 8)
-           ((string-match "^arm.*" cpu) 4)
-           (else (error "unknown CPU word size" cpu)))))
- 
-EOF
-	fi
 	if test "$HOST_ARCH" = sh3; then
 		echo "adding sh3 support to guile-2.0 http://git.savannah.gnu.org/cgit/guile.git/commit/?id=92222727f81b2a03cde124b88d7e6224ecb29199"
 		sed -i -e 's/"sh4"/"sh3" &/' /usr/share/guile/2.0/system/base/target.scm
 	fi
 }
 patch_guile_2_0() {
-	if test "$HOST_ARCH" = tilegx; then
-		echo "patching guile tilegx support #855191"
-		drop_privs patch -p1 <<'EOF'
---- a/module/system/base/target.scm
-+++ b/module/system/base/target.scm
-@@ -65,7 +65,7 @@
-       (cond ((string-match "^i[0-9]86$" cpu)
-              (endianness little))
-             ((member cpu '("x86_64" "ia64"
--                           "powerpcle" "powerpc64le" "mipsel" "mips64el" "nios2" "sh4" "alpha"))
-+                           "powerpcle" "powerpc64le" "mipsel" "mips64el" "nios2" "sh4" "alpha" "tilegx"))
-              (endianness little))
-             ((member cpu '("sparc" "sparc64" "powerpc" "powerpc64" "spu"
-                            "mips" "mips64" "m68k" "s390x"))
-@@ -105,7 +105,7 @@
-           ((string-match "64$" cpu) 8)
-           ((string-match "64_?[lbe][lbe]$" cpu) 8)
-           ((member cpu '("sparc" "powerpc" "mips" "mipsel" "nios2" "m68k" "sh4")) 4)
--          ((member cpu '("s390x" "alpha")) 8)
-+          ((member cpu '("s390x" "alpha" "tilegx")) 8)
-           ((string-match "^arm.*" cpu) 4)
-           (else (error "unknown CPU word size" cpu)))))
- 
-EOF
-	fi
 	if test "$HOST_ARCH" = sh3; then
 		echo "adding sh3 support to guile-2.0 http://git.savannah.gnu.org/cgit/guile.git/commit/?id=92222727f81b2a03cde124b88d7e6224ecb29199"
 		sed -i -e 's/"sh4"/"sh3" &/' module/system/base/target.scm
@@ -3419,7 +3362,7 @@ buildenv_jemalloc() {
 			echo "setting je_cv_static_page_shift=13"
 			export je_cv_static_page_shift=13
 		;;
-		mips64el|mipsel|nios2|tilegx)
+		mips64el|mipsel|nios2)
 			echo "setting je_cv_static_page_shift=14"
 			export je_cv_static_page_shift=14
 		;;
@@ -3503,55 +3446,6 @@ patch_libgc() {
       || ((defined(RTEMS) || defined(PLATFORM_ANDROID)) && defined(I386))) \
      && !defined(NO_GETCONTEXT)
 EOF
-	fi
-	if test "$HOST_ARCH" = tilegx; then
-		echo "patching libgc for tilegx #854174"
-		drop_privs patch -p1 <<'EOF'
---- a/include/private/gcconfig.h
-+++ b/include/private/gcconfig.h
-@@ -460,6 +460,10 @@
- #     define  mach_type_known
- #    endif 
- # endif
-+# if defined(__tilegx__) && defined(LINUX)
-+#  define TILEGX
-+#  define mach_type_known
-+# endif
- 
- /* Feel free to add more clauses here */
- 
-@@ -2086,6 +2097,28 @@
- #   endif
- # endif
- 
-+# ifdef TILEGX
-+#  define CPP_WORDSZ (__SIZEOF_POINTER__ * 8)
-+#  define MACH_TYPE "TILE-Gx"
-+#  define ALIGNMENT __SIZEOF_POINTER__
-+#  if CPP_WORDSZ < 64
-+#   define ALIGN_DOUBLE /* Guarantee 64-bit alignment for allocations. */
-+    /* Take advantage of 64-bit stores. */
-+#   define CLEAR_DOUBLE(x) ((*(long long *)(x)) = 0)
-+#  endif
-+#  define PREFETCH(x) __insn_prefetch_l1(x)
-+#  include <arch/chip.h>
-+#  define CACHE_LINE_SIZE CHIP_L2_LINE_SIZE()
-+#  define USE_GENERIC_PUSH_REGS
-+#  ifdef LINUX
-+#   define OS_TYPE "LINUX"
-+    extern int __data_start[];
-+#   define DATASTART (ptr_t)(__data_start)
-+#   define LINUX_STACKBOTTOM
-+#   define DYNAMIC_LOADING
-+#  endif
-+# endif
-+
- #if defined(LINUX) && defined(USE_MMAP)
-     /* The kernel may do a somewhat better job merging mappings etc.	*/
-     /* with anonymous mappings.						*/
-EOF
-		echo "updating libgc symbols for tilegx #??????"
-		sed -i -e '/^ /s/=\(!\?\)arm64 /&\1tilegx /' debian/libgc1c2.symbols
 	fi
 	if test "$HOST_ARCH" = sh3; then
 		echo "updating libgc symbols for sh3 #851924"
@@ -3913,25 +3807,7 @@ EOF
 }
 
 add_automatic openssl
-
 add_automatic openssl1.0
-patch_openssl1_0() {
-	if test "$HOST_ARCH" = tilegx; then
-		echo "adding tilegx support to openssl1.0 #858398"
-		drop_privs patch ./Configure <<'EOF'
---- a/Configure
-+++ b/Configure
-@@ -400,6 +400,7 @@
- "debian-sparc-v8","gcc:-DB_ENDIAN ${debian_cflags} -mcpu=v8 -DBN_DIV2W::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:${sparcv8_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
- "debian-sparc-v9","gcc:-DB_ENDIAN ${debian_cflags} -mcpu=v9 -Wa,-Av8plus -DULTRASPARC -DBN_DIV2W::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:${sparcv9_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
- "debian-sparc64","gcc:-m64 -DB_ENDIAN ${debian_cflags} -DULTRASPARC -DBN_DIV2W::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_INT DES_PTR DES_RISC1 DES_UNROLL BF_PTR:${sparcv9_asm}:dlfcn:linux-shared:-fPIC:-m64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-+"debian-tilegx","gcc:-DL_ENDIAN ${debian_cflags}::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL:${no_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
- "debian-x32","gcc:-mx32 -DL_ENDIAN ${debian_cflags} -DMD32_REG_T=int::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT RC4_CHUNK DES_INT DES_UNROLL:${no_asm}:dlfcn:linux-shared:-fPIC:-mx32:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::x32",
-
- ####
-EOF
-	fi
-}
 
 add_automatic p11-kit
 builddep_p11_kit() {
