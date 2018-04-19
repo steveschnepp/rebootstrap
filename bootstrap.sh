@@ -4532,8 +4532,6 @@ else
 		assert_built libseccomp
 	fi
 	apt_get_build_dep "-a$HOST_ARCH" --arch-only -P nocheck,noudeb,stage1 ./
-	echo "patching meson to compute sizeof again https://github.com/mesonbuild/meson/issues/3113"
-	sed -i -e '/cross_compute_int/s/128/1024/' /usr/share/meson/mesonbuild/compilers/c.py
 	check_binNMU
 	drop_privs ac_cv_func_malloc_0_nonnull=yes dpkg-buildpackage "-a$HOST_ARCH" -B -uc -us -Pnocheck,noudeb,stage1 -d
 	cd ..
