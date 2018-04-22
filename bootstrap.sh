@@ -3041,8 +3041,8 @@ add_automatic adns
 
 builddep_apt() {
 	# g++ dependency needs toolchain translation
-	assert_built "bzip2 curl db-defaults db5.3 gnutls28 lz4 xz-utils zlib"
-	apt_get_install cmake debhelper dh-systemd docbook-xml docbook-xsl dpkg-dev gettext "libbz2-dev:$1" "libcurl4-gnutls-dev:$1" "libdb-dev:$1" "libgnutls28-dev:$1" "liblz4-dev:$1" "liblzma-dev:$1" pkg-config po4a xsltproc "zlib1g-dev:$1"
+	assert_built "bzip2 curl db-defaults db5.3 gnutls28 lz4 xz-utils zlib libzstd"
+	apt_get_install cmake debhelper dh-systemd docbook-xml docbook-xsl dpkg-dev gettext "libbz2-dev:$1" "libcurl4-gnutls-dev:$1" "libdb-dev:$1" "libgnutls28-dev:$1" "liblz4-dev:$1" "liblzma-dev:$1" pkg-config po4a xsltproc "zlib1g-dev:$1" "libzstd-dev:$1"
 }
 
 add_automatic attr
@@ -3580,6 +3580,7 @@ buildenv_libxt() {
 	export xorg_cv_malloc0_returns_null=no
 }
 
+add_automatic libzstd
 add_automatic lz4
 
 add_automatic make-dfsg
@@ -3971,6 +3972,7 @@ add_need libtextwrap # by cdebconf
 add_need libunistring # by libidn2
 add_need libx11 # by dbus
 add_need libxrender # by cairo
+add_need libzstd # by apt
 add_need lz4 # by systemd
 add_need make-dfsg # for build-essential
 add_need man-db # for debhelper
