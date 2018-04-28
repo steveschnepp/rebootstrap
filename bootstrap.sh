@@ -3526,7 +3526,63 @@ buildenv_libprelude() {
 
 add_automatic libpsl
 add_automatic libpthread-stubs
-add_automatic libseccomp
+
+patch_libseccomp() {
+	echo "adding nopython profile to libseccomp #897057"
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/control
++++ b/debian/control
+@@ -3,7 +3,7 @@
+ Priority: optional
+ Maintainer: Kees Cook <kees@debian.org>
+ Uploaders: Luca Bruno <lucab@debian.org>, Felix Geyer <fgeyer@debian.org>
+-Build-Depends: debhelper (>= 10~), linux-libc-dev, dh-python, python-all-dev, python3-all-dev, cython, cython3
++Build-Depends: debhelper (>= 10~), linux-libc-dev, dh-python <!nopython>, python-all-dev <!nopython>, python3-all-dev <!nopython>, cython <!nopython>, cython3 <!nopython>
+ Standards-Version: 3.9.7
+ Homepage: https://github.com/seccomp/libseccomp
+ Vcs-Git: https://salsa.debian.org/debian/libseccomp.git
+@@ -44,6 +44,7 @@
+  the supported architectures.
+
+ Package: python-seccomp
++Build-Profiles: <!nopython>
+ Architecture: linux-any
+ Multi-Arch: same
+ Section: python
+@@ -54,6 +55,7 @@
+  prctl() syscall.
+
+ Package: python3-seccomp
++Build-Profiles: <!nopython>
+ Architecture: linux-any
+ Multi-Arch: same
+ Section: python
+--- a/debian/rules
++++ b/debian/rules
+@@ -8,8 +8,13 @@
+ export V=1
+
+ %:
++ifeq ($(filter nopython,$(DEB_BUILD_PROFILES)),)
+ 	dh $@ --with python2,python3
++else
++	dh $@
++endif
+
++ifeq ($(filter nopython,$(DEB_BUILD_PROFILES)),)
+ override_dh_auto_configure:
+ 	dh_auto_configure -- --enable-python
+
+@@ -24,6 +29,7 @@
+ 	set -e && for pyver in `py3versions -s`; do \
+ 		dh_auto_install --sourcedirectory=src/python -- PYTHON=$$pyver; \
+ 	done
++endif
+ 
+ override_dh_auto_clean:
+ 	dh_auto_clean
+EOF
+}
 
 add_automatic libsepol
 add_automatic libsm
@@ -3934,9 +3990,6 @@ dpkg-architecture "-a$HOST_ARCH" -ilinux-any && add_need libcap2 # by systemd
 add_need libdebian-installer # by cdebconf
 add_need libevent # by unbound
 add_need libgcrypt20 # by libprelude, cryptsetup
-if apt-cache showsrc systemd | grep -q "^Build-Depends:.*libseccomp-dev[^,]*[[ ]$HOST_ARCH[] ]"; then
-	add_need libseccomp # by systemd
-fi
 dpkg-architecture "-a$HOST_ARCH" -ilinux-any && add_need libsepol # by libselinux
 if dpkg-architecture "-a$HOST_ARCH" -ihurd-any || dpkg-architecture "-a$HOST_ARCH" -ikfreebsd-any; then
 	add_need libsystemd-dummy # by nghttp2
@@ -4498,6 +4551,28 @@ automatically_cross_build_packages
 fi
 
 if test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = linux; then
+if apt-cache showsrc systemd | grep -q "^Build-Depends:.*libseccomp-dev[^,]*[[ ]$HOST_ARCH[] ]"; then
+if test -f "$REPODIR/stamps/libseccomp_1"; then
+	echo "skipping stage1 rebuild of libseccomp"
+else
+	cross_build_setup libseccomp libseccomp_1
+	apt_get_build_dep "-a$HOST_ARCH" --arch-only -P nopython ./
+	check_binNMU
+	drop_privs dpkg-buildpackage "-a$HOST_ARCH" -B -uc -us -Pnopython
+	cd ..
+	ls -l
+	pickup_packages *.changes
+	touch "$REPODIR/stamps/libseccomp_1"
+	compare_native ./*.deb
+	cd ..
+	drop_privs rm -Rf libseccomp_1
+fi
+progress_mark "libseccomp stage1 cross build"
+mark_built libseccomp
+fi
+
+automatically_cross_build_packages
+
 if test -f "$REPODIR/stamps/systemd_1"; then
 	echo "skipping stage1 rebuild of systemd"
 else
