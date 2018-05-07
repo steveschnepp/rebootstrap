@@ -4155,15 +4155,13 @@ patch_readline() {
 	drop_privs patch -p1 <<EOF
 --- a/debian/control
 +++ b/debian/control
-@@ -4,11 +4,11 @@
+@@ -4,10 +4,10 @@
  Maintainer: Matthias Klose <doko@debian.org>
  Standards-Version: 3.9.8
  Build-Depends: debhelper (>= 9),
--  libtinfo-dev, lib32tinfo-dev [amd64 ppc64],
-+  libtinfo-dev, lib32tinfo-dev [amd64 ppc64] <!nobiarch>,
-   libncursesw5-dev (>= 5.6),
--  lib32ncursesw5-dev [amd64 ppc64], lib64ncurses5-dev [i386 powerpc sparc s390],
-+  lib32ncursesw5-dev [amd64 ppc64] <!nobiarch>, lib64ncurses5-dev [i386 powerpc sparc s390] <!nobiarch>,
+   libncurses-dev,
+-  lib32ncurses-dev [amd64 ppc64], lib64ncurses-dev [i386 powerpc sparc s390],
++  lib32ncurses-dev [amd64 ppc64] <!nobiarch>, lib64ncurses-dev [i386 powerpc sparc s390] <!nobiarch>,
    mawk | awk, texinfo, autotools-dev,
 -  gcc-multilib [amd64 i386 kfreebsd-amd64 powerpc ppc64 s390 sparc]
 +  gcc-multilib [amd64 i386 kfreebsd-amd64 powerpc ppc64 s390 sparc] <!nobiarch>
