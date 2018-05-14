@@ -3347,10 +3347,11 @@ buildenv_gzip() {
 
 add_automatic hostname
 
-add_automatic icu
 patch_icu() {
 	echo "patching icu to drop versioned libstdc++-dev dependency"
 	sed -i -e '/^[^:]*Depends:/s/,\s*libstdc++-[0-9]-dev[^,]*\(,\|$\)/\1/g' debian/control
+	echo "patching icu to drop the cycle with icu-le-hb #898571"
+	drop_privs sed -i -e 's/, libicu-le-hb-dev//' debian/control
 }
 
 add_automatic isl
@@ -3983,7 +3984,6 @@ add_need gnutls28 # by libprelude, openldap
 test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = linux && add_need gpm # by ncurses
 add_need groff # for man-db
 test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = linux && add_need kmod # by systemd
-add_need icu # by libxml2
 add_need krb5 # by audit
 add_need libatomic-ops # by gcc-VER
 dpkg-architecture "-a$HOST_ARCH" -ilinux-any && add_need libcap2 # by systemd
@@ -4320,6 +4320,12 @@ automatically_cross_build_packages
 cross_build elfutils
 mark_built elfutils
 # needed by glib2.0, systemtap
+
+automatically_cross_build_packages
+
+cross_build icu
+mark_built icu
+# needed by libxml2
 
 automatically_cross_build_packages
 
