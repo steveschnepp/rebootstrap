@@ -3527,64 +3527,6 @@ buildenv_libprelude() {
 
 add_automatic libpsl
 add_automatic libpthread-stubs
-
-patch_libseccomp() {
-	echo "adding nopython profile to libseccomp #897057"
-	drop_privs patch -p1 <<'EOF'
---- a/debian/control
-+++ b/debian/control
-@@ -3,7 +3,7 @@
- Priority: optional
- Maintainer: Kees Cook <kees@debian.org>
- Uploaders: Luca Bruno <lucab@debian.org>, Felix Geyer <fgeyer@debian.org>
--Build-Depends: debhelper (>= 10~), linux-libc-dev, dh-python, python-all-dev, python3-all-dev, cython, cython3
-+Build-Depends: debhelper (>= 10~), linux-libc-dev, dh-python <!nopython>, python-all-dev <!nopython>, python3-all-dev <!nopython>, cython <!nopython>, cython3 <!nopython>
- Standards-Version: 3.9.7
- Homepage: https://github.com/seccomp/libseccomp
- Vcs-Git: https://salsa.debian.org/debian/libseccomp.git
-@@ -44,6 +44,7 @@
-  the supported architectures.
-
- Package: python-seccomp
-+Build-Profiles: <!nopython>
- Architecture: linux-any
- Multi-Arch: same
- Section: python
-@@ -54,6 +55,7 @@
-  prctl() syscall.
-
- Package: python3-seccomp
-+Build-Profiles: <!nopython>
- Architecture: linux-any
- Multi-Arch: same
- Section: python
---- a/debian/rules
-+++ b/debian/rules
-@@ -8,8 +8,13 @@
- export V=1
-
- %:
-+ifeq ($(filter nopython,$(DEB_BUILD_PROFILES)),)
- 	dh $@ --with python2,python3
-+else
-+	dh $@
-+endif
-
-+ifeq ($(filter nopython,$(DEB_BUILD_PROFILES)),)
- override_dh_auto_configure:
- 	dh_auto_configure -- --enable-python
-
-@@ -24,6 +29,7 @@
- 	set -e && for pyver in `py3versions -s`; do \
- 		dh_auto_install --sourcedirectory=src/python -- PYTHON=$$pyver; \
- 	done
-+endif
- 
- override_dh_auto_clean:
- 	dh_auto_clean
-EOF
-}
-
 add_automatic libsepol
 add_automatic libsm
 add_automatic libssh2
