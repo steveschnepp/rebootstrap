@@ -4497,7 +4497,7 @@ automatically_cross_build_packages
 fi
 
 if test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = linux; then
-if apt-cache showsrc systemd | grep -q "^Build-Depends:.*libseccomp-dev[^,]*[[ ]$HOST_ARCH[] ]"; then
+if apt-cache showsrc man-db systemd | grep -q "^Build-Depends:.*libseccomp-dev[^,]*[[ ]$HOST_ARCH[] ]"; then
 if test -f "$REPODIR/stamps/libseccomp_1"; then
 	echo "skipping stage1 rebuild of libseccomp"
 else
@@ -4516,6 +4516,7 @@ fi
 progress_mark "libseccomp stage1 cross build"
 mark_built libseccomp
 fi
+# needed by man-db, systemd
 
 automatically_cross_build_packages
 
