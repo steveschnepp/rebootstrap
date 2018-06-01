@@ -3454,10 +3454,6 @@ patch_libgc() {
      && !defined(NO_GETCONTEXT)
 EOF
 	fi
-	if test "$HOST_ARCH" = sh3; then
-		echo "updating libgc symbols for sh3 #851924"
-		sed -i -e '/^ /s/!sh4/!sh3 &/' debian/libgc1c2.symbols
-	fi
 }
 
 add_automatic libgcrypt20
