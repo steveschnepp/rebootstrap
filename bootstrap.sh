@@ -3793,14 +3793,7 @@ builddep_p11_kit() {
 }
 
 add_automatic patch
-
 add_automatic pcre3
-patch_pcre3() {
-	echo "work around FTBFS with gcc-7 #853606"
-	# ignore symbol changes
-	sed -i -e 's/\(dh_makeshlibs.*-- -c\)4$/\10/' debian/rules
-}
-
 add_automatic readline5
 add_automatic rtmpdump
 add_automatic sed
