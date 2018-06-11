@@ -3480,8 +3480,6 @@ builddep_libidn2() {
 	apt_get_install debhelper dh-autoreconf gengetopt help2man "libunistring-dev:$1" pkg-config ruby-ronn texinfo texlive gtk-doc-tools dblatex
 }
 patch_libidn2() {
-	echo "fixing architecture of libidn2-0-dev #872567"
-	drop_privs sed -i -e '/^Package: libidn2-0-dev/,/^$/s/Architecture: all/Architecture: any/' debian/control
 	echo "fixing FTBFS #881915"
 	drop_privs patch -p1 <<'EOF'
 --- a/debian/rules
