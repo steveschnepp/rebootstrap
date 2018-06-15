@@ -3348,8 +3348,6 @@ buildenv_gzip() {
 add_automatic hostname
 
 patch_icu() {
-	echo "patching icu to drop versioned libstdc++-dev dependency"
-	sed -i -e '/^[^:]*Depends:/s/,\s*libstdc++-[0-9]-dev[^,]*\(,\|$\)/\1/g' debian/control
 	echo "patching icu to drop the cycle with icu-le-hb #898571"
 	drop_privs sed -i -e 's/, libicu-le-hb-dev//' debian/control
 }
