@@ -3485,10 +3485,6 @@ buildenv_libprelude() {
 		echo "glibc does not return NULL for malloc(0)"
 		export ac_cv_func_malloc_0_nonnull=yes
 	;; esac
-	if test "$GCC_VER" = 8; then
-		# work around symbol mismatch #892588
-		export DPKG_GENSYMBOLS_CHECK_LEVEL=0
-	fi
 }
 
 add_automatic libpsl
