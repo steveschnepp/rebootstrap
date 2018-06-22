@@ -3241,12 +3241,6 @@ builddep_gnu_efi() {
 }
 
 add_automatic gnupg2
-builddep_gnupg2() {
-	apt_get_build_dep "-a$1" --arch-only -P nocheck ./
-	# work around libgpg-error-dev shipping yat2m #895770
-	rm -vf /usr/bin/yat2m
-}
-
 add_automatic gnutls28
 
 add_automatic gpm
