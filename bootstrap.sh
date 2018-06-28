@@ -3186,13 +3186,7 @@ buildenv_diffutils() {
 
 add_automatic dpkg
 add_automatic e2fsprogs
-
-builddep_elfutils() {
-	assert_built "bzip2 xz-utils zlib"
-	# gcc-multilib dependency lacks nocheck profile
-	apt_get_install debhelper autotools-dev autoconf automake bzip2 "zlib1g-dev:$1" zlib1g-dev "libbz2-dev:$1" "liblzma-dev:$1" m4 gettext gawk dpkg-dev flex libfl-dev bison
-}
-
+add_automatic elfutils
 add_automatic expat
 add_automatic file
 add_automatic findutils
@@ -4210,12 +4204,6 @@ fi
 progress_mark "db5.3 stage1 cross build"
 mark_built db5.3
 # needed by perl, python2.7, needed for db-defaults and thus by freebsd-glue
-
-automatically_cross_build_packages
-
-cross_build elfutils
-mark_built elfutils
-# needed by glib2.0, systemtap
 
 automatically_cross_build_packages
 
