@@ -2707,6 +2707,8 @@ EOF
  		--without-selinux \
  		--enable-stackguard-randomization \
 EOF
+	echo "work around FTBFS #902800"
+	rm -vf debian/debhelper.in/*.docs
 }
 if test -f "$REPODIR/stamps/${LIBC_NAME}_1"; then
 	echo "skipping rebuild of $LIBC_NAME stage1"
@@ -3375,7 +3377,13 @@ buildenv_krb5() {
 }
 
 add_automatic libassuan
+
 add_automatic libatomic-ops
+patch_libatomic_ops() {
+	echo "work around FTBFS #902802"
+	rm -vf debian/*.docs
+}
+
 add_automatic libbsd
 add_automatic libcap2
 add_automatic libdebian-installer
@@ -3475,6 +3483,12 @@ buildenv_libprelude() {
 
 add_automatic libpsl
 add_automatic libpthread-stubs
+
+patch_libseccomp() {
+	echo "working around FTBFS #902767"
+	rm -vf debian/docs
+}
+
 add_automatic libsepol
 add_automatic libsm
 add_automatic libssh2
