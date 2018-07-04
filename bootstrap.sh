@@ -3483,12 +3483,6 @@ buildenv_libprelude() {
 
 add_automatic libpsl
 add_automatic libpthread-stubs
-
-patch_libseccomp() {
-	echo "working around FTBFS #902767"
-	rm -vf debian/docs
-}
-
 add_automatic libsepol
 add_automatic libsm
 add_automatic libssh2
