@@ -3377,13 +3377,7 @@ buildenv_krb5() {
 }
 
 add_automatic libassuan
-
 add_automatic libatomic-ops
-patch_libatomic_ops() {
-	echo "work around FTBFS #902802"
-	rm -vf debian/*.docs
-}
-
 add_automatic libbsd
 add_automatic libcap2
 add_automatic libdebian-installer
