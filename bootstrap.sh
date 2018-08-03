@@ -2707,8 +2707,6 @@ EOF
  		--without-selinux \
  		--enable-stackguard-randomization \
 EOF
-	echo "work around FTBFS #902800"
-	rm -vf debian/debhelper.in/*.docs
 }
 if test -f "$REPODIR/stamps/${LIBC_NAME}_1"; then
 	echo "skipping rebuild of $LIBC_NAME stage1"
