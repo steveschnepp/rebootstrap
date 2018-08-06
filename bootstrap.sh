@@ -3448,15 +3448,7 @@ buildenv_libgcrypt20() {
 add_automatic libgpg-error
 add_automatic libice
 add_automatic libidn
-
-builddep_libidn2() {
-	assert_built libunistring
-	# ruby-ronn is not M-A:foreign #882163
-	# new dblatex dep for FTBFS #881915
-	# dpkg doesn't allow :native on arch:all #854438
-	apt_get_install debhelper dh-autoreconf gengetopt help2man "libunistring-dev:$1" pkg-config ruby-ronn texinfo texlive gtk-doc-tools dblatex
-}
-
+add_automatic libidn2
 add_automatic libksba
 add_automatic libonig
 add_automatic libpipeline
@@ -3805,7 +3797,6 @@ if dpkg-architecture "-a$HOST_ARCH" -ihurd-any || dpkg-architecture "-a$HOST_ARC
 	add_need libsystemd-dummy # by nghttp2
 fi
 add_need libtextwrap # by cdebconf
-add_need libunistring # by libidn2
 add_need libx11 # by dbus
 add_need libxrender # by cairo
 add_need libzstd # by apt
@@ -4318,12 +4309,6 @@ fi
 progress_mark "unbound stage1 cross build"
 mark_built unbound
 # needed by gnutls28
-
-automatically_cross_build_packages
-
-cross_build libidn2
-mark_built libidn2
-# needed by curl, gnutls28
 
 automatically_cross_build_packages
 
