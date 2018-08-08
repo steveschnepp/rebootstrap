@@ -2259,7 +2259,7 @@ if test "$HOST_ARCH" = hppa && ! test -f "$REPODIR/stamps/cross-binutils-hppa64"
 	drop_privs TARGET=hppa64-linux-gnu dpkg-buildpackage -B -uc -us -Pnocheck
 	cd ..
 	ls -l
-	pickup_additional_packages *.changes
+	pickup_additional_packages binutils-hppa64-linux-gnu_*.deb
 	$APT_GET install binutils-hppa64-linux-gnu
 	if ! which hppa64-linux-gnu-as; then echo "hppa64-linux-gnu-as missing in binutils package"; exit 1; fi
 	if ! drop_privs hppa64-linux-gnu-as -o test.o /dev/null; then echo "binutils-hppa64 fail to execute"; exit 1; fi
