@@ -1184,6 +1184,7 @@ patch_gcc_8() {
 	drop_privs sed -i -e 's,^\(+LIMITS_H_TEST = \).*,\1:,' debian/patches/gcc-multiarch.diff
 	patch_gcc_arm64ilp32
 	patch_gcc_default_pie_everywhere
+	patch_gcc_multilib_deps
 	patch_gcc_wdotap
 }
 # choosing libatomic1 arbitrarily here, cause it never bumped soname
