@@ -601,11 +601,6 @@ cat >/etc/dpkg/dpkg.cfg.d/bug-825146 <<'EOF'
 path-exclude=/usr/share/doc/libxdmcp-dev/xdmcp.txt.gz
 EOF
 
-# Work around Multi-Arch: same file conflict in libgpg-error0. #872806
-cat >/etc/dpkg/dpkg.cfg.d/bug-872806 <<'EOF'
-path-exclude=/usr/share/locale/*/libgpg-error.mo
-EOF
-
 if test "$HOST_ARCH" = nios2; then
 	echo "fixing libtool's nios2 misdetection as os2 #851253"
 	apt_get_install libtool
