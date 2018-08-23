@@ -2147,14 +2147,7 @@ add_automatic expat
 add_automatic file
 add_automatic findutils
 add_automatic flex
-
 add_automatic fontconfig
-builddep_fontconfig() {
-	# help apt with finding a solution
-	apt_get_remove "libfreetype6-dev:$(dpkg --print-architecture)"
-	apt_get_build_dep "-a$1" ./
-}
-
 add_automatic freebsd-glue
 add_automatic freetype
 add_automatic fuse
