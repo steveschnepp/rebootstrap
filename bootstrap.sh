@@ -2600,15 +2600,7 @@ EOF
 
 add_automatic openssl
 add_automatic openssl1.0
-
 add_automatic p11-kit
-builddep_p11_kit() {
-	# work around m-a:same violation in libffi-dev
-	# texinfo stores its own version in the generated info docs
-	apt_get_remove "libffi-dev:$(dpkg --print-architecture)"
-	$APT_GET build-dep "-a$1" --arch-only p11-kit
-}
-
 add_automatic patch
 
 add_automatic pcre3
