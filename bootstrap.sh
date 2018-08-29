@@ -2601,6 +2601,15 @@ EOF
 add_automatic openssl
 add_automatic openssl1.0
 add_automatic p11-kit
+
+builddep_pam() {
+	# should be replaced with pkg.pam.noaudit profile #907492
+	dpkg-architecture "-a$1" -ilinux-any && assert_built libselinux
+	assert_built "cracklib2 db-defaults db5.3 flex"
+	dpkg-architecture "-a$1" -ilinux-any && apt_get_install "libselinux1-dev:$1"
+	apt_get_install "libcrack2-dev:$1" bzip2 debhelper quilt flex "libdb-dev:$1" po-debconf dh-autoreconf autopoint pkg-config libfl-dev "libfl-dev:$1" docbook-xsl docbook-xml xsltproc libxml2-utils w3m
+}
+
 add_automatic patch
 
 add_automatic pcre3
@@ -3165,14 +3174,6 @@ mark_built build-essential
 
 automatically_cross_build_packages
 
-builddep_pam() {
-	dpkg-architecture "-a$1" -ilinux-any && assert_built libselinux
-	assert_built "cracklib2 db-defaults db5.3 flex"
-	dpkg-architecture "-a$1" -ilinux-any && apt_get_install "libselinux1-dev:$1"
-	apt_get_install "libcrack2-dev:$1" bzip2 debhelper quilt flex "libdb-dev:$1" po-debconf dh-autoreconf autopoint pkg-config
-	# flex wrongly declares M-A:foreign #761449
-	apt_get_install flex "libfl-dev:$1" libfl-dev
-}
 if test -f "$REPODIR/stamps/pam_1"; then
 	echo "skipping stage1 rebuild of pam"
 else
