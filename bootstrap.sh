@@ -2425,15 +2425,7 @@ add_automatic libsm
 add_automatic libssh2
 add_automatic libsystemd-dummy
 add_automatic libtasn1-6
-
 add_automatic libtextwrap
-patch_libtextwrap() {
-	echo "fixing libtextwrap FTBFS #905472"
-	drop_privs tee -a Makefile.am << EOF
-EXTRA_dotextwrap_DEPENDENCIES = libtextwrap.la
-EOF
-}
-
 add_automatic libunistring
 buildenv_libunistring() {
 	if dpkg-architecture "-a$HOST_ARCH" -ignu-any-any; then
