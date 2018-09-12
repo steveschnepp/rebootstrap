@@ -2121,6 +2121,7 @@ builddep_build_essential() {
 add_automatic bzip2
 add_automatic c-ares
 add_automatic cloog
+add_automatic coreutils
 add_automatic curl
 add_automatic dash
 add_automatic datefudge
