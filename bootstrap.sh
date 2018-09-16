@@ -2320,6 +2320,12 @@ buildenv_gzip() {
 		echo gl_cv_func_fflush_stdin exported
 		export gl_cv_func_fflush_stdin=yes
 	fi
+	if test "$(dpkg-architecture "-a$1" -qDEB_HOST_ARCH_BITS)" = 32; then
+		# If touch works with large timestamps (e.g. on amd64),
+		# gzip fails instead of warning about 32bit time_t.
+		echo "TIME_T_32_BIT_OK=yes exported"
+		export TIME_T_32_BIT_OK=yes
+	fi
 }
 
 add_automatic hostname
