@@ -1966,6 +1966,9 @@ fi
 progress_mark "gcc cross rtlibs build"
 fi
 
+# install something similar to crossbuild-essential
+apt_get_install "binutils$HOST_ARCH_SUFFIX" "gcc-$GCC_VER$HOST_ARCH_SUFFIX" "g++-$GCC_VER$HOST_ARCH_SUFFIX" "libc-dev:$HOST_ARCH"
+
 apt_get_remove libc6-i386 # breaks cross builds
 
 if dpkg-architecture "-a$HOST_ARCH" -ihurd-any; then
