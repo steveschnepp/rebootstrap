@@ -2706,6 +2706,8 @@ patch_systemd() {
 EOF
 }
 
+add_automatic sysvinit
+
 add_automatic tar
 buildenv_tar() {
 	case $(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_GNU_SYSTEM) in *gnu*)
