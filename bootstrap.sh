@@ -1410,6 +1410,30 @@ progress_mark "cross mig build"
 fi
 
 # libc
+builddep_glibc() {
+	test "$1" = "$HOST_ARCH"
+	apt_get_install gettext file quilt autoconf gawk debhelper rdfind symlinks binutils bison netbase "gcc-$GCC_VER$HOST_ARCH_SUFFIX"
+	case "$(dpkg-architecture "-a$1" -qDEB_HOST_ARCH_OS)" in
+		linux)
+			if test "$ENABLE_MULTIARCH_GCC" = yes; then
+				apt_get_install "linux-libc-dev${CROSS_ARCH_SUFFIX}"
+			else
+				apt_get_install "linux-libc-dev-$HOST_ARCH-cross"
+			fi
+		;;
+		hurd)
+			apt_get_install "gnumach-dev:$1" "hurd-headers-dev:$1" "mig:$HOST_ARCH_SUFFIX"
+			test "$2" = stage1 || apt_get_install "libihash-dev:$1"
+		;;
+		kfreebsd)
+			apt_get_install "kfreebsd-kernel-headers:$1"
+		;;
+		*)
+			echo "rebootstrap-error: unsupported kernel"
+			exit 1
+		;;
+	esac
+}
 patch_glibc() {
 	echo "patching eglibc to avoid dependency on libc6 from libc6-dev in stage1"
 	drop_privs sed -i '/^Depends:/s/\(\(libc[0-9.]\+-[^d]\|@libc@\)[^,]*\)\(,\|$\)/\1 <!stage1>\3/g' debian/control.in/*
@@ -1667,31 +1691,12 @@ EOF
 if test -f "$REPODIR/stamps/${LIBC_NAME}_1"; then
 	echo "skipping rebuild of $LIBC_NAME stage1"
 else
-	if test "$LIBC_NAME" = musl; then
-		$APT_GET build-dep "-a$HOST_ARCH" --arch-only musl
+	cross_build_setup "$LIBC_NAME" "${LIBC_NAME}_1"
+	if test "$LIBC_NAME" = glibc; then
+		"$(get_hook builddep glibc)" "$HOST_ARCH" stage1
 	else
-		$APT_GET install gettext file quilt autoconf gawk debhelper rdfind symlinks binutils bison netbase "gcc-$GCC_VER$HOST_ARCH_SUFFIX"
-		case "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" in
-			linux)
-				if test "$ENABLE_MULTIARCH_GCC" = yes; then
-					$APT_GET install "linux-libc-dev:$HOST_ARCH"
-				else
-					$APT_GET install "linux-libc-dev-$HOST_ARCH-cross"
-				fi
-			;;
-			hurd)
-				apt_get_install "gnumach-dev:$HOST_ARCH" "hurd-headers-dev:$HOST_ARCH" "mig$HOST_ARCH_SUFFIX"
-			;;
-			kfreebsd)
-				$APT_GET install "kfreebsd-kernel-headers:$HOST_ARCH"
-			;;
-			*)
-				echo "rebootstrap-error: unsupported kernel"
-				exit 1
-			;;
-		esac
+		apt_get_build_dep "-a$HOST_ARCH" --arch-only ./
 	fi
-	cross_build_setup "$LIBC_NAME" "${LIBC_NAME}1"
 	if test "$ENABLE_MULTILIB" = yes; then
 		dpkg-checkbuilddeps -B "-a$HOST_ARCH" -Pstage1 || : # tell unmet build depends
 		drop_privs DEB_GCC_VERSION="-$GCC_VER" dpkg-buildpackage -B -uc -us "-a$HOST_ARCH" -d -Pstage1
@@ -1724,7 +1729,7 @@ else
 	fi
 	touch "$REPODIR/stamps/${LIBC_NAME}_1"
 	cd ..
-	drop_privs rm -Rf "${LIBC_NAME}1"
+	drop_privs rm -Rf "${LIBC_NAME}_1"
 fi
 progress_mark "$LIBC_NAME stage1 cross build"
 
@@ -1807,27 +1812,12 @@ apt_get_remove $(dpkg-query -W "libc[0-9]*:$(dpkg --print-architecture)" | sed "
 if test -f "$REPODIR/stamps/${LIBC_NAME}_2"; then
 	echo "skipping rebuild of $LIBC_NAME stage2"
 else
-	$APT_GET install gettext file quilt autoconf gawk debhelper rdfind symlinks binutils bison netbase "gcc-$GCC_VER$HOST_ARCH_SUFFIX"
-	case "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" in
-		linux)
-			if test "$ENABLE_MULTIARCH_GCC" = yes; then
-				$APT_GET install "linux-libc-dev:$HOST_ARCH"
-			else
-				$APT_GET install "linux-libc-dev-$HOST_ARCH-cross"
-			fi
-		;;
-		hurd)
-			apt_get_install "gnumach-dev:$HOST_ARCH" "hurd-headers-dev:$HOST_ARCH" "libihash-dev:$HOST_ARCH" "mig$HOST_ARCH_SUFFIX"
-		;;
-		kfreebsd)
-			$APT_GET install "kfreebsd-kernel-headers:$HOST_ARCH"
-		;;
-		*)
-			echo "rebootstrap-error: unsupported kernel"
-			exit 1
-		;;
-	esac
-	cross_build_setup "$LIBC_NAME" "${LIBC_NAME}2"
+	cross_build_setup "$LIBC_NAME" "${LIBC_NAME}_2"
+	if test "$LIBC_NAME" = glibc; then
+		"$(get_hook builddep glibc)" "$HOST_ARCH" stage2
+	else
+		apt_get_build_dep "-a$HOST_ARCH" --arch-only ./
+	fi
 	if test "$ENABLE_MULTILIB" = yes; then
 		dpkg-checkbuilddeps -B "-a$HOST_ARCH" -Pstage2 || : # tell unmet build depends
 		drop_privs DEB_GCC_VERSION=-$GCC_VER dpkg-buildpackage -B -uc -us "-a$HOST_ARCH" -d -Pstage2
@@ -1855,7 +1845,7 @@ else
 	touch "$REPODIR/stamps/${LIBC_NAME}_2"
 	compare_native ./*.deb
 	cd ..
-	drop_privs rm -Rf "${LIBC_NAME}2"
+	drop_privs rm -Rf "${LIBC_NAME}_2"
 fi
 progress_mark "$LIBC_NAME stage2 cross build"
 
