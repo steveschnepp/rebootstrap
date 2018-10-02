@@ -1416,7 +1416,7 @@ builddep_glibc() {
 	case "$(dpkg-architecture "-a$1" -qDEB_HOST_ARCH_OS)" in
 		linux)
 			if test "$ENABLE_MULTIARCH_GCC" = yes; then
-				apt_get_install "linux-libc-dev${CROSS_ARCH_SUFFIX}"
+				apt_get_install "linux-libc-dev:$HOST_ARCH"
 			else
 				apt_get_install "linux-libc-dev-$HOST_ARCH-cross"
 			fi
