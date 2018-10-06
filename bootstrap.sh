@@ -2651,6 +2651,7 @@ patch_pcre3() {
 add_automatic readline5
 add_automatic rtmpdump
 add_automatic sed
+add_automatic shadow
 add_automatic slang2
 add_automatic spdylay
 add_automatic sqlite3
