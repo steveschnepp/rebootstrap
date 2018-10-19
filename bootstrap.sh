@@ -1812,6 +1812,14 @@ EOF
 add_automatic autogen
 add_automatic base-files
 add_automatic bash
+
+add_automatic blt
+buildenv_blt() {
+	# blt now knows which CC to use, but its configure misdetects tons of
+	# stuff when you tell it explicitly.
+	unset CC
+}
+
 add_automatic bsdmainutils
 
 builddep_build_essential() {
@@ -2508,6 +2516,7 @@ done
 add_need acl # by coreutils, systemd
 add_need attr # by coreutils, libcap-ng
 add_need autogen # by gcc-VER, gnutls28
+add_need blt # by pythonX.Y
 add_need bsdmainutils # for man-db
 add_need bzip2 # by perl
 add_need cloog # by gcc-VER
@@ -2551,7 +2560,6 @@ add_need sqlite3 # by python2.7
 add_need tcl8.6 # by newt
 add_need tcltk-defaults # by python2.7
 dpkg-architecture "-a$HOST_ARCH" -ilinux-any && add_need tcp-wrappers # by audit
-add_need tk8.6 # by blt
 add_need xz-utils # by libxml2
 
 automatically_cross_build_packages() {
