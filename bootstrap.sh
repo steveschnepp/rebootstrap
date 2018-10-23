@@ -2230,6 +2230,7 @@ add_automatic make-dfsg
 add_automatic man-db
 add_automatic mawk
 add_automatic mpclib3
+add_automatic mpdecimal
 add_automatic mpfr4
 add_automatic nettle
 add_automatic nghttp2
@@ -2549,6 +2550,7 @@ add_need make-dfsg # for build-essential
 add_need man-db # for debhelper
 add_need mawk # for base-files (alternatively: gawk)
 add_need mpclib3 # by gcc-VER
+add_need mpdecimal # by python3.X
 add_need mpfr4 # by gcc-VER
 add_need nettle # by unbound
 add_need openssl # by cyrus-sasl2
