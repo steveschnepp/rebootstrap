@@ -619,7 +619,348 @@ if test "$ENABLE_MULTIARCH_GCC" != yes; then
 	apt_get_install dpkg-cross
 fi
 
-# gcc0
+automatic_packages=
+add_automatic() { automatic_packages=$(set_add "$automatic_packages" "$1"); }
+
+add_automatic acl
+add_automatic adns
+
+builddep_apt() {
+	# g++ dependency needs toolchain translation
+	assert_built "bzip2 curl db-defaults db5.3 gnutls28 lz4 xz-utils zlib libzstd"
+	apt_get_install cmake debhelper dh-systemd docbook-xml docbook-xsl dpkg-dev gettext "libbz2-dev:$1" "libcurl4-gnutls-dev:$1" "libdb-dev:$1" "libgnutls28-dev:$1" "liblz4-dev:$1" "liblzma-dev:$1" pkg-config po4a xsltproc "zlib1g-dev:$1" "libzstd-dev:$1"
+}
+
+add_automatic attr
+patch_attr() {
+	echo "patching attr to support musl #782830"
+	drop_privs patch -p1 <<'EOF'
+diff -Nru attr-2.4.47/debian/patches/20-remove-attr-xattr.patch attr-2.4.47/debian/patches/20-remove-attr-xattr.patch
+--- attr-2.4.47/debian/patches/20-remove-attr-xattr.patch
++++ attr-2.4.47/debian/patches/20-remove-attr-xattr.patch
+@@ -0,0 +1,89 @@
++Description: Backport upstream patch for musl support
++ Drop attr/xattr.h and use sys/xattr.h from libc instead.
++Author: Szabolcs Nagy <nsz@port70.net>
++Origin: upstream, http://git.savannah.gnu.org/cgit/attr.git/commit/?id=7921157890d07858d092f4003ca4c6bae9fd2c38
++Last-Update: 2015-04-18
++
++Index: attr-2.4.47/include/attributes.h
++===================================================================
++--- attr-2.4.47.orig/include/attributes.h
+++++ attr-2.4.47/include/attributes.h
++@@ -21,6 +21,10 @@
++ #ifdef __cplusplus
++ extern "C" {
++ #endif
+++#include <errno.h>
+++#ifndef ENOATTR
+++# define ENOATTR ENODATA
+++#endif
++ 
++ /*
++  *	An almost-IRIX-compatible extended attributes API
++Index: attr-2.4.47/include/xattr.h
++===================================================================
++--- attr-2.4.47.orig/include/xattr.h
+++++ attr-2.4.47/include/xattr.h
++@@ -19,45 +19,13 @@
++  */
++ #ifndef __XATTR_H__
++ #define __XATTR_H__
++ 
++ #include <features.h>
++ 
+++#include <sys/xattr.h>
++ #include <errno.h>
++ #ifndef ENOATTR
++ # define ENOATTR ENODATA        /* No such attribute */
++ #endif
++-
++-#define XATTR_CREATE  0x1       /* set value, fail if attr already exists */
++-#define XATTR_REPLACE 0x2       /* set value, fail if attr does not exist */
++-
++-
++-__BEGIN_DECLS
++-
++-extern int setxattr (const char *__path, const char *__name,
++-		      const void *__value, size_t __size, int __flags) __THROW;
++-extern int lsetxattr (const char *__path, const char *__name,
++-		      const void *__value, size_t __size, int __flags) __THROW;
++-extern int fsetxattr (int __filedes, const char *__name,
++-		      const void *__value, size_t __size, int __flags) __THROW;
++-
++-extern ssize_t getxattr (const char *__path, const char *__name,
++-				void *__value, size_t __size) __THROW;
++-extern ssize_t lgetxattr (const char *__path, const char *__name,
++-				void *__value, size_t __size) __THROW;
++-extern ssize_t fgetxattr (int __filedes, const char *__name,
++-				void *__value, size_t __size) __THROW;
++-
++-extern ssize_t listxattr (const char *__path, char *__list,
++-				size_t __size) __THROW;
++-extern ssize_t llistxattr (const char *__path, char *__list,
++-				size_t __size) __THROW;
++-extern ssize_t flistxattr (int __filedes, char *__list,
++-				size_t __size) __THROW;
++-
++-extern int removexattr (const char *__path, const char *__name) __THROW;
++-extern int lremovexattr (const char *__path, const char *__name) __THROW;
++-extern int fremovexattr (int __filedes,   const char *__name) __THROW;
++-
++-__END_DECLS
++ 
++ #endif	/* __XATTR_H__ */
++Index: attr-2.4.47/libattr/Makefile
++===================================================================
++--- attr-2.4.47.orig/libattr/Makefile
+++++ attr-2.4.47/libattr/Makefile
++@@ -29,12 +29,6 @@ LT_AGE = 1
++ CFILES = libattr.c attr_copy_fd.c attr_copy_file.c attr_copy_check.c attr_copy_action.c
++ HFILES = libattr.h
++ 
++-ifeq ($(PKG_PLATFORM),linux)
++-CFILES += syscalls.c
++-else
++-LSRCFILES = syscalls.c
++-endif
++-
++ LCFLAGS = -include libattr.h
++ 
++ default: $(LTLIBRARY)
+diff -Nru attr-2.4.47/debian/patches/series attr-2.4.47/debian/patches/series
+--- attr-2.4.47/debian/patches/series
++++ attr-2.4.47/debian/patches/series
+@@ -1,3 +1,4 @@
+ 01-configure.in.patch
+ 02-687531-fix-missing-ldflags.patch
+ 12-643587-attr-autoconf-version-check.patch
++20-remove-attr-xattr.patch
+EOF
+	drop_privs quilt push -a
+}
+
+add_automatic autogen
+add_automatic base-files
+add_automatic bash
+
+patch_binutils() {
+	if test "$HOST_ARCH" = "hurd-amd64"; then
+		echo "patching binutils for hurd-amd64"
+		drop_privs patch -p1 <<'EOF'
+--- a/bfd/config.bfd
++++ b/bfd/config.bfd
+@@ -671,7 +671,7 @@
+     targ_selvecs="i386_elf32_vec i386_aout_nbsd_vec i386_coff_vec i386_pei_vec x86_64_pei_vec l1om_elf64_vec k1om_elf64_vec"
+     want64=true
+     ;;
+-  x86_64-*-linux-*)
++  x86_64-*-linux-* | x86_64-*-gnu*)
+     targ_defvec=x86_64_elf64_vec
+     targ_selvecs="i386_elf32_vec x86_64_elf32_vec i386_aout_linux_vec i386_pei_vec x86_64_pei_vec l1om_elf64_vec k1om_elf64_vec"
+     want64=true
+--- a/ld/configure.tgt
++++ b/ld/configure.tgt
+@@ -311,6 +311,7 @@
+ i[3-7]86-*-mach*)	targ_emul=i386mach ;;
+ i[3-7]86-*-gnu*)	targ_emul=elf_i386
+ 			targ_extra_emuls=elf_iamcu ;;
++x86_64-*-gnu*)		targ_emul=elf_x86_64 ;;
+ i[3-7]86-*-msdos*)	targ_emul=i386msdos; targ_extra_emuls=i386aout ;;
+ i[3-7]86-*-moss*)	targ_emul=i386moss; targ_extra_emuls=i386msdos ;;
+ i[3-7]86-*-winnt*)	targ_emul=i386pe ;
+EOF
+	fi
+	if test "$HOST_ARCH" = "kfreebsd-armhf"; then
+		echo "patching binutils for kfreebsd-armhf"
+		drop_privs patch -p1 <<'EOF'
+--- a/bfd/config.bfd
++++ b/bfd/config.bfd
+@@ -337,7 +337,7 @@
+     targ_selvecs=arm_elf32_be_vec
+     ;;
+   arm-*-elf | arm*-*-freebsd* | arm*-*-linux-* | arm*-*-conix* | \
+-  arm*-*-uclinux* | arm-*-kfreebsd*-gnu | \
++  arm*-*-uclinux* | arm-*-kfreebsd*-gnu* | \
+   arm*-*-eabi* | arm-*-rtems*)
+     targ_defvec=arm_elf32_le_vec
+     targ_selvecs=arm_elf32_be_vec
+--- a/gas/configure.tgt
++++ b/gas/configure.tgt
+@@ -140,7 +140,8 @@
+   arm-*-conix*)				fmt=elf ;;
+   arm-*-freebsd[89].* | armeb-*-freebsd[89].*)
+ 					fmt=elf  em=freebsd ;;
+-  arm-*-freebsd* | armeb-*-freebsd*)	fmt=elf  em=armfbsdeabi ;;
++  arm-*-freebsd* | armeb-*-freebsd* | arm-*-kfreebsd-gnueabi*)
++                                       fmt=elf  em=armfbsdeabi ;;
+   arm*-*-freebsd*)			fmt=elf  em=armfbsdvfp ;;
+   arm-*-linux*aout*)			fmt=aout em=linux ;;
+   arm-*-linux-*eabi*)			fmt=elf  em=armlinuxeabi ;;
+--- a/ld/configure.tgt
++++ b/ld/configure.tgt
+@@ -83,7 +83,7 @@
+ arm-*-coff)		targ_emul=armcoff ;;
+ arm*b-*-freebsd*)	targ_emul=armelfb_fbsd
+ 			targ_extra_emuls="armelf_fbsd armelf" ;;
+-arm*-*-freebsd* | arm-*-kfreebsd*-gnu)
++arm*-*-freebsd* | arm-*-kfreebsd*-gnu*)
+ 	       		targ_emul=armelf_fbsd
+ 			targ_extra_emuls="armelfb_fbsd armelf" ;;
+ armeb-*-netbsdelf*)	targ_emul=armelfb_nbsd;
+EOF
+	fi
+	echo "patching binutils to discard ldscripts"
+	# They cause file conflicts with binutils and the in-archive cross
+	# binutils discard ldscripts as well.
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/rules
++++ b/debian/rules
+@@ -751,6 +751,7 @@
+ 		mandir=$(pwd)/$(D_CROSS)/$(PF)/share/man install
+ 
+ 	rm -rf \
++		$(D_CROSS)/$(PF)/lib/ldscripts \
+ 		$(D_CROSS)/$(PF)/share/info \
+ 		$(D_CROSS)/$(PF)/share/locale
+ 
+EOF
+	if test "$HOST_ARCH" = hppa; then
+		echo "patching binutils to discard hppa64 ldscripts"
+		# They cause file conflicts with binutils and the in-archive
+		# cross binutils discard ldscripts as well.
+		drop_privs patch -p1 <<'EOF'
+--- a/debian/rules
++++ b/debian/rules
+@@ -1233,6 +1233,7 @@
+ 		$(d_hppa64)/$(PF)/lib/$(DEB_HOST_MULTIARCH)/.
+
+ 	: # Now get rid of just about everything in binutils-hppa64
++	rm -rf $(d_hppa64)/$(PF)/lib/ldscripts
+ 	rm -rf $(d_hppa64)/$(PF)/man
+ 	rm -rf $(d_hppa64)/$(PF)/info
+ 	rm -rf $(d_hppa64)/$(PF)/include
+EOF
+	fi
+}
+
+add_automatic blt
+buildenv_blt() {
+	# blt now knows which CC to use, but its configure misdetects tons of
+	# stuff when you tell it explicitly.
+	unset CC
+}
+
+add_automatic bsdmainutils
+
+builddep_build_essential() {
+	# g++ dependency needs cross translation
+	$APT_GET install debhelper python3
+}
+
+add_automatic bzip2
+add_automatic c-ares
+add_automatic cloog
+add_automatic coreutils
+
+builddep_cracklib2() {
+	# python-all-dev lacks build profile annotation
+	$APT_GET install autoconf automake autotools-dev chrpath debhelper docbook-utils docbook-xml dpkg-dev libtool python dh-python
+	# additional B-D for cross
+	$APT_GET install cracklib-runtime
+}
+
+add_automatic curl
+
+builddep_cyrus_sasl2() {
+	assert_built "db-defaults db5.3 openssl pam"
+	# many packages droppable in stage1
+	$APT_GET install debhelper quilt automake autotools-dev "libdb-dev:$1" "libpam0g-dev:$1" "libssl-dev:$1" chrpath groff-base po-debconf docbook-to-man dh-autoreconf
+}
+patch_cyrus_sasl2() {
+	echo "fixing cyrus-sasl2 compilation of build tools #792851"
+	drop_privs patch -p1 <<'EOF'
+diff -Nru cyrus-sasl2-2.1.26.dfsg1/debian/patches/cross.patch cyrus-sasl2-2.1.26.dfsg1/debian/patches/cross.patch
+--- cyrus-sasl2-2.1.26.dfsg1/debian/patches/cross.patch
++++ cyrus-sasl2-2.1.26.dfsg1/debian/patches/cross.patch
+@@ -0,0 +1,17 @@
++Description: fix cross compialtion
++Author: Helmut Grohne <helmut@subdivi.de>
++
++ * Remove SASL_DB_LIB as it expands to -ldb and make fails to find a build arch
++   -ldb.
++
++--- a/sasldb/Makefile.am
+++++ b/sasldb/Makefile.am
++@@ -55,7 +55,7 @@
++ 
++ libsasldb_la_SOURCES = allockey.c sasldb.h
++ EXTRA_libsasldb_la_SOURCES = $(extra_common_sources)
++-libsasldb_la_DEPENDENCIES = $(SASL_DB_BACKEND) $(SASL_DB_LIB)
+++libsasldb_la_DEPENDENCIES = $(SASL_DB_BACKEND)
++ libsasldb_la_LIBADD = $(SASL_DB_BACKEND) $(SASL_DB_LIB)
++ 
++ # Prevent make dist stupidity
+diff -Nru cyrus-sasl2-2.1.26.dfsg1/debian/rules cyrus-sasl2-2.1.26.dfsg1/debian/rules
+--- cyrus-sasl2-2.1.26.dfsg1/debian/rules
++++ cyrus-sasl2-2.1.26.dfsg1/debian/rules
+@@ -25,4 +25,8 @@
+ include /usr/share/dpkg/default.mk
+ 
++ifeq ($(origin CC),default)
++export CC=$(DEB_HOST_GNU_TYPE)-gcc
++endif
++
+ # Save Berkeley DB used for building the package
+ BDB_VERSION ?= $(shell LC_ALL=C dpkg-query -l 'libdb[45].[0-9]-dev' | grep ^ii | sed -e 's|.*\s\libdb\([45]\.[0-9]\)-dev\s.*|\1|')
+diff -Nru cyrus-sasl2-2.1.26.dfsg1/debian/sample/Makefile cyrus-sasl2-2.1.26.dfsg1/debian/sample/Makefile
+--- cyrus-sasl2-2.1.26.dfsg1/debian/sample/Makefile
++++ cyrus-sasl2-2.1.26.dfsg1/debian/sample/Makefile
+@@ -7,7 +7,7 @@
+ all: sample-server sample-client
+ 
+ sample-server: sample-server.c
+-	gcc $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) -g -o sample-server sample-server.c -I. -I$(T) -I$(INCDIR1) -I$(INCDIR2) -L$(LIBDIR) -lsasl2
++	$(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) -g -o sample-server sample-server.c -I. -I$(T) -I$(INCDIR1) -I$(INCDIR2) -L$(LIBDIR) -lsasl2
+ 
+ sample-client: sample-client.c
+-	gcc $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) -g -o sample-client sample-client.c -I. -I$(T) -I$(INCDIR1) -I$(INCDIR2) -L$(LIBDIR) -lsasl2
++	$(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) -g -o sample-client sample-client.c -I. -I$(T) -I$(INCDIR1) -I$(INCDIR2) -L$(LIBDIR) -lsasl2
+EOF
+	echo cross.patch | drop_privs tee -a debian/patches/series >/dev/null
+	drop_privs quilt push -a
+}
+
+add_automatic dash
+add_automatic datefudge
+add_automatic db-defaults
+
+builddep_db5_3() {
+	# java stuff lacks build profile annotation
+	apt_get_install debhelper autotools-dev procps
+}
+
+add_automatic debianutils
+
+add_automatic diffutils
+buildenv_diffutils() {
+	if dpkg-architecture "-a$1" -ignu-any-any; then
+		export gl_cv_func_getopt_gnu=yes
+	fi
+}
+
+add_automatic dpkg
+add_automatic e2fsprogs
+add_automatic elfutils
+add_automatic expat
+add_automatic file
+add_automatic findutils
+add_automatic flex
+add_automatic fontconfig
+add_automatic freebsd-glue
+add_automatic freetype
+add_automatic fuse
+
 patch_gcc_multilib_deps() {
 	test "$ENABLE_MULTIARCH_GCC" != yes || return 0
 	echo "fixing multilib libc dependencies #862756"
@@ -754,370 +1095,68 @@ patch_gcc_8() {
 	patch_gcc_multilib_deps
 	patch_gcc_wdotap
 }
-# choosing libatomic1 arbitrarily here, cause it never bumped soname
-BUILD_GCC_MULTIARCH_VER=`apt-cache show --no-all-versions libatomic1 | sed 's/^Source: gcc-\([0-9.]*\)$/\1/;t;d'`
-if test "$GCC_VER" != "$BUILD_GCC_MULTIARCH_VER"; then
-	echo "host gcc version ($GCC_VER) and build gcc version ($BUILD_GCC_MULTIARCH_VER) mismatch. need different build gcc"
-if dpkg --compare-versions "$GCC_VER" gt "$BUILD_GCC_MULTIARCH_VER"; then
-	echo "deb [ arch=$(dpkg --print-architecture) ] $MIRROR experimental main" > /etc/apt/sources.list.d/tmp-experimental.list
-	$APT_GET update
-	$APT_GET -t experimental install g++ g++-$GCC_VER
-	rm -f /etc/apt/sources.list.d/tmp-experimental.list
-	$APT_GET update
-elif test -f "$REPODIR/stamps/gcc_0"; then
-	echo "skipping rebuild of build gcc"
-	$APT_GET --force-yes dist-upgrade # downgrade!
-else
-	$APT_GET build-dep --arch-only gcc-$GCC_VER
-	# dependencies for common libs no longer declared
-	$APT_GET install doxygen graphviz ghostscript texlive-latex-base xsltproc docbook-xsl-ns
-	cross_build_setup "gcc-$GCC_VER" gcc0
-	(
-		export gcc_cv_libc_provides_ssp=yes
-		nolang=$(set_add "${GCC_NOLANG:-}" biarch)
-		export DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=$(join_words , $nolang)"
-		drop_privs_exec dpkg-buildpackage -B -uc -us
-	)
-	cd ..
-	ls -l
-	reprepro include rebootstrap-native ./*.changes
-	drop_privs rm -fv ./*-plugin-dev_*.deb ./*-dbg_*.deb
-	dpkg -i *.deb
-	touch "$REPODIR/stamps/gcc_0"
-	cd ..
-	drop_privs rm -Rf gcc0
-fi
-progress_mark "build compiler complete"
-else
-echo "host gcc version and build gcc version match. good for multiarch"
-fi
 
-# binutils
-patch_binutils() {
-	if test "$HOST_ARCH" = "hurd-amd64"; then
-		echo "patching binutils for hurd-amd64"
-		drop_privs patch -p1 <<'EOF'
---- a/bfd/config.bfd
-+++ b/bfd/config.bfd
-@@ -671,7 +671,7 @@
-     targ_selvecs="i386_elf32_vec i386_aout_nbsd_vec i386_coff_vec i386_pei_vec x86_64_pei_vec l1om_elf64_vec k1om_elf64_vec"
-     want64=true
-     ;;
--  x86_64-*-linux-*)
-+  x86_64-*-linux-* | x86_64-*-gnu*)
-     targ_defvec=x86_64_elf64_vec
-     targ_selvecs="i386_elf32_vec x86_64_elf32_vec i386_aout_linux_vec i386_pei_vec x86_64_pei_vec l1om_elf64_vec k1om_elf64_vec"
-     want64=true
---- a/ld/configure.tgt
-+++ b/ld/configure.tgt
-@@ -311,6 +311,7 @@
- i[3-7]86-*-mach*)	targ_emul=i386mach ;;
- i[3-7]86-*-gnu*)	targ_emul=elf_i386
- 			targ_extra_emuls=elf_iamcu ;;
-+x86_64-*-gnu*)		targ_emul=elf_x86_64 ;;
- i[3-7]86-*-msdos*)	targ_emul=i386msdos; targ_extra_emuls=i386aout ;;
- i[3-7]86-*-moss*)	targ_emul=i386moss; targ_extra_emuls=i386msdos ;;
- i[3-7]86-*-winnt*)	targ_emul=i386pe ;
-EOF
+buildenv_gdbm() {
+	if dpkg-architecture "-a$1" -ignu-any-any; then
+		export ac_cv_func_mmap_fixed_mapped=yes
 	fi
-	if test "$HOST_ARCH" = "kfreebsd-armhf"; then
-		echo "patching binutils for kfreebsd-armhf"
-		drop_privs patch -p1 <<'EOF'
---- a/bfd/config.bfd
-+++ b/bfd/config.bfd
-@@ -337,7 +337,7 @@
-     targ_selvecs=arm_elf32_be_vec
-     ;;
-   arm-*-elf | arm*-*-freebsd* | arm*-*-linux-* | arm*-*-conix* | \
--  arm*-*-uclinux* | arm-*-kfreebsd*-gnu | \
-+  arm*-*-uclinux* | arm-*-kfreebsd*-gnu* | \
-   arm*-*-eabi* | arm-*-rtems*)
-     targ_defvec=arm_elf32_le_vec
-     targ_selvecs=arm_elf32_be_vec
---- a/gas/configure.tgt
-+++ b/gas/configure.tgt
-@@ -140,7 +140,8 @@
-   arm-*-conix*)				fmt=elf ;;
-   arm-*-freebsd[89].* | armeb-*-freebsd[89].*)
- 					fmt=elf  em=freebsd ;;
--  arm-*-freebsd* | armeb-*-freebsd*)	fmt=elf  em=armfbsdeabi ;;
-+  arm-*-freebsd* | armeb-*-freebsd* | arm-*-kfreebsd-gnueabi*)
-+                                       fmt=elf  em=armfbsdeabi ;;
-   arm*-*-freebsd*)			fmt=elf  em=armfbsdvfp ;;
-   arm-*-linux*aout*)			fmt=aout em=linux ;;
-   arm-*-linux-*eabi*)			fmt=elf  em=armlinuxeabi ;;
---- a/ld/configure.tgt
-+++ b/ld/configure.tgt
-@@ -83,7 +83,7 @@
- arm-*-coff)		targ_emul=armcoff ;;
- arm*b-*-freebsd*)	targ_emul=armelfb_fbsd
- 			targ_extra_emuls="armelf_fbsd armelf" ;;
--arm*-*-freebsd* | arm-*-kfreebsd*-gnu)
-+arm*-*-freebsd* | arm-*-kfreebsd*-gnu*)
- 	       		targ_emul=armelf_fbsd
- 			targ_extra_emuls="armelfb_fbsd armelf" ;;
- armeb-*-netbsdelf*)	targ_emul=armelfb_nbsd;
-EOF
-	fi
-	echo "patching binutils to discard ldscripts"
-	# They cause file conflicts with binutils and the in-archive cross
-	# binutils discard ldscripts as well.
+}
+
+add_automatic glib2.0
+builddep_glib2_0() {
+	apt_get_build_dep "-a$1" --arch-only -P nocheck ./
+	# FTCBFS #908334
+	apt_get_install libglib2.0-dev-bin
+}
+patch_glib2_0() {
+	echo "fixing FTCBFS FTCBFS #908334"
 	drop_privs patch -p1 <<'EOF'
---- a/debian/rules
-+++ b/debian/rules
-@@ -751,6 +751,7 @@
- 		mandir=$(pwd)/$(D_CROSS)/$(PF)/share/man install
- 
- 	rm -rf \
-+		$(D_CROSS)/$(PF)/lib/ldscripts \
- 		$(D_CROSS)/$(PF)/share/info \
- 		$(D_CROSS)/$(PF)/share/locale
- 
+--- a/tests/gobject/Makefile.am
++++ b/tests/gobject/Makefile.am
+@@ -51,19 +51,23 @@
+ installed_test_programs += timeloop-closure
+ endif
+
+-# The marshal test requires running a binary, which means we cannot
+-# build it when cross-compiling
+-if !CROSS_COMPILING
++# The marshal test requires running a binary, use the native system copy for
++# cross compilation.
++if CROSS_COMPILING
++glib_genmarshal=glib-genmarshal
++else
+ glib_genmarshal=$(top_builddir)/gobject/glib-genmarshal
++glib_genmarshal_dep=$(glib_genmarshal)
++endif
+
+ testmarshal.h: stamp-testmarshal.h
+ 	@true
+-stamp-testmarshal.h: testmarshal.list $(glib_genmarshal)
++stamp-testmarshal.h: testmarshal.list $(glib_genmarshal_dep)
+ 	$(AM_V_GEN) $(glib_genmarshal) --prefix=test_marshal $(srcdir)/testmarshal.list --header >> xgen-gmh \
+ 	&& (cmp -s xgen-gmh testmarshal.h 2>/dev/null || cp xgen-gmh testmarshal.h) \
+ 	&& rm -f xgen-gmh xgen-gmh~ \
+ 	&& echo timestamp > $@
+-testmarshal.c: testmarshal.h testmarshal.list $(glib_genmarshal)
++testmarshal.c: testmarshal.h testmarshal.list $(glib_genmarshal_dep)
+ 	$(AM_V_GEN) (echo "#include \"testmarshal.h\""; $(glib_genmarshal) --prefix=test_marshal $(srcdir)/testmarshal.list --body) >> xgen-gmc \
+ 	&& cp xgen-gmc testmarshal.c \
+ 	&& rm -f xgen-gmc xgen-gmc~
+@@ -71,4 +75,3 @@
+ BUILT_SOURCES += testmarshal.h testmarshal.c
+ CLEANFILES += stamp-testmarshal.h testmarshal.h testmarshal.c
+ EXTRA_DIST += testcommon.h testmarshal.list
+-endif # !CROSS_COMPILING
+\ No newline at end of file
 EOF
-	if test "$HOST_ARCH" = hppa; then
-		echo "patching binutils to discard hppa64 ldscripts"
-		# They cause file conflicts with binutils and the in-archive
-		# cross binutils discard ldscripts as well.
-		drop_privs patch -p1 <<'EOF'
---- a/debian/rules
-+++ b/debian/rules
-@@ -1233,6 +1233,7 @@
- 		$(d_hppa64)/$(PF)/lib/$(DEB_HOST_MULTIARCH)/.
-
- 	: # Now get rid of just about everything in binutils-hppa64
-+	rm -rf $(d_hppa64)/$(PF)/lib/ldscripts
- 	rm -rf $(d_hppa64)/$(PF)/man
- 	rm -rf $(d_hppa64)/$(PF)/info
- 	rm -rf $(d_hppa64)/$(PF)/include
-EOF
-	fi
 }
-if test -f "$REPODIR/stamps/cross-binutils"; then
-	echo "skipping rebuild of binutils-target"
-else
-	cross_build_setup binutils
-	check_binNMU
-	apt_get_build_dep --arch-only -Pnocheck ./
-	drop_privs TARGET=$HOST_ARCH dpkg-buildpackage -B -Pnocheck --target=stamps/control
-	drop_privs TARGET=$HOST_ARCH dpkg-buildpackage -B -uc -us -Pnocheck
-	cd ..
-	ls -l
-	pickup_packages *.changes
-	$APT_GET install binutils$HOST_ARCH_SUFFIX
-	assembler="`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE`-as"
-	if ! which "$assembler"; then echo "$assembler missing in binutils package"; exit 1; fi
-	if ! drop_privs "$assembler" -o test.o /dev/null; then echo "binutils fail to execute"; exit 1; fi
-	if ! test -f test.o; then echo "binutils fail to create object"; exit 1; fi
-	check_arch test.o "$HOST_ARCH"
-	touch "$REPODIR/stamps/cross-binutils"
-	cd ..
-	drop_privs rm -Rf binutils
-fi
-progress_mark "cross binutils"
-
-if test "$HOST_ARCH" = hppa && ! test -f "$REPODIR/stamps/cross-binutils-hppa64"; then
-	cross_build_setup binutils binutils-hppa64
-	check_binNMU
-	apt_get_build_dep --arch-only -Pnocheck ./
-	drop_privs TARGET=hppa64-linux-gnu dpkg-buildpackage -B -Pnocheck --target=stamps/control
-	drop_privs TARGET=hppa64-linux-gnu dpkg-buildpackage -B -uc -us -Pnocheck
-	cd ..
-	ls -l
-	pickup_additional_packages binutils-hppa64-linux-gnu_*.deb
-	$APT_GET install binutils-hppa64-linux-gnu
-	if ! which hppa64-linux-gnu-as; then echo "hppa64-linux-gnu-as missing in binutils package"; exit 1; fi
-	if ! drop_privs hppa64-linux-gnu-as -o test.o /dev/null; then echo "binutils-hppa64 fail to execute"; exit 1; fi
-	if ! test -f test.o; then echo "binutils-hppa64 fail to create object"; exit 1; fi
-	check_arch test.o hppa64
-	touch "$REPODIR/stamps/cross-binutils-hppa64"
-	cd ..
-	drop_privs rm -Rf binutils-hppa64-linux-gnu
-	progress_mark "cross binutils-hppa64"
-fi
-
-# linux
-patch_linux() {
-	local kernel_arch comment
-	kernel_arch=
-	comment="just building headers yet"
-	case "$HOST_ARCH" in
-		arm|ia64|nios2)
-			kernel_arch=$HOST_ARCH
-		;;
-		arm64ilp32) kernel_arch=arm64; ;;
-		mipsr6|mipsr6el|mipsn32r6|mipsn32r6el|mips64r6|mips64r6el)
-			kernel_arch=defines-only
-		;;
-		powerpcel) kernel_arch=powerpc; ;;
-		riscv64) kernel_arch=riscv; ;;
-		*-linux-*)
-			if ! test -d "debian/config/$HOST_ARCH"; then
-				kernel_arch=$(sed 's/^kernel-arch: //;t;d' < "debian/config/${HOST_ARCH#*-linux-}/defines")
-				comment="$HOST_ARCH must be part of a multiarch installation with a ${HOST_ARCH#*-linux-*} kernel"
-			fi
-		;;
-	esac
-	if test -n "$kernel_arch"; then
-		if test "$kernel_arch" != defines-only; then
-			echo "patching linux for $HOST_ARCH with kernel-arch $kernel_arch"
-			drop_privs mkdir -p "debian/config/$HOST_ARCH"
-			drop_privs tee "debian/config/$HOST_ARCH/defines" >/dev/null <<EOF
-[base]
-kernel-arch: $kernel_arch
-featuresets:
-# empty; $comment
-EOF
-		else
-			echo "patching linux to enable $HOST_ARCH"
-		fi
-		drop_privs sed -i -e "/^arches:/a\\ $HOST_ARCH" debian/config/defines
-		apt_get_install kernel-wedge
-		drop_privs ./debian/rules debian/rules.gen || : # intentionally exits 1 to avoid being called automatically. we are doing it wrong
-	fi
+buildenv_glib2_0() {
+	export glib_cv_stack_grows=no
+	export glib_cv_uscore=no
+	export ac_cv_func_posix_getgrgid_r=yes
+	export ac_cv_func_posix_getpwuid_r=yes
 }
-if test "`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS`" = "linux"; then
-if test -f "$REPODIR/stamps/linux_1"; then
-	echo "skipping rebuild of linux-libc-dev"
-else
-	cross_build_setup linux
-	check_binNMU
-	if dpkg-architecture -ilinux-any && test "$(dpkg-query -W -f '${Version}' "linux-libc-dev:$(dpkg --print-architecture)")" != "$(dpkg-parsechangelog -SVersion)"; then
-		echo "rebootstrap-warning: working around linux-libc-dev m-a:same skew"
-		apt_get_build_dep --arch-only -Pstage1 ./
-		drop_privs KBUILD_VERBOSE=1 dpkg-buildpackage -B -Pstage1 -uc -us
-	fi
-	apt_get_build_dep --arch-only "-a$HOST_ARCH" -Pstage1 ./
-	drop_privs KBUILD_VERBOSE=1 dpkg-buildpackage -B "-a$HOST_ARCH" -Pstage1 -uc -us
-	cd ..
-	ls -l
-	if test "$ENABLE_MULTIARCH_GCC" != yes; then
-		drop_privs dpkg-cross -M -a "$HOST_ARCH" -b ./*"_$HOST_ARCH.deb"
-	fi
-	pickup_packages *.deb
-	touch "$REPODIR/stamps/linux_1"
-	compare_native ./*.deb
-	cd ..
-	drop_privs rm -Rf linux
-fi
-progress_mark "linux-libc-dev cross build"
-fi
 
-# gnumach
-if test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = hurd; then
-if test -f "$REPODIR/stamps/gnumach_1"; then
-	echo "skipping rebuild of gnumach stage1"
-else
-	$APT_GET install debhelper sharutils autoconf automake texinfo
-	cross_build_setup gnumach gnumach_1
-	drop_privs dpkg-buildpackage -B "-a$HOST_ARCH" -Pstage1 -uc -us
-	cd ..
-	pickup_packages ./*.deb
-	touch "$REPODIR/stamps/gnumach_1"
-	cd ..
-	drop_privs rm -Rf gnumach_1
-fi
-progress_mark "gnumach stage1 cross build"
-fi
-
-if test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = kfreebsd; then
-cross_build kfreebsd-kernel-headers
-fi
-
-# gcc
-if test -f "$REPODIR/stamps/gcc_1"; then
-	echo "skipping rebuild of gcc stage1"
-else
-	apt_get_install debhelper gawk patchutils bison flex lsb-release quilt libtool autoconf2.64 zlib1g-dev libcloog-isl-dev libmpc-dev libmpfr-dev libgmp-dev autogen systemtap-sdt-dev sharutils "binutils$HOST_ARCH_SUFFIX"
-	if test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = linux; then
-		if test "$ENABLE_MULTIARCH_GCC" = yes; then
-			apt_get_install "linux-libc-dev:$HOST_ARCH"
-		else
-			apt_get_install "linux-libc-dev-${HOST_ARCH}-cross"
-		fi
-	fi
-	if test "$HOST_ARCH" = hppa; then
-		$APT_GET install binutils-hppa64-linux-gnu
-	fi
-	cross_build_setup "gcc-$GCC_VER" gcc1
-	dpkg-checkbuilddeps || : # tell unmet build depends
-	echo "$HOST_ARCH" > debian/target
-	(
-		nolang=${GCC_NOLANG:-}
-		test "$ENABLE_MULTILIB" = yes || nolang=$(set_add "$nolang" biarch)
-		export DEB_STAGE=stage1
-		export DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS${nolang:+ nolang=$(join_words , $nolang)}"
-		drop_privs dpkg-buildpackage -d -T control
-		dpkg-checkbuilddeps || : # tell unmet build depends again after rewriting control
-		drop_privs_exec dpkg-buildpackage -d -b -uc -us
-	)
-	cd ..
-	ls -l
-	pickup_packages *.changes
-	apt_get_remove gcc-multilib
-	if test "$ENABLE_MULTILIB" = yes && ls | grep -q multilib; then
-		$APT_GET install "gcc-$GCC_VER-multilib$HOST_ARCH_SUFFIX"
-	else
-		rm -vf ./*multilib*.deb
-		$APT_GET install "gcc-$GCC_VER$HOST_ARCH_SUFFIX"
-	fi
-	compiler="`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_GNU_TYPE`-gcc-$GCC_VER"
-	if ! which "$compiler"; then echo "$compiler missing in stage1 gcc package"; exit 1; fi
-	if ! drop_privs "$compiler" -x c -c /dev/null -o test.o; then echo "stage1 gcc fails to execute"; exit 1; fi
-	if ! test -f test.o; then echo "stage1 gcc fails to create binaries"; exit 1; fi
-	check_arch test.o "$HOST_ARCH"
-	touch "$REPODIR/stamps/gcc_1"
-	cd ..
-	drop_privs rm -Rf gcc1
-fi
-progress_mark "cross gcc stage1 build"
-
-# replacement for cross-gcc-defaults
-for prog in c++ cpp g++ gcc gcc-ar gcc-ranlib gfortran; do
-	ln -fs "`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_GNU_TYPE`-$prog-$GCC_VER" "/usr/bin/`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_GNU_TYPE`-$prog"
-done
-
-# hurd
-patch_hurd() {
-	echo "working around #818618"
-	sed -i -e '/^#.*818618/d;s/^#//' debian/control
-}
-if test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = hurd; then
-if test -f "$REPODIR/stamps/hurd_1"; then
-	echo "skipping rebuild of hurd stage1"
-else
-	apt_get_install texinfo debhelper dh-exec autoconf dh-autoreconf gawk flex bison autotools-dev perl
-	cross_build_setup hurd hurd_1
-	dpkg-checkbuilddeps -B "-a$HOST_ARCH" -Pstage1 || :
-	drop_privs dpkg-buildpackage -d -B "-a$HOST_ARCH" -Pstage1 -uc -us
-	cd ..
-	ls -l
-	pickup_packages *.changes
-	touch "$REPODIR/stamps/hurd_1"
-	cd ..
-	drop_privs rm -Rf hurd_1
-fi
-progress_mark "hurd stage1 cross build"
-fi
-
-# mig
-if test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = hurd; then
-if test -f "$REPODIR/stamps/mig_1"; then
-	echo "skipping rebuild of mig cross"
-else
-	cross_build_setup mig mig_1
-	apt_get_install dpkg-dev debhelper "gnumach-dev:$HOST_ARCH" flex libfl-dev bison dh-autoreconf
-	drop_privs dpkg-buildpackage -d -B "--target-arch=$HOST_ARCH" -uc -us
-	cd ..
-	ls -l
-	pickup_packages *.changes
-	touch "$REPODIR/stamps/mig_1"
-	cd ..
-	drop_privs rm -Rf mig_1
-fi
-progress_mark "cross mig build"
-fi
-
-# libc
 builddep_glibc() {
 	test "$1" = "$HOST_ARCH"
 	apt_get_install gettext file quilt autoconf gawk debhelper rdfind symlinks binutils bison netbase "gcc-$GCC_VER$HOST_ARCH_SUFFIX"
@@ -1396,6 +1435,921 @@ EOF
  		--enable-stackguard-randomization \
 EOF
 }
+
+add_automatic gmp
+patch_gmp() {
+	if test "$LIBC_NAME" = musl; then
+		echo "patching gmp symbols for musl arch #788411"
+		sed -i -r "s/([= ])(\!)?\<(${HOST_ARCH#musl-linux-})\>/\1\2\3 \2musl-linux-\3/" debian/libgmp10.symbols
+		# musl does not implement GNU obstack
+		sed -i -r 's/^ (.*_obstack_)/ (arch=!musl-linux-any !musleabihf-linux-any)\1/' debian/libgmp10.symbols
+	fi
+}
+
+builddep_gnu_efi() {
+	# binutils dependency needs cross translation
+	$APT_GET install debhelper
+}
+
+add_automatic gnupg2
+add_automatic gnutls28
+
+add_automatic gpm
+patch_gpm() {
+	if dpkg-architecture "-a$HOST_ARCH" -imusl-linux-any; then
+		echo "patching gpm to support musl #813751"
+		drop_privs patch -p1 <<'EOF'
+--- a/src/lib/liblow.c
++++ a/src/lib/liblow.c
+@@ -173,7 +173,7 @@
+   /* Reincarnation. Prepare for another death early. */
+   sigemptyset(&sa.sa_mask);
+   sa.sa_handler = gpm_suspend_hook;
+-  sa.sa_flags = SA_NOMASK;
++  sa.sa_flags = SA_NODEFER;
+   sigaction (SIGTSTP, &sa, 0);
+ 
+   /* Pop the gpm stack by closing the useless connection */
+@@ -350,7 +350,7 @@
+ 
+          /* if signal was originally ignored, job control is not supported */
+          if (gpm_saved_suspend_hook.sa_handler != SIG_IGN) {
+-            sa.sa_flags = SA_NOMASK;
++            sa.sa_flags = SA_NODEFER;
+             sa.sa_handler = gpm_suspend_hook;
+             sigaction(SIGTSTP, &sa, 0);
+          }
+--- a/src/prog/display-buttons.c
++++ b/src/prog/display-buttons.c
+@@ -36,6 +36,7 @@
+ #include <stdio.h>            /* printf()             */
+ #include <time.h>             /* time()               */
+ #include <errno.h>            /* errno                */
++#include <sys/select.h>       /* fd_set, FD_ZERO      */
+ #include <gpm.h>              /* gpm information      */
+ 
+ /* display resulting data */
+--- a/src/prog/display-coords.c
++++ b/src/prog/display-coords.c
+@@ -37,6 +37,7 @@
+ #include <stdio.h>            /* printf()             */
+ #include <time.h>             /* time()               */
+ #include <errno.h>            /* errno                */
++#include <sys/select.h>       /* fd_set, FD_ZERO      */
+ #include <gpm.h>              /* gpm information      */
+ 
+ /* display resulting data */
+--- a/src/prog/gpm-root.y
++++ b/src/prog/gpm-root.y
+@@ -1197,6 +1197,9 @@
+    /* reap your zombies */
+    childaction.sa_handler=reap_children;
+    sigemptyset(&childaction.sa_mask);
++#ifndef SA_INTERRUPT
++#define SA_INTERRUPT 0
++#endif
+    childaction.sa_flags=SA_INTERRUPT; /* need to break the select() call */
+    sigaction(SIGCHLD,&childaction,NULL);
+ 
+--- a/contrib/control/gpm_has_mouse_control.c
++++ a/contrib/control/gpm_has_mouse_control.c
+@@ -1,4 +1,4 @@
+-#include <sys/fcntl.h>
++#include <fcntl.h>
+ #include <sys/kd.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+EOF
+	fi
+}
+
+add_automatic grep
+add_automatic groff
+
+add_automatic guile-2.0
+builddep_guile_2_0() {
+	apt_get_build_dep "-a$HOST_ARCH" --arch-only -P cross ./
+	if test "$HOST_ARCH" = sh3; then
+		echo "adding sh3 support to guile-2.0 http://git.savannah.gnu.org/cgit/guile.git/commit/?id=92222727f81b2a03cde124b88d7e6224ecb29199"
+		sed -i -e 's/"sh4"/"sh3" &/' /usr/share/guile/2.0/system/base/target.scm
+	fi
+}
+patch_guile_2_0() {
+	if test "$HOST_ARCH" = sh3; then
+		echo "adding sh3 support to guile-2.0 http://git.savannah.gnu.org/cgit/guile.git/commit/?id=92222727f81b2a03cde124b88d7e6224ecb29199"
+		sed -i -e 's/"sh4"/"sh3" &/' module/system/base/target.scm
+	fi
+}
+
+add_automatic gzip
+buildenv_gzip() {
+	if test "$LIBC_NAME" = musl; then
+		# this avoids replacing fseeko with a variant that is broken
+		echo gl_cv_func_fflush_stdin exported
+		export gl_cv_func_fflush_stdin=yes
+	fi
+	if test "$(dpkg-architecture "-a$1" -qDEB_HOST_ARCH_BITS)" = 32; then
+		# If touch works with large timestamps (e.g. on amd64),
+		# gzip fails instead of warning about 32bit time_t.
+		echo "TIME_T_32_BIT_OK=yes exported"
+		export TIME_T_32_BIT_OK=yes
+	fi
+}
+
+add_automatic hostname
+
+patch_hurd() {
+	echo "working around #818618"
+	sed -i -e '/^#.*818618/d;s/^#//' debian/control
+}
+
+patch_icu() {
+	echo "patching icu to drop the cycle with icu-le-hb #898571"
+	drop_privs sed -i -e 's/, libicu-le-hb-dev//' debian/control
+}
+
+add_automatic isl
+add_automatic isl-0.18
+add_automatic jansson
+
+add_automatic jemalloc
+buildenv_jemalloc() {
+	case "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_CPU)" in
+		amd64|arm|arm64|hppa|i386|m68k|mips|s390x|sh3|sh4)
+			echo "setting je_cv_static_page_shift=12"
+			export je_cv_static_page_shift=12
+		;;
+		alpha|sparc|sparc64)
+			echo "setting je_cv_static_page_shift=13"
+			export je_cv_static_page_shift=13
+		;;
+		mips64el|mipsel|nios2)
+			echo "setting je_cv_static_page_shift=14"
+			export je_cv_static_page_shift=14
+		;;
+		powerpc|ppc64|ppc64el)
+			echo "setting je_cv_static_page_shift=16"
+			export je_cv_static_page_shift=16
+		;;
+	esac
+}
+
+add_automatic keyutils
+add_automatic kmod
+
+add_automatic krb5
+buildenv_krb5() {
+	export krb5_cv_attr_constructor_destructor=yes,yes
+	export ac_cv_func_regcomp=yes
+	export ac_cv_printf_positional=yes
+}
+
+add_automatic libassuan
+add_automatic libatomic-ops
+add_automatic libbsd
+add_automatic libcap2
+add_automatic libdebian-installer
+add_automatic libev
+add_automatic libevent
+add_automatic libffi
+
+add_automatic libgc
+patch_libgc() {
+	if test "$HOST_ARCH" = nios2; then
+		echo "cherry-picking upstream commit https://github.com/ivmai/bdwgc/commit/2571df0e30b4976d7a12dbc6fbec4f1c4027924d"
+		drop_privs patch -p1 <<'EOF'
+--- a/include/private/gcconfig.h
++++ b/include/private/gcconfig.h
+@@ -188,6 +188,10 @@
+ #    endif
+ #    define mach_type_known
+ # endif
++# if defined(__NIOS2__) || defined(__NIOS2) || defined(__nios2__)
++#   define NIOS2 /* Altera NIOS2 */
++#   define mach_type_known
++# endif
+ # if defined(__NetBSD__) && defined(__vax__)
+ #    define VAX
+ #    define mach_type_known
+@@ -1729,6 +1733,24 @@
+ #   endif
+ # endif
+ 
++# ifdef NIOS2
++#  define CPP_WORDSZ 32
++#  define MACH_TYPE "NIOS2"
++#  ifdef LINUX
++#    define OS_TYPE "LINUX"
++#    define DYNAMIC_LOADING
++     extern int _end[];
++     extern int __data_start[];
++#    define DATASTART ((ptr_t)(__data_start))
++#    define DATAEND ((ptr_t)(_end))
++#    define ALIGNMENT 4
++#    ifndef HBLKSIZE
++#      define HBLKSIZE 4096
++#    endif
++#    define LINUX_STACKBOTTOM
++#  endif /* Linux */
++# endif
++
+ # ifdef SH4
+ #   define MACH_TYPE "SH4"
+ #   define OS_TYPE "MSWINCE"
+@@ -2800,7 +2822,8 @@
+
+ #if ((defined(UNIX_LIKE) && (defined(DARWIN) || defined(HURD) \
+                              || defined(OPENBSD) || defined(ARM32) \
+-                             || defined(MIPS) || defined(AVR32))) \
++                             || defined(MIPS) || defined(AVR32) \
++                             || defined(NIOS2))) \
+      || (defined(LINUX) && (defined(SPARC) || defined(M68K))) \
+      || ((defined(RTEMS) || defined(PLATFORM_ANDROID)) && defined(I386))) \
+     && !defined(NO_GETCONTEXT)
+EOF
+	fi
+}
+
+add_automatic libgcrypt20
+buildenv_libgcrypt20() {
+	export ac_cv_sys_symbol_underscore=no
+}
+
+add_automatic libgpg-error
+add_automatic libice
+add_automatic libidn
+add_automatic libidn2
+add_automatic libksba
+add_automatic libonig
+add_automatic libpipeline
+add_automatic libpng1.6
+
+patch_libprelude() {
+	echo "removing the unsatisfiable g++ build dependency"
+	drop_privs sed -i -e '/^\s\+g++/d' debian/control
+}
+buildenv_libprelude() {
+	case $(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_GNU_SYSTEM) in *gnu*)
+		echo "glibc does not return NULL for malloc(0)"
+		export ac_cv_func_malloc_0_nonnull=yes
+	;; esac
+}
+
+add_automatic libpsl
+add_automatic libpthread-stubs
+add_automatic libsepol
+add_automatic libsm
+add_automatic libssh2
+add_automatic libsystemd-dummy
+add_automatic libtasn1-6
+add_automatic libtextwrap
+
+builddep_libtool() {
+	assert_built "zlib"
+	test "$1" = "$HOST_ARCH"
+	# gfortran dependency needs cross-translation
+	# gnulib dependency lacks M-A:foreign
+	apt_get_install debhelper file "gfortran-$GCC_VER$HOST_ARCH_SUFFIX" automake autoconf autotools-dev help2man texinfo "zlib1g-dev:$HOST_ARCH" gnulib
+}
+
+add_automatic libunistring
+buildenv_libunistring() {
+	if dpkg-architecture "-a$HOST_ARCH" -ignu-any-any; then
+		echo "glibc does not prefer rwlock writers to readers"
+		export gl_cv_pthread_rwlock_rdlock_prefer_writer=no
+	fi
+}
+
+add_automatic libusb
+add_automatic libusb-1.0
+add_automatic libverto
+
+add_automatic libx11
+buildenv_libx11() {
+	export xorg_cv_malloc0_returns_null=no
+}
+
+add_automatic libxau
+add_automatic libxaw
+add_automatic libxcb
+add_automatic libxdmcp
+
+add_automatic libxext
+buildenv_libxext() {
+	export xorg_cv_malloc0_returns_null=no
+}
+
+add_automatic libxmu
+add_automatic libxpm
+
+add_automatic libxrender
+buildenv_libxrender() {
+	export xorg_cv_malloc0_returns_null=no
+}
+
+add_automatic libxss
+buildenv_libxss() {
+	export xorg_cv_malloc0_returns_null=no
+}
+
+add_automatic libxt
+buildenv_libxt() {
+	export xorg_cv_malloc0_returns_null=no
+}
+
+add_automatic libzstd
+
+patch_linux() {
+	local kernel_arch comment
+	kernel_arch=
+	comment="just building headers yet"
+	case "$HOST_ARCH" in
+		arm|ia64|nios2)
+			kernel_arch=$HOST_ARCH
+		;;
+		arm64ilp32) kernel_arch=arm64; ;;
+		mipsr6|mipsr6el|mipsn32r6|mipsn32r6el|mips64r6|mips64r6el)
+			kernel_arch=defines-only
+		;;
+		powerpcel) kernel_arch=powerpc; ;;
+		riscv64) kernel_arch=riscv; ;;
+		*-linux-*)
+			if ! test -d "debian/config/$HOST_ARCH"; then
+				kernel_arch=$(sed 's/^kernel-arch: //;t;d' < "debian/config/${HOST_ARCH#*-linux-}/defines")
+				comment="$HOST_ARCH must be part of a multiarch installation with a ${HOST_ARCH#*-linux-*} kernel"
+			fi
+		;;
+	esac
+	if test -n "$kernel_arch"; then
+		if test "$kernel_arch" != defines-only; then
+			echo "patching linux for $HOST_ARCH with kernel-arch $kernel_arch"
+			drop_privs mkdir -p "debian/config/$HOST_ARCH"
+			drop_privs tee "debian/config/$HOST_ARCH/defines" >/dev/null <<EOF
+[base]
+kernel-arch: $kernel_arch
+featuresets:
+# empty; $comment
+EOF
+		else
+			echo "patching linux to enable $HOST_ARCH"
+		fi
+		drop_privs sed -i -e "/^arches:/a\\ $HOST_ARCH" debian/config/defines
+		apt_get_install kernel-wedge
+		drop_privs ./debian/rules debian/rules.gen || : # intentionally exits 1 to avoid being called automatically. we are doing it wrong
+	fi
+}
+
+add_automatic lz4
+add_automatic make-dfsg
+add_automatic man-db
+add_automatic mawk
+add_automatic mpclib3
+add_automatic mpdecimal
+add_automatic mpfr4
+
+builddep_ncurses() {
+	if test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = linux; then
+		assert_built gpm
+		$APT_GET install "libgpm-dev:$1"
+	fi
+	# g++-multilib dependency unsatisfiable
+	apt_get_install debhelper pkg-config autoconf-dickey
+	case "$ENABLE_MULTILIB:$HOST_ARCH" in
+		yes:amd64|yes:i386|yes:powerpc|yes:ppc64|yes:s390|yes:sparc)
+			test "$1" = "$HOST_ARCH"
+			$APT_GET install "g++-$GCC_VER-multilib$HOST_ARCH_SUFFIX"
+			# the unversioned gcc-multilib$HOST_ARCH_SUFFIX should contain the following link
+			ln -sf "`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_MULTIARCH`/asm" /usr/include/asm
+		;;
+	esac
+}
+
+add_automatic nettle
+add_automatic nghttp2
+add_automatic npth
+
+add_automatic nspr
+patch_nspr() {
+	echo "patching nspr for nios2 https://bugzilla.mozilla.org/show_bug.cgi?id=1244421"
+	drop_privs patch -p1 <<'EOF'
+--- a/nspr/pr/include/md/_linux.cfg
++++ b/nspr/pr/include/md/_linux.cfg
+@@ -972,6 +972,51 @@
+ #define PR_BYTES_PER_WORD_LOG2   2
+ #define PR_BYTES_PER_DWORD_LOG2  3
+ 
++#elif defined(__nios2__)
++
++#define IS_LITTLE_ENDIAN    1
++#undef  IS_BIG_ENDIAN
++
++#define PR_BYTES_PER_BYTE   1
++#define PR_BYTES_PER_SHORT  2
++#define PR_BYTES_PER_INT    4
++#define PR_BYTES_PER_INT64  8
++#define PR_BYTES_PER_LONG   4
++#define PR_BYTES_PER_FLOAT  4
++#define PR_BYTES_PER_DOUBLE 8
++#define PR_BYTES_PER_WORD   4
++#define PR_BYTES_PER_DWORD  8
++
++#define PR_BITS_PER_BYTE    8
++#define PR_BITS_PER_SHORT   16
++#define PR_BITS_PER_INT     32
++#define PR_BITS_PER_INT64   64
++#define PR_BITS_PER_LONG    32
++#define PR_BITS_PER_FLOAT   32
++#define PR_BITS_PER_DOUBLE  64
++#define PR_BITS_PER_WORD    32
++
++#define PR_BITS_PER_BYTE_LOG2   3
++#define PR_BITS_PER_SHORT_LOG2  4
++#define PR_BITS_PER_INT_LOG2    5
++#define PR_BITS_PER_INT64_LOG2  6
++#define PR_BITS_PER_LONG_LOG2   5
++#define PR_BITS_PER_FLOAT_LOG2  5
++#define PR_BITS_PER_DOUBLE_LOG2 6
++#define PR_BITS_PER_WORD_LOG2   5
++
++#define PR_ALIGN_OF_SHORT   2
++#define PR_ALIGN_OF_INT     4
++#define PR_ALIGN_OF_LONG    4
++#define PR_ALIGN_OF_INT64   4
++#define PR_ALIGN_OF_FLOAT   4
++#define PR_ALIGN_OF_DOUBLE  4
++#define PR_ALIGN_OF_POINTER 4
++#define PR_ALIGN_OF_WORD    4
++
++#define PR_BYTES_PER_WORD_LOG2   2
++#define PR_BYTES_PER_DWORD_LOG2  3
++
+ #elif defined(__or1k__)
+ 
+ #undef  IS_LITTLE_ENDIAN
+--- a/nspr/pr/include/md/_linux.h
++++ b/nspr/pr/include/md/_linux.h
+@@ -55,6 +55,8 @@
+ #define _PR_SI_ARCHITECTURE "avr32"
+ #elif defined(__m32r__)
+ #define _PR_SI_ARCHITECTURE "m32r"
++#elif defined(__nios2__)
++#define _PR_SI_ARCHITECTURE "nios2"
+ #elif defined(__or1k__)
+ #define _PR_SI_ARCHITECTURE "or1k"
+ #else
+@@ -125,6 +127,18 @@ extern PRInt32 _PR_x86_64_AtomicSet(PRInt32 *val, PRInt32 newval);
+ #define _MD_ATOMIC_SET                _PR_x86_64_AtomicSet
+ #endif
+ 
++#if defined(__nios2__)
++#if defined(__GNUC__)
++/* Use GCC built-in functions */
++#define _PR_HAVE_ATOMIC_OPS
++#define _MD_INIT_ATOMIC()
++#define _MD_ATOMIC_INCREMENT(ptr) __sync_add_and_fetch(ptr, 1)
++#define _MD_ATOMIC_DECREMENT(ptr) __sync_sub_and_fetch(ptr, 1)
++#define _MD_ATOMIC_ADD(ptr, i) __sync_add_and_fetch(ptr, i)
++#define _MD_ATOMIC_SET(ptr, nv) __sync_lock_test_and_set(ptr, nv)
++#endif
++#endif
++
+ #if defined(__or1k__)
+ #if defined(__GNUC__)
+ /* Use GCC built-in functions */
+EOF
+}
+
+add_automatic nss
+patch_nss() {
+	echo "work around nss FTBFS with gcc-7 #853576"
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/rules
++++ b/debian/rules
+@@ -110,6 +110,7 @@
+ 		NSPR_LIB_DIR=/usr/lib/$(DEB_HOST_MULTIARCH) \
+ 		BUILD_OPT=1 \
+ 		NS_USE_GCC=1 \
++		NSS_ENABLE_WERROR=0 \
+ 		OPTIMIZER="$(CFLAGS) $(CPPFLAGS)" \
+ 		LDFLAGS='$(LDFLAGS) $$(ARCHFLAG) $$(ZDEFS_FLAG)' \
+ 		DSO_LDOPTS='-shared $$(LDFLAGS)' \
+EOF
+}
+
+add_automatic openssl
+add_automatic openssl1.0
+add_automatic p11-kit
+
+builddep_pam() {
+	# should be replaced with pkg.pam.noaudit profile #907492
+	dpkg-architecture "-a$1" -ilinux-any && assert_built libselinux
+	assert_built "cracklib2 db-defaults db5.3 flex"
+	dpkg-architecture "-a$1" -ilinux-any && apt_get_install "libselinux1-dev:$1"
+	apt_get_install "libcrack2-dev:$1" bzip2 debhelper quilt flex "libdb-dev:$1" po-debconf dh-autoreconf autopoint pkg-config libfl-dev "libfl-dev:$1" docbook-xsl docbook-xml xsltproc libxml2-utils w3m
+}
+
+add_automatic patch
+
+add_automatic pcre3
+patch_pcre3() {
+	echo "work around FTBFS with gcc-8 #897834"
+	# ignore symbol changes
+	sed -i -e 's/\(dh_makeshlibs.*-- -c\)4$/\10/' debian/rules
+}
+
+builddep_readline() {
+	assert_built "ncurses"
+	# gcc-multilib dependency unsatisfiable
+	$APT_GET install debhelper "libtinfo-dev:$1" "libncursesw5-dev:$1" mawk texinfo autotools-dev
+	case "$ENABLE_MULTILIB:$HOST_ARCH" in
+		yes:amd64|yes:ppc64)
+			test "$1" = "$HOST_ARCH"
+			$APT_GET install "gcc-$GCC_VER-multilib$HOST_ARCH_SUFFIX" "lib32tinfo-dev:$1" "lib32ncursesw5-dev:$1"
+			# the unversioned gcc-multilib$HOST_ARCH_SUFFIX should contain the following link
+			ln -sf "`dpkg-architecture -a$1 -qDEB_HOST_MULTIARCH`/asm" /usr/include/asm
+		;;
+		yes:i386|yes:powerpc|yes:sparc|yes:s390)
+			test "$1" = "$HOST_ARCH"
+			$APT_GET install "gcc-$GCC_VER-multilib$HOST_ARCH_SUFFIX" "lib64ncurses5-dev:$1"
+			# the unversioned gcc-multilib$HOST_ARCH_SUFFIX should contain the following link
+			ln -sf "`dpkg-architecture -a$1 -qDEB_HOST_MULTIARCH`/asm" /usr/include/asm
+		;;
+	esac
+}
+patch_readline() {
+	echo "patching readline to support nobiarch profile #737955"
+	drop_privs patch -p1 <<EOF
+--- a/debian/control
++++ b/debian/control
+@@ -4,10 +4,10 @@
+ Maintainer: Matthias Klose <doko@debian.org>
+ Standards-Version: 3.9.8
+ Build-Depends: debhelper (>= 9),
+   libncurses-dev,
+-  lib32ncurses-dev [amd64 ppc64], lib64ncurses-dev [i386 powerpc sparc s390],
++  lib32ncurses-dev [amd64 ppc64] <!nobiarch>, lib64ncurses-dev [i386 powerpc sparc s390] <!nobiarch>,
+   mawk | awk, texinfo, autotools-dev,
+-  gcc-multilib [amd64 i386 kfreebsd-amd64 powerpc ppc64 s390 sparc]
++  gcc-multilib [amd64 i386 kfreebsd-amd64 powerpc ppc64 s390 sparc] <!nobiarch>
+ 
+ Package: libreadline7
+ Architecture: any
+@@ -30,6 +30,7 @@
+ Depends: readline-common, \${shlibs:Depends}, \${misc:Depends}
+ Section: libs
+ Priority: optional
++Build-Profiles: <!nobiarch>
+ Description: GNU readline and history libraries, run-time libraries (64-bit)
+  The GNU readline library aids in the consistency of user interface
+  across discrete programs that need to provide a command line
+@@ -96,6 +97,7 @@
+ Conflicts: lib64readline-dev, lib64readline-gplv2-dev
+ Section: libdevel
+ Priority: optional
++Build-Profiles: <!nobiarch>
+ Description: GNU readline and history libraries, development files (64-bit)
+  The GNU readline library aids in the consistency of user interface
+  across discrete programs that need to provide a command line
+@@ -139,6 +141,7 @@
+ Depends: readline-common, \${shlibs:Depends}, \${misc:Depends}
+ Section: libs
+ Priority: optional
++Build-Profiles: <!nobiarch>
+ Description: GNU readline and history libraries, run-time libraries (32-bit)
+  The GNU readline library aids in the consistency of user interface
+  across discrete programs that need to provide a command line
+@@ -154,6 +157,7 @@
+ Conflicts: lib32readline-dev, lib32readline-gplv2-dev
+ Section: libdevel
+ Priority: optional
++Build-Profiles: <!nobiarch>
+ Description: GNU readline and history libraries, development files (32-bit)
+  The GNU readline library aids in the consistency of user interface
+  across discrete programs that need to provide a command line
+--- a/debian/rules
++++ b/debian/rules
+@@ -57,6 +57,11 @@
+   endif
+ endif
+ 
++ifneq (\$(filter nobiarch,\$(DEB_BUILD_PROFILES)),)
++build32 =
++build64 =
++endif
++
+ CFLAGS := \$(shell dpkg-buildflags --get CFLAGS)
+ CPPFLAGS := \$(shell dpkg-buildflags --get CPPFLAGS)
+ LDFLAGS := \$(shell dpkg-buildflags --get LDFLAGS)
+EOF
+}
+
+add_automatic readline5
+add_automatic rtmpdump
+add_automatic sed
+add_automatic shadow
+add_automatic slang2
+add_automatic spdylay
+add_automatic sqlite3
+
+patch_systemd() {
+	echo "fixing systemd FTCBFS for efi #905381"
+	drop_privs patch -p1 <<'EOF'
+--- a/meson_options.txt
++++ b/meson_options.txt
+@@ -276,9 +276,9 @@
+
+ option('gnu-efi', type : 'combo', choices : ['auto', 'true', 'false'],
+        description : 'gnu-efi support for sd-boot')
+-option('efi-cc', type : 'string', value : 'gcc',
++option('efi-cc', type : 'string', value : '$cc',
+        description : 'the compiler to use for EFI modules')
+-option('efi-ld', type : 'string', value : 'ld',
++option('efi-ld', type : 'string', value : '$ld',
+        description : 'the linker to use for EFI modules')
+ option('efi-libdir', type : 'string',
+        description : 'path to the EFI lib directory')
+--- a/src/boot/efi/meson.build
++++ b/src/boot/efi/meson.build
+@@ -33,8 +33,16 @@
+ '''.split()
+
+ if conf.get('ENABLE_EFI') == 1 and get_option('gnu-efi') != 'false'
+-        efi_cc = get_option('efi-cc')
+-        efi_ld = get_option('efi-ld')
++        if get_option('efi-cc') == '$cc'
++                efi_cc = ' '.join(cc.cmd_array())
++        else
++                efi_cc = get_option('efi-cc')
++        endif
++        if get_option('efi-ld') == '$ld'
++                efi_ld = find_program('ld', required: true)
++        else
++                efi_ld = get_option('efi-ld')
++        endif
+         efi_incdir = get_option('efi-includedir')
+
+         gnu_efi_path_arch = ''
+EOF
+}
+
+add_automatic sysvinit
+
+add_automatic tar
+buildenv_tar() {
+	case $(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_GNU_SYSTEM) in *gnu*)
+		echo "struct dirent contains working d_ino on glibc systems"
+		export gl_cv_struct_dirent_d_ino=yes
+	;; esac
+	if ! dpkg-architecture "-a$HOST_ARCH" -ilinux-any; then
+		echo "forcing broken posix acl check to fail on non-linux #850668"
+		export gl_cv_getxattr_with_posix_acls=no
+	fi
+}
+
+add_automatic tcl8.6
+buildenv_tcl8_6() {
+	export tcl_cv_strtod_buggy=ok
+}
+
+add_automatic tcltk-defaults
+add_automatic tcp-wrappers
+
+add_automatic tk8.6
+buildenv_tk8_6() {
+	export tcl_cv_strtod_buggy=ok
+}
+
+add_automatic ustr
+
+builddep_util_linux() {
+	dpkg-architecture "-a$1" -ilinux-any && assert_built libselinux
+	assert_built "ncurses slang2 zlib"
+	$APT_GET build-dep "-a$1" --arch-only -P "$2" util-linux
+}
+
+add_automatic xft
+add_automatic xz-utils
+
+builddep_zlib() {
+	# gcc-multilib dependency unsatisfiable
+	$APT_GET install debhelper binutils dpkg-dev
+}
+
+# choosing libatomic1 arbitrarily here, cause it never bumped soname
+BUILD_GCC_MULTIARCH_VER=`apt-cache show --no-all-versions libatomic1 | sed 's/^Source: gcc-\([0-9.]*\)$/\1/;t;d'`
+if test "$GCC_VER" != "$BUILD_GCC_MULTIARCH_VER"; then
+	echo "host gcc version ($GCC_VER) and build gcc version ($BUILD_GCC_MULTIARCH_VER) mismatch. need different build gcc"
+if dpkg --compare-versions "$GCC_VER" gt "$BUILD_GCC_MULTIARCH_VER"; then
+	echo "deb [ arch=$(dpkg --print-architecture) ] $MIRROR experimental main" > /etc/apt/sources.list.d/tmp-experimental.list
+	$APT_GET update
+	$APT_GET -t experimental install g++ g++-$GCC_VER
+	rm -f /etc/apt/sources.list.d/tmp-experimental.list
+	$APT_GET update
+elif test -f "$REPODIR/stamps/gcc_0"; then
+	echo "skipping rebuild of build gcc"
+	$APT_GET --force-yes dist-upgrade # downgrade!
+else
+	$APT_GET build-dep --arch-only gcc-$GCC_VER
+	# dependencies for common libs no longer declared
+	$APT_GET install doxygen graphviz ghostscript texlive-latex-base xsltproc docbook-xsl-ns
+	cross_build_setup "gcc-$GCC_VER" gcc0
+	(
+		export gcc_cv_libc_provides_ssp=yes
+		nolang=$(set_add "${GCC_NOLANG:-}" biarch)
+		export DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS nolang=$(join_words , $nolang)"
+		drop_privs_exec dpkg-buildpackage -B -uc -us
+	)
+	cd ..
+	ls -l
+	reprepro include rebootstrap-native ./*.changes
+	drop_privs rm -fv ./*-plugin-dev_*.deb ./*-dbg_*.deb
+	dpkg -i *.deb
+	touch "$REPODIR/stamps/gcc_0"
+	cd ..
+	drop_privs rm -Rf gcc0
+fi
+progress_mark "build compiler complete"
+else
+echo "host gcc version and build gcc version match. good for multiarch"
+fi
+
+if test -f "$REPODIR/stamps/cross-binutils"; then
+	echo "skipping rebuild of binutils-target"
+else
+	cross_build_setup binutils
+	check_binNMU
+	apt_get_build_dep --arch-only -Pnocheck ./
+	drop_privs TARGET=$HOST_ARCH dpkg-buildpackage -B -Pnocheck --target=stamps/control
+	drop_privs TARGET=$HOST_ARCH dpkg-buildpackage -B -uc -us -Pnocheck
+	cd ..
+	ls -l
+	pickup_packages *.changes
+	$APT_GET install binutils$HOST_ARCH_SUFFIX
+	assembler="`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_GNU_TYPE`-as"
+	if ! which "$assembler"; then echo "$assembler missing in binutils package"; exit 1; fi
+	if ! drop_privs "$assembler" -o test.o /dev/null; then echo "binutils fail to execute"; exit 1; fi
+	if ! test -f test.o; then echo "binutils fail to create object"; exit 1; fi
+	check_arch test.o "$HOST_ARCH"
+	touch "$REPODIR/stamps/cross-binutils"
+	cd ..
+	drop_privs rm -Rf binutils
+fi
+progress_mark "cross binutils"
+
+if test "$HOST_ARCH" = hppa && ! test -f "$REPODIR/stamps/cross-binutils-hppa64"; then
+	cross_build_setup binutils binutils-hppa64
+	check_binNMU
+	apt_get_build_dep --arch-only -Pnocheck ./
+	drop_privs TARGET=hppa64-linux-gnu dpkg-buildpackage -B -Pnocheck --target=stamps/control
+	drop_privs TARGET=hppa64-linux-gnu dpkg-buildpackage -B -uc -us -Pnocheck
+	cd ..
+	ls -l
+	pickup_additional_packages binutils-hppa64-linux-gnu_*.deb
+	$APT_GET install binutils-hppa64-linux-gnu
+	if ! which hppa64-linux-gnu-as; then echo "hppa64-linux-gnu-as missing in binutils package"; exit 1; fi
+	if ! drop_privs hppa64-linux-gnu-as -o test.o /dev/null; then echo "binutils-hppa64 fail to execute"; exit 1; fi
+	if ! test -f test.o; then echo "binutils-hppa64 fail to create object"; exit 1; fi
+	check_arch test.o hppa64
+	touch "$REPODIR/stamps/cross-binutils-hppa64"
+	cd ..
+	drop_privs rm -Rf binutils-hppa64-linux-gnu
+	progress_mark "cross binutils-hppa64"
+fi
+
+if test "`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS`" = "linux"; then
+if test -f "$REPODIR/stamps/linux_1"; then
+	echo "skipping rebuild of linux-libc-dev"
+else
+	cross_build_setup linux
+	check_binNMU
+	if dpkg-architecture -ilinux-any && test "$(dpkg-query -W -f '${Version}' "linux-libc-dev:$(dpkg --print-architecture)")" != "$(dpkg-parsechangelog -SVersion)"; then
+		echo "rebootstrap-warning: working around linux-libc-dev m-a:same skew"
+		apt_get_build_dep --arch-only -Pstage1 ./
+		drop_privs KBUILD_VERBOSE=1 dpkg-buildpackage -B -Pstage1 -uc -us
+	fi
+	apt_get_build_dep --arch-only "-a$HOST_ARCH" -Pstage1 ./
+	drop_privs KBUILD_VERBOSE=1 dpkg-buildpackage -B "-a$HOST_ARCH" -Pstage1 -uc -us
+	cd ..
+	ls -l
+	if test "$ENABLE_MULTIARCH_GCC" != yes; then
+		drop_privs dpkg-cross -M -a "$HOST_ARCH" -b ./*"_$HOST_ARCH.deb"
+	fi
+	pickup_packages *.deb
+	touch "$REPODIR/stamps/linux_1"
+	compare_native ./*.deb
+	cd ..
+	drop_privs rm -Rf linux
+fi
+progress_mark "linux-libc-dev cross build"
+fi
+
+if test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = hurd; then
+if test -f "$REPODIR/stamps/gnumach_1"; then
+	echo "skipping rebuild of gnumach stage1"
+else
+	$APT_GET install debhelper sharutils autoconf automake texinfo
+	cross_build_setup gnumach gnumach_1
+	drop_privs dpkg-buildpackage -B "-a$HOST_ARCH" -Pstage1 -uc -us
+	cd ..
+	pickup_packages ./*.deb
+	touch "$REPODIR/stamps/gnumach_1"
+	cd ..
+	drop_privs rm -Rf gnumach_1
+fi
+progress_mark "gnumach stage1 cross build"
+fi
+
+if test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = kfreebsd; then
+cross_build kfreebsd-kernel-headers
+fi
+
+if test -f "$REPODIR/stamps/gcc_1"; then
+	echo "skipping rebuild of gcc stage1"
+else
+	apt_get_install debhelper gawk patchutils bison flex lsb-release quilt libtool autoconf2.64 zlib1g-dev libcloog-isl-dev libmpc-dev libmpfr-dev libgmp-dev autogen systemtap-sdt-dev sharutils "binutils$HOST_ARCH_SUFFIX"
+	if test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = linux; then
+		if test "$ENABLE_MULTIARCH_GCC" = yes; then
+			apt_get_install "linux-libc-dev:$HOST_ARCH"
+		else
+			apt_get_install "linux-libc-dev-${HOST_ARCH}-cross"
+		fi
+	fi
+	if test "$HOST_ARCH" = hppa; then
+		$APT_GET install binutils-hppa64-linux-gnu
+	fi
+	cross_build_setup "gcc-$GCC_VER" gcc1
+	dpkg-checkbuilddeps || : # tell unmet build depends
+	echo "$HOST_ARCH" > debian/target
+	(
+		nolang=${GCC_NOLANG:-}
+		test "$ENABLE_MULTILIB" = yes || nolang=$(set_add "$nolang" biarch)
+		export DEB_STAGE=stage1
+		export DEB_BUILD_OPTIONS="$DEB_BUILD_OPTIONS${nolang:+ nolang=$(join_words , $nolang)}"
+		drop_privs dpkg-buildpackage -d -T control
+		dpkg-checkbuilddeps || : # tell unmet build depends again after rewriting control
+		drop_privs_exec dpkg-buildpackage -d -b -uc -us
+	)
+	cd ..
+	ls -l
+	pickup_packages *.changes
+	apt_get_remove gcc-multilib
+	if test "$ENABLE_MULTILIB" = yes && ls | grep -q multilib; then
+		$APT_GET install "gcc-$GCC_VER-multilib$HOST_ARCH_SUFFIX"
+	else
+		rm -vf ./*multilib*.deb
+		$APT_GET install "gcc-$GCC_VER$HOST_ARCH_SUFFIX"
+	fi
+	compiler="`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_GNU_TYPE`-gcc-$GCC_VER"
+	if ! which "$compiler"; then echo "$compiler missing in stage1 gcc package"; exit 1; fi
+	if ! drop_privs "$compiler" -x c -c /dev/null -o test.o; then echo "stage1 gcc fails to execute"; exit 1; fi
+	if ! test -f test.o; then echo "stage1 gcc fails to create binaries"; exit 1; fi
+	check_arch test.o "$HOST_ARCH"
+	touch "$REPODIR/stamps/gcc_1"
+	cd ..
+	drop_privs rm -Rf gcc1
+fi
+progress_mark "cross gcc stage1 build"
+
+# replacement for cross-gcc-defaults
+for prog in c++ cpp g++ gcc gcc-ar gcc-ranlib gfortran; do
+	ln -fs "`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_GNU_TYPE`-$prog-$GCC_VER" "/usr/bin/`dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_GNU_TYPE`-$prog"
+done
+
+if test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = hurd; then
+if test -f "$REPODIR/stamps/hurd_1"; then
+	echo "skipping rebuild of hurd stage1"
+else
+	apt_get_install texinfo debhelper dh-exec autoconf dh-autoreconf gawk flex bison autotools-dev perl
+	cross_build_setup hurd hurd_1
+	dpkg-checkbuilddeps -B "-a$HOST_ARCH" -Pstage1 || :
+	drop_privs dpkg-buildpackage -d -B "-a$HOST_ARCH" -Pstage1 -uc -us
+	cd ..
+	ls -l
+	pickup_packages *.changes
+	touch "$REPODIR/stamps/hurd_1"
+	cd ..
+	drop_privs rm -Rf hurd_1
+fi
+progress_mark "hurd stage1 cross build"
+fi
+
+if test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = hurd; then
+if test -f "$REPODIR/stamps/mig_1"; then
+	echo "skipping rebuild of mig cross"
+else
+	cross_build_setup mig mig_1
+	apt_get_install dpkg-dev debhelper "gnumach-dev:$HOST_ARCH" flex libfl-dev bison dh-autoreconf
+	drop_privs dpkg-buildpackage -d -B "--target-arch=$HOST_ARCH" -uc -us
+	cd ..
+	ls -l
+	pickup_packages *.changes
+	touch "$REPODIR/stamps/mig_1"
+	cd ..
+	drop_privs rm -Rf mig_1
+fi
+progress_mark "cross mig build"
+fi
+
 if test -f "$REPODIR/stamps/${LIBC_NAME}_1"; then
 	echo "skipping rebuild of $LIBC_NAME stage1"
 else
@@ -1688,763 +2642,6 @@ apt_get_install "hurd-dev:$HOST_ARCH"
 progress_mark "hurd stage3 cross build"
 fi
 
-automatic_packages=
-add_automatic() { automatic_packages=`set_add "$automatic_packages" "$1"`; }
-
-add_automatic acl
-add_automatic adns
-
-builddep_apt() {
-	# g++ dependency needs toolchain translation
-	assert_built "bzip2 curl db-defaults db5.3 gnutls28 lz4 xz-utils zlib libzstd"
-	apt_get_install cmake debhelper dh-systemd docbook-xml docbook-xsl dpkg-dev gettext "libbz2-dev:$1" "libcurl4-gnutls-dev:$1" "libdb-dev:$1" "libgnutls28-dev:$1" "liblz4-dev:$1" "liblzma-dev:$1" pkg-config po4a xsltproc "zlib1g-dev:$1" "libzstd-dev:$1"
-}
-
-add_automatic attr
-patch_attr() {
-	echo "patching attr to support musl #782830"
-	drop_privs patch -p1 <<'EOF'
-diff -Nru attr-2.4.47/debian/patches/20-remove-attr-xattr.patch attr-2.4.47/debian/patches/20-remove-attr-xattr.patch
---- attr-2.4.47/debian/patches/20-remove-attr-xattr.patch
-+++ attr-2.4.47/debian/patches/20-remove-attr-xattr.patch
-@@ -0,0 +1,89 @@
-+Description: Backport upstream patch for musl support
-+ Drop attr/xattr.h and use sys/xattr.h from libc instead.
-+Author: Szabolcs Nagy <nsz@port70.net>
-+Origin: upstream, http://git.savannah.gnu.org/cgit/attr.git/commit/?id=7921157890d07858d092f4003ca4c6bae9fd2c38
-+Last-Update: 2015-04-18
-+
-+Index: attr-2.4.47/include/attributes.h
-+===================================================================
-+--- attr-2.4.47.orig/include/attributes.h
-++++ attr-2.4.47/include/attributes.h
-+@@ -21,6 +21,10 @@
-+ #ifdef __cplusplus
-+ extern "C" {
-+ #endif
-++#include <errno.h>
-++#ifndef ENOATTR
-++# define ENOATTR ENODATA
-++#endif
-+ 
-+ /*
-+  *	An almost-IRIX-compatible extended attributes API
-+Index: attr-2.4.47/include/xattr.h
-+===================================================================
-+--- attr-2.4.47.orig/include/xattr.h
-++++ attr-2.4.47/include/xattr.h
-+@@ -19,45 +19,13 @@
-+  */
-+ #ifndef __XATTR_H__
-+ #define __XATTR_H__
-+ 
-+ #include <features.h>
-+ 
-++#include <sys/xattr.h>
-+ #include <errno.h>
-+ #ifndef ENOATTR
-+ # define ENOATTR ENODATA        /* No such attribute */
-+ #endif
-+-
-+-#define XATTR_CREATE  0x1       /* set value, fail if attr already exists */
-+-#define XATTR_REPLACE 0x2       /* set value, fail if attr does not exist */
-+-
-+-
-+-__BEGIN_DECLS
-+-
-+-extern int setxattr (const char *__path, const char *__name,
-+-		      const void *__value, size_t __size, int __flags) __THROW;
-+-extern int lsetxattr (const char *__path, const char *__name,
-+-		      const void *__value, size_t __size, int __flags) __THROW;
-+-extern int fsetxattr (int __filedes, const char *__name,
-+-		      const void *__value, size_t __size, int __flags) __THROW;
-+-
-+-extern ssize_t getxattr (const char *__path, const char *__name,
-+-				void *__value, size_t __size) __THROW;
-+-extern ssize_t lgetxattr (const char *__path, const char *__name,
-+-				void *__value, size_t __size) __THROW;
-+-extern ssize_t fgetxattr (int __filedes, const char *__name,
-+-				void *__value, size_t __size) __THROW;
-+-
-+-extern ssize_t listxattr (const char *__path, char *__list,
-+-				size_t __size) __THROW;
-+-extern ssize_t llistxattr (const char *__path, char *__list,
-+-				size_t __size) __THROW;
-+-extern ssize_t flistxattr (int __filedes, char *__list,
-+-				size_t __size) __THROW;
-+-
-+-extern int removexattr (const char *__path, const char *__name) __THROW;
-+-extern int lremovexattr (const char *__path, const char *__name) __THROW;
-+-extern int fremovexattr (int __filedes,   const char *__name) __THROW;
-+-
-+-__END_DECLS
-+ 
-+ #endif	/* __XATTR_H__ */
-+Index: attr-2.4.47/libattr/Makefile
-+===================================================================
-+--- attr-2.4.47.orig/libattr/Makefile
-++++ attr-2.4.47/libattr/Makefile
-+@@ -29,12 +29,6 @@ LT_AGE = 1
-+ CFILES = libattr.c attr_copy_fd.c attr_copy_file.c attr_copy_check.c attr_copy_action.c
-+ HFILES = libattr.h
-+ 
-+-ifeq ($(PKG_PLATFORM),linux)
-+-CFILES += syscalls.c
-+-else
-+-LSRCFILES = syscalls.c
-+-endif
-+-
-+ LCFLAGS = -include libattr.h
-+ 
-+ default: $(LTLIBRARY)
-diff -Nru attr-2.4.47/debian/patches/series attr-2.4.47/debian/patches/series
---- attr-2.4.47/debian/patches/series
-+++ attr-2.4.47/debian/patches/series
-@@ -1,3 +1,4 @@
- 01-configure.in.patch
- 02-687531-fix-missing-ldflags.patch
- 12-643587-attr-autoconf-version-check.patch
-+20-remove-attr-xattr.patch
-EOF
-	drop_privs quilt push -a
-}
-
-add_automatic autogen
-add_automatic base-files
-add_automatic bash
-
-add_automatic blt
-buildenv_blt() {
-	# blt now knows which CC to use, but its configure misdetects tons of
-	# stuff when you tell it explicitly.
-	unset CC
-}
-
-add_automatic bsdmainutils
-
-builddep_build_essential() {
-	# g++ dependency needs cross translation
-	$APT_GET install debhelper python3
-}
-
-add_automatic bzip2
-add_automatic c-ares
-add_automatic cloog
-add_automatic coreutils
-add_automatic curl
-add_automatic dash
-add_automatic datefudge
-add_automatic db-defaults
-add_automatic debianutils
-
-add_automatic diffutils
-buildenv_diffutils() {
-	if dpkg-architecture "-a$1" -ignu-any-any; then
-		export gl_cv_func_getopt_gnu=yes
-	fi
-}
-
-add_automatic dpkg
-add_automatic e2fsprogs
-add_automatic elfutils
-add_automatic expat
-add_automatic file
-add_automatic findutils
-add_automatic flex
-add_automatic fontconfig
-add_automatic freebsd-glue
-add_automatic freetype
-add_automatic fuse
-
-buildenv_gdbm() {
-	if dpkg-architecture "-a$1" -ignu-any-any; then
-		export ac_cv_func_mmap_fixed_mapped=yes
-	fi
-}
-
-add_automatic glib2.0
-builddep_glib2_0() {
-	apt_get_build_dep "-a$1" --arch-only -P nocheck ./
-	# FTCBFS #908334
-	apt_get_install libglib2.0-dev-bin
-}
-patch_glib2_0() {
-	echo "fixing FTCBFS FTCBFS #908334"
-	drop_privs patch -p1 <<'EOF'
---- a/tests/gobject/Makefile.am
-+++ b/tests/gobject/Makefile.am
-@@ -51,19 +51,23 @@
- installed_test_programs += timeloop-closure
- endif
-
--# The marshal test requires running a binary, which means we cannot
--# build it when cross-compiling
--if !CROSS_COMPILING
-+# The marshal test requires running a binary, use the native system copy for
-+# cross compilation.
-+if CROSS_COMPILING
-+glib_genmarshal=glib-genmarshal
-+else
- glib_genmarshal=$(top_builddir)/gobject/glib-genmarshal
-+glib_genmarshal_dep=$(glib_genmarshal)
-+endif
-
- testmarshal.h: stamp-testmarshal.h
- 	@true
--stamp-testmarshal.h: testmarshal.list $(glib_genmarshal)
-+stamp-testmarshal.h: testmarshal.list $(glib_genmarshal_dep)
- 	$(AM_V_GEN) $(glib_genmarshal) --prefix=test_marshal $(srcdir)/testmarshal.list --header >> xgen-gmh \
- 	&& (cmp -s xgen-gmh testmarshal.h 2>/dev/null || cp xgen-gmh testmarshal.h) \
- 	&& rm -f xgen-gmh xgen-gmh~ \
- 	&& echo timestamp > $@
--testmarshal.c: testmarshal.h testmarshal.list $(glib_genmarshal)
-+testmarshal.c: testmarshal.h testmarshal.list $(glib_genmarshal_dep)
- 	$(AM_V_GEN) (echo "#include \"testmarshal.h\""; $(glib_genmarshal) --prefix=test_marshal $(srcdir)/testmarshal.list --body) >> xgen-gmc \
- 	&& cp xgen-gmc testmarshal.c \
- 	&& rm -f xgen-gmc xgen-gmc~
-@@ -71,4 +75,3 @@
- BUILT_SOURCES += testmarshal.h testmarshal.c
- CLEANFILES += stamp-testmarshal.h testmarshal.h testmarshal.c
- EXTRA_DIST += testcommon.h testmarshal.list
--endif # !CROSS_COMPILING
-\ No newline at end of file
-EOF
-}
-buildenv_glib2_0() {
-	export glib_cv_stack_grows=no
-	export glib_cv_uscore=no
-	export ac_cv_func_posix_getgrgid_r=yes
-	export ac_cv_func_posix_getpwuid_r=yes
-}
-
-add_automatic gmp
-patch_gmp() {
-	if test "$LIBC_NAME" = musl; then
-		echo "patching gmp symbols for musl arch #788411"
-		sed -i -r "s/([= ])(\!)?\<(${HOST_ARCH#musl-linux-})\>/\1\2\3 \2musl-linux-\3/" debian/libgmp10.symbols
-		# musl does not implement GNU obstack
-		sed -i -r 's/^ (.*_obstack_)/ (arch=!musl-linux-any !musleabihf-linux-any)\1/' debian/libgmp10.symbols
-	fi
-}
-
-builddep_gnu_efi() {
-	# binutils dependency needs cross translation
-	$APT_GET install debhelper
-}
-
-add_automatic gnupg2
-add_automatic gnutls28
-
-add_automatic gpm
-patch_gpm() {
-	if dpkg-architecture "-a$HOST_ARCH" -imusl-linux-any; then
-		echo "patching gpm to support musl #813751"
-		drop_privs patch -p1 <<'EOF'
---- a/src/lib/liblow.c
-+++ a/src/lib/liblow.c
-@@ -173,7 +173,7 @@
-   /* Reincarnation. Prepare for another death early. */
-   sigemptyset(&sa.sa_mask);
-   sa.sa_handler = gpm_suspend_hook;
--  sa.sa_flags = SA_NOMASK;
-+  sa.sa_flags = SA_NODEFER;
-   sigaction (SIGTSTP, &sa, 0);
- 
-   /* Pop the gpm stack by closing the useless connection */
-@@ -350,7 +350,7 @@
- 
-          /* if signal was originally ignored, job control is not supported */
-          if (gpm_saved_suspend_hook.sa_handler != SIG_IGN) {
--            sa.sa_flags = SA_NOMASK;
-+            sa.sa_flags = SA_NODEFER;
-             sa.sa_handler = gpm_suspend_hook;
-             sigaction(SIGTSTP, &sa, 0);
-          }
---- a/src/prog/display-buttons.c
-+++ b/src/prog/display-buttons.c
-@@ -36,6 +36,7 @@
- #include <stdio.h>            /* printf()             */
- #include <time.h>             /* time()               */
- #include <errno.h>            /* errno                */
-+#include <sys/select.h>       /* fd_set, FD_ZERO      */
- #include <gpm.h>              /* gpm information      */
- 
- /* display resulting data */
---- a/src/prog/display-coords.c
-+++ b/src/prog/display-coords.c
-@@ -37,6 +37,7 @@
- #include <stdio.h>            /* printf()             */
- #include <time.h>             /* time()               */
- #include <errno.h>            /* errno                */
-+#include <sys/select.h>       /* fd_set, FD_ZERO      */
- #include <gpm.h>              /* gpm information      */
- 
- /* display resulting data */
---- a/src/prog/gpm-root.y
-+++ b/src/prog/gpm-root.y
-@@ -1197,6 +1197,9 @@
-    /* reap your zombies */
-    childaction.sa_handler=reap_children;
-    sigemptyset(&childaction.sa_mask);
-+#ifndef SA_INTERRUPT
-+#define SA_INTERRUPT 0
-+#endif
-    childaction.sa_flags=SA_INTERRUPT; /* need to break the select() call */
-    sigaction(SIGCHLD,&childaction,NULL);
- 
---- a/contrib/control/gpm_has_mouse_control.c
-+++ a/contrib/control/gpm_has_mouse_control.c
-@@ -1,4 +1,4 @@
--#include <sys/fcntl.h>
-+#include <fcntl.h>
- #include <sys/kd.h>
- #include <stdio.h>
- #include <stdlib.h>
-EOF
-	fi
-}
-
-add_automatic grep
-add_automatic groff
-
-add_automatic guile-2.0
-builddep_guile_2_0() {
-	apt_get_build_dep "-a$HOST_ARCH" --arch-only -P cross ./
-	if test "$HOST_ARCH" = sh3; then
-		echo "adding sh3 support to guile-2.0 http://git.savannah.gnu.org/cgit/guile.git/commit/?id=92222727f81b2a03cde124b88d7e6224ecb29199"
-		sed -i -e 's/"sh4"/"sh3" &/' /usr/share/guile/2.0/system/base/target.scm
-	fi
-}
-patch_guile_2_0() {
-	if test "$HOST_ARCH" = sh3; then
-		echo "adding sh3 support to guile-2.0 http://git.savannah.gnu.org/cgit/guile.git/commit/?id=92222727f81b2a03cde124b88d7e6224ecb29199"
-		sed -i -e 's/"sh4"/"sh3" &/' module/system/base/target.scm
-	fi
-}
-
-add_automatic gzip
-buildenv_gzip() {
-	if test "$LIBC_NAME" = musl; then
-		# this avoids replacing fseeko with a variant that is broken
-		echo gl_cv_func_fflush_stdin exported
-		export gl_cv_func_fflush_stdin=yes
-	fi
-	if test "$(dpkg-architecture "-a$1" -qDEB_HOST_ARCH_BITS)" = 32; then
-		# If touch works with large timestamps (e.g. on amd64),
-		# gzip fails instead of warning about 32bit time_t.
-		echo "TIME_T_32_BIT_OK=yes exported"
-		export TIME_T_32_BIT_OK=yes
-	fi
-}
-
-add_automatic hostname
-
-patch_icu() {
-	echo "patching icu to drop the cycle with icu-le-hb #898571"
-	drop_privs sed -i -e 's/, libicu-le-hb-dev//' debian/control
-}
-
-add_automatic isl
-add_automatic isl-0.18
-add_automatic jansson
-
-add_automatic jemalloc
-buildenv_jemalloc() {
-	case "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_CPU)" in
-		amd64|arm|arm64|hppa|i386|m68k|mips|s390x|sh3|sh4)
-			echo "setting je_cv_static_page_shift=12"
-			export je_cv_static_page_shift=12
-		;;
-		alpha|sparc|sparc64)
-			echo "setting je_cv_static_page_shift=13"
-			export je_cv_static_page_shift=13
-		;;
-		mips64el|mipsel|nios2)
-			echo "setting je_cv_static_page_shift=14"
-			export je_cv_static_page_shift=14
-		;;
-		powerpc|ppc64|ppc64el)
-			echo "setting je_cv_static_page_shift=16"
-			export je_cv_static_page_shift=16
-		;;
-	esac
-}
-
-add_automatic keyutils
-add_automatic kmod
-
-add_automatic krb5
-buildenv_krb5() {
-	export krb5_cv_attr_constructor_destructor=yes,yes
-	export ac_cv_func_regcomp=yes
-	export ac_cv_printf_positional=yes
-}
-
-add_automatic libassuan
-add_automatic libatomic-ops
-add_automatic libbsd
-add_automatic libcap2
-add_automatic libdebian-installer
-add_automatic libev
-add_automatic libevent
-add_automatic libffi
-
-add_automatic libgc
-patch_libgc() {
-	if test "$HOST_ARCH" = nios2; then
-		echo "cherry-picking upstream commit https://github.com/ivmai/bdwgc/commit/2571df0e30b4976d7a12dbc6fbec4f1c4027924d"
-		drop_privs patch -p1 <<'EOF'
---- a/include/private/gcconfig.h
-+++ b/include/private/gcconfig.h
-@@ -188,6 +188,10 @@
- #    endif
- #    define mach_type_known
- # endif
-+# if defined(__NIOS2__) || defined(__NIOS2) || defined(__nios2__)
-+#   define NIOS2 /* Altera NIOS2 */
-+#   define mach_type_known
-+# endif
- # if defined(__NetBSD__) && defined(__vax__)
- #    define VAX
- #    define mach_type_known
-@@ -1729,6 +1733,24 @@
- #   endif
- # endif
- 
-+# ifdef NIOS2
-+#  define CPP_WORDSZ 32
-+#  define MACH_TYPE "NIOS2"
-+#  ifdef LINUX
-+#    define OS_TYPE "LINUX"
-+#    define DYNAMIC_LOADING
-+     extern int _end[];
-+     extern int __data_start[];
-+#    define DATASTART ((ptr_t)(__data_start))
-+#    define DATAEND ((ptr_t)(_end))
-+#    define ALIGNMENT 4
-+#    ifndef HBLKSIZE
-+#      define HBLKSIZE 4096
-+#    endif
-+#    define LINUX_STACKBOTTOM
-+#  endif /* Linux */
-+# endif
-+
- # ifdef SH4
- #   define MACH_TYPE "SH4"
- #   define OS_TYPE "MSWINCE"
-@@ -2800,7 +2822,8 @@
-
- #if ((defined(UNIX_LIKE) && (defined(DARWIN) || defined(HURD) \
-                              || defined(OPENBSD) || defined(ARM32) \
--                             || defined(MIPS) || defined(AVR32))) \
-+                             || defined(MIPS) || defined(AVR32) \
-+                             || defined(NIOS2))) \
-      || (defined(LINUX) && (defined(SPARC) || defined(M68K))) \
-      || ((defined(RTEMS) || defined(PLATFORM_ANDROID)) && defined(I386))) \
-     && !defined(NO_GETCONTEXT)
-EOF
-	fi
-}
-
-add_automatic libgcrypt20
-buildenv_libgcrypt20() {
-	export ac_cv_sys_symbol_underscore=no
-}
-
-add_automatic libgpg-error
-add_automatic libice
-add_automatic libidn
-add_automatic libidn2
-add_automatic libksba
-add_automatic libonig
-add_automatic libpipeline
-add_automatic libpng1.6
-
-patch_libprelude() {
-	echo "removing the unsatisfiable g++ build dependency"
-	drop_privs sed -i -e '/^\s\+g++/d' debian/control
-}
-buildenv_libprelude() {
-	case $(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_GNU_SYSTEM) in *gnu*)
-		echo "glibc does not return NULL for malloc(0)"
-		export ac_cv_func_malloc_0_nonnull=yes
-	;; esac
-}
-
-add_automatic libpsl
-add_automatic libpthread-stubs
-add_automatic libsepol
-add_automatic libsm
-add_automatic libssh2
-add_automatic libsystemd-dummy
-add_automatic libtasn1-6
-add_automatic libtextwrap
-add_automatic libunistring
-buildenv_libunistring() {
-	if dpkg-architecture "-a$HOST_ARCH" -ignu-any-any; then
-		echo "glibc does not prefer rwlock writers to readers"
-		export gl_cv_pthread_rwlock_rdlock_prefer_writer=no
-	fi
-}
-
-add_automatic libusb
-add_automatic libusb-1.0
-add_automatic libverto
-
-add_automatic libx11
-buildenv_libx11() {
-	export xorg_cv_malloc0_returns_null=no
-}
-
-add_automatic libxau
-add_automatic libxaw
-add_automatic libxcb
-add_automatic libxdmcp
-
-add_automatic libxext
-buildenv_libxext() {
-	export xorg_cv_malloc0_returns_null=no
-}
-
-add_automatic libxmu
-add_automatic libxpm
-
-add_automatic libxrender
-buildenv_libxrender() {
-	export xorg_cv_malloc0_returns_null=no
-}
-
-add_automatic libxss
-buildenv_libxss() {
-	export xorg_cv_malloc0_returns_null=no
-}
-
-add_automatic libxt
-buildenv_libxt() {
-	export xorg_cv_malloc0_returns_null=no
-}
-
-add_automatic libzstd
-add_automatic lz4
-add_automatic make-dfsg
-add_automatic man-db
-add_automatic mawk
-add_automatic mpclib3
-add_automatic mpdecimal
-add_automatic mpfr4
-add_automatic nettle
-add_automatic nghttp2
-add_automatic npth
-
-add_automatic nspr
-patch_nspr() {
-	echo "patching nspr for nios2 https://bugzilla.mozilla.org/show_bug.cgi?id=1244421"
-	drop_privs patch -p1 <<'EOF'
---- a/nspr/pr/include/md/_linux.cfg
-+++ b/nspr/pr/include/md/_linux.cfg
-@@ -972,6 +972,51 @@
- #define PR_BYTES_PER_WORD_LOG2   2
- #define PR_BYTES_PER_DWORD_LOG2  3
- 
-+#elif defined(__nios2__)
-+
-+#define IS_LITTLE_ENDIAN    1
-+#undef  IS_BIG_ENDIAN
-+
-+#define PR_BYTES_PER_BYTE   1
-+#define PR_BYTES_PER_SHORT  2
-+#define PR_BYTES_PER_INT    4
-+#define PR_BYTES_PER_INT64  8
-+#define PR_BYTES_PER_LONG   4
-+#define PR_BYTES_PER_FLOAT  4
-+#define PR_BYTES_PER_DOUBLE 8
-+#define PR_BYTES_PER_WORD   4
-+#define PR_BYTES_PER_DWORD  8
-+
-+#define PR_BITS_PER_BYTE    8
-+#define PR_BITS_PER_SHORT   16
-+#define PR_BITS_PER_INT     32
-+#define PR_BITS_PER_INT64   64
-+#define PR_BITS_PER_LONG    32
-+#define PR_BITS_PER_FLOAT   32
-+#define PR_BITS_PER_DOUBLE  64
-+#define PR_BITS_PER_WORD    32
-+
-+#define PR_BITS_PER_BYTE_LOG2   3
-+#define PR_BITS_PER_SHORT_LOG2  4
-+#define PR_BITS_PER_INT_LOG2    5
-+#define PR_BITS_PER_INT64_LOG2  6
-+#define PR_BITS_PER_LONG_LOG2   5
-+#define PR_BITS_PER_FLOAT_LOG2  5
-+#define PR_BITS_PER_DOUBLE_LOG2 6
-+#define PR_BITS_PER_WORD_LOG2   5
-+
-+#define PR_ALIGN_OF_SHORT   2
-+#define PR_ALIGN_OF_INT     4
-+#define PR_ALIGN_OF_LONG    4
-+#define PR_ALIGN_OF_INT64   4
-+#define PR_ALIGN_OF_FLOAT   4
-+#define PR_ALIGN_OF_DOUBLE  4
-+#define PR_ALIGN_OF_POINTER 4
-+#define PR_ALIGN_OF_WORD    4
-+
-+#define PR_BYTES_PER_WORD_LOG2   2
-+#define PR_BYTES_PER_DWORD_LOG2  3
-+
- #elif defined(__or1k__)
- 
- #undef  IS_LITTLE_ENDIAN
---- a/nspr/pr/include/md/_linux.h
-+++ b/nspr/pr/include/md/_linux.h
-@@ -55,6 +55,8 @@
- #define _PR_SI_ARCHITECTURE "avr32"
- #elif defined(__m32r__)
- #define _PR_SI_ARCHITECTURE "m32r"
-+#elif defined(__nios2__)
-+#define _PR_SI_ARCHITECTURE "nios2"
- #elif defined(__or1k__)
- #define _PR_SI_ARCHITECTURE "or1k"
- #else
-@@ -125,6 +127,18 @@ extern PRInt32 _PR_x86_64_AtomicSet(PRInt32 *val, PRInt32 newval);
- #define _MD_ATOMIC_SET                _PR_x86_64_AtomicSet
- #endif
- 
-+#if defined(__nios2__)
-+#if defined(__GNUC__)
-+/* Use GCC built-in functions */
-+#define _PR_HAVE_ATOMIC_OPS
-+#define _MD_INIT_ATOMIC()
-+#define _MD_ATOMIC_INCREMENT(ptr) __sync_add_and_fetch(ptr, 1)
-+#define _MD_ATOMIC_DECREMENT(ptr) __sync_sub_and_fetch(ptr, 1)
-+#define _MD_ATOMIC_ADD(ptr, i) __sync_add_and_fetch(ptr, i)
-+#define _MD_ATOMIC_SET(ptr, nv) __sync_lock_test_and_set(ptr, nv)
-+#endif
-+#endif
-+
- #if defined(__or1k__)
- #if defined(__GNUC__)
- /* Use GCC built-in functions */
-EOF
-}
-
-add_automatic nss
-patch_nss() {
-	echo "work around nss FTBFS with gcc-7 #853576"
-	drop_privs patch -p1 <<'EOF'
---- a/debian/rules
-+++ b/debian/rules
-@@ -110,6 +110,7 @@
- 		NSPR_LIB_DIR=/usr/lib/$(DEB_HOST_MULTIARCH) \
- 		BUILD_OPT=1 \
- 		NS_USE_GCC=1 \
-+		NSS_ENABLE_WERROR=0 \
- 		OPTIMIZER="$(CFLAGS) $(CPPFLAGS)" \
- 		LDFLAGS='$(LDFLAGS) $$(ARCHFLAG) $$(ZDEFS_FLAG)' \
- 		DSO_LDOPTS='-shared $$(LDFLAGS)' \
-EOF
-}
-
-add_automatic openssl
-add_automatic openssl1.0
-add_automatic p11-kit
-
-builddep_pam() {
-	# should be replaced with pkg.pam.noaudit profile #907492
-	dpkg-architecture "-a$1" -ilinux-any && assert_built libselinux
-	assert_built "cracklib2 db-defaults db5.3 flex"
-	dpkg-architecture "-a$1" -ilinux-any && apt_get_install "libselinux1-dev:$1"
-	apt_get_install "libcrack2-dev:$1" bzip2 debhelper quilt flex "libdb-dev:$1" po-debconf dh-autoreconf autopoint pkg-config libfl-dev "libfl-dev:$1" docbook-xsl docbook-xml xsltproc libxml2-utils w3m
-}
-
-add_automatic patch
-
-add_automatic pcre3
-patch_pcre3() {
-	echo "work around FTBFS with gcc-8 #897834"
-	# ignore symbol changes
-	sed -i -e 's/\(dh_makeshlibs.*-- -c\)4$/\10/' debian/rules
-}
-
-add_automatic readline5
-add_automatic rtmpdump
-add_automatic sed
-add_automatic shadow
-add_automatic slang2
-add_automatic spdylay
-add_automatic sqlite3
-
-patch_systemd() {
-	echo "fixing systemd FTCBFS for efi #905381"
-	drop_privs patch -p1 <<'EOF'
---- a/meson_options.txt
-+++ b/meson_options.txt
-@@ -276,9 +276,9 @@
-
- option('gnu-efi', type : 'combo', choices : ['auto', 'true', 'false'],
-        description : 'gnu-efi support for sd-boot')
--option('efi-cc', type : 'string', value : 'gcc',
-+option('efi-cc', type : 'string', value : '$cc',
-        description : 'the compiler to use for EFI modules')
--option('efi-ld', type : 'string', value : 'ld',
-+option('efi-ld', type : 'string', value : '$ld',
-        description : 'the linker to use for EFI modules')
- option('efi-libdir', type : 'string',
-        description : 'path to the EFI lib directory')
---- a/src/boot/efi/meson.build
-+++ b/src/boot/efi/meson.build
-@@ -33,8 +33,16 @@
- '''.split()
-
- if conf.get('ENABLE_EFI') == 1 and get_option('gnu-efi') != 'false'
--        efi_cc = get_option('efi-cc')
--        efi_ld = get_option('efi-ld')
-+        if get_option('efi-cc') == '$cc'
-+                efi_cc = ' '.join(cc.cmd_array())
-+        else
-+                efi_cc = get_option('efi-cc')
-+        endif
-+        if get_option('efi-ld') == '$ld'
-+                efi_ld = find_program('ld', required: true)
-+        else
-+                efi_ld = get_option('efi-ld')
-+        endif
-         efi_incdir = get_option('efi-includedir')
-
-         gnu_efi_path_arch = ''
-EOF
-}
-
-add_automatic sysvinit
-
-add_automatic tar
-buildenv_tar() {
-	case $(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_GNU_SYSTEM) in *gnu*)
-		echo "struct dirent contains working d_ino on glibc systems"
-		export gl_cv_struct_dirent_d_ino=yes
-	;; esac
-	if ! dpkg-architecture "-a$HOST_ARCH" -ilinux-any; then
-		echo "forcing broken posix acl check to fail on non-linux #850668"
-		export gl_cv_getxattr_with_posix_acls=no
-	fi
-}
-
-add_automatic tcl8.6
-buildenv_tcl8_6() {
-	export tcl_cv_strtod_buggy=ok
-}
-
-add_automatic tcltk-defaults
-add_automatic tcp-wrappers
-
-add_automatic tk8.6
-buildenv_tk8_6() {
-	export tcl_cv_strtod_buggy=ok
-}
-
-add_automatic ustr
-add_automatic xft
-add_automatic xz-utils
-
 $APT_GET install dose-builddebcheck dctrl-tools
 
 call_dose_builddebcheck() {
@@ -2651,136 +2848,24 @@ assert_built() {
 
 automatically_cross_build_packages
 
-builddep_zlib() {
-	# gcc-multilib dependency unsatisfiable
-	$APT_GET install debhelper binutils dpkg-dev
-}
 cross_build zlib "$(if test "$ENABLE_MULTILIB" != yes; then echo stage1; fi)"
 mark_built zlib
 # needed by dpkg, file, gnutls28, libpng1.6, libtool, libxml2, perl, slang2, tcl8.6, util-linux
 
 automatically_cross_build_packages
 
-builddep_libtool() {
-	assert_built "zlib"
-	test "$1" = "$HOST_ARCH"
-	# gfortran dependency needs cross-translation
-	# gnulib dependency lacks M-A:foreign
-	apt_get_install debhelper file "gfortran-$GCC_VER$HOST_ARCH_SUFFIX" automake autoconf autotools-dev help2man texinfo "zlib1g-dev:$HOST_ARCH" gnulib
-}
 cross_build libtool
 mark_built libtool
 # needed by guile-2.0, libffi
 
 automatically_cross_build_packages
 
-builddep_ncurses() {
-	if test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = linux; then
-		assert_built gpm
-		$APT_GET install "libgpm-dev:$1"
-	fi
-	# g++-multilib dependency unsatisfiable
-	apt_get_install debhelper pkg-config autoconf-dickey
-	case "$ENABLE_MULTILIB:$HOST_ARCH" in
-		yes:amd64|yes:i386|yes:powerpc|yes:ppc64|yes:s390|yes:sparc)
-			test "$1" = "$HOST_ARCH"
-			$APT_GET install "g++-$GCC_VER-multilib$HOST_ARCH_SUFFIX"
-			# the unversioned gcc-multilib$HOST_ARCH_SUFFIX should contain the following link
-			ln -sf "`dpkg-architecture -a$HOST_ARCH -qDEB_HOST_MULTIARCH`/asm" /usr/include/asm
-		;;
-	esac
-}
 cross_build ncurses
 mark_built ncurses
 # needed by bash, bsdmainutils, dpkg, guile-2.0, readline, slang2
 
 automatically_cross_build_packages
 
-patch_readline() {
-	echo "patching readline to support nobiarch profile #737955"
-	drop_privs patch -p1 <<EOF
---- a/debian/control
-+++ b/debian/control
-@@ -4,10 +4,10 @@
- Maintainer: Matthias Klose <doko@debian.org>
- Standards-Version: 3.9.8
- Build-Depends: debhelper (>= 9),
-   libncurses-dev,
--  lib32ncurses-dev [amd64 ppc64], lib64ncurses-dev [i386 powerpc sparc s390],
-+  lib32ncurses-dev [amd64 ppc64] <!nobiarch>, lib64ncurses-dev [i386 powerpc sparc s390] <!nobiarch>,
-   mawk | awk, texinfo, autotools-dev,
--  gcc-multilib [amd64 i386 kfreebsd-amd64 powerpc ppc64 s390 sparc]
-+  gcc-multilib [amd64 i386 kfreebsd-amd64 powerpc ppc64 s390 sparc] <!nobiarch>
- 
- Package: libreadline7
- Architecture: any
-@@ -30,6 +30,7 @@
- Depends: readline-common, \${shlibs:Depends}, \${misc:Depends}
- Section: libs
- Priority: optional
-+Build-Profiles: <!nobiarch>
- Description: GNU readline and history libraries, run-time libraries (64-bit)
-  The GNU readline library aids in the consistency of user interface
-  across discrete programs that need to provide a command line
-@@ -96,6 +97,7 @@
- Conflicts: lib64readline-dev, lib64readline-gplv2-dev
- Section: libdevel
- Priority: optional
-+Build-Profiles: <!nobiarch>
- Description: GNU readline and history libraries, development files (64-bit)
-  The GNU readline library aids in the consistency of user interface
-  across discrete programs that need to provide a command line
-@@ -139,6 +141,7 @@
- Depends: readline-common, \${shlibs:Depends}, \${misc:Depends}
- Section: libs
- Priority: optional
-+Build-Profiles: <!nobiarch>
- Description: GNU readline and history libraries, run-time libraries (32-bit)
-  The GNU readline library aids in the consistency of user interface
-  across discrete programs that need to provide a command line
-@@ -154,6 +157,7 @@
- Conflicts: lib32readline-dev, lib32readline-gplv2-dev
- Section: libdevel
- Priority: optional
-+Build-Profiles: <!nobiarch>
- Description: GNU readline and history libraries, development files (32-bit)
-  The GNU readline library aids in the consistency of user interface
-  across discrete programs that need to provide a command line
---- a/debian/rules
-+++ b/debian/rules
-@@ -57,6 +57,11 @@
-   endif
- endif
- 
-+ifneq (\$(filter nobiarch,\$(DEB_BUILD_PROFILES)),)
-+build32 =
-+build64 =
-+endif
-+
- CFLAGS := \$(shell dpkg-buildflags --get CFLAGS)
- CPPFLAGS := \$(shell dpkg-buildflags --get CPPFLAGS)
- LDFLAGS := \$(shell dpkg-buildflags --get LDFLAGS)
-EOF
-}
-builddep_readline() {
-	assert_built "ncurses"
-	# gcc-multilib dependency unsatisfiable
-	$APT_GET install debhelper "libtinfo-dev:$1" "libncursesw5-dev:$1" mawk texinfo autotools-dev
-	case "$ENABLE_MULTILIB:$HOST_ARCH" in
-		yes:amd64|yes:ppc64)
-			test "$1" = "$HOST_ARCH"
-			$APT_GET install "gcc-$GCC_VER-multilib$HOST_ARCH_SUFFIX" "lib32tinfo-dev:$1" "lib32ncursesw5-dev:$1"
-			# the unversioned gcc-multilib$HOST_ARCH_SUFFIX should contain the following link
-			ln -sf "`dpkg-architecture -a$1 -qDEB_HOST_MULTIARCH`/asm" /usr/include/asm
-		;;
-		yes:i386|yes:powerpc|yes:sparc|yes:s390)
-			test "$1" = "$HOST_ARCH"
-			$APT_GET install "gcc-$GCC_VER-multilib$HOST_ARCH_SUFFIX" "lib64ncurses5-dev:$1"
-			# the unversioned gcc-multilib$HOST_ARCH_SUFFIX should contain the following link
-			ln -sf "`dpkg-architecture -a$1 -qDEB_HOST_MULTIARCH`/asm" /usr/include/asm
-		;;
-	esac
-}
 cross_build readline
 mark_built readline
 # needed by gnupg2, guile-2.0, libxml2
@@ -2811,11 +2896,6 @@ mark_built libselinux
 automatically_cross_build_packages
 fi # $HOST_ARCH matches linux-any
 
-builddep_util_linux() {
-	dpkg-architecture "-a$1" -ilinux-any && assert_built libselinux
-	assert_built "ncurses slang2 zlib"
-	$APT_GET build-dep "-a$1" --arch-only -P "$2" util-linux
-}
 if test -f "$REPODIR/stamps/util-linux_1"; then
 	echo "skipping rebuild of util-linux stage1"
 else
@@ -2837,10 +2917,6 @@ mark_built util-linux
 
 automatically_cross_build_packages
 
-builddep_db5_3() {
-	# java stuff lacks build profile annotation
-	apt_get_install debhelper autotools-dev procps
-}
 if test -f "$REPODIR/stamps/db5.3_1"; then
 	echo "skipping stage1 rebuild of db5.3"
 else
@@ -2890,12 +2966,6 @@ mark_built libxml2
 
 automatically_cross_build_packages
 
-builddep_cracklib2() {
-	# python-all-dev lacks build profile annotation
-	$APT_GET install autoconf automake autotools-dev chrpath debhelper docbook-utils docbook-xml dpkg-dev libtool python dh-python
-	# additional B-D for cross
-	$APT_GET install cracklib-runtime
-}
 if test -f "$REPODIR/stamps/cracklib2_1"; then
 	echo "skipping stage1 rebuild of cracklib2"
 else
@@ -2946,64 +3016,6 @@ mark_built pam
 
 automatically_cross_build_packages
 
-builddep_cyrus_sasl2() {
-	assert_built "db-defaults db5.3 openssl pam"
-	# many packages droppable in stage1
-	$APT_GET install debhelper quilt automake autotools-dev "libdb-dev:$1" "libpam0g-dev:$1" "libssl-dev:$1" chrpath groff-base po-debconf docbook-to-man dh-autoreconf
-}
-patch_cyrus_sasl2() {
-	echo "fixing cyrus-sasl2 compilation of build tools #792851"
-	drop_privs patch -p1 <<'EOF'
-diff -Nru cyrus-sasl2-2.1.26.dfsg1/debian/patches/cross.patch cyrus-sasl2-2.1.26.dfsg1/debian/patches/cross.patch
---- cyrus-sasl2-2.1.26.dfsg1/debian/patches/cross.patch
-+++ cyrus-sasl2-2.1.26.dfsg1/debian/patches/cross.patch
-@@ -0,0 +1,17 @@
-+Description: fix cross compialtion
-+Author: Helmut Grohne <helmut@subdivi.de>
-+
-+ * Remove SASL_DB_LIB as it expands to -ldb and make fails to find a build arch
-+   -ldb.
-+
-+--- a/sasldb/Makefile.am
-++++ b/sasldb/Makefile.am
-+@@ -55,7 +55,7 @@
-+ 
-+ libsasldb_la_SOURCES = allockey.c sasldb.h
-+ EXTRA_libsasldb_la_SOURCES = $(extra_common_sources)
-+-libsasldb_la_DEPENDENCIES = $(SASL_DB_BACKEND) $(SASL_DB_LIB)
-++libsasldb_la_DEPENDENCIES = $(SASL_DB_BACKEND)
-+ libsasldb_la_LIBADD = $(SASL_DB_BACKEND) $(SASL_DB_LIB)
-+ 
-+ # Prevent make dist stupidity
-diff -Nru cyrus-sasl2-2.1.26.dfsg1/debian/rules cyrus-sasl2-2.1.26.dfsg1/debian/rules
---- cyrus-sasl2-2.1.26.dfsg1/debian/rules
-+++ cyrus-sasl2-2.1.26.dfsg1/debian/rules
-@@ -25,4 +25,8 @@
- include /usr/share/dpkg/default.mk
- 
-+ifeq ($(origin CC),default)
-+export CC=$(DEB_HOST_GNU_TYPE)-gcc
-+endif
-+
- # Save Berkeley DB used for building the package
- BDB_VERSION ?= $(shell LC_ALL=C dpkg-query -l 'libdb[45].[0-9]-dev' | grep ^ii | sed -e 's|.*\s\libdb\([45]\.[0-9]\)-dev\s.*|\1|')
-diff -Nru cyrus-sasl2-2.1.26.dfsg1/debian/sample/Makefile cyrus-sasl2-2.1.26.dfsg1/debian/sample/Makefile
---- cyrus-sasl2-2.1.26.dfsg1/debian/sample/Makefile
-+++ cyrus-sasl2-2.1.26.dfsg1/debian/sample/Makefile
-@@ -7,7 +7,7 @@
- all: sample-server sample-client
- 
- sample-server: sample-server.c
--	gcc $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) -g -o sample-server sample-server.c -I. -I$(T) -I$(INCDIR1) -I$(INCDIR2) -L$(LIBDIR) -lsasl2
-+	$(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) -g -o sample-server sample-server.c -I. -I$(T) -I$(INCDIR1) -I$(INCDIR2) -L$(LIBDIR) -lsasl2
- 
- sample-client: sample-client.c
--	gcc $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) -g -o sample-client sample-client.c -I. -I$(T) -I$(INCDIR1) -I$(INCDIR2) -L$(LIBDIR) -lsasl2
-+	$(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) -g -o sample-client sample-client.c -I. -I$(T) -I$(INCDIR1) -I$(INCDIR2) -L$(LIBDIR) -lsasl2
-EOF
-	echo cross.patch | drop_privs tee -a debian/patches/series >/dev/null
-	drop_privs quilt push -a
-}
 if test -f "$REPODIR/stamps/cyrus-sasl2_1"; then
 	echo "skipping stage1 rebuild of cyrus-sasl2"
 else
