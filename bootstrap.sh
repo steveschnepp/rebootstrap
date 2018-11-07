@@ -1029,36 +1029,31 @@ EOF
 		echo "debian_patches += arm64-ilp32-default" | drop_privs tee -a debian/rules.patch >/dev/null
 	fi
 	drop_privs patch -p1 <<'EOF'
---- a/debian/patches/gcc-multiarch.diff
-+++ b/debian/patches/gcc-multiarch.diff
-@@ -163,17 +163,21 @@
- ===================================================================
- --- a/src/gcc/config/aarch64/t-aarch64-linux
- +++ b/src/gcc/config/aarch64/t-aarch64-linux
--@@ -22,7 +22,7 @@ LIB1ASMSRC   = aarch64/lib1funcs.asm
-+@@ -22,7 +22,12 @@ LIB1ASMSRC   = aarch64/lib1funcs.asm
-  LIB1ASMFUNCS = _aarch64_sync_cache_range
-  
-  AARCH_BE = $(if $(findstring TARGET_BIG_ENDIAN_DEFAULT=1, $(tm_defines)),_be)
---MULTILIB_OSDIRNAMES = mabi.lp64=../lib64$(call if_multiarch,:aarch64$(AARCH_BE)-linux-gnu)
---MULTIARCH_DIRNAME = $(call if_multiarch,aarch64$(AARCH_BE)-linux-gnu)
+--- a/debian/patches/gcc-multilib-multiarch.diff
++++ b/debian/patches/gcc-multilib-multiarch.diff
+@@ -124,3 +124,22 @@
+  else
+  MULTIARCH_DIRNAME := powerpc-linux-gnu
+  endif
++Index: b/src/gcc/config/aarch64/t-aarch64-linux
++===================================================================
++--- a/src/gcc/config/aarch64/t-aarch64-linux	2018-09-02 02:55:29.497080395 +0100
+++++ b/src/gcc/config/aarch64/t-aarch64-linux	2018-09-02 02:58:07.985592927 +0100
++@@ -22,7 +22,14 @@
++ LIB1ASMFUNCS = _aarch64_sync_cache_range
++
++ AARCH_BE = $(if $(findstring TARGET_BIG_ENDIAN_DEFAULT=1, $(tm_defines)),_be)
 ++ifneq (,$(findstring _ilp32,$(target)))
-+ MULTILIB_OSDIRNAMES = mabi.lp64=../lib64$(call if_multiarch,:aarch64$(AARCH_BE)-linux-gnu)
-++MULTILIB_OSDIRNAMES += mabi.ilp32=../lib$(call if_multiarch,:aarch64$(AARCH_BE)-linux-gnu_ilp32)
+++MULTILIB_OSDIRNAMES = mabi.lp64=../lib64$(call if_multiarch,:aarch64$(AARCH_BE)-linux-gnu)
 ++MULTIARCH_DIRNAME = $(call if_multiarch,aarch64$(AARCH_BE)-linux-gnu_ilp32)
+++
+++MULTILIB_OSDIRNAMES += mabi.ilp32=../lib$(call if_multiarch,:aarch64$(AARCH_BE)-linux-gnu_ilp32)
 ++else
- +MULTILIB_OSDIRNAMES = mabi.lp64=../lib$(call if_multiarch,:aarch64$(AARCH_BE)-linux-gnu)
--+MULTILIB_OSDIRNAMES += mabi.ilp32=../libilp32$(call if_multiarch,:aarch64$(AARCH_BE)_ilp32-linux-gnu)
-- 
-++MULTILIB_OSDIRNAMES += mabi.ilp32=../libilp32$(call if_multiarch,:aarch64$(AARCH_BE)-linux-gnu_ilp32)
++ MULTILIB_OSDIRNAMES = mabi.lp64=../lib$(call if_multiarch,:aarch64$(AARCH_BE)-linux-gnu)
 + MULTIARCH_DIRNAME = $(call if_multiarch,aarch64$(AARCH_BE)-linux-gnu)
-+-
- -MULTILIB_OSDIRNAMES += mabi.ilp32=../libilp32
--+MULTIARCH_DIRNAME = $(call if_multiarch,aarch64$(AARCH_BE)-linux-gnu)
++
++ MULTILIB_OSDIRNAMES += mabi.ilp32=../libilp32$(call if_multiarch,:aarch64$(AARCH_BE)-linux-gnu_ilp32)
 ++endif
- Index: b/src/gcc/config/mips/mips.h
- ===================================================================
- --- a/src/gcc/config/mips/mips.h
 EOF
 }
 patch_gcc_default_pie_everywhere()
