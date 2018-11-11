@@ -959,6 +959,7 @@ add_automatic flex
 add_automatic fontconfig
 add_automatic freebsd-glue
 add_automatic freetype
+add_automatic fribidi
 add_automatic fuse
 
 patch_gcc_multilib_deps() {
@@ -2718,6 +2719,7 @@ add_need expat # by unbound
 add_need file # by gcc-6, for debhelper
 add_need flex # by libsemanage, pam
 dpkg-architecture "-a$HOST_ARCH" -ikfreebsd-any && add_need freebsd-glue # by freebsd-libs
+add_need fribidi # by newt
 add_need gnupg2 # for apt
 add_need gnutls28 # by libprelude, openldap
 test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = linux && add_need gpm # by ncurses
