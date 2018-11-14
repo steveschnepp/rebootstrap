@@ -1953,6 +1953,8 @@ patch_pcre3() {
 	sed -i -e 's/\(dh_makeshlibs.*-- -c\)4$/\10/' debian/rules
 }
 
+add_automatic popt
+
 builddep_readline() {
 	assert_built "ncurses"
 	# gcc-multilib dependency unsatisfiable
@@ -2750,6 +2752,7 @@ add_need nettle # by unbound
 add_need openssl # by cyrus-sasl2
 add_need patch # for dpkg-dev
 add_need pcre3 # by libselinux
+add_need popt # by newt
 add_need readline5 # by lvm2
 add_need slang2 # by cdebconf, newt
 add_need sqlite3 # by python2.7
