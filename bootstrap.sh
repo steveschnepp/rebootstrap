@@ -1561,7 +1561,9 @@ patch_hurd() {
 
 patch_icu() {
 	echo "patching icu to drop the cycle with icu-le-hb #898571"
-	drop_privs sed -i -e 's/, libicu-le-hb-dev//' debian/control
+	drop_privs sed -i -e 's/, libicu-le-hb-dev [^,]*//' debian/control
+	drop_privs sed -i -e '/^Package: libiculx/aBuild-Profiles: <disabled>' debian/control
+	drop_privs sed -i -e 's/, libiculx[^,]*//' debian/control
 }
 
 add_automatic isl
