@@ -1955,7 +1955,22 @@ patch_pcre3() {
 	sed -i -e 's/\(dh_makeshlibs.*-- -c\)4$/\10/' debian/rules
 }
 
-add_automatic popt
+patch_popt() {
+	echo "adding <nocheck> annotation #894824"
+	drop_privs patch -p1 <<'EOF'
+--- a/debian/control
++++ b/debian/control
+@@ -3,7 +3,7 @@
+ Priority: optional
+ Maintainer: Michael Jeanson <mjeanson@debian.org>
+ Build-Depends: debhelper (>= 9~), gettext (>= 0.18.1.1-8), dh-autoreconf,
+- api-sanity-checker
++ api-sanity-checker <!nocheck>
+ Standards-Version: 4.1.3
+ Vcs-Git: https://salsa.debian.org/debian/popt.git
+ Vcs-Browser: https://salsa.debian.org/debian/popt.git
+EOF
+}
 
 builddep_readline() {
 	assert_built "ncurses"
@@ -2754,7 +2769,6 @@ add_need nettle # by unbound
 add_need openssl # by cyrus-sasl2
 add_need patch # for dpkg-dev
 add_need pcre3 # by libselinux
-add_need popt # by newt
 add_need readline5 # by lvm2
 add_need slang2 # by cdebconf, newt
 add_need sqlite3 # by python2.7
@@ -3269,6 +3283,11 @@ fi
 progress_mark "gdbm stage1 cross build"
 mark_built gdbm
 # needed by man-db, perl, python2.7
+
+automatically_cross_build_packages
+
+cross_build popt
+# needed by newt
 
 automatically_cross_build_packages
 
