@@ -2065,48 +2065,6 @@ add_automatic shadow
 add_automatic slang2
 add_automatic spdylay
 add_automatic sqlite3
-
-patch_systemd() {
-	echo "fixing systemd FTCBFS for efi #905381"
-	drop_privs patch -p1 <<'EOF'
---- a/meson_options.txt
-+++ b/meson_options.txt
-@@ -276,9 +276,9 @@
-
- option('gnu-efi', type : 'combo', choices : ['auto', 'true', 'false'],
-        description : 'gnu-efi support for sd-boot')
--option('efi-cc', type : 'string', value : 'gcc',
-+option('efi-cc', type : 'string', value : '$cc',
-        description : 'the compiler to use for EFI modules')
--option('efi-ld', type : 'string', value : 'ld',
-+option('efi-ld', type : 'string', value : '$ld',
-        description : 'the linker to use for EFI modules')
- option('efi-libdir', type : 'string',
-        description : 'path to the EFI lib directory')
---- a/src/boot/efi/meson.build
-+++ b/src/boot/efi/meson.build
-@@ -33,8 +33,16 @@
- '''.split()
-
- if conf.get('ENABLE_EFI') == 1 and get_option('gnu-efi') != 'false'
--        efi_cc = get_option('efi-cc')
--        efi_ld = get_option('efi-ld')
-+        if get_option('efi-cc') == '$cc'
-+                efi_cc = ' '.join(cc.cmd_array())
-+        else
-+                efi_cc = get_option('efi-cc')
-+        endif
-+        if get_option('efi-ld') == '$ld'
-+                efi_ld = find_program('ld', required: true)
-+        else
-+                efi_ld = get_option('efi-ld')
-+        endif
-         efi_incdir = get_option('efi-includedir')
-
-         gnu_efi_path_arch = ''
-EOF
-}
-
 add_automatic sysvinit
 
 add_automatic tar
