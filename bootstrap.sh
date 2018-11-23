@@ -3249,6 +3249,25 @@ cross_build popt
 
 automatically_cross_build_packages
 
+if test -f "$REPODIR/stamps/newt_1"; then
+	echo "skipping rebuild of newt stage1"
+else
+	cross_build_setup newt newt_1
+	apt_get_build_dep "-a$HOST_ARCH" --arch-only -P stage1 ./
+	check_binNMU
+	drop_privs dpkg-buildpackage "-a$HOST_ARCH" -B -uc -us -Pstage1
+	cd ..
+	ls -l
+	pickup_packages *.changes
+	touch "$REPODIR/stamps/newt_1"
+	compare_native ./*.deb
+	cd ..
+	drop_privs rm -Rf newt_1
+fi
+progress_mark "newt stage1 cross build"
+mark_built newt
+# needed by cdebconf
+
 assert_built "$need_packages"
 
 echo "checking installability of build-essential with dose"
