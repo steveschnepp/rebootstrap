@@ -3268,6 +3268,29 @@ progress_mark "newt stage1 cross build"
 mark_built newt
 # needed by cdebconf
 
+automatically_cross_build_packages
+
+if test -f "$REPODIR/stamps/cdebconf_1"; then
+	echo "skipping rebuild of cdebconf nogtk"
+else
+	cross_build_setup cdebconf cdebconf_1
+	apt_get_build_dep "-a$HOST_ARCH" --arch-only -P pkg.cdebconf.nogtk ./
+	check_binNMU
+	drop_privs dpkg-buildpackage "-a$HOST_ARCH" -B -uc -us -Ppkg.cdebconf.nogtk
+	cd ..
+	ls -l
+	pickup_packages *.changes
+	touch "$REPODIR/stamps/cdebconf_1"
+	compare_native ./*.deb
+	cd ..
+	drop_privs rm -Rf cdebconf_1
+fi
+progress_mark "cdebconf nogtk cross build"
+mark_built cdebconf
+# needed by base-passwd
+
+automatically_cross_build_packages
+
 assert_built "$need_packages"
 
 echo "checking installability of build-essential with dose"
