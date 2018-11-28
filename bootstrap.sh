@@ -742,6 +742,7 @@ EOF
 
 add_automatic autogen
 add_automatic base-files
+add_automatic base-passwd
 add_automatic bash
 
 patch_binutils() {
