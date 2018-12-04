@@ -1552,6 +1552,18 @@ buildenv_gzip() {
 		export TIME_T_32_BIT_OK=yes
 	fi
 }
+patch_gzip() {
+	echo "work around FTBFS #915150"
+	drop_privs sed -i -e 's/^#if\( defined _IO_ftrylockfile\)/#if defined _IO_EOF_SEEN ||\1/' lib/*.c
+	drop_privs tee -a lib/stdio-impl.h >/dev/null <<'EOF'
+/* Glibc 2.28 made _IO_IN_BACKUP private.  For now, work around this
+   problem by defining it ourselves.  FIXME: Do not rely on glibc
+   internals.  */
+#if !defined _IO_IN_BACKUP && defined _IO_EOF_SEEN
+# define _IO_IN_BACKUP 0x100
+#endif
+EOF
+}
 
 add_automatic hostname
 
