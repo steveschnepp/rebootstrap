@@ -1166,7 +1166,7 @@ builddep_glibc() {
 			fi
 		;;
 		hurd)
-			apt_get_install "gnumach-dev:$1" "hurd-headers-dev:$1" "mig:$HOST_ARCH_SUFFIX"
+			apt_get_install "gnumach-dev:$1" "hurd-headers-dev:$1" "mig$HOST_ARCH_SUFFIX"
 			test "$2" = stage1 || apt_get_install "libihash-dev:$1"
 		;;
 		kfreebsd)
