@@ -2107,6 +2107,7 @@ buildenv_tk8_6() {
 	export tcl_cv_strtod_buggy=ok
 }
 
+add_automatic uchardet
 add_automatic ustr
 
 builddep_util_linux() {
