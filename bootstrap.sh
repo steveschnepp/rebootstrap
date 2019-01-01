@@ -870,19 +870,6 @@ builddep_cracklib2() {
 	# additional B-D for cross
 	$APT_GET install cracklib-runtime
 }
-patch_cracklib2() {
-	echo "fix FTBFS with nopython profile #917835"
-	drop_privs patch -p1 <<'EOF'
---- a/debian/rules
-+++ b/debian/rules
-@@ -153,4 +153,4 @@
- endif
-
- %:
--	dh $@ --with $(DH_WITH_PARAMETERS) $(NOPYTHON_OPTIONS)
-+	dh $@ --with=$(DH_WITH_PARAMETERS) $(NOPYTHON_OPTIONS)
-EOF
-}
 
 add_automatic curl
 
