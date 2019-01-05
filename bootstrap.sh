@@ -1100,53 +1100,6 @@ buildenv_gdbm() {
 }
 
 add_automatic glib2.0
-builddep_glib2_0() {
-	apt_get_build_dep "-a$1" --arch-only -P nocheck ./
-	# FTCBFS #908334
-	apt_get_install libglib2.0-dev-bin
-}
-patch_glib2_0() {
-	echo "fixing FTCBFS FTCBFS #908334"
-	drop_privs patch -p1 <<'EOF'
---- a/tests/gobject/Makefile.am
-+++ b/tests/gobject/Makefile.am
-@@ -51,19 +51,23 @@
- installed_test_programs += timeloop-closure
- endif
-
--# The marshal test requires running a binary, which means we cannot
--# build it when cross-compiling
--if !CROSS_COMPILING
-+# The marshal test requires running a binary, use the native system copy for
-+# cross compilation.
-+if CROSS_COMPILING
-+glib_genmarshal=glib-genmarshal
-+else
- glib_genmarshal=$(top_builddir)/gobject/glib-genmarshal
-+glib_genmarshal_dep=$(glib_genmarshal)
-+endif
-
- testmarshal.h: stamp-testmarshal.h
- 	@true
--stamp-testmarshal.h: testmarshal.list $(glib_genmarshal)
-+stamp-testmarshal.h: testmarshal.list $(glib_genmarshal_dep)
- 	$(AM_V_GEN) $(glib_genmarshal) --prefix=test_marshal $(srcdir)/testmarshal.list --header >> xgen-gmh \
- 	&& (cmp -s xgen-gmh testmarshal.h 2>/dev/null || cp xgen-gmh testmarshal.h) \
- 	&& rm -f xgen-gmh xgen-gmh~ \
- 	&& echo timestamp > $@
--testmarshal.c: testmarshal.h testmarshal.list $(glib_genmarshal)
-+testmarshal.c: testmarshal.h testmarshal.list $(glib_genmarshal_dep)
- 	$(AM_V_GEN) (echo "#include \"testmarshal.h\""; $(glib_genmarshal) --prefix=test_marshal $(srcdir)/testmarshal.list --body) >> xgen-gmc \
- 	&& cp xgen-gmc testmarshal.c \
- 	&& rm -f xgen-gmc xgen-gmc~
-@@ -71,4 +75,3 @@
- BUILT_SOURCES += testmarshal.h testmarshal.c
- CLEANFILES += stamp-testmarshal.h testmarshal.h testmarshal.c
- EXTRA_DIST += testcommon.h testmarshal.list
--endif # !CROSS_COMPILING
-\ No newline at end of file
-EOF
-}
 buildenv_glib2_0() {
 	export glib_cv_stack_grows=no
 	export glib_cv_uscore=no
