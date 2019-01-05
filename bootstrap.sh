@@ -1476,47 +1476,7 @@ EOF
 }
 
 add_automatic grep
-
 add_automatic groff
-patch_groff() {
-	echo "fixing FTCBFS #917779"
-	drop_privs patch -p1 <<'EOF'
---- a/debian/rules
-+++ b/debian/rules
-@@ -65,27 +65,12 @@
-   cross :=
- else
-   native_tmp := $(CURDIR)/debian/build-native
--  groff_bin_dirs := \
--	$(native_tmp)/src/roff/groff \
--	$(native_tmp)/src/roff/troff \
--	$(native_tmp)/src/preproc/pic \
--	$(native_tmp)/src/preproc/eqn \
--	$(native_tmp)/src/preproc/tbl \
--	$(native_tmp)/src/preproc/grn \
--	$(native_tmp)/src/preproc/refer \
--	$(native_tmp)/src/preproc/soelim \
--	$(native_tmp)/src/preproc/html \
--	$(native_tmp)/src/devices/grops \
--	$(native_tmp)/src/devices/grodvi \
--	$(native_tmp)/src/devices/grotty \
--	$(native_tmp)/src/devices/grolj4 \
--	$(native_tmp)/src/devices/grolbp \
--	$(native_tmp)/src/devices/grohtml
-+  groff_bin_dirs := $(native_tmp)
-   empty :=
-   space := $(empty) $(empty)
-   cross := \
--	GROFFBIN=$(native_tmp)/src/roff/groff/groff \
--	GROFF_BIN_DIR=$(native_tmp)/src/roff/groff \
-+	GROFFBIN=$(native_tmp)/groff \
-+	GROFF_BIN_DIR=$(native_tmp) \
- 	GROFF_BIN_PATH=$(subst $(space),:,$(groff_bin_dirs))
- endif
-
-EOF
-}
-
 add_automatic guile-2.0
 builddep_guile_2_0() {
 	apt_get_build_dep "-a$HOST_ARCH" --arch-only -P cross ./
