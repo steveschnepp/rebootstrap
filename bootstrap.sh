@@ -173,8 +173,7 @@ else
 		adduser --system --group --home /tmp/buildd --no-create-home --shell /bin/false "$DROP_PRIVS"
 	fi
 	drop_privs_exec() {
-		# Two "--" are necessary here. The first is for start-stop-daemon, the second is for env.
-		exec /sbin/start-stop-daemon --start --pidfile /dev/null --chuid "$DROP_PRIVS:$DROP_PRIVS" --chdir "`pwd`" --startas /usr/bin/env -- -- "$@"
+		exec /sbin/runuser --user "$DROP_PRIVS" --group "$DROP_PRIVS" -- /usr/bin/env -- "$@"
 	}
 fi
 drop_privs() {
