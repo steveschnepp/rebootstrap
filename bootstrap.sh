@@ -743,7 +743,12 @@ EOF
 add_automatic autogen
 add_automatic base-files
 add_automatic base-passwd
-add_automatic bash
+
+builddep_bash() {
+	# man2html dependency unsatisfiable #889757
+	assert_built ncurses
+	apt_get_install autoconf autotools-dev bison "libncurses5-dev:$1" texinfo texi2html debhelper gettext sharutils xz-utils dpkg-dev
+}
 
 patch_binutils() {
 	if test "$HOST_ARCH" = "hurd-amd64"; then
@@ -3159,6 +3164,12 @@ automatically_cross_build_packages
 cross_build apt
 mark_built apt
 # almost essential
+
+automatically_cross_build_packages
+
+cross_build bash
+mark_built bash
+# essential
 
 automatically_cross_build_packages
 
