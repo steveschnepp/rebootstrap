@@ -1465,13 +1465,7 @@ patch_hurd() {
 	sed -i -e '/^#.*818618/d;s/^#//' debian/control
 }
 
-patch_icu() {
-	echo "patching icu to drop the cycle with icu-le-hb #898571"
-	drop_privs sed -i -e 's/, libicu-le-hb-dev [^,]*//' debian/control
-	drop_privs sed -i -e '/^Package: libiculx/aBuild-Profiles: <disabled>' debian/control
-	drop_privs sed -i -e 's/, libiculx[^,]*//' debian/control
-}
-
+add_automatic icu
 add_automatic isl
 add_automatic isl-0.18
 add_automatic jansson
@@ -2594,6 +2588,7 @@ add_need gnutls28 # by libprelude, openldap
 test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = linux && add_need gpm # by ncurses
 add_need groff # for man-db
 test "$(dpkg-architecture "-a$HOST_ARCH" -qDEB_HOST_ARCH_OS)" = linux && add_need kmod # by systemd
+add_need icu # by libxml2
 add_need krb5 # by audit
 add_need libatomic-ops # by gcc-VER
 dpkg-architecture "-a$HOST_ARCH" -ilinux-any && add_need libcap2 # by systemd
@@ -2803,12 +2798,6 @@ fi
 progress_mark "db5.3 stage1 cross build"
 mark_built db5.3
 # needed by perl, python2.7, needed for db-defaults and thus by freebsd-glue
-
-automatically_cross_build_packages
-
-cross_build icu
-mark_built icu
-# needed by libxml2
 
 automatically_cross_build_packages
 
