@@ -886,12 +886,6 @@ builddep_cyrus_sasl2() {
 add_automatic dash
 add_automatic datefudge
 add_automatic db-defaults
-
-builddep_db5_3() {
-	# java stuff lacks build profile annotation
-	apt_get_install debhelper autotools-dev procps
-}
-
 add_automatic debianutils
 
 add_automatic diffutils
@@ -2783,10 +2777,9 @@ if test -f "$REPODIR/stamps/db5.3_1"; then
 	echo "skipping stage1 rebuild of db5.3"
 else
 	cross_build_setup db5.3 db5.3_1
-	builddep_db5_3 "$HOST_ARCH"
+	apt_get_build_dep "-a$HOST_ARCH" -P pkg.db5.3.notcl,nocheck,nojava ./
 	check_binNMU
-	dpkg-checkbuilddeps -B "-a$HOST_ARCH" || : # tell unmet build depends
-	drop_privs DEB_STAGE=stage1 dpkg-buildpackage "-a$HOST_ARCH" -B -d -uc -us
+	drop_privs dpkg-buildpackage "-a$HOST_ARCH" -Ppkg.db5.3.notcl,nocheck,nojava -B -uc -us
 	cd ..
 	ls -l
 	pickup_packages *.changes
