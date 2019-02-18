@@ -632,6 +632,7 @@ builddep_apt() {
 
 add_automatic attr
 patch_attr() {
+	dpkg-architecture "-a$HOST_ARCH" -i musl-linux-any || return 0
 	echo "patching attr to support musl #782830"
 	drop_privs patch -p1 <<'EOF'
 diff -Nru attr-2.4.47/debian/patches/20-remove-attr-xattr.patch attr-2.4.47/debian/patches/20-remove-attr-xattr.patch
