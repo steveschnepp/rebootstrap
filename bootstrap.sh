@@ -863,14 +863,6 @@ add_automatic bzip2
 add_automatic c-ares
 add_automatic cloog
 add_automatic coreutils
-
-builddep_cracklib2() {
-	# python-all-dev lacks build profile annotation
-	$APT_GET install autoconf automake autotools-dev chrpath debhelper docbook-utils docbook-xml dpkg-dev libtool python dh-python
-	# additional B-D for cross
-	$APT_GET install cracklib-runtime
-}
-
 add_automatic curl
 
 builddep_cyrus_sasl2() {
@@ -2814,11 +2806,10 @@ automatically_cross_build_packages
 if test -f "$REPODIR/stamps/cracklib2_1"; then
 	echo "skipping stage1 rebuild of cracklib2"
 else
-	builddep_cracklib2 "$HOST_ARCH"
 	cross_build_setup cracklib2 cracklib2_1
+	apt_get_build_dep "-a$HOST_ARCH" --arch-only -Pcross,nopython ./
 	check_binNMU
-	dpkg-checkbuilddeps -B "-a$HOST_ARCH" || : # tell unmet build depends
-	drop_privs DEB_STAGE=stage1 dpkg-buildpackage "-a$HOST_ARCH" -B -d -uc -us
+	drop_privs dpkg-buildpackage "-a$HOST_ARCH" -B -Pcross,nopython -uc -us
 	cd ..
 	ls -l
 	pickup_packages *.changes
