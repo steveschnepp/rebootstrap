@@ -752,7 +752,6 @@ builddep_build_essential() {
 
 add_automatic bzip2
 add_automatic c-ares
-add_automatic cloog
 add_automatic coreutils
 add_automatic curl
 
@@ -2449,7 +2448,6 @@ add_need autogen # by gcc-VER, gnutls28
 add_need blt # by pythonX.Y
 add_need bsdmainutils # for man-db
 add_need bzip2 # by perl
-add_need cloog # by gcc-VER
 add_need db-defaults # by perl, python2.7, python3.5
 add_need expat # by unbound
 add_need file # by gcc-6, for debhelper
