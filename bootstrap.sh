@@ -1709,15 +1709,6 @@ EOF
 add_automatic openssl
 add_automatic openssl1.0
 add_automatic p11-kit
-
-builddep_pam() {
-	# should be replaced with pkg.pam.noaudit profile #907492
-	dpkg-architecture "-a$1" -ilinux-any && assert_built libselinux
-	assert_built "cracklib2 db-defaults db5.3 flex"
-	dpkg-architecture "-a$1" -ilinux-any && apt_get_install "libselinux1-dev:$1"
-	apt_get_install "libcrack2-dev:$1" bzip2 debhelper quilt flex "libdb-dev:$1" po-debconf dh-autoreconf autopoint pkg-config libfl-dev "libfl-dev:$1" docbook-xsl docbook-xml xsltproc libxml2-utils w3m
-}
-
 add_automatic patch
 
 add_automatic pcre3
@@ -2722,11 +2713,10 @@ automatically_cross_build_packages
 if test -f "$REPODIR/stamps/pam_1"; then
 	echo "skipping stage1 rebuild of pam"
 else
-	builddep_pam "$HOST_ARCH"
 	cross_build_setup pam pam_1
+	apt_get_build_dep "-a$HOST_ARCH" --arch-only -Pstage1 ./
 	check_binNMU
-	dpkg-checkbuilddeps -B "-a$HOST_ARCH" || : # tell unmet build depends
-	drop_privs DEB_BUILD_PROFILE=stage1 dpkg-buildpackage "-a$HOST_ARCH" -B -d -uc -us
+	drop_privs dpkg-buildpackage "-a$HOST_ARCH" -Pstage1 -B -uc -us
 	cd ..
 	ls -l
 	pickup_packages *.changes
