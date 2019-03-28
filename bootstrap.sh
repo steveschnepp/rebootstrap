@@ -915,6 +915,9 @@ patch_gcc_8() {
 	patch_gcc_multilib_deps
 	patch_gcc_wdotap
 }
+patch_gcc_9() {
+	patch_gcc_wdotap
+}
 
 buildenv_gdbm() {
 	if dpkg-architecture "-a$1" -ignu-any-any; then
