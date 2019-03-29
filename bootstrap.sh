@@ -184,6 +184,8 @@ if test "$ENABLE_MULTIARCH_GCC" = yes; then
 	$APT_GET install cross-gcc-dev
 	echo "removing unused unstripped_exe patch"
 	sed -i '/made-unstripped_exe-setting-overridable/d' /usr/share/cross-gcc/patches/gcc-*/series
+	# fix patch application failure #925950
+	sed -i -e 's/\(`TARGET\))/\1/' /usr/share/cross-gcc/patches/gcc-[89]/*-now-depend-on-cpp-*
 fi
 
 obtain_source_package() {
