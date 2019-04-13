@@ -136,11 +136,11 @@ filter_dpkg_tracked() {
 }
 
 apt_get_install() {
-	$APT_GET install "$@"
+	DEBIAN_FRONTEND=noninteractive $APT_GET install "$@"
 }
 
 apt_get_build_dep() {
-	$APT_GET build-dep "$@"
+	DEBIAN_FRONTEND=noninteractive $APT_GET build-dep "$@"
 }
 
 apt_get_remove() {
