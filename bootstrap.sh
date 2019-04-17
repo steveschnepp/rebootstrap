@@ -186,7 +186,7 @@ if test "$ENABLE_MULTIARCH_GCC" = yes; then
 	sed -i '/made-unstripped_exe-setting-overridable/d' /usr/share/cross-gcc/patches/gcc-*/series
 	# fix patch application failure #925950
 	sed -i -e 's/\(`TARGET\))/\1/' /usr/share/cross-gcc/patches/gcc-[89]/*-now-depend-on-cpp-*
-	if "$GCC_VER" = 9; then
+	if test "$GCC_VER" = 9; then
 		echo "dropping libmpx from patch for gcc-9 #927230"
 	patch /usr/share/cross-gcc/patches/gcc-9/*-multi-arch-specific-install-location-* <<'EOF'
 --- a
