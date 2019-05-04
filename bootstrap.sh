@@ -1759,22 +1759,6 @@ EOF
 }
 
 add_automatic nss
-patch_nss() {
-	echo "work around nss FTBFS with gcc-7 #853576"
-	drop_privs patch -p1 <<'EOF'
---- a/debian/rules
-+++ b/debian/rules
-@@ -110,6 +110,7 @@
- 		NSPR_LIB_DIR=/usr/lib/$(DEB_HOST_MULTIARCH) \
- 		BUILD_OPT=1 \
- 		NS_USE_GCC=1 \
-+		NSS_ENABLE_WERROR=0 \
- 		OPTIMIZER="$(CFLAGS) $(CPPFLAGS)" \
- 		LDFLAGS='$(LDFLAGS) $$(ARCHFLAG) $$(ZDEFS_FLAG)' \
- 		DSO_LDOPTS='-shared $$(LDFLAGS)' \
-EOF
-}
-
 add_automatic openssl
 add_automatic openssl1.0
 add_automatic p11-kit
