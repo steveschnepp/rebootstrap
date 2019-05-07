@@ -2740,6 +2740,8 @@ if test -f "$REPODIR/stamps/cracklib2_1"; then
 	echo "skipping stage1 rebuild of cracklib2"
 else
 	cross_build_setup cracklib2 cracklib2_1
+	# explicitly disable zlib support #928436
+	apt_get_remove zlib1g-dev "zlib1g-dev:$HOST_ARCH"
 	apt_get_build_dep "-a$HOST_ARCH" --arch-only -Pcross,nopython ./
 	check_binNMU
 	drop_privs dpkg-buildpackage "-a$HOST_ARCH" -B -Pcross,nopython -uc -us
