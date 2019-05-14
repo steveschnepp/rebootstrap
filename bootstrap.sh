@@ -952,35 +952,6 @@ patch_gcc_wdotap() {
 		drop_privs rm -Rf .pc
 	fi
 }
-patch_gcc_libgfortran_location() {
-	echo "fixing up cross-install-location.diff #928785"
-	patch -p1 <<'EOF'
---- a/debian/patches/cross-install-location.diff
-+++ b/debian/patches/cross-install-location.diff
-@@ -18,8 +18,8 @@
-  @LIBGFOR_USE_SYMVER_GNU_TRUE@@LIBGFOR_USE_SYMVER_TRUE@version_dep = $(srcdir)/gfortran.map
-  @LIBGFOR_USE_SYMVER_SUN_TRUE@@LIBGFOR_USE_SYMVER_TRUE@version_dep = gfortran.map-sun
-  gfor_c_HEADERS = $(srcdir)/ISO_Fortran_binding.h
---gfor_cdir = $(libdir)/gcc/$(target_alias)/$(gcc_version)$(MULTISUBDIR)/include
--+gfor_cdir = $(libdir)/gcc-cross/$(target_alias)/$(gcc_version)$(MULTISUBDIR)/include
-+-gfor_cdir = $(libdir)/gcc/$(target_alias)/$(gcc_version)/include
-++gfor_cdir = $(libdir)/gcc-cross/$(target_alias)/$(gcc_version)/include
-  LTLDFLAGS = $(shell $(SHELL) $(top_srcdir)/../libtool-ldflags $(LDFLAGS)) \
-  	    $(lt_host_flags)
-  
-@@ -44,8 +44,8 @@
-  endif
-  
-  gfor_c_HEADERS = $(srcdir)/ISO_Fortran_binding.h
---gfor_cdir = $(libdir)/gcc/$(target_alias)/$(gcc_version)$(MULTISUBDIR)/include
--+gfor_cdir = $(libdir)/gcc-cross/$(target_alias)/$(gcc_version)$(MULTISUBDIR)/include
-+-gfor_cdir = $(libdir)/gcc/$(target_alias)/$(gcc_version)/include
-++gfor_cdir = $(libdir)/gcc-cross/$(target_alias)/$(gcc_version)/include
-  
-  LTLDFLAGS = $(shell $(SHELL) $(top_srcdir)/../libtool-ldflags $(LDFLAGS)) \
-  	    $(lt_host_flags)
-EOF
-}
 patch_gcc_8() {
 	echo "fix LIMITS_H_TEST again https://gcc.gnu.org/bugzilla/show_bug.cgi?id=80677"
 	drop_privs sed -i -e 's,^\(+LIMITS_H_TEST = \).*,\1:,' debian/patches/gcc-multiarch.diff
@@ -992,7 +963,6 @@ patch_gcc_8() {
 patch_gcc_9() {
 	echo "fix LIMITS_H_TEST again https://gcc.gnu.org/bugzilla/show_bug.cgi?id=80677"
 	drop_privs sed -i -e 's,^\(+LIMITS_H_TEST = \).*,\1:,' debian/patches/gcc-multiarch.diff
-	patch_gcc_libgfortran_location
 	patch_gcc_wdotap
 }
 
