@@ -608,18 +608,19 @@ buildpackage_failed() {
 }
 
 cross_build() {
-	local pkg profiles ignorebd hook installedpackages
+	local pkg profiles stamp ignorebd hook installedpackages
 	pkg="$1"
 	profiles="$DEFAULT_PROFILES ${2:-}"
+	stamp="${3:-$pkg}"
 	if test "$ENABLE_MULTILIB" = "no"; then
 		profiles="$profiles nobiarch"
 	fi
 	profiles=`echo "$profiles" | sed 's/ /,/g;s/,,*/,/g;s/^,//;s/,$//'`
-	if test -f "$REPODIR/stamps/$pkg"; then
+	if test -f "$REPODIR/stamps/$stamp"; then
 		echo "skipping rebuild of $pkg with profiles $profiles"
 	else
 		echo "building $pkg with profiles $profiles"
-		cross_build_setup "$pkg"
+		cross_build_setup "$pkg" "$stamp"
 		installedpackages=$(record_installed_packages)
 		if hook=`get_hook builddep "$pkg"`; then
 			echo "installing Build-Depends for $pkg using custom function"
@@ -647,12 +648,12 @@ cross_build() {
 		remove_extra_packages "$installedpackages"
 		ls -l
 		pickup_packages *.changes
-		touch "$REPODIR/stamps/$pkg"
+		touch "$REPODIR/stamps/$stamp"
 		compare_native ./*.deb
 		cd ..
-		drop_privs rm -Rf "$pkg"
+		drop_privs rm -Rf "$stamp"
 	fi
-	progress_mark "$pkg cross build"
+	progress_mark "$stamp cross build"
 }
 
 case "$HOST_ARCH" in
@@ -2650,24 +2651,9 @@ mark_built readline
 automatically_cross_build_packages
 
 if dpkg-architecture "-a$HOST_ARCH" -ilinux-any; then
-if test -f "$REPODIR/stamps/libselinux_1"; then
-	echo "skipping rebuild of libselinux stage1"
-else
-	cross_build_setup libselinux libselinux1
 	assert_built "libsepol pcre3"
-	apt_get_build_dep "-a$HOST_ARCH" --arch-only -P nopython,noruby ./
-	check_binNMU
-	drop_privs dpkg-buildpackage -B -uc -us "-a$HOST_ARCH" -Pnopython,noruby
-	cd ..
-	ls -l
-	pickup_packages *.changes
-	touch "$REPODIR/stamps/libselinux_1"
-	compare_native ./*.deb
-	cd ..
-	drop_privs rm -Rf libselinux1
-fi
-progress_mark "libselinux stage1 cross build"
-mark_built libselinux
+	cross_build libselinux "nopython noruby" libselinux_1
+	mark_built libselinux
 # needed by coreutils, dpkg, findutils, glibc, sed, tar, util-linux
 
 automatically_cross_build_packages
