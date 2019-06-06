@@ -1902,6 +1902,9 @@ builddep_util_linux() {
 	assert_built "ncurses slang2 zlib"
 	$APT_GET build-dep "-a$1" --arch-only -P "$2" util-linux
 }
+buildenv_util_linux() {
+	export scanf_cv_type_modifier=ms
+}
 
 add_automatic xft
 add_automatic xz-utils
@@ -2659,21 +2662,7 @@ if dpkg-architecture "-a$HOST_ARCH" -ilinux-any; then
 automatically_cross_build_packages
 fi # $HOST_ARCH matches linux-any
 
-if test -f "$REPODIR/stamps/util-linux_1"; then
-	echo "skipping rebuild of util-linux stage1"
-else
-	builddep_util_linux "$HOST_ARCH" stage1
-	cross_build_setup util-linux util-linux_1
-	check_binNMU
-	drop_privs scanf_cv_type_modifier=ms dpkg-buildpackage -B -uc -us "-a$HOST_ARCH" -Pstage1
-	cd ..
-	ls -l
-	pickup_packages *.changes
-	touch "$REPODIR/stamps/util-linux_1"
-	compare_native ./*.deb
-	cd ..
-	drop_privs rm -Rf util-linux_1
-fi
+cross_build util-linux stage1 util-linux_1
 progress_mark "util-linux stage1 cross build"
 mark_built util-linux
 # essential, needed by e2fsprogs
