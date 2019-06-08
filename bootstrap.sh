@@ -2669,21 +2669,7 @@ mark_built util-linux
 
 automatically_cross_build_packages
 
-if test -f "$REPODIR/stamps/db5.3_1"; then
-	echo "skipping stage1 rebuild of db5.3"
-else
-	cross_build_setup db5.3 db5.3_1
-	apt_get_build_dep "-a$HOST_ARCH" -P pkg.db5.3.notcl,nocheck,nojava ./
-	check_binNMU
-	drop_privs dpkg-buildpackage "-a$HOST_ARCH" -Ppkg.db5.3.notcl,nocheck,nojava -B -uc -us
-	cd ..
-	ls -l
-	pickup_packages *.changes
-	touch "$REPODIR/stamps/db5.3_1"
-	compare_native ./*.deb
-	cd ..
-	drop_privs rm -Rf db5.3_1
-fi
+cross_build db5.3 "pkg.db5.3.notcl nojava" db5.3_1
 progress_mark "db5.3 stage1 cross build"
 mark_built db5.3
 # needed by perl, python2.7, needed for db-defaults and thus by freebsd-glue
