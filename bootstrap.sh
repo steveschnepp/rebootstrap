@@ -2676,21 +2676,7 @@ mark_built db5.3
 
 automatically_cross_build_packages
 
-if test -f "$REPODIR/stamps/libxml2_1"; then
-	echo "skipping rebuild of libxml2 nopython"
-else
-	cross_build_setup libxml2 libxml2_1
-	apt_get_build_dep "-a$HOST_ARCH" --arch-only -P nopython ./
-	check_binNMU
-	drop_privs dpkg-buildpackage "-a$HOST_ARCH" -B -Pnopython -uc -us
-	cd ..
-	ls -l
-	pickup_packages *.changes
-	touch "$REPODIR/stamps/libxml2_1"
-	compare_native ./*.deb
-	cd ..
-	drop_privs rm -Rf libxml2_1
-fi
+cross_build libxml2 nopython libxml2_1
 progress_mark "libxml2 nopython cross build"
 mark_built libxml2
 # needed by autogen
