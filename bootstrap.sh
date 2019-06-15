@@ -2712,21 +2712,7 @@ mark_built build-essential
 
 automatically_cross_build_packages
 
-if test -f "$REPODIR/stamps/pam_1"; then
-	echo "skipping stage1 rebuild of pam"
-else
-	cross_build_setup pam pam_1
-	apt_get_build_dep "-a$HOST_ARCH" --arch-only -Pstage1 ./
-	check_binNMU
-	drop_privs dpkg-buildpackage "-a$HOST_ARCH" -Pstage1 -B -uc -us
-	cd ..
-	ls -l
-	pickup_packages *.changes
-	touch "$REPODIR/stamps/pam_1"
-	compare_native ./*.deb
-	cd ..
-	drop_privs rm -Rf pam_1
-fi
+cross_build pam stage1 pam_1
 progress_mark "pam stage1 cross build"
 mark_built pam
 # needed by shadow
