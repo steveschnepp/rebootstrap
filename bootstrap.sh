@@ -2741,23 +2741,9 @@ mark_built cyrus-sasl2
 
 automatically_cross_build_packages
 
-if test -f "$REPODIR/stamps/unbound_1"; then
-	echo "skipping stage1 rebuild of unbound"
-else
-	assert_built "libevent expat nettle"
-	dpkg-architecture "-a$HOST_ARCH" -ilinux-any || assert_built libbsd
-	cross_build_setup unbound unbound_1
-	apt_get_build_dep "-a$HOST_ARCH" --arch-only -P pkg.unbound.libonly ./
-	check_binNMU
-	drop_privs dpkg-buildpackage "-a$HOST_ARCH" -B -uc -us -Ppkg.unbound.libonly
-	cd ..
-	ls -l
-	pickup_packages *.changes
-	touch "$REPODIR/stamps/unbound_1"
-	compare_native ./*.deb
-	cd ..
-	drop_privs rm -Rf unbound_1
-fi
+assert_built "libevent expat nettle"
+dpkg-architecture "-a$HOST_ARCH" -ilinux-any || assert_built libbsd
+cross_build unbound pkg.unbound.libonly unbound_1
 progress_mark "unbound stage1 cross build"
 mark_built unbound
 # needed by gnutls28
