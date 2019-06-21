@@ -1760,6 +1760,12 @@ EOF
 }
 
 add_automatic nss
+
+buildenv_openldap() {
+	export ol_cv_pthread_select_yields=yes
+	export ac_cv_func_memcmp_working=yes
+}
+
 add_automatic openssl
 add_automatic openssl1.0
 add_automatic p11-kit
@@ -2750,23 +2756,8 @@ mark_built unbound
 
 automatically_cross_build_packages
 
-if test -f "$REPODIR/stamps/openldap_1"; then
-	echo "skipping stage1 rebuild of openldap"
-else
-	assert_built "gnutls28 cyrus-sasl2"
-	$APT_GET build-dep "-a$HOST_ARCH" --arch-only -P stage1 openldap
-	cross_build_setup openldap openldap_1
-	check_binNMU
-	dpkg-checkbuilddeps -B "-a$HOST_ARCH" -Pstage1 || : # tell unmet build depends
-	drop_privs ol_cv_pthread_select_yields=yes ac_cv_func_memcmp_working=yes dpkg-buildpackage "-a$HOST_ARCH" -B -d -uc -us -Pstage1
-	cd ..
-	ls -l
-	pickup_packages *.changes
-	touch "$REPODIR/stamps/openldap_1"
-	compare_native ./*.deb
-	cd ..
-	drop_privs rm -Rf openldap_1
-fi
+assert_built "gnutls28 cyrus-sasl2"
+cross_build openldap stage1 openldap_1
 progress_mark "openldap stage1 cross build"
 mark_built openldap
 # needed by curl
